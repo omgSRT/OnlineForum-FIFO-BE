@@ -10,7 +10,8 @@ public enum SuccessReturnMessage {
     CHANGE_SUCCESS("Change Successfully"),
     DELETE_SUCCESS("Delete Successfully"),
     CONVERT_SUCCESS("Convert Successfully"),
-    SEND_SUCCESS("Send Successfully")
+    SEND_SUCCESS("Send Successfully"),
+    POST_SUCCESS("Post Successfully"),
     ;
 
     private String message;
