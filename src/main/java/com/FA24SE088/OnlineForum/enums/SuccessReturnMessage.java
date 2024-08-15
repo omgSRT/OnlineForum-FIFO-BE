@@ -12,6 +12,7 @@ public enum SuccessReturnMessage {
     CONVERT_SUCCESS("Convert Successfully"),
     SEND_SUCCESS("Send Successfully"),
     POST_SUCCESS("Post Successfully"),
+    LOGIN_SUCCESS("Login Successfully"),
     ;
 
     private String message;
