@@ -5,13 +5,14 @@ import com.FA24SE088.OnlineForum.dto.requests.IntrospectRequest;
 import com.FA24SE088.OnlineForum.dto.requests.LogoutRequest;
 import com.FA24SE088.OnlineForum.dto.response.AuthenticationResponse;
 import com.FA24SE088.OnlineForum.dto.response.IntrospectResponse;
+import com.FA24SE088.OnlineForum.dto.response.RefreshAccessTokenResponse;
 import com.FA24SE088.OnlineForum.entities.Account;
 import com.FA24SE088.OnlineForum.entities.InvalidatedToken;
 import com.FA24SE088.OnlineForum.exception.AppException;
+import com.FA24SE088.OnlineForum.exception.ErrorCode;
 import com.FA24SE088.OnlineForum.repositories.AccountRepository;
 import com.FA24SE088.OnlineForum.repositories.InvalidateTokenRepository;
 
-import com.google.firebase.ErrorCode;
 import com.nimbusds.jose.*;
 import com.nimbusds.jose.crypto.MACSigner;
 import com.nimbusds.jose.crypto.MACVerifier;
@@ -21,14 +22,14 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.util.CollectionUtils;
 
 import java.text.ParseException;
-import java.util.Collections;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.StringJoiner;
 import java.util.UUID;
@@ -38,11 +39,10 @@ import java.util.UUID;
 @Slf4j
 @Service
 public class AuthenticateService {
-    @Autowired
-    InvalidateTokenRepository invalidateTokenRepository;
-    @Autowired
-    AccountRepository accountRepository;
-    private String jwtSecret = "9fpGEUpGqiplW2HJB7UDOpJScDgzJWJR5xqOP3zsJQKs8fuIQpvw37BP3hmNmb/9";
+    final InvalidateTokenRepository invalidateTokenRepository;
+    final AccountRepository accountRepository;
+    @Value("${spring.custom.jwt.secret}")
+    private String jwtSecret;
 
     //Introspect JWT Token
     public IntrospectResponse introspectJWT(IntrospectRequest request) throws JOSEException, ParseException {
@@ -70,16 +70,22 @@ public class AuthenticateService {
         if (!authenticated){
             throw new RuntimeException("UNAUTHENTICATED");
         }
-        var token = generateToken(account);
+        var token = generateToken(account, 1);
+        var refreshToken = generateToken(account, 365);
         return AuthenticationResponse.builder()
                 .token(token)
+                .refreshToken(refreshToken)
                 .authenticated(true)
                 .build();
     }
 
-    private String generateToken(Account account) {
+    private String generateToken(Account account, int expirationDay) {
         Date now = new Date();
-        Date expirationTime = new Date(now.getTime() + 36000 * 1000);
+        Instant nowInstant = now.toInstant();
+        Instant expirationInstant = nowInstant.plus(expirationDay, ChronoUnit.DAYS);
+        Date expirationTime = Date.from(expirationInstant);
+        //Date expirationTime = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+
         JWSHeader header = new JWSHeader(JWSAlgorithm.HS512);
 
         JWTClaimsSet jwtClaimsSet = new JWTClaimsSet.Builder()
@@ -94,7 +100,6 @@ public class AuthenticateService {
 
         Payload payload = new Payload(jwtClaimsSet.toJSONObject());
 
-
         JWSObject jwsObject = new JWSObject(header, payload);
         try {
             jwsObject.sign(new MACSigner(jwtSecret.getBytes()));
@@ -103,6 +108,44 @@ public class AuthenticateService {
             log.error("Cannot Create JWT", e);
             throw new RuntimeException(e);
         }
+    }
+
+    private boolean verifyRefreshToken(String refreshToken, Account account) {
+        try {
+            JWSObject jwsObject = JWSObject.parse(refreshToken);
+            if (!jwsObject.verify(new MACVerifier(jwtSecret.getBytes()))) {
+                return false; // Signature verification failed
+            }
+
+            JWTClaimsSet claimsSet = JWTClaimsSet.parse(jwsObject.getPayload().toJSONObject());
+            if (claimsSet.getExpirationTime().before(new Date())) {
+                return false; // Token has expired
+            }
+
+            String accountIdClaim = (String) claimsSet.getClaim("accountId");
+            if (!account.getAccountId().equals(UUID.fromString(accountIdClaim))) {
+                return false; // Account ID mismatch
+            }
+
+            return true; // Refresh token is valid
+        } catch (ParseException | JOSEException e) {
+            log.error("Token validation failed", e);
+            return false; // Token validation failed
+        }
+    }
+    public RefreshAccessTokenResponse generateNewAccessTokenFromRefreshToken(String refreshToken, String username) {
+        Account account = accountRepository.findByUsername(username)
+                .orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND));
+
+        if (!verifyRefreshToken(refreshToken, account)) {
+            throw new RuntimeException("Invalid refresh token");
+        }
+
+        var newAccessToken = generateToken(account, 1);
+
+        return RefreshAccessTokenResponse.builder()
+                .accessToken(newAccessToken)
+                .build();
     }
 
     public void logout(LogoutRequest request) throws ParseException, JOSEException {
@@ -130,7 +173,7 @@ public class AuthenticateService {
             throw new RuntimeException("String.valueOf(ErrorCode.UNAUTHENTICATED)");
         }
         if(invalidateTokenRepository.existsById(signedJWT.getJWTClaimsSet().getJWTID())){
-            throw new RuntimeException("unauthenicated");
+            throw new RuntimeException("unauthenticated");
         }
 
         return signedJWT;
@@ -144,7 +187,4 @@ public class AuthenticateService {
         }
         return stringJoiner.toString();
     }
-
-
-
 }
