@@ -8,6 +8,9 @@ spring:
       dialect: org.hibernate.dialect.MySQLDialect
       ddl-auto: update
     show-sql: true
+  custom:
+    jwt:
+      secret: 9fpGEUpGqiplW2HJB7UDOpJScDgzJWJR5xqOP3zsJQKs8fuIQpvw37BP3hmNmb/9
 
 #  mail:
 #    host: smtp.gmail.com
