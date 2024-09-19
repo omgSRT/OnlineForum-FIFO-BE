@@ -1,19 +1,21 @@
-package com.GSU24SE43.ConstructionDrawingManagement.controller;
+package com.FA24SE088.OnlineForum.controllers;
 //
-import com.GSU24SE43.ConstructionDrawingManagement.dto.request.AuthenticationRequest;
-import com.GSU24SE43.ConstructionDrawingManagement.dto.request.IntrospectRequest;
-import com.GSU24SE43.ConstructionDrawingManagement.dto.request.LogoutRequest;
-import com.GSU24SE43.ConstructionDrawingManagement.dto.response.ApiResponse;
-import com.GSU24SE43.ConstructionDrawingManagement.dto.response.AuthenticationResponse;
-import com.GSU24SE43.ConstructionDrawingManagement.dto.response.IntrospectResponse;
-import com.GSU24SE43.ConstructionDrawingManagement.repository.AccountRepository;
-import com.GSU24SE43.ConstructionDrawingManagement.service.AuthenticateService;
+
+import com.FA24SE088.OnlineForum.dto.requests.AuthenticationRequest;
+import com.FA24SE088.OnlineForum.dto.requests.IntrospectRequest;
+import com.FA24SE088.OnlineForum.dto.requests.LogoutRequest;
+import com.FA24SE088.OnlineForum.dto.response.ApiResponse;
+import com.FA24SE088.OnlineForum.dto.response.AuthenticationResponse;
+import com.FA24SE088.OnlineForum.dto.response.IntrospectResponse;
+import com.FA24SE088.OnlineForum.services.AuthenticateService;
 import com.nimbusds.jose.JOSEException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-import java.io.*;
 import java.text.ParseException;
 
 @RestController
@@ -22,8 +24,6 @@ import java.text.ParseException;
 public class AuthenticationController {
     @Autowired
     private AuthenticateService authenticateService;
-//    @Autowired
-//    private AccountRepository accountRepository;
 
     @PostMapping("/login")
     public ApiResponse<AuthenticationResponse> login(@RequestBody AuthenticationRequest request){

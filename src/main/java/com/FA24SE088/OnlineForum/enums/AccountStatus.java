@@ -1,4 +1,4 @@
-package com.GSU24SE43.ConstructionDrawingManagement.enums;
+package com.FA24SE088.OnlineForum.enums;
 
 public enum AccountStatus {
     ACTIVE,

@@ -1,16 +1,17 @@
-package com.GSU24SE43.ConstructionDrawingManagement.service;
+package com.FA24SE088.OnlineForum.services;
 
-import com.GSU24SE43.ConstructionDrawingManagement.dto.request.AuthenticationRequest;
-import com.GSU24SE43.ConstructionDrawingManagement.dto.request.IntrospectRequest;
-import com.GSU24SE43.ConstructionDrawingManagement.dto.request.LogoutRequest;
-import com.GSU24SE43.ConstructionDrawingManagement.dto.response.AuthenticationResponse;
-import com.GSU24SE43.ConstructionDrawingManagement.dto.response.IntrospectResponse;
-import com.GSU24SE43.ConstructionDrawingManagement.entity.Account;
-import com.GSU24SE43.ConstructionDrawingManagement.entity.InvalidatedToken;
-import com.GSU24SE43.ConstructionDrawingManagement.exception.AppException;
-import com.GSU24SE43.ConstructionDrawingManagement.exception.ErrorCode;
-import com.GSU24SE43.ConstructionDrawingManagement.repository.AccountRepository;
-import com.GSU24SE43.ConstructionDrawingManagement.repository.InvalidateTokenRepository;
+import com.FA24SE088.OnlineForum.dto.requests.AuthenticationRequest;
+import com.FA24SE088.OnlineForum.dto.requests.IntrospectRequest;
+import com.FA24SE088.OnlineForum.dto.requests.LogoutRequest;
+import com.FA24SE088.OnlineForum.dto.response.AuthenticationResponse;
+import com.FA24SE088.OnlineForum.dto.response.IntrospectResponse;
+import com.FA24SE088.OnlineForum.entities.Account;
+import com.FA24SE088.OnlineForum.entities.InvalidatedToken;
+import com.FA24SE088.OnlineForum.exception.AppException;
+import com.FA24SE088.OnlineForum.repositories.AccountRepository;
+import com.FA24SE088.OnlineForum.repositories.InvalidateTokenRepository;
+
+import com.google.firebase.ErrorCode;
 import com.nimbusds.jose.*;
 import com.nimbusds.jose.crypto.MACSigner;
 import com.nimbusds.jose.crypto.MACVerifier;
@@ -27,8 +28,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
 import java.text.ParseException;
-
-import java.util.*;
+import java.util.Collections;
+import java.util.Date;
+import java.util.StringJoiner;
+import java.util.UUID;
 
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
@@ -60,12 +63,12 @@ public class AuthenticateService {
     public AuthenticationResponse authenticated(AuthenticationRequest request){
         PasswordEncoder passwordEncoder = new BCryptPasswordEncoder(10);
         var account = accountRepository.findByUsername(request.getUsername()).orElseThrow(
-                () -> new AppException(ErrorCode.ACCOUNT_NOT_EXIST)
+                () -> new RuntimeException("ACCOUNT_NOT_EXIST")
         );
 
         boolean authenticated = passwordEncoder.matches(request.getPassword(), account.getPassword());
         if (!authenticated){
-            throw new AppException(ErrorCode.UNAUTHENTICATED);
+            throw new RuntimeException("UNAUTHENTICATED");
         }
         var token = generateToken(account);
         return AuthenticationResponse.builder()
@@ -133,13 +136,15 @@ public class AuthenticateService {
         return signedJWT;
     }
 
-private String buildScope(Account account) {
-    StringJoiner stringJoiner = new StringJoiner(" ");
-    if (!CollectionUtils.isEmpty(Collections.singleton(account.getRoleName()))) {
-        stringJoiner.add(account.getRoleName());
+    private String buildScope(Account account) {
+        StringJoiner stringJoiner = new StringJoiner(" ");
+        // Kiểm tra xem role của tài khoản có khác null không
+        if (account.getRole() != null && account.getRole().getName() != null) {
+            stringJoiner.add(account.getRole().getName());
+        }
+        return stringJoiner.toString();
     }
-    return stringJoiner.toString();
-}
+
 
 
 }

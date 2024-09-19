@@ -1,4 +1,4 @@
-package com.GSU24SE43.ConstructionDrawingManagement.dto.response;
+package com.FA24SE088.OnlineForum.dto.response;
 
 import lombok.*;
 import lombok.experimental.FieldDefaults;

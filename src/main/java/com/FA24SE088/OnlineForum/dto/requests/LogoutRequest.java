@@ -1,4 +1,4 @@
-package com.GSU24SE43.ConstructionDrawingManagement.dto.request;
+package com.FA24SE088.OnlineForum.dto.requests;
 
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;

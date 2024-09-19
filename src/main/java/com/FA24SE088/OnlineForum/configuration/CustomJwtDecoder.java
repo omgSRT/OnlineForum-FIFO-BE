@@ -1,8 +1,7 @@
-package com.GSU24SE43.ConstructionDrawingManagement.configuration;
+package com.FA24SE088.OnlineForum.configuration;
 
-import com.GSU24SE43.ConstructionDrawingManagement.dto.request.IntrospectRequest;
-import com.GSU24SE43.ConstructionDrawingManagement.service.AuthenticateService;
-
+import com.FA24SE088.OnlineForum.dto.requests.IntrospectRequest;
+import com.FA24SE088.OnlineForum.services.AuthenticateService;
 import com.nimbusds.jose.JOSEException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;

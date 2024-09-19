@@ -1,22 +1,18 @@
-package com.GSU24SE43.ConstructionDrawingManagement.configuration;
+package com.FA24SE088.OnlineForum.configuration;
 
 import org.springframework.beans.factory.annotation.Autowired;
-
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
-
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.web.SecurityFilterChain;
-
 
 
 @Configuration
@@ -33,14 +29,7 @@ public class SecurityConfiguration {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception{
-        //Example of a default filter chain
-//        http
-//                .csrf(Customizer.withDefaults())
-//                .authorizeHttpRequests(authorize -> authorize.anyRequest().authenticated())
-//                .httpBasic(Customizer.withDefaults())
-//                .formLogin(Customizer.withDefaults());
 
-        //Config which method is allowed while the rest will be authenticated
         http.authorizeHttpRequests(request ->
                 request
                         .requestMatchers(HttpMethod.GET, PUBLIC_ENDPOINTS_GET).permitAll()
@@ -70,14 +59,6 @@ public class SecurityConfiguration {
         return jwtAuthenticationConverter;
     }
 
-//    @Bean
-//    public JwtDecoder jwtDecoder(){
-//        SecretKeySpec secretKeySpec = new SecretKeySpec(jwtSecret.getBytes(), "HS512");
-//        return NimbusJwtDecoder
-//                .withSecretKey(secretKeySpec)
-//                .macAlgorithm(MacAlgorithm.HS512)
-//                .build();
-//    }
 
     @Bean
     public PasswordEncoder passwordEncoder(){

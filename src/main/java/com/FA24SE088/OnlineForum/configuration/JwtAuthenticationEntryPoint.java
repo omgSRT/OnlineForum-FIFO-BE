@@ -1,7 +1,7 @@
-package com.GSU24SE43.ConstructionDrawingManagement.configuration;
+package com.FA24SE088.OnlineForum.configuration;
 
-import com.GSU24SE43.ConstructionDrawingManagement.dto.response.ApiResponse;
-import com.GSU24SE43.ConstructionDrawingManagement.exception.ErrorCode;
+import com.FA24SE088.OnlineForum.dto.response.ApiResponse;
+import com.FA24SE088.OnlineForum.exception.ErrorCode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
