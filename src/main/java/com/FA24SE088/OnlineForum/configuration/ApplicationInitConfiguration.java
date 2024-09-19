@@ -25,17 +25,9 @@ import java.util.Date;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Slf4j
 public class ApplicationInitConfiguration {
-
-    PasswordEncoder passwordEncoder;
-    AccountRepository accountRepository;
-    RoleRepository roleRepository;
-
-    @Autowired
-    public ApplicationInitConfiguration(AccountRepository accountRepository, PasswordEncoder passwordEncoder, RoleRepository roleRepository) {
-        this.accountRepository = accountRepository;
-        this.passwordEncoder = passwordEncoder;
-        this.roleRepository = roleRepository;
-    }
+    final PasswordEncoder passwordEncoder;
+    final AccountRepository accountRepository;
+    final RoleRepository roleRepository;
 
     private boolean checkRole() {
         if (roleRepository.findByName("ADMIN") != null &&
