@@ -17,4 +17,18 @@ public class UnitOfWork {
     final RoleRepository roleRepository;
     final CategoryRepository categoryRepository;
     final CommentRepository commentRepository;
+    final DailyPointRepository dailyPointRepository;
+    final FeedbackRepository feedbackRepository;
+    final FollowRepository followRepository;
+    final ImageRepository imageRepository;
+    final NotificationRepository notificationRepository;
+    final PointRepository pointRepository;
+    final PostRepository postRepository;
+    final RedeemRepository redeemRepository;
+    final RewardRepository rewardRepository;
+    final TagRepository tagRepository;
+    final TopicRepository topicRepository;
+    final TransactionRepository transactionRepository;
+    final UpvoteRepository upvoteRepository;
+    final WalletRepository walletRepository;
 }
