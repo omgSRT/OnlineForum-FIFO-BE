@@ -1,11 +1,10 @@
 package com.FA24SE088.OnlineForum.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
-import java.util.List;
+import java.util.Date;
 import java.util.UUID;
 
 @Getter
@@ -15,18 +14,18 @@ import java.util.UUID;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class Category {
+public class Event {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    UUID categoryId;
-    String name;
+    UUID eventId;
+    String title;
+    Date startDate;
+    Date endDate;
     String image;
+    String content;
+    String link;
 
     @ManyToOne
     @JoinColumn(name = "accountId")
     Account account;
-
-    @JsonIgnoreProperties(value = { "category" }, allowSetters = true)
-    @OneToMany(mappedBy = "category", cascade = CascadeType.ALL, orphanRemoval = true)
-    List<Topic> topicList;
 }
