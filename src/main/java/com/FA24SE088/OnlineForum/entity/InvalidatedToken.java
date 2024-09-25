@@ -1,4 +1,4 @@
-package com.FA24SE088.OnlineForum.entities;
+package com.FA24SE088.OnlineForum.entity;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;

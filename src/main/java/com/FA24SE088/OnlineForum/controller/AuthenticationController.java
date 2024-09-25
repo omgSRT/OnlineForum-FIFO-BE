@@ -1,4 +1,4 @@
-package com.FA24SE088.OnlineForum.controllers;
+package com.FA24SE088.OnlineForum.controller;
 //
 
 import com.FA24SE088.OnlineForum.dto.requests.AuthenticationRequest;
@@ -8,7 +8,7 @@ import com.FA24SE088.OnlineForum.dto.response.ApiResponse;
 import com.FA24SE088.OnlineForum.dto.response.AuthenticationResponse;
 import com.FA24SE088.OnlineForum.dto.response.IntrospectResponse;
 import com.FA24SE088.OnlineForum.dto.response.RefreshAccessTokenResponse;
-import com.FA24SE088.OnlineForum.services.AuthenticateService;
+import com.FA24SE088.OnlineForum.service.AuthenticateService;
 import com.nimbusds.jose.JOSEException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
