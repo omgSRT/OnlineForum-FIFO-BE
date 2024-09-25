@@ -31,4 +31,5 @@ public class UnitOfWork {
     final TransactionRepository transactionRepository;
     final UpvoteRepository upvoteRepository;
     final WalletRepository walletRepository;
+    final EventRepository eventRepository;
 }
