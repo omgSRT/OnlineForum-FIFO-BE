@@ -68,6 +68,10 @@ public class Account {
     List<Comment> commentList;
 
     @JsonIgnoreProperties(value = {"account"}, allowSetters = true)
-    @OneToOne(mappedBy = "account", cascade = CascadeType.ALL, orphanRemoval = true)
-    Category category;
+    @OneToMany(mappedBy = "account", cascade = CascadeType.ALL, orphanRemoval = true)
+    List<Category> categoryList;
+
+    @JsonIgnoreProperties(value = {"account"}, allowSetters = true)
+    @OneToMany(mappedBy = "account", cascade = CascadeType.ALL, orphanRemoval = true)
+    List<Event> eventList;
 }
