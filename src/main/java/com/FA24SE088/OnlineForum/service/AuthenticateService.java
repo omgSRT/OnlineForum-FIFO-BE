@@ -13,6 +13,7 @@ import com.FA24SE088.OnlineForum.exception.ErrorCode;
 import com.FA24SE088.OnlineForum.repository.Repository.AccountRepository;
 import com.FA24SE088.OnlineForum.repository.Repository.InvalidateTokenRepository;
 
+import com.FA24SE088.OnlineForum.repository.UnitOfWork.UnitOfWork;
 import com.nimbusds.jose.*;
 import com.nimbusds.jose.crypto.MACSigner;
 import com.nimbusds.jose.crypto.MACVerifier;
@@ -39,8 +40,7 @@ import java.util.UUID;
 @Slf4j
 @Service
 public class AuthenticateService {
-    final InvalidateTokenRepository invalidateTokenRepository;
-    final AccountRepository accountRepository;
+    final UnitOfWork unitOfWork;
     @Value("${spring.custom.jwt.secret}")
     private String jwtSecret;
 
@@ -62,7 +62,7 @@ public class AuthenticateService {
 
     public AuthenticationResponse authenticated(AuthenticationRequest request){
         PasswordEncoder passwordEncoder = new BCryptPasswordEncoder(10);
-        var account = accountRepository.findByUsername(request.getUsername()).orElseThrow(
+        var account = unitOfWork.getAccountRepository().findByUsername(request.getUsername()).orElseThrow(
                 () -> new RuntimeException("ACCOUNT_NOT_EXIST")
         );
 
@@ -134,7 +134,7 @@ public class AuthenticateService {
         }
     }
     public RefreshAccessTokenResponse generateNewAccessTokenFromRefreshToken(String refreshToken, String username) {
-        Account account = accountRepository.findByUsername(username)
+        Account account = unitOfWork.getAccountRepository().findByUsername(username)
                 .orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND));
 
         if (!verifyRefreshToken(refreshToken, account)) {
@@ -158,7 +158,7 @@ public class AuthenticateService {
                 .expiryTime(expTime)
                 .build();
 
-        invalidateTokenRepository.save(invalidatedToken);
+        unitOfWork.getInvalidateTokenRepository().save(invalidatedToken);
     }
 
     private SignedJWT verifyToken(String token) throws JOSEException, ParseException {
@@ -172,7 +172,7 @@ public class AuthenticateService {
         if (!(verified && expiredDate.after(new Date()))) {
             throw new RuntimeException("String.valueOf(ErrorCode.UNAUTHENTICATED)");
         }
-        if(invalidateTokenRepository.existsById(signedJWT.getJWTClaimsSet().getJWTID())){
+        if(unitOfWork.getInvalidateTokenRepository().existsById(signedJWT.getJWTClaimsSet().getJWTID())){
             throw new RuntimeException("unauthenticated");
         }
 
