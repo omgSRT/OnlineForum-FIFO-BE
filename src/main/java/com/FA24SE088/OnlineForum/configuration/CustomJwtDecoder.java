@@ -1,7 +1,7 @@
 package com.FA24SE088.OnlineForum.configuration;
 
 import com.FA24SE088.OnlineForum.dto.requests.IntrospectRequest;
-import com.FA24SE088.OnlineForum.services.AuthenticateService;
+import com.FA24SE088.OnlineForum.service.AuthenticateService;
 import com.nimbusds.jose.JOSEException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;

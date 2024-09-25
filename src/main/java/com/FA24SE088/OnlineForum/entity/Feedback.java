@@ -1,13 +1,11 @@
-package com.FA24SE088.OnlineForum.entities;
+package com.FA24SE088.OnlineForum.entity;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 import java.util.UUID;
+
 @Getter
 @Setter
 @Entity
@@ -15,9 +13,15 @@ import java.util.UUID;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class Role {
+public class Feedback {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    UUID roleID;
-    String name;
+    UUID feedbackId;
+    String title;
+    String content;
+    String status;
+
+    @ManyToOne
+    @JoinColumn(name = "postId")
+    Post post;
 }

@@ -1,4 +1,4 @@
-package com.FA24SE088.OnlineForum.services;
+package com.FA24SE088.OnlineForum.service;
 
 import com.FA24SE088.OnlineForum.dto.requests.AuthenticationRequest;
 import com.FA24SE088.OnlineForum.dto.requests.IntrospectRequest;
@@ -6,12 +6,12 @@ import com.FA24SE088.OnlineForum.dto.requests.LogoutRequest;
 import com.FA24SE088.OnlineForum.dto.response.AuthenticationResponse;
 import com.FA24SE088.OnlineForum.dto.response.IntrospectResponse;
 import com.FA24SE088.OnlineForum.dto.response.RefreshAccessTokenResponse;
-import com.FA24SE088.OnlineForum.entities.Account;
-import com.FA24SE088.OnlineForum.entities.InvalidatedToken;
+import com.FA24SE088.OnlineForum.entity.Account;
+import com.FA24SE088.OnlineForum.entity.InvalidatedToken;
 import com.FA24SE088.OnlineForum.exception.AppException;
 import com.FA24SE088.OnlineForum.exception.ErrorCode;
-import com.FA24SE088.OnlineForum.repositories.AccountRepository;
-import com.FA24SE088.OnlineForum.repositories.InvalidateTokenRepository;
+import com.FA24SE088.OnlineForum.repository.Repository.AccountRepository;
+import com.FA24SE088.OnlineForum.repository.Repository.InvalidateTokenRepository;
 
 import com.nimbusds.jose.*;
 import com.nimbusds.jose.crypto.MACSigner;

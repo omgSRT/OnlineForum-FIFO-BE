@@ -50,7 +50,7 @@
   </component>
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
-    "Application.OnlineForumApplication.executor": "Debug",
+    "Application.OnlineForumApplication.executor": "Run",
     "Maven.OnlineForum [clean].executor": "Run",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "WebServerToolWindowFactoryState": "false",
@@ -70,6 +70,10 @@
     <key name="CopyFile.RECENT_KEYS">
       <recent name="C:\Forum\OnlineForum\src\main\resources" />
     </key>
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="D:\Capstone\v2\OnlineForum\src\main\resources" />
+      <recent name="D:\Capstone\v2\OnlineForum\src\main\java\com\FA24SE088\OnlineForum\entity" />
+    </key>
     <key name="CopyClassDialog.RECENTS_KEY">
       <recent name="com.FA24SE088.OnlineForum.controllers" />
       <recent name="com.FA24SE088.OnlineForum.enums" />
@@ -78,7 +82,7 @@
       <recent name="com.FA24SE088.OnlineForum.services" />
     </key>
   </component>
-  <component name="RunManager">
+  <component name="RunManager" selected="Application.OnlineForumApplication">
     <configuration name="OnlineForumApplication" type="Application" factoryName="Application" nameIsGenerated="true">
       <option name="ALTERNATIVE_JRE_PATH" value="17" />
       <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="true" />
@@ -94,6 +98,41 @@
         <option name="Make" enabled="true" />
       </method>
     </configuration>
+    <configuration name="OnlineForum [clean]" type="MavenRunConfiguration" factoryName="Maven" temporary="true">
+      <MavenSettings>
+        <option name="myGeneralSettings" />
+        <option name="myRunnerSettings" />
+        <option name="myRunnerParameters">
+          <MavenRunnerParameters>
+            <option name="cmdOptions" />
+            <option name="profiles">
+              <set />
+            </option>
+            <option name="goals">
+              <list>
+                <option value="clean" />
+              </list>
+            </option>
+            <option name="multimoduleDir" />
+            <option name="pomFileName" value="pom.xml" />
+            <option name="profilesMap">
+              <map />
+            </option>
+            <option name="projectsCmdOptionValues">
+              <list />
+            </option>
+            <option name="resolveToWorkspace" value="false" />
+            <option name="workingDirPath" value="$PROJECT_DIR$" />
+          </MavenRunnerParameters>
+        </option>
+      </MavenSettings>
+      <method v="2" />
+    </configuration>
+    <recent_temporary>
+      <list>
+        <item itemvalue="Maven.OnlineForum [clean]" />
+      </list>
+    </recent_temporary>
   </component>
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
   <component name="TaskManager">
@@ -114,7 +153,7 @@
     <breakpoint-manager>
       <breakpoints>
         <line-breakpoint enabled="true" type="java-line">
-          <url>file://$PROJECT_DIR$/src/main/java/com/FA24SE088/OnlineForum/services/AuthenticateService.java</url>
+          <url>file://$PROJECT_DIR$/src/main/java/com/FA24SE088/OnlineForum/service/AuthenticateService.java</url>
           <line>114</line>
           <option name="timeStamp" value="2" />
         </line-breakpoint>

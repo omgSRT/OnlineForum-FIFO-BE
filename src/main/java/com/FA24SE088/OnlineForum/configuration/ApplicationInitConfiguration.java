@@ -1,16 +1,15 @@
 package com.FA24SE088.OnlineForum.configuration;
 
-import com.FA24SE088.OnlineForum.entities.Account;
-import com.FA24SE088.OnlineForum.entities.Role;
+import com.FA24SE088.OnlineForum.entity.Account;
+import com.FA24SE088.OnlineForum.entity.Role;
 import com.FA24SE088.OnlineForum.enums.AccountStatus;
-import com.FA24SE088.OnlineForum.repositories.AccountRepository;
-import com.FA24SE088.OnlineForum.repositories.RoleRepository;
+import com.FA24SE088.OnlineForum.repository.Repository.AccountRepository;
+import com.FA24SE088.OnlineForum.repository.Repository.RoleRepository;
 
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -78,6 +77,7 @@ public class ApplicationInitConfiguration {
                         .username("admin")
                         .password(passwordEncoder.encode("admin"))
                         .role(role1)
+                        .handle("admin")
                         .createdDate(new Date())
                         .status(AccountStatus.ACTIVE.name())
                         .build();
