@@ -24,6 +24,8 @@ public class Reward {
     double price;
     String type;
     String status;
+    int currentQuantity;
+    int maxQuantity;
 
     @JsonIgnoreProperties(value = {"reward"}, allowSetters = true)
     @OneToMany(mappedBy = "reward", cascade = CascadeType.ALL, orphanRemoval = true)
