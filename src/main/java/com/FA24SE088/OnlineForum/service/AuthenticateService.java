@@ -10,8 +10,6 @@ import com.FA24SE088.OnlineForum.entity.Account;
 import com.FA24SE088.OnlineForum.entity.InvalidatedToken;
 import com.FA24SE088.OnlineForum.exception.AppException;
 import com.FA24SE088.OnlineForum.exception.ErrorCode;
-import com.FA24SE088.OnlineForum.repository.Repository.AccountRepository;
-import com.FA24SE088.OnlineForum.repository.Repository.InvalidateTokenRepository;
 
 import com.FA24SE088.OnlineForum.repository.UnitOfWork.UnitOfWork;
 import com.nimbusds.jose.*;
@@ -24,6 +22,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -133,6 +132,7 @@ public class AuthenticateService {
             return false; // Token validation failed
         }
     }
+
     public RefreshAccessTokenResponse generateNewAccessTokenFromRefreshToken(String refreshToken, String username) {
         Account account = unitOfWork.getAccountRepository().findByUsername(username)
                 .orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND));
