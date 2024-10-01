@@ -1,4 +1,4 @@
-package com.FA24SE088.OnlineForum.dto.requests;
+package com.FA24SE088.OnlineForum.dto.request;
 
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;

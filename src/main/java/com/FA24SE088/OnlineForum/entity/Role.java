@@ -1,5 +1,6 @@
 package com.FA24SE088.OnlineForum.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
@@ -20,6 +21,7 @@ public class Role {
     UUID roleID;
     String name;
 
+    @JsonIgnore
     @JsonIgnoreProperties(value = { "role" }, allowSetters = true)
     @OneToMany(mappedBy = "role", cascade = CascadeType.ALL, orphanRemoval = true)
     List<Account> accountList;
