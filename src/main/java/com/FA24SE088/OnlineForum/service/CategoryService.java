@@ -1,6 +1,7 @@
 package com.FA24SE088.OnlineForum.service;
 
 import com.FA24SE088.OnlineForum.dto.request.CategoryRequest;
+import com.FA24SE088.OnlineForum.dto.request.CategoryUpdateAccountRequest;
 import com.FA24SE088.OnlineForum.dto.request.CategoryUpdateRequest;
 import com.FA24SE088.OnlineForum.dto.response.CategoryNoAccountResponse;
 import com.FA24SE088.OnlineForum.dto.response.CategoryResponse;
@@ -66,6 +67,22 @@ public class CategoryService {
     }
 
     @Async("AsyncTaskExecutor")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
+    public CompletableFuture<List<CategoryNoAccountResponse>> getAllCategoriesByAccountId(int page, int perPage, UUID accountId) {
+        var accountFuture = findAccountById(accountId);
+
+        return accountFuture.thenCompose(account ->
+                unitOfWork.getCategoryRepository()
+                        .findByAccountAccountId(account.getAccountId())
+                        .thenApply(list -> {
+                            var responses = list.stream()
+                                    .map(categoryMapper::toCategoryNoAccountResponse)
+                                    .toList();
+                            return paginationUtils.convertListToPage(page, perPage, responses);
+                        }));
+    }
+
+    @Async("AsyncTaskExecutor")
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
     public CompletableFuture<CategoryResponse> getCategoryById(UUID categoryId) {
         return CompletableFuture.supplyAsync(() -> {
@@ -77,7 +94,7 @@ public class CategoryService {
     }
 
     @Async("AsyncTaskExecutor")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
+    @PreAuthorize("hasRole('ADMIN')")
     public CompletableFuture<CategoryResponse> deleteCategoryById(UUID categoryId){
         return CompletableFuture.supplyAsync(() -> {
             var category = unitOfWork.getCategoryRepository().findById(categoryId)
@@ -90,7 +107,7 @@ public class CategoryService {
     }
 
     @Async("AsyncTaskExecutor")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
+    @PreAuthorize("hasRole('ADMIN')")
     public CompletableFuture<CategoryResponse> updateCategoryById(UUID categoryId, CategoryUpdateRequest request) {
         return unitOfWork.getCategoryRepository().existsByNameContaining(request.getName())
                 .thenCompose(exists -> {
@@ -106,6 +123,21 @@ public class CategoryService {
                         return unitOfWork.getCategoryRepository().save(category);
                     }).thenApply(categoryMapper::toCategoryResponse);
                 });
+    }
+
+    @Async("AsyncTaskExecutor")
+    @PreAuthorize("hasRole('ADMIN')")
+    public CompletableFuture<CategoryResponse> assignCategoryToAccountById(UUID categoryId, CategoryUpdateAccountRequest request) {
+        var accountFuture = findAccountById(request.getAccountId());
+
+        return accountFuture.thenApply(account -> {
+            var category = unitOfWork.getCategoryRepository().findById(categoryId)
+                    .orElseThrow(() -> new AppException(ErrorCode.CATEGORY_NOT_FOUND));
+
+            category.setAccount(account);
+
+            return categoryMapper.toCategoryResponse(unitOfWork.getCategoryRepository().save(category));
+        });
     }
 
 

@@ -1,6 +1,7 @@
 package com.FA24SE088.OnlineForum.controller;
 
 import com.FA24SE088.OnlineForum.dto.request.CategoryRequest;
+import com.FA24SE088.OnlineForum.dto.request.CategoryUpdateAccountRequest;
 import com.FA24SE088.OnlineForum.dto.request.CategoryUpdateRequest;
 import com.FA24SE088.OnlineForum.dto.response.ApiResponse;
 import com.FA24SE088.OnlineForum.dto.response.CategoryNoAccountResponse;
@@ -46,6 +47,18 @@ public class CategoryController {
         ).join();
     }
 
+    @Operation(summary = "Get All Categories", description = "Get All Categories Based On Account Managing")
+    @GetMapping(path = "/getall/by-account/{accountId}")
+    public ApiResponse<List<CategoryNoAccountResponse>> getAllCategoriesByAccountId(@RequestParam(defaultValue = "1") int page,
+                                                                                    @RequestParam(defaultValue = "10") int perPage,
+                                                                                    @PathVariable UUID accountId){
+        return categoryService.getAllCategoriesByAccountId(page, perPage, accountId).thenApply(categoryNoAccountResponses ->
+                ApiResponse.<List<CategoryNoAccountResponse>>builder()
+                        .entity(categoryNoAccountResponses)
+                        .build()
+        ).join();
+    }
+
     @Operation(summary = "Get A Category", description = "Get A Category By ID")
     @GetMapping(path = "/get/{categoryId}")
     public ApiResponse<CategoryResponse> getCategoryById(@PathVariable UUID categoryId){
@@ -73,6 +86,18 @@ public class CategoryController {
     public ApiResponse<CategoryResponse> updateCategoryById(@PathVariable UUID categoryId,
                                                             @RequestBody @Valid CategoryUpdateRequest request){
         return categoryService.updateCategoryById(categoryId, request).thenApply(categoryResponse ->
+                ApiResponse.<CategoryResponse>builder()
+                        .message(SuccessReturnMessage.UPDATE_SUCCESS.getMessage())
+                        .entity(categoryResponse)
+                        .build()
+        ).join();
+    }
+
+    @Operation(summary = "Update A Category", description = "Update A Managing Account For Category By ID")
+    @PutMapping(path = "/update/{categoryId}/account")
+    public ApiResponse<CategoryResponse> updateCategoryAccountById(@PathVariable UUID categoryId,
+                                                                @RequestBody @Valid CategoryUpdateAccountRequest request){
+        return categoryService.assignCategoryToAccountById(categoryId, request).thenApply(categoryResponse ->
                 ApiResponse.<CategoryResponse>builder()
                         .message(SuccessReturnMessage.UPDATE_SUCCESS.getMessage())
                         .entity(categoryResponse)

@@ -14,4 +14,7 @@ import java.util.concurrent.CompletableFuture;
 public interface CategoryRepository extends JpaRepository<Category, UUID> {
     @Async("AsyncTaskExecutor")
     CompletableFuture<Boolean> existsByNameContaining(String name);
+
+    @Async("AsyncTaskExecutor")
+    CompletableFuture<List<Category>> findByAccountAccountId(UUID accountId);
 }
