@@ -29,13 +29,9 @@ public class ApplicationInitConfiguration {
     final RoleRepository roleRepository;
 
     private boolean checkRole() {
-        if (roleRepository.findByName("ADMIN") != null &&
+        return roleRepository.findByName("ADMIN") != null &&
                 roleRepository.findByName("STAFF") != null &&
-                roleRepository.findByName("GUEST") != null &&
-                roleRepository.findByName("USER") != null) {
-            return true;
-        }
-        return false;
+                roleRepository.findByName("USER") != null;
     }
 
     @Bean
@@ -56,11 +52,6 @@ public class ApplicationInitConfiguration {
                 Role user = new Role();
                 user.setName("USER");
                 roleRepository.save(user);
-
-                Role guest = new Role();
-                guest.setName("GUEST");
-                roleRepository.save(guest);
-
             }
         };
     }
