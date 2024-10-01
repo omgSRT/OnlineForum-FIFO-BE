@@ -13,7 +13,11 @@ public enum ErrorCode {
     INVALID_PER_PAGE_NUMBER(10003, "Per Page Number Must Be Greater Than 0", HttpStatus.BAD_REQUEST),
     UNAUTHORIZED(10004, "You Don't Have Permissions For This Function", HttpStatus.UNAUTHORIZED),
     AUTHORIZATION_DENIED_EXCEPTION(10005, "Your Role Cannot Access This Function", HttpStatus.FORBIDDEN),
-    ACCOUNT_NOT_FOUND(10006, "Account Not Found", HttpStatus.NOT_FOUND)
+    ACCOUNT_NOT_FOUND(10006, "Account Not Found", HttpStatus.NOT_FOUND),
+    NAME_NOT_NULL(10007, "Name Cannot Be Null", HttpStatus.BAD_REQUEST),
+    INVALID_URL(10008, "URL Must Be Valid", HttpStatus.BAD_REQUEST),
+    CATEGORY_NOT_FOUND(10009, "Category Not Found", HttpStatus.NOT_FOUND),
+    NAME_EXIST(10010, "Name Existed", HttpStatus.BAD_REQUEST)
     ;
     private int code;
     private String message;

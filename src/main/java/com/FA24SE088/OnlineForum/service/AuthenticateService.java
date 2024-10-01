@@ -1,8 +1,8 @@
 package com.FA24SE088.OnlineForum.service;
 
-import com.FA24SE088.OnlineForum.dto.requests.AuthenticationRequest;
-import com.FA24SE088.OnlineForum.dto.requests.IntrospectRequest;
-import com.FA24SE088.OnlineForum.dto.requests.LogoutRequest;
+import com.FA24SE088.OnlineForum.dto.request.AuthenticationRequest;
+import com.FA24SE088.OnlineForum.dto.request.IntrospectRequest;
+import com.FA24SE088.OnlineForum.dto.request.LogoutRequest;
 import com.FA24SE088.OnlineForum.dto.response.AuthenticationResponse;
 import com.FA24SE088.OnlineForum.dto.response.IntrospectResponse;
 import com.FA24SE088.OnlineForum.dto.response.RefreshAccessTokenResponse;
@@ -22,7 +22,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
