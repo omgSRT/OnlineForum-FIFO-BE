@@ -19,6 +19,7 @@ public class Account {
     UUID accountId;
     String username;
     String handle;
+    String email;
     String password;
     String bio;
     String gender;
@@ -26,6 +27,7 @@ public class Account {
     String avatar;
     Date createdDate;
     String status;
+
 
     @ManyToOne
     @JoinColumn(name = "roleId")

@@ -18,8 +18,8 @@ spring:
   mail:
     host: smtp.gmail.com
     port: 587
-    username: drawing.system.team@gmail.com
-    password: rfcilnorstiuynlo
+    username: phucthse150983@fpt.edu.vn
+    password: tranhuuphuc308
     properties:
       mail:
         smtp:
