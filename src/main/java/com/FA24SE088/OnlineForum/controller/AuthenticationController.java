@@ -1,9 +1,9 @@
 package com.FA24SE088.OnlineForum.controller;
 //
 
-import com.FA24SE088.OnlineForum.dto.requests.AuthenticationRequest;
-import com.FA24SE088.OnlineForum.dto.requests.IntrospectRequest;
-import com.FA24SE088.OnlineForum.dto.requests.LogoutRequest;
+import com.FA24SE088.OnlineForum.dto.request.AuthenticationRequest;
+import com.FA24SE088.OnlineForum.dto.request.IntrospectRequest;
+import com.FA24SE088.OnlineForum.dto.request.LogoutRequest;
 import com.FA24SE088.OnlineForum.dto.response.ApiResponse;
 import com.FA24SE088.OnlineForum.dto.response.AuthenticationResponse;
 import com.FA24SE088.OnlineForum.dto.response.IntrospectResponse;

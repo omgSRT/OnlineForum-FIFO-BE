@@ -1,5 +1,6 @@
 package com.FA24SE088.OnlineForum.service;
 
+
 import com.FA24SE088.OnlineForum.dto.requests.AccountRequest;
 import com.FA24SE088.OnlineForum.dto.response.AccountResponse;
 import com.FA24SE088.OnlineForum.entity.Account;
@@ -8,22 +9,28 @@ import com.FA24SE088.OnlineForum.enums.AccountStatus;
 import com.FA24SE088.OnlineForum.exception.AppException;
 import com.FA24SE088.OnlineForum.exception.ErrorCode;
 import com.FA24SE088.OnlineForum.mappers.AccountMapper;
+
 import com.FA24SE088.OnlineForum.repository.UnitOfWork.UnitOfWork;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
 
+
+import org.springframework.security.access.prepost.PreAuthorize;
+
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Slf4j
 @Service
 public class AccountService {
+
     @Autowired
     UnitOfWork unitOfWork;
     @Autowired
@@ -54,7 +61,14 @@ public class AccountService {
         return response;
     }
 
-    public void activeUser(Account account){
+    public void activeUser(Account account) {
         account.setStatus(AccountStatus.ACTIVE.name());
+    }
+
+
+    @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
+    public Account findByUsername(String username){
+        return unitOfWork.getAccountRepository().findByUsername(username)
+                .orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND));
     }
 }

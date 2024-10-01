@@ -14,10 +14,15 @@ public enum ErrorCode {
     UNAUTHORIZED(10004, "You Don't Have Permissions For This Function", HttpStatus.UNAUTHORIZED),
     AUTHORIZATION_DENIED_EXCEPTION(10005, "Your Role Cannot Access This Function", HttpStatus.FORBIDDEN),
     ACCOUNT_NOT_FOUND(10006, "Account Not Found", HttpStatus.NOT_FOUND),
+
     ACCOUNT_IS_EXISTED(10006, "Account is existed", HttpStatus.BAD_REQUEST),
     EMAIL_IS_EXISTED(10006, "Email is existed", HttpStatus.BAD_REQUEST),
     ROLE_NOT_FOUND(10006, "Role Not Found", HttpStatus.NOT_FOUND),
 
+    NAME_NOT_NULL(10007, "Name Cannot Be Null", HttpStatus.BAD_REQUEST),
+    INVALID_URL(10008, "URL Must Be Valid", HttpStatus.BAD_REQUEST),
+    CATEGORY_NOT_FOUND(10009, "Category Not Found", HttpStatus.NOT_FOUND),
+    NAME_EXIST(10010, "Name Existed", HttpStatus.BAD_REQUEST)
     ;
     private int code;
     private String message;

@@ -1,8 +1,8 @@
 package com.FA24SE088.OnlineForum.service;
 
-import com.FA24SE088.OnlineForum.dto.requests.AuthenticationRequest;
-import com.FA24SE088.OnlineForum.dto.requests.IntrospectRequest;
-import com.FA24SE088.OnlineForum.dto.requests.LogoutRequest;
+import com.FA24SE088.OnlineForum.dto.request.AuthenticationRequest;
+import com.FA24SE088.OnlineForum.dto.request.IntrospectRequest;
+import com.FA24SE088.OnlineForum.dto.request.LogoutRequest;
 import com.FA24SE088.OnlineForum.dto.response.AuthenticationResponse;
 import com.FA24SE088.OnlineForum.dto.response.IntrospectResponse;
 import com.FA24SE088.OnlineForum.dto.response.RefreshAccessTokenResponse;
@@ -10,8 +10,6 @@ import com.FA24SE088.OnlineForum.entity.Account;
 import com.FA24SE088.OnlineForum.entity.InvalidatedToken;
 import com.FA24SE088.OnlineForum.exception.AppException;
 import com.FA24SE088.OnlineForum.exception.ErrorCode;
-import com.FA24SE088.OnlineForum.repository.Repository.AccountRepository;
-import com.FA24SE088.OnlineForum.repository.Repository.InvalidateTokenRepository;
 
 import com.FA24SE088.OnlineForum.repository.UnitOfWork.UnitOfWork;
 import com.nimbusds.jose.*;
@@ -133,6 +131,7 @@ public class AuthenticateService {
             return false; // Token validation failed
         }
     }
+
     public RefreshAccessTokenResponse generateNewAccessTokenFromRefreshToken(String refreshToken, String username) {
         Account account = unitOfWork.getAccountRepository().findByUsername(username)
                 .orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND));
