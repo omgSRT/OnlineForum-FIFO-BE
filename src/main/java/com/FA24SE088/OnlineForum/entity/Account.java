@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+import org.springframework.data.redis.core.RedisHash;
 
 import java.util.*;
 @Getter
@@ -20,6 +21,7 @@ public class Account {
     UUID accountId;
     String username;
     String handle;
+    String email;
     String password;
     String bio;
     String gender;
@@ -27,6 +29,7 @@ public class Account {
     String avatar;
     Date createdDate;
     String status;
+
 
     @ManyToOne
     @JoinColumn(name = "roleId")

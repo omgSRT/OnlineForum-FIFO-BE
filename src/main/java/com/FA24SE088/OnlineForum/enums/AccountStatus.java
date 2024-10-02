@@ -4,4 +4,5 @@ public enum AccountStatus {
     ACTIVE,
     INACTIVE,
     HIDDEN,
+    PENDING_APPROVAL,
 }

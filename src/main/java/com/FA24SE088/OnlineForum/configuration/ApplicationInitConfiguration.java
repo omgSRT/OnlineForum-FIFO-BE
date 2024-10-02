@@ -29,9 +29,9 @@ public class ApplicationInitConfiguration {
     final RoleRepository roleRepository;
 
     private boolean checkRole() {
-        return roleRepository.findByName("ADMIN") != null &&
-                roleRepository.findByName("STAFF") != null &&
-                roleRepository.findByName("USER") != null;
+        return roleRepository.findByNameContainingIgnoreCase("ADMIN") != null &&
+                roleRepository.findByNameContainingIgnoreCase("STAFF") != null &&
+                roleRepository.findByNameContainingIgnoreCase("USER") != null;
     }
 
     @Bean
@@ -60,7 +60,7 @@ public class ApplicationInitConfiguration {
     @Order(2)
     ApplicationRunner applicationRunner() {
         return args -> {
-            Role role1 = roleRepository.findByName("ADMIN");
+            Role role1 = roleRepository.findByNameContainingIgnoreCase("ADMIN");
             if (role1 == null) throw new RuntimeException("Chưa có role admin");
 
             if (accountRepository.findByUsername("admin").isEmpty()) {
