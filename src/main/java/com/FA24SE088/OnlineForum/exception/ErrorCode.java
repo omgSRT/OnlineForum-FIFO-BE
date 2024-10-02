@@ -17,7 +17,8 @@ public enum ErrorCode {
     NAME_NOT_NULL(10007, "Name Cannot Be Null", HttpStatus.BAD_REQUEST),
     INVALID_URL(10008, "URL Must Be Valid", HttpStatus.BAD_REQUEST),
     CATEGORY_NOT_FOUND(10009, "Category Not Found", HttpStatus.NOT_FOUND),
-    NAME_EXIST(10010, "Name Existed", HttpStatus.BAD_REQUEST)
+    NAME_EXIST(10010, "Name Existed", HttpStatus.BAD_REQUEST),
+    TOPIC_NOT_FOUND(10011, "Topic Not Found", HttpStatus.NOT_FOUND)
     ;
     private int code;
     private String message;
