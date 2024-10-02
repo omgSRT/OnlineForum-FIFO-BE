@@ -15,6 +15,7 @@ public enum ErrorCode {
     AUTHORIZATION_DENIED_EXCEPTION(10005, "Your Role Cannot Access This Function", HttpStatus.FORBIDDEN),
     ACCOUNT_NOT_FOUND(10006, "Account Not Found", HttpStatus.NOT_FOUND),
 
+
     ACCOUNT_IS_EXISTED(10007, "Account is existed", HttpStatus.BAD_REQUEST),
     EMAIL_IS_EXISTED(10008, "Email is existed", HttpStatus.BAD_REQUEST),
     ROLE_NOT_FOUND(10009, "Role Not Found", HttpStatus.NOT_FOUND),
@@ -26,7 +27,9 @@ public enum ErrorCode {
     WRONG_OTP(10014, "wrong otp", HttpStatus.BAD_REQUEST),
     WALLET_IS_EXISTED(10015, "wallet is existed in this account", HttpStatus.BAD_REQUEST),
     WALLET_NOT_EXIST(10016, "wallet is not exist in this account", HttpStatus.BAD_REQUEST),
-            ;
+    TOPIC_NOT_FOUND(10011, "Topic Not Found", HttpStatus.NOT_FOUND)
+    ;
+
     private int code;
     private String message;
     private HttpStatusCode statusCode;

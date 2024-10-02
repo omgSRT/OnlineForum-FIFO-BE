@@ -1,5 +1,6 @@
 package com.FA24SE088.OnlineForum.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
@@ -25,6 +26,7 @@ public class Topic {
     @JoinColumn(name = "categoryId")
     Category category;
 
+    @JsonIgnore
     @JsonIgnoreProperties(value = { "topic" }, allowSetters = true)
     @OneToMany(mappedBy = "topic", cascade = CascadeType.ALL, orphanRemoval = true)
     List<Post> postList;
