@@ -15,7 +15,7 @@ import java.util.UUID;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class Reward {
+public class SourceCode {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     UUID rewardId;
@@ -28,6 +28,6 @@ public class Reward {
     int maxQuantity;
 
     @JsonIgnoreProperties(value = {"reward"}, allowSetters = true)
-    @OneToMany(mappedBy = "reward", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "sourceCode", cascade = CascadeType.ALL, orphanRemoval = true)
     List<Redeem> redeemList;
 }
