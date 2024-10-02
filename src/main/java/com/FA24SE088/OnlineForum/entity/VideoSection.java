@@ -4,7 +4,6 @@ import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
-import java.util.Date;
 import java.util.UUID;
 
 @Getter
@@ -14,17 +13,13 @@ import java.util.UUID;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class Redeem {
+public class VideoSection {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    UUID redeemId;
-    Date createdDate;
+    UUID videoSectionId;
+    String url;
 
     @ManyToOne
-    @JoinColumn(name = "accountId")
-    Account account;
-
-    @ManyToOne
-    @JoinColumn(name = "rewardId")
-    SourceCode sourceCode;
+    @JoinColumn(name = "sectionId")
+    Section section;
 }
