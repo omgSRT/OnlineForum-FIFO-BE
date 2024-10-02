@@ -1,5 +1,6 @@
 package com.FA24SE088.OnlineForum.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
@@ -26,6 +27,7 @@ public class Category {
     @JoinColumn(name = "accountId")
     Account account;
 
+    @JsonIgnore
     @JsonIgnoreProperties(value = { "category" }, allowSetters = true)
     @OneToMany(mappedBy = "category", cascade = CascadeType.ALL, orphanRemoval = true)
     List<Topic> topicList;
