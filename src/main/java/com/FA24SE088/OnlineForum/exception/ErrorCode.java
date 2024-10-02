@@ -15,15 +15,18 @@ public enum ErrorCode {
     AUTHORIZATION_DENIED_EXCEPTION(10005, "Your Role Cannot Access This Function", HttpStatus.FORBIDDEN),
     ACCOUNT_NOT_FOUND(10006, "Account Not Found", HttpStatus.NOT_FOUND),
 
-    ACCOUNT_IS_EXISTED(10006, "Account is existed", HttpStatus.BAD_REQUEST),
-    EMAIL_IS_EXISTED(10006, "Email is existed", HttpStatus.BAD_REQUEST),
-    ROLE_NOT_FOUND(10006, "Role Not Found", HttpStatus.NOT_FOUND),
+    ACCOUNT_IS_EXISTED(10007, "Account is existed", HttpStatus.BAD_REQUEST),
+    EMAIL_IS_EXISTED(10008, "Email is existed", HttpStatus.BAD_REQUEST),
+    ROLE_NOT_FOUND(10009, "Role Not Found", HttpStatus.NOT_FOUND),
 
-    NAME_NOT_NULL(10007, "Name Cannot Be Null", HttpStatus.BAD_REQUEST),
-    INVALID_URL(10008, "URL Must Be Valid", HttpStatus.BAD_REQUEST),
-    CATEGORY_NOT_FOUND(10009, "Category Not Found", HttpStatus.NOT_FOUND),
-    NAME_EXIST(10010, "Name Existed", HttpStatus.BAD_REQUEST)
-    ;
+    NAME_NOT_NULL(10010, "Name Cannot Be Null", HttpStatus.BAD_REQUEST),
+    INVALID_URL(10011, "URL Must Be Valid", HttpStatus.BAD_REQUEST),
+    CATEGORY_NOT_FOUND(10012, "Category Not Found", HttpStatus.NOT_FOUND),
+    NAME_EXIST(10013, "Name Existed", HttpStatus.BAD_REQUEST),
+    WRONG_OTP(10014, "wrong otp", HttpStatus.BAD_REQUEST),
+    WALLET_IS_EXISTED(10015, "wallet is existed in this account", HttpStatus.BAD_REQUEST),
+    WALLET_NOT_EXIST(10016, "wallet is not exist in this account", HttpStatus.BAD_REQUEST),
+            ;
     private int code;
     private String message;
     private HttpStatusCode statusCode;

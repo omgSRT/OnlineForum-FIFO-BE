@@ -17,4 +17,6 @@ public interface CategoryRepository extends JpaRepository<Category, UUID> {
 
     @Async("AsyncTaskExecutor")
     CompletableFuture<List<Category>> findByAccountAccountId(UUID accountId);
+
+    Optional<Category> findByNameContainingIgnoreCase(String name);
 }

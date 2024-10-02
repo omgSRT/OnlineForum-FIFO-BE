@@ -1,9 +1,12 @@
-package com.FA24SE088.OnlineForum.dto.requests;
+package com.FA24SE088.OnlineForum.dto.request;
 
+import com.FA24SE088.OnlineForum.entity.Category;
 import com.FA24SE088.OnlineForum.entity.Role;
 import jakarta.validation.constraints.Size;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+
+import java.util.List;
 
 @Data
 @NoArgsConstructor
@@ -22,4 +25,5 @@ public class AccountRequest {
     String address;
     String avatar;
     String roleName;
+    List<String> categoryList;
 }

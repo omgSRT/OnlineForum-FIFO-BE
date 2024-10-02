@@ -1,10 +1,12 @@
 package com.FA24SE088.OnlineForum.dto.response;
 
+import com.FA24SE088.OnlineForum.entity.Category;
 import com.FA24SE088.OnlineForum.entity.Role;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 import java.util.Date;
+import java.util.List;
 
 @Data
 @NoArgsConstructor
@@ -15,7 +17,6 @@ public class AccountResponse {
     String username;
     String handle;
     String email;
-    String password;
     String bio;
     String gender;
     String address;
@@ -23,4 +24,5 @@ public class AccountResponse {
     Date createdDate;
     String status;
     Role role;
+    List<Category> categoryList;
 }
