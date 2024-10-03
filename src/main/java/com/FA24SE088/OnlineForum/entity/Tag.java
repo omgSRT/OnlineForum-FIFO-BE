@@ -1,5 +1,6 @@
 package com.FA24SE088.OnlineForum.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
@@ -21,6 +22,7 @@ public class Tag {
     UUID tagId;
     String name;
 
+    @JsonIgnore
     @JsonIgnoreProperties(value = { "tag" }, allowSetters = true)
     @OneToMany(mappedBy = "tag", cascade = CascadeType.ALL, orphanRemoval = true)
     List<Post> postList;

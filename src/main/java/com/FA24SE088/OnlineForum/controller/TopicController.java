@@ -1,7 +1,5 @@
 package com.FA24SE088.OnlineForum.controller;
 
-import com.FA24SE088.OnlineForum.dto.request.CategoryRequest;
-import com.FA24SE088.OnlineForum.dto.request.CategoryUpdateRequest;
 import com.FA24SE088.OnlineForum.dto.request.TopicRequest;
 import com.FA24SE088.OnlineForum.dto.request.TopicUpdateRequest;
 import com.FA24SE088.OnlineForum.dto.response.*;
@@ -20,7 +18,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/topic")
 @Slf4j
-public class TopicCategory {
+public class TopicController {
     final TopicService topicService;
 
     @Operation(summary = "Create New Topic")
