@@ -8,18 +8,22 @@ spring:
       dialect: org.hibernate.dialect.MySQLDialect
       ddl-auto: update
     show-sql: true
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 10MB
+      max-request-size: 100MB
   mail:
     host: smtp.gmail.com
     port: 587
-    username: huuphuc3082001@gmail.com
-    password: phuchuu308
+    username: thangckdt@gmail.com
+    password: bhwxmfnljndftdlv
     properties:
       mail:
         smtp:
           auth: true
           starttls:
             enable: true
-
   custom:
     jwt:
       secret: 9fpGEUpGqiplW2HJB7UDOpJScDgzJWJR5xqOP3zsJQKs8fuIQpvw37BP3hmNmb/9

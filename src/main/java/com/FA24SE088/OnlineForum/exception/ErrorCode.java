@@ -25,7 +25,10 @@ public enum ErrorCode {
     WALLET_IS_EXISTED(10015, "wallet is existed in this account", HttpStatus.BAD_REQUEST),
     WALLET_NOT_EXIST(10016, "wallet is not exist in this account", HttpStatus.BAD_REQUEST),
     TOPIC_NOT_FOUND(10017, "Topic Not Found", HttpStatus.NOT_FOUND),
-    TAG_NOT_FOUND(10018, "Tag Not Found", HttpStatus.NOT_FOUND)
+    TAG_NOT_FOUND(10018, "Tag Not Found", HttpStatus.NOT_FOUND),
+    EMAIL_CONTENT_BLANK(10019, "Email Content Cannot Be Blank", HttpStatus.BAD_REQUEST),
+    SEND_MAIL_FAILED(10020, "Failed To Send Email To Participants", HttpStatus.EXPECTATION_FAILED),
+    TO_EMAIL_EMPTY(10021, "No Send To Emails Found", HttpStatus.NOT_FOUND),
     ;
 
     private int code;
