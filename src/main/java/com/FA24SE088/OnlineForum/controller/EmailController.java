@@ -3,6 +3,7 @@ package com.FA24SE088.OnlineForum.controller;
 import com.FA24SE088.OnlineForum.dto.response.ApiResponse;
 import com.FA24SE088.OnlineForum.enums.SuccessReturnMessage;
 import com.FA24SE088.OnlineForum.service.EmailService;
+import com.FA24SE088.OnlineForum.utils.EmailUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,7 +21,7 @@ import java.util.List;
 @RequestMapping("/email")
 @Slf4j
 public class EmailController {
-    final EmailService emailService;
+    final EmailUtil emailUtil;
 
     @Operation(summary = "Send An Email to multiple participants")
     @PostMapping(value = "/send", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -29,7 +30,7 @@ public class EmailController {
             @RequestParam(required = false) String body,
             @RequestParam(required = false) String subject,
             @RequestParam(required = false) List<MultipartFile> attachments) {
-        emailService.sendEmail(emails, body, subject, attachments);
+        emailUtil.sendEmail(emails, body, subject, attachments);
         return ApiResponse.<Void>builder()
                 .message(SuccessReturnMessage.SEND_SUCCESS.getMessage())
                 .build();
