@@ -1,5 +1,6 @@
 package com.FA24SE088.OnlineForum.mapper;
 
+import com.FA24SE088.OnlineForum.dto.request.CategoryNoAccountRequest;
 import com.FA24SE088.OnlineForum.dto.request.CategoryRequest;
 import com.FA24SE088.OnlineForum.dto.request.CategoryUpdateRequest;
 import com.FA24SE088.OnlineForum.dto.response.CategoryNoAccountResponse;
@@ -10,7 +11,7 @@ import org.springframework.stereotype.Component;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2024-10-03T13:50:09+0700",
+    date = "2024-10-03T22:01:51+0700",
     comments = "version: 1.5.5.Final, compiler: javac, environment: Java 17.0.12 (Oracle Corporation)"
 )
 @Component
@@ -18,6 +19,20 @@ public class CategoryMapperImpl implements CategoryMapper {
 
     @Override
     public Category toCategory(CategoryRequest request) {
+        if ( request == null ) {
+            return null;
+        }
+
+        Category.CategoryBuilder category = Category.builder();
+
+        category.name( request.getName() );
+        category.image( request.getImage() );
+
+        return category.build();
+    }
+
+    @Override
+    public Category toCategoryWithNoAccount(CategoryNoAccountRequest request) {
         if ( request == null ) {
             return null;
         }

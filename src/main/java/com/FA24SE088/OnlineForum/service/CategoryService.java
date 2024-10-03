@@ -1,5 +1,6 @@
 package com.FA24SE088.OnlineForum.service;
 
+import com.FA24SE088.OnlineForum.dto.request.CategoryNoAccountRequest;
 import com.FA24SE088.OnlineForum.dto.request.CategoryRequest;
 import com.FA24SE088.OnlineForum.dto.request.CategoryUpdateAccountRequest;
 import com.FA24SE088.OnlineForum.dto.request.CategoryUpdateRequest;
@@ -52,7 +53,21 @@ public class CategoryService {
                 }));
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
+    public CompletableFuture<CategoryResponse> createCategoryNoAccount(CategoryNoAccountRequest request) {
 
+        return unitOfWork.getCategoryRepository().existsByNameContaining(request.getName())
+                        .thenCompose(exists -> {
+                            if (exists) {
+                                throw new AppException(ErrorCode.NAME_EXIST);
+                            }
+
+                            Category newCategory = categoryMapper.toCategoryWithNoAccount(request);
+                            return CompletableFuture.completedFuture(
+                                    categoryMapper.toCategoryResponse(unitOfWork.getCategoryRepository().save(newCategory))
+                            );
+                        });
+    }
 
     @Async("AsyncTaskExecutor")
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
