@@ -1,5 +1,6 @@
 package com.FA24SE088.OnlineForum.controller;
 
+import com.FA24SE088.OnlineForum.dto.request.CategoryNoAccountRequest;
 import com.FA24SE088.OnlineForum.dto.request.CategoryRequest;
 import com.FA24SE088.OnlineForum.dto.request.CategoryUpdateAccountRequest;
 import com.FA24SE088.OnlineForum.dto.request.CategoryUpdateRequest;
@@ -29,6 +30,17 @@ public class CategoryController {
     @PostMapping(path = "/create")
     public ApiResponse<CategoryResponse> createCategory(@RequestBody @Valid CategoryRequest request){
         return categoryService.createCategory(request).thenApply(categoryResponse ->
+                ApiResponse.<CategoryResponse>builder()
+                        .message(SuccessReturnMessage.CREATE_SUCCESS.getMessage())
+                        .entity(categoryResponse)
+                        .build()
+        ).join();
+    }
+
+    @Operation(summary = "Create New Category No Account Assigning")
+    @PostMapping(path = "/create/no-account")
+    public ApiResponse<CategoryResponse> createCategoryNoAccount(@RequestBody @Valid CategoryNoAccountRequest request){
+        return categoryService.createCategoryNoAccount(request).thenApply(categoryResponse ->
                 ApiResponse.<CategoryResponse>builder()
                         .message(SuccessReturnMessage.CREATE_SUCCESS.getMessage())
                         .entity(categoryResponse)

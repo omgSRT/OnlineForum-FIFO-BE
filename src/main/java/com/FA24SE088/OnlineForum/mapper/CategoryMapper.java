@@ -1,5 +1,6 @@
 package com.FA24SE088.OnlineForum.mapper;
 
+import com.FA24SE088.OnlineForum.dto.request.CategoryNoAccountRequest;
 import com.FA24SE088.OnlineForum.dto.request.CategoryRequest;
 import com.FA24SE088.OnlineForum.dto.request.CategoryUpdateRequest;
 import com.FA24SE088.OnlineForum.dto.response.CategoryNoAccountResponse;
@@ -12,6 +13,8 @@ import org.mapstruct.MappingTarget;
 @Mapper(componentModel = "spring")
 public interface CategoryMapper {
     Category toCategory(CategoryRequest request);
+
+    Category toCategoryWithNoAccount(CategoryNoAccountRequest request);
 
     CategoryResponse toCategoryResponse(Category category);
 
