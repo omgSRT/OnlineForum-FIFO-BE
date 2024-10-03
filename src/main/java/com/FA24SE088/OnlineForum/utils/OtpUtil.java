@@ -34,6 +34,9 @@ public class OtpUtil {
         return otpResponse;
     }
 
+    //email để tìm tài khoản tồn tại hay chưa
+    //otp chứa thông tin người dùng nhập
+    //otpResponse để so sánh otp người dùng nhập với thời gian có quá hạn hay chưa
     public boolean verifyOTP(String email, String otp, OtpResponse otpResponse){
         Account account = unitOfWork.getAccountRepository().findByEmail(email);
         if(account == null){
