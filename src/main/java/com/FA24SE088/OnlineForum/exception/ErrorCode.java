@@ -14,12 +14,9 @@ public enum ErrorCode {
     UNAUTHORIZED(10004, "You Don't Have Permissions For This Function", HttpStatus.UNAUTHORIZED),
     AUTHORIZATION_DENIED_EXCEPTION(10005, "Your Role Cannot Access This Function", HttpStatus.FORBIDDEN),
     ACCOUNT_NOT_FOUND(10006, "Account Not Found", HttpStatus.NOT_FOUND),
-
-
     ACCOUNT_IS_EXISTED(10007, "Account is existed", HttpStatus.BAD_REQUEST),
     EMAIL_IS_EXISTED(10008, "Email is existed", HttpStatus.BAD_REQUEST),
     ROLE_NOT_FOUND(10009, "Role Not Found", HttpStatus.NOT_FOUND),
-
     NAME_NOT_NULL(10010, "Name Cannot Be Null", HttpStatus.BAD_REQUEST),
     INVALID_URL(10011, "URL Must Be Valid", HttpStatus.BAD_REQUEST),
     CATEGORY_NOT_FOUND(10012, "Category Not Found", HttpStatus.NOT_FOUND),
@@ -27,7 +24,11 @@ public enum ErrorCode {
     WRONG_OTP(10014, "wrong otp", HttpStatus.BAD_REQUEST),
     WALLET_IS_EXISTED(10015, "wallet is existed in this account", HttpStatus.BAD_REQUEST),
     WALLET_NOT_EXIST(10016, "wallet is not exist in this account", HttpStatus.BAD_REQUEST),
-    TOPIC_NOT_FOUND(10011, "Topic Not Found", HttpStatus.NOT_FOUND)
+    TOPIC_NOT_FOUND(10017, "Topic Not Found", HttpStatus.NOT_FOUND),
+    TAG_NOT_FOUND(10018, "Tag Not Found", HttpStatus.NOT_FOUND),
+    EMAIL_CONTENT_BLANK(10019, "Email Content Cannot Be Blank", HttpStatus.BAD_REQUEST),
+    SEND_MAIL_FAILED(10020, "Failed To Send Email To Participants", HttpStatus.EXPECTATION_FAILED),
+    TO_EMAIL_EMPTY(10021, "No Send To Emails Found", HttpStatus.NOT_FOUND),
     ;
 
     private int code;
