@@ -20,7 +20,7 @@ import java.util.UUID;
 @Slf4j
 public class TagController {
     final TagService tagService;
-
+    
     @Operation(summary = "Create New Tag")
     @PostMapping(path = "/create")
     public ApiResponse<TagResponse> createTag(@RequestBody @Valid TagRequest request){

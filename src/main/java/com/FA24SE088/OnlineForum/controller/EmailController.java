@@ -2,7 +2,6 @@ package com.FA24SE088.OnlineForum.controller;
 
 import com.FA24SE088.OnlineForum.dto.response.ApiResponse;
 import com.FA24SE088.OnlineForum.enums.SuccessReturnMessage;
-import com.FA24SE088.OnlineForum.service.EmailService;
 import com.FA24SE088.OnlineForum.utils.EmailUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;

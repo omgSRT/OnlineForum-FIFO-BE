@@ -7,8 +7,6 @@ import com.FA24SE088.OnlineForum.dto.response.ApiResponse;
 import com.FA24SE088.OnlineForum.exception.AppException;
 import com.FA24SE088.OnlineForum.exception.ErrorCode;
 import com.FA24SE088.OnlineForum.service.AccountService;
-import com.FA24SE088.OnlineForum.service.EmailService;
-import com.FA24SE088.OnlineForum.service.OTPService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -33,10 +31,6 @@ import java.util.List;
 @Slf4j
 public class AccountController {
     final AccountService accountService;
-    @Autowired
-    final OTPService otpService;
-    @Autowired
-    final EmailService emailService;
 
     @Operation(summary = "Find Account", description = "Find By Username")
     @GetMapping(path = "/find/by-username")
@@ -65,15 +59,15 @@ public class AccountController {
                 .build();
     }
 
-    @PostMapping("/verify-otp")
-    public ApiResponse<Void> verifyAccount(@RequestParam String email, @RequestParam String otp) {
-        if (!otpService.validateOTP(email, otp)) {
-            throw new AppException(ErrorCode.WRONG_OTP);
-        }
-        Account account = accountService.findByEmail(email);
-        accountService.activeAccount(account);
-        otpService.clearOTP(email);
-        return ApiResponse.<Void>builder()
-                .build();
-    }
+//    @PostMapping("/verify-otp")
+//    public ApiResponse<Void> verifyAccount(@RequestParam String email, @RequestParam String otp) {
+//        if (!otpService.validateOTP(email, otp)) {
+//            throw new AppException(ErrorCode.WRONG_OTP);
+//        }
+//        Account account = accountService.findByEmail(email);
+//        accountService.activeAccount(account);
+//        otpService.clearOTP(email);
+//        return ApiResponse.<Void>builder()
+//                .build();
+//    }
 }
