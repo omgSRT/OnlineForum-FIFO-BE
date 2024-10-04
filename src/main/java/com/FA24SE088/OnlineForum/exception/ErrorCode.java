@@ -29,6 +29,7 @@ public enum ErrorCode {
     EMAIL_CONTENT_BLANK(10019, "Email Content Cannot Be Blank", HttpStatus.BAD_REQUEST),
     SEND_MAIL_FAILED(10020, "Failed To Send Email To Participants", HttpStatus.EXPECTATION_FAILED),
     TO_EMAIL_EMPTY(10021, "No Send To Emails Found", HttpStatus.NOT_FOUND),
+    CATEGORY_HAS_UNDERTAKE(10022, "This category has someone to undertake", HttpStatus.BAD_REQUEST),
     ;
 
     private int code;

@@ -43,4 +43,5 @@ public class WalletService {
         return unitOfWork.getWalletRepository().findById(id).orElseThrow(() -> new AppException(ErrorCode.WALLET_NOT_EXIST));
     }
 
+
 }
