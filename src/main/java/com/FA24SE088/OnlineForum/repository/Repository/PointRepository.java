@@ -8,4 +8,5 @@ import java.util.UUID;
 
 @Repository
 public interface PointRepository extends JpaRepository<Point, UUID> {
+
 }

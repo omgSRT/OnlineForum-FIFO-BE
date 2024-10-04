@@ -40,7 +40,6 @@ public class AccountController {
                 .entity(accountService.findByUsername(username))
                 .build();
     }
-    @Operation(summary = "username, email không trùng")
     @PostMapping("/create")
     public ApiResponse<AccountResponse> create(@RequestBody AccountRequest request,
                                                @RequestParam(defaultValue = "yes") String autoWallet ) {
