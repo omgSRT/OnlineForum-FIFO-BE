@@ -7,6 +7,7 @@ import com.FA24SE088.OnlineForum.dto.response.AccountResponse;
 import com.FA24SE088.OnlineForum.entity.Account;
 import com.FA24SE088.OnlineForum.entity.Category;
 import com.FA24SE088.OnlineForum.entity.Role;
+import com.FA24SE088.OnlineForum.entity.Wallet;
 import com.FA24SE088.OnlineForum.enums.AccountStatus;
 import com.FA24SE088.OnlineForum.exception.AppException;
 import com.FA24SE088.OnlineForum.exception.ErrorCode;
@@ -44,36 +45,50 @@ public class AccountService {
     AccountMapper accountMapper;
     @Autowired
     PasswordEncoder passwordEncoder;
-     PaginationUtils paginationUtils;
+    @Autowired
+    PaginationUtils paginationUtils;
 
-    public AccountResponse create(AccountRequest request){
-        if(unitOfWork.getAccountRepository().existsByUsername(request.getUsername()))
+    public AccountResponse create(AccountRequest request, String autoWallet) {
+        if (unitOfWork.getAccountRepository().existsByUsername(request.getUsername()))
             throw new AppException(ErrorCode.ACCOUNT_IS_EXISTED);
-        if(unitOfWork.getAccountRepository().existsByEmail(request.getEmail()))
+        if (unitOfWork.getAccountRepository().existsByEmail(request.getEmail()))
             throw new AppException(ErrorCode.EMAIL_IS_EXISTED);
         Account account = accountMapper.toAccount(request);
         account.setPassword(passwordEncoder.encode(request.getPassword()));
-        if (!request.getRoleName().equals("USER") &&
-                !request.getRoleName().equals("STAFF")) {
-            Role role = unitOfWork.getRoleRepository().findByNameContainingIgnoreCase("USER");
-            if(role == null) throw new AppException(ErrorCode.ROLE_NOT_FOUND);
+
+        if (request.getRoleName().equalsIgnoreCase("STAFF")) {
+            Role role = unitOfWork.getRoleRepository().findByName(request.getRoleName()).orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_FOUND));
+            if (role == null) throw new AppException(ErrorCode.ROLE_NOT_FOUND);
             account.setRole(role);
-        }
-        if (request.getRoleName().equals("STAFF")) {
-            Role role = unitOfWork.getRoleRepository().findByNameContainingIgnoreCase(request.getRoleName());
-            if(role == null) throw new AppException(ErrorCode.ROLE_NOT_FOUND);
-            account.setRole(role);
-            if (request.getCategoryList() != null) {
+
+            if (request.getCategoryList() != null && !request.getCategoryList().isEmpty()) {
+                List<Category> categories = new ArrayList<>();
                 request.getCategoryList().forEach(categoryName -> {
                     Category categoryEntity = unitOfWork.getCategoryRepository()
-                            .findByNameContainingIgnoreCase(categoryName)
+                            .findByName(categoryName)
                             .orElseThrow(() -> new AppException(ErrorCode.CATEGORY_NOT_FOUND));
-                    if (account.getCategoryList() == null) {
-                        account.setCategoryList(new ArrayList<>());
+
+                    if (categoryEntity.getAccount() == null || categoryEntity.getAccount().getAccountId() == null) {
+                        // Gán account vào category (thiết lập mối quan hệ 2 chiều)
+                        categoryEntity.setAccount(account);
+                        categories.add(categoryEntity);
+
+                    } else {
+                        throw new AppException(ErrorCode.CATEGORY_HAS_UNDERTAKE);
                     }
-                    account.getCategoryList().add(categoryEntity);
                 });
+                account.setCategoryList(categories); // Gán toàn bộ danh sách category vào account
             }
+        } else {
+            Role role = unitOfWork.getRoleRepository().findByName("USER").orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_FOUND));
+            if (role == null) throw new AppException(ErrorCode.ROLE_NOT_FOUND);
+            account.setRole(role);
+        }
+        if (autoWallet.equalsIgnoreCase("yes")) {
+            Wallet wallet = new Wallet();
+            wallet.setBalance(0);
+            wallet.setAccount(account);
+            account.setWallet(wallet);
         }
         account.setCreatedDate(new Date());
         account.setStatus(AccountStatus.PENDING_APPROVAL.name());
@@ -82,25 +97,27 @@ public class AccountService {
         return response;
     }
 
-    public List<AccountResponse> getAll(int page, int perPage){
+    public List<AccountResponse> getAll(int page, int perPage) {
         var list = unitOfWork.getAccountRepository().findAll().stream()
                 .map(accountMapper::toResponse)
                 .toList();
-        return  paginationUtils.convertListToPage(page,perPage, list);
+        return paginationUtils.convertListToPage(page, perPage, list);
     }
 
-    private Account findAccount(UUID id){
+    private Account findAccount(UUID id) {
         return unitOfWork.getAccountRepository().findById(id).orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND));
     }
-    public AccountResponse update(UUID id, AccountUpdateRequest request){
+
+    public AccountResponse update(UUID id, AccountUpdateRequest request) {
         Account account = findAccount(id);
-        if (account != null){
-            accountMapper.updateAccount(account,request);
+        if (account != null) {
+            accountMapper.updateAccount(account, request);
             unitOfWork.getAccountRepository().save(account);
         }
         return accountMapper.toResponse(account);
     }
-    public void delete(UUID uuid){
+
+    public void delete(UUID uuid) {
         findAccount(uuid);
         unitOfWork.getAccountRepository().deleteById(uuid);
     }
@@ -111,12 +128,13 @@ public class AccountService {
 
 
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
-    public Account findByUsername(String username){
+    public Account findByUsername(String username) {
         return unitOfWork.getAccountRepository().findByUsername(username)
                 .orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND));
     }
-    public Account findByEmail(String email){
-        if(unitOfWork.getAccountRepository().findByEmail(email) == null)
+
+    public Account findByEmail(String email) {
+        if (unitOfWork.getAccountRepository().findByEmail(email) == null)
             throw new AppException(ErrorCode.ACCOUNT_NOT_FOUND);
         return unitOfWork.getAccountRepository().findByEmail(email);
     }

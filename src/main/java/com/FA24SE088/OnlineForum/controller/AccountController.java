@@ -40,10 +40,11 @@ public class AccountController {
                 .entity(accountService.findByUsername(username))
                 .build();
     }
-
+    @Operation(summary = "username, email không trùng")
     @PostMapping("/create")
-    public ApiResponse<AccountResponse> create(@RequestBody AccountRequest request) {
-        AccountResponse response = accountService.create(request);
+    public ApiResponse<AccountResponse> create(@RequestBody AccountRequest request,
+                                               @RequestParam(defaultValue = "yes") String autoWallet ) {
+        AccountResponse response = accountService.create(request,autoWallet);
 //        String otp = otpService.generateOTP(request.getEmail());
 //        emailService.sendOtpEmail(request.getEmail(), "Mã OTP xác thực tài khoản", "Mã OTP của bạn là: " + otp);
         return ApiResponse.<AccountResponse>builder()

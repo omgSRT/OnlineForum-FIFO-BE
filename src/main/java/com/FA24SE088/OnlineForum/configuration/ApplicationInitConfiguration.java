@@ -3,6 +3,8 @@ package com.FA24SE088.OnlineForum.configuration;
 import com.FA24SE088.OnlineForum.entity.Account;
 import com.FA24SE088.OnlineForum.entity.Role;
 import com.FA24SE088.OnlineForum.enums.AccountStatus;
+import com.FA24SE088.OnlineForum.exception.AppException;
+import com.FA24SE088.OnlineForum.exception.ErrorCode;
 import com.FA24SE088.OnlineForum.repository.Repository.AccountRepository;
 import com.FA24SE088.OnlineForum.repository.Repository.RoleRepository;
 
@@ -29,9 +31,9 @@ public class ApplicationInitConfiguration {
     final RoleRepository roleRepository;
 
     private boolean checkRole() {
-        return roleRepository.findByNameContainingIgnoreCase("ADMIN") != null &&
-                roleRepository.findByNameContainingIgnoreCase("STAFF") != null &&
-                roleRepository.findByNameContainingIgnoreCase("USER") != null;
+        return roleRepository.findByName("ADMIN") != null &&
+                roleRepository.findByName("STAFF") != null &&
+                roleRepository.findByName("USER") != null;
     }
 
     @Bean
@@ -60,8 +62,8 @@ public class ApplicationInitConfiguration {
     @Order(2)
     ApplicationRunner applicationRunner() {
         return args -> {
-            Role role1 = roleRepository.findByNameContainingIgnoreCase("ADMIN");
-            if (role1 == null) throw new RuntimeException("Chưa có role admin");
+            Role role1 = roleRepository.findByName("ADMIN").orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_FOUND));
+//            if (role1 == null) throw new RuntimeException("Chưa có role admin");
 
             if (accountRepository.findByUsername("admin").isEmpty()) {
                 Account user = Account.builder()
