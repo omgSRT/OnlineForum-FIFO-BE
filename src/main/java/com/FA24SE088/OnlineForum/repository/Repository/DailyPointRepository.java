@@ -15,4 +15,10 @@ import java.util.concurrent.CompletableFuture;
 public interface DailyPointRepository extends JpaRepository<DailyPoint, UUID> {
     @Async("AsyncTaskExecutor")
     CompletableFuture<List<DailyPoint>> findByAccountAndCreatedDate(Account account, Date createdDate);
+
+    @Async("AsyncTaskExecutor")
+    CompletableFuture<List<DailyPoint>> findByAccount(Account account);
+
+    @Async("AsyncTaskExecutor")
+    CompletableFuture<List<DailyPoint>> findByCreatedDate(Date givenDate);
 }

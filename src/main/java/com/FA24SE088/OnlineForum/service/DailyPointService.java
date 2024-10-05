@@ -4,6 +4,7 @@ import com.FA24SE088.OnlineForum.dto.request.DailyPointRequest;
 import com.FA24SE088.OnlineForum.dto.request.PointRequest;
 import com.FA24SE088.OnlineForum.dto.response.DailyPointResponse;
 import com.FA24SE088.OnlineForum.dto.response.PointResponse;
+import com.FA24SE088.OnlineForum.dto.response.TagResponse;
 import com.FA24SE088.OnlineForum.entity.Account;
 import com.FA24SE088.OnlineForum.entity.DailyPoint;
 import com.FA24SE088.OnlineForum.entity.Point;
@@ -36,7 +37,6 @@ public class DailyPointService {
     final PaginationUtils paginationUtils;
 
     @Async("AsyncTaskExecutor")
-    @PreAuthorize("hasRole('ADMIN')")
     public CompletableFuture<DailyPointResponse> createDailyPoint(DailyPointRequest request){
         var accountFuture = findAccountById(request.getAccountId());
         var postFuture = findPostById(request.getPostId());
@@ -55,39 +55,103 @@ public class DailyPointService {
                         throw new AppException(ErrorCode.POINT_NOT_FOUND);
                     }
                     point = pointList.get(0);
-                    if(totalPoint > point.getMaxPoint()){
-                        throw new AppException(ErrorCode);
-                    }
 
                     DailyPoint newDailyPoint = dailyPointMapper.toDailyPoint(request);
                     newDailyPoint.setCreatedDate(new Date());
                     newDailyPoint.setPoint(point);
                     newDailyPoint.setPost(post);
                     newDailyPoint.setAccount(account);
-                    newDailyPoint.setPointEarned(point.getPointPerPost());
+                    if(totalPoint + point.getPointPerPost() > point.getMaxPoint()){
+                        newDailyPoint.setPointEarned(0);
+                    }
+                    else{
+                        newDailyPoint.setPointEarned(point.getPointPerPost());
+                    }
 
                     return CompletableFuture.completedFuture(dailyPointMapper.toDailyPointResponse(newDailyPoint));
+                });
+    }
+
+    @Async("AsyncTaskExecutor")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
+    public CompletableFuture<List<DailyPointResponse>> getAllDailyPoints(int page, int perPage) {
+        return CompletableFuture.supplyAsync(() -> {
+            var list = unitOfWork.getDailyPointRepository().findAll().stream()
+                    .map(dailyPointMapper::toDailyPointResponse)
+                    .toList();
+
+            return paginationUtils.convertListToPage(page, perPage, list);
+        });
+    }
+
+    @Async("AsyncTaskExecutor")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
+    public CompletableFuture<List<DailyPointResponse>> getAllDailyPointsByAccountId(int page, int perPage, UUID accountId) {
+        var accountFuture = findAccountById(accountId);
+
+        return accountFuture.thenCompose(account ->
+            unitOfWork.getDailyPointRepository().findByAccount(account)
+                    .thenCompose(list -> {
+                        var responses = list.stream()
+                                .map(dailyPointMapper::toDailyPointResponse)
+                                .toList();
+
+                        var paginatedList = paginationUtils.convertListToPage(page, perPage, responses);
+
+                        return CompletableFuture.completedFuture(paginatedList);
+                    })
+        );
+    }
+
+    @Async("AsyncTaskExecutor")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
+    public CompletableFuture<List<DailyPointResponse>> getAllDailyPointsByDate(int page, int perPage, Date givenDate) {
+        return unitOfWork.getDailyPointRepository().findByCreatedDate(givenDate)
+                .thenCompose(list -> {
+                    var responses = list.stream()
+                            .map(dailyPointMapper::toDailyPointResponse)
+                            .toList();
+
+                    var paginatedList = paginationUtils.convertListToPage(page, perPage, responses);
+
+                    return CompletableFuture.completedFuture(paginatedList);
+                });
+    }
+
+    @Async("AsyncTaskExecutor")
+    @PreAuthorize("hasRole('ADMIN')")
+    public CompletableFuture<DailyPointResponse> deleteDailyPointPoint(UUID dailyPointId){
+        var dailyPointFuture = findDailyPointById(dailyPointId);
+
+        return CompletableFuture.allOf(dailyPointFuture)
+                .thenCompose(all -> {
+                    var dailyPoint = dailyPointFuture.join();
+
+                    unitOfWork.getDailyPointRepository().delete(dailyPoint);
+
+                    return CompletableFuture.completedFuture(dailyPoint);
                 })
+                .thenApply(dailyPointMapper::toDailyPointResponse);
     }
 
     @Async("AsyncTaskExecutor")
     private CompletableFuture<Double> countUserTotalPointAtAGivenDate(UUID accountId, Date givenDate){
         var accountFuture = findAccountById(accountId);
         return accountFuture.thenCompose(account ->
-            unitOfWork.getDailyPointRepository().findByAccountAndCreatedDate(account, givenDate)
-                    .thenCompose(dailyPoints -> {
-                        double totalCount = 0;
-                        if(dailyPoints == null || dailyPoints.isEmpty()){
-                            totalCount = 0;
-                        }
-                        else{
-                            for(DailyPoint dailyPoint : dailyPoints){
-                                totalCount += dailyPoint.getPointEarned();
+                unitOfWork.getDailyPointRepository().findByAccountAndCreatedDate(account, givenDate)
+                        .thenCompose(dailyPoints -> {
+                            double totalCount = 0;
+                            if(dailyPoints == null || dailyPoints.isEmpty()){
+                                totalCount = 0;
                             }
-                        }
+                            else{
+                                for(DailyPoint dailyPoint : dailyPoints){
+                                    totalCount += dailyPoint.getPointEarned();
+                                }
+                            }
 
-                        return CompletableFuture.completedFuture(totalCount);
-                    })
+                            return CompletableFuture.completedFuture(totalCount);
+                        })
         );
     }
     @Async("AsyncTaskExecutor")
@@ -105,55 +169,16 @@ public class DailyPointService {
         );
     }
     @Async("AsyncTaskExecutor")
+    private CompletableFuture<DailyPoint> findDailyPointById(UUID dailyPointId) {
+        return CompletableFuture.supplyAsync(() ->
+                unitOfWork.getDailyPointRepository().findById(dailyPointId)
+                        .orElseThrow(() -> new AppException(ErrorCode.DAILY_POINT_NOT_FOUND))
+        );
+    }
+    @Async("AsyncTaskExecutor")
     private CompletableFuture<List<Point>> getPoint() {
         return CompletableFuture.supplyAsync(() ->
                 unitOfWork.getPointRepository().findAll().stream()
                         .toList());
-    }
-
-    @Async("AsyncTaskExecutor")
-    @PreAuthorize("hasRole('ADMIN')")
-    public CompletableFuture<PointResponse> updatePoint(PointRequest request){
-        var listPointDataFuture = CompletableFuture.supplyAsync(() ->
-                unitOfWork.getPointRepository().findAll()
-        );
-
-        return listPointDataFuture.thenApply(listPointData -> {
-            Point existPoint = new Point();
-
-            if(!listPointData.isEmpty()){
-                existPoint = listPointData.get(0);
-            }
-            else{
-                throw new AppException(ErrorCode.POINT_NOT_FOUND);
-            }
-
-            pointMapper.updatePoint(existPoint, request);
-
-            return pointMapper.toPointResponse(unitOfWork.getPointRepository().save(existPoint));
-        });
-    }
-
-    @Async("AsyncTaskExecutor")
-    @PreAuthorize("hasRole('ADMIN')")
-    public CompletableFuture<PointResponse> deletePoint(){
-        var listPointDataFuture = CompletableFuture.supplyAsync(() ->
-                unitOfWork.getPointRepository().findAll()
-        );
-
-        return listPointDataFuture.thenApply(listPointData -> {
-            Point existPoint = new Point();
-
-            if(!listPointData.isEmpty()){
-                existPoint = listPointData.get(0);
-            }
-            else{
-                throw new AppException(ErrorCode.POINT_NOT_FOUND);
-            }
-
-            unitOfWork.getPointRepository().delete(existPoint);
-
-            return pointMapper.toPointResponse(existPoint);
-        });
     }
 }
