@@ -37,6 +37,9 @@ public enum ErrorCode {
     POINT_NOT_FOUND(10026, "Point Not Found", HttpStatus.NOT_FOUND),
     TITLE_NULL(10027, "Title Cannot Be Null", HttpStatus.BAD_REQUEST),
     CONTENT_NULL(10028, "Content Cannot Be Null", HttpStatus.BAD_REQUEST),
+    URL_NULL(10029, "URL Cannot Be Null", HttpStatus.BAD_REQUEST),
+    POINT_EARNED_LOWER_THAN_ZERO(10030, "Point earned must be greater than or equal to 0", HttpStatus.BAD_REQUEST),
+    POST_NOT_FOUND(10031, "Post Not Found", HttpStatus.NOT_FOUND),
     ;
 
     private int code;

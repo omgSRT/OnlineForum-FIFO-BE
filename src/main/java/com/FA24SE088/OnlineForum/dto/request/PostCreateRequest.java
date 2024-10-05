@@ -4,6 +4,7 @@ import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
+import java.util.Set;
 import java.util.UUID;
 
 @Data
@@ -19,4 +20,5 @@ public class PostCreateRequest {
     UUID accountId;
     UUID topicId;
     UUID tagId;
+    Set<ImageRequest> imageUrlList;
 }
