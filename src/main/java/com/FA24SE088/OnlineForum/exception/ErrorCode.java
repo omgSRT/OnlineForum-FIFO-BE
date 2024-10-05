@@ -1,5 +1,6 @@
 package com.FA24SE088.OnlineForum.exception;
 
+import com.google.api.Http;
 import lombok.Getter;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
@@ -34,6 +35,8 @@ public enum ErrorCode {
     POINT_PER_POST_LOWER_THAN_ONE(10024, "Point per post must be greater than or equal to 1", HttpStatus.BAD_REQUEST),
     POINT_DATA_EXIST(10025, "Point Data Already Exist", HttpStatus.CREATED),
     POINT_NOT_FOUND(10026, "Point Not Found", HttpStatus.NOT_FOUND),
+    TITLE_NULL(10027, "Title Cannot Be Null", HttpStatus.BAD_REQUEST),
+    CONTENT_NULL(10028, "Content Cannot Be Null", HttpStatus.BAD_REQUEST),
     ;
 
     private int code;
