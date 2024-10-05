@@ -89,4 +89,13 @@ public class Account {
     @JsonIgnoreProperties(value = {"account"}, allowSetters = true)
     @OneToMany(mappedBy = "account", cascade = CascadeType.ALL, orphanRemoval = true)
     List<Event> eventList;
+
+    @JsonIgnore
+    @ManyToMany
+    @JoinTable(
+            name = "account_blocked_accounts",
+            joinColumns = @JoinColumn(name = "account_id"),
+            inverseJoinColumns = @JoinColumn(name = "blocked_account_id")
+    )
+    List<Account> blockedAccounts;
 }
