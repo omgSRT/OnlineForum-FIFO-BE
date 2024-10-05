@@ -18,6 +18,7 @@ import springfox.documentation.spi.service.contexts.SecurityContext;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
@@ -46,9 +47,12 @@ public class FollowService {
     public List<String> unfollow(UUID id){
         Account account = getCurrentUser();
         Account account1 = unitOfWork.getAccountRepository().findById(id).orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND));
-        List<Follow> list =  account.getFolloweeList().forEach(follow -> {
-
-        });
+        account.getFolloweeList().removeIf(follow ->
+               follow.getFollowee().getAccountId().equals(account1.getAccountId())
+        );
+        return account.getFolloweeList().stream()
+                .map(follow -> follow.getFollowee().getUsername()) // Giả sử bạn muốn lấy username của followee
+                .collect(Collectors.toList());
     }
 
 
