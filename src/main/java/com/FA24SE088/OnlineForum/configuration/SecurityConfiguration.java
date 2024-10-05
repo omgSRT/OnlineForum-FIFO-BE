@@ -21,7 +21,7 @@ import org.springframework.security.web.SecurityFilterChain;
 public class SecurityConfiguration {
     private final String[] PUBLIC_ENDPOINTS_POST = {"/authenticate/login", "/authenticate/introspect", "/authenticate/logout",
             "/authenticate/refresh", "/email/send",
-            "/version/create", "/notification/create", "/notification/change/status",
+            "/daily-point/create", "/notification/create", "/notification/change/status",
             "/account/create"};
     private final String[] PUBLIC_ENDPOINTS_GET = {"/swagger-ui/**", "/v3/api-docs/**", "/swagger-resources/**"
     };

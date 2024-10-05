@@ -1,5 +1,6 @@
 package com.FA24SE088.OnlineForum.exception;
 
+import com.google.api.Http;
 import lombok.Getter;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
@@ -30,6 +31,16 @@ public enum ErrorCode {
     SEND_MAIL_FAILED(10020, "Failed To Send Email To Participants", HttpStatus.EXPECTATION_FAILED),
     TO_EMAIL_EMPTY(10021, "No Send To Emails Found", HttpStatus.NOT_FOUND),
     CATEGORY_HAS_UNDERTAKE(10022, "This category has someone to undertake", HttpStatus.BAD_REQUEST),
+    MAX_POINT_LOWER_THAN_ONE(10023, "Max point must be greater than or equal to 1", HttpStatus.BAD_REQUEST),
+    POINT_PER_POST_LOWER_THAN_ONE(10024, "Point per post must be greater than or equal to 1", HttpStatus.BAD_REQUEST),
+    POINT_DATA_EXIST(10025, "Point Data Already Exist", HttpStatus.CREATED),
+    POINT_NOT_FOUND(10026, "Point Not Found", HttpStatus.NOT_FOUND),
+    TITLE_NULL(10027, "Title Cannot Be Null", HttpStatus.BAD_REQUEST),
+    CONTENT_NULL(10028, "Content Cannot Be Null", HttpStatus.BAD_REQUEST),
+    URL_NULL(10029, "URL Cannot Be Null", HttpStatus.BAD_REQUEST),
+    POINT_EARNED_LOWER_THAN_ZERO(10030, "Point earned must be greater than or equal to 0", HttpStatus.BAD_REQUEST),
+    POST_NOT_FOUND(10031, "Post Not Found", HttpStatus.NOT_FOUND),
+    DAILY_POINT_NOT_FOUND(10031, "Daily Point Not Found", HttpStatus.NOT_FOUND),
     ;
 
     private int code;
