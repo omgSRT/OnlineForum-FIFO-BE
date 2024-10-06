@@ -35,4 +35,5 @@ public class UnitOfWork {
     final UpvoteRepository upvoteRepository;
     final WalletRepository walletRepository;
     final EventRepository eventRepository;
+    final BlockedAccountRepository blockedAccountRepository;
 }

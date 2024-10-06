@@ -1,6 +1,7 @@
 package com.FA24SE088.OnlineForum.service;
 
 import com.FA24SE088.OnlineForum.entity.Account;
+import com.FA24SE088.OnlineForum.entity.BlockedAccount;
 import com.FA24SE088.OnlineForum.entity.Follow;
 import com.FA24SE088.OnlineForum.enums.FollowStatus;
 import com.FA24SE088.OnlineForum.exception.AppException;
@@ -16,6 +17,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import springfox.documentation.spi.service.contexts.SecurityContext;
 
+import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -44,17 +46,26 @@ public class FollowService {
                 .build();
     }
 
-    public List<String> unfollow(UUID id){
-        Account account = getCurrentUser();
-        Account account1 = unitOfWork.getAccountRepository().findById(id).orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND));
-        account.getFolloweeList().removeIf(follow ->
-               follow.getFollowee().getAccountId().equals(account1.getAccountId())
-        );
-        return account.getFolloweeList().stream()
-                .map(follow -> follow.getFollowee().getUsername()) // Giả sử bạn muốn lấy username của followee
-                .collect(Collectors.toList());
+    public void blockUser(UUID accountIdToBlock) {
+        Account currentUser = getCurrentUser();
+
+        // Tìm tài khoản cần chặn
+        Account accountToBlock = unitOfWork.getAccountRepository().findById(accountIdToBlock)
+                .orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND));
+
+        // Kiểm tra xem đã chặn chưa
+        boolean alreadyBlocked = currentUser.getBlockedAccounts().stream()
+                .anyMatch(blocked -> blocked.getBlocked().getAccountId().equals(accountToBlock.getAccountId()));
+
+        if (!alreadyBlocked) {
+
+            BlockedAccount blockedAccount = new BlockedAccount();
+            blockedAccount.setBlocker(currentUser);
+            blockedAccount.setBlocked(accountToBlock);
+            blockedAccount.setBlockedDate(new Date());
+
+            unitOfWork.getBlockedAccountRepository().save(blockedAccount);
+        }
     }
-
-
 
 }
