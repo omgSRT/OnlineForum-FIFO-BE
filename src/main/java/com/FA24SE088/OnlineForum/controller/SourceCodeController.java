@@ -27,6 +27,12 @@ public class SourceCodeController {
                 .entity(sourceCodeService.createSourceCode(request))
                 .build();
     }
+    @PostMapping("/create-2")
+    public ApiResponse<SourceCodeResponse> create2(@RequestBody SourceCodeRequest request) {
+        return ApiResponse.<SourceCodeResponse>builder()
+                .entity(sourceCodeService.createDocument(request))
+                .build();
+    }
 
 
 }

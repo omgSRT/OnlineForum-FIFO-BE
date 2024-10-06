@@ -12,6 +12,8 @@ import com.FA24SE088.OnlineForum.entity.ImageSection;
 import com.FA24SE088.OnlineForum.entity.Section;
 import com.FA24SE088.OnlineForum.entity.SourceCode;
 import com.FA24SE088.OnlineForum.entity.VideoSection;
+import com.FA24SE088.OnlineForum.mapper.SectionMapper;
+import com.FA24SE088.OnlineForum.mapper.SourceCodeMapper;
 import com.FA24SE088.OnlineForum.repository.Repository.ImageSectionRepository;
 import com.FA24SE088.OnlineForum.repository.Repository.SectionRepository;
 import com.FA24SE088.OnlineForum.repository.Repository.SourceCodeRepository;
@@ -46,6 +48,12 @@ public class SourceCodeService {
 
     @Autowired
     private VideoSectionRepository videoSectionRepository;
+
+    @Autowired
+    private SourceCodeMapper sourceCodeMapper;
+
+    @Autowired
+    private SectionMapper sectionMapper;
 
     @Transactional
     public SourceCodeResponse createSourceCode(SourceCodeRequest request) {
@@ -117,6 +125,60 @@ public class SourceCodeService {
         response.setSectionList(sectionResponses);
 
         // Trả về đối tượng SourceCodeResponse
+        return response;
+    }
+
+    @Transactional
+    public SourceCodeResponse createDocument(SourceCodeRequest request) {
+        SourceCode sourceCode = sourceCodeMapper.toSourceCode(request);
+
+        sourceCode = sourceCodeRepository.save(sourceCode);
+
+        List<SectionResponse> sectionResponses = new ArrayList<>();
+
+        for (SectionRequest sectionRequest : request.getSectionList()) {
+            Section section = sectionMapper.toSection(sectionRequest);
+            section.setCreatedDate(new Date());
+            section.setSourceCode(sourceCode);
+
+            section = sectionRepository.save(section);
+
+            List<ImageSectionResponse> imageResponses = new ArrayList<>();
+            for (ImageSectionRequest imageRequest : sectionRequest.getImageSectionList()) {
+                ImageSection imageSection = new ImageSection();
+                imageSection.setUrl(imageRequest.getUrl());
+                imageSection.setSection(section);
+
+                imageSection = imageSectionRepository.save(imageSection);
+                imageResponses.add(new ImageSectionResponse(imageSection.getUrl()));
+            }
+
+            List<VideoSectionResponse> videoResponses = new ArrayList<>();
+            for (VideoSectionRequest videoRequest : sectionRequest.getVideoSectionList()) {
+                VideoSection videoSection = new VideoSection();
+                videoSection.setUrl(videoRequest.getUrl());
+                videoSection.setSection(section);
+
+                videoSection = videoSectionRepository.save(videoSection);
+                videoResponses.add(new VideoSectionResponse(videoSection.getUrl()));
+            }
+
+            SectionResponse sectionResponse = new SectionResponse();
+            sectionResponse.setLinkGit(section.getLinkGit());
+            sectionResponse.setImageSectionList(imageResponses);
+            sectionResponse.setVideoSectionList(videoResponses);
+
+            sectionResponses.add(sectionResponse);
+        }
+
+        SourceCodeResponse response = sourceCodeMapper.toResponse(sourceCode);
+//        response.setName(sourceCode.getName());
+//        response.setImage(sourceCode.getImage());
+//        response.setPrice(sourceCode.getPrice());
+//        response.setType(sourceCode.getType());
+//        response.setStatus(sourceCode.getStatus());
+        response.setSectionList(sectionResponses);
+
         return response;
     }
 }
