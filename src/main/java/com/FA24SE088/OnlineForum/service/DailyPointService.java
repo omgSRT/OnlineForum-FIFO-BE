@@ -74,6 +74,14 @@ public class DailyPointService {
 
     @Async("AsyncTaskExecutor")
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
+    public CompletableFuture<DailyPointResponse> getDailyPointById(UUID dailyPointId) {
+        var dailyPointFuture = findDailyPointById(dailyPointId);
+
+        return dailyPointFuture.thenApply(dailyPointMapper::toDailyPointResponse);
+    }
+
+    @Async("AsyncTaskExecutor")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
     public CompletableFuture<List<DailyPointResponse>> getAllDailyPoints(int page, int perPage) {
         return CompletableFuture.supplyAsync(() -> {
             var list = unitOfWork.getDailyPointRepository().findAll().stream()

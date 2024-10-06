@@ -2,10 +2,13 @@ package com.FA24SE088.OnlineForum.service;
 
 import com.FA24SE088.OnlineForum.dto.request.ImageRequest;
 import com.FA24SE088.OnlineForum.dto.request.PostCreateRequest;
+import com.FA24SE088.OnlineForum.dto.request.PostUpdateRequest;
+import com.FA24SE088.OnlineForum.dto.response.PostGetByIdResponse;
 import com.FA24SE088.OnlineForum.dto.response.PostResponse;
 import com.FA24SE088.OnlineForum.dto.response.TopicNoCategoryResponse;
 import com.FA24SE088.OnlineForum.entity.*;
 import com.FA24SE088.OnlineForum.enums.PostStatus;
+import com.FA24SE088.OnlineForum.enums.UpdatePostStatus;
 import com.FA24SE088.OnlineForum.exception.AppException;
 import com.FA24SE088.OnlineForum.exception.ErrorCode;
 import com.FA24SE088.OnlineForum.mapper.ImageMapper;
@@ -65,17 +68,39 @@ public class PostService {
                     CompletableFuture<Wallet> walletFuture = addPointToWallet(request.getAccountId());
 
                     return CompletableFuture.allOf(imageFuture, dailyPointFuture, walletFuture)
+                            .thenCompose(v -> {
+                                savedPost.setImageList(imageFuture.join());
+                                return CompletableFuture.completedFuture(savedPost);
+                            })
                             .thenApply(v -> savedPost);
                 })
                 .thenApply(postMapper::toPostResponse);
     }
     @Async("AsyncTaskExecutor")
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
-    public CompletableFuture<List<PostResponse>> getAllPosts(int page, int perPage) {
+    public CompletableFuture<List<PostResponse>> getAllPosts(int page, int perPage,
+                                                             UUID accountId,
+                                                             String topicName,
+                                                             String tagName,
+                                                             PostStatus status) {
         var postListFuture = unitOfWork.getPostRepository().findByStatus(PostStatus.PUBLIC.name());
+        var accountFuture = accountId != null
+                            ? findAccountById(accountId)
+                            : CompletableFuture.completedFuture(null);
+        var topicFuture = unitOfWork.getTopicRepository().findByName(topicName);
+        var tagFuture = unitOfWork.getTagRepository().findByName(tagName);
 
-        return postListFuture.thenCompose((postList -> {
+        return CompletableFuture.allOf(postListFuture, accountFuture, topicFuture, tagFuture).thenCompose(v -> {
+            var postList = postListFuture.join();
+            var account = accountFuture.join();
+            var topic = topicFuture.join();
+            var tag = tagFuture.join();
+
             var list = postList.stream()
+                    .filter(post -> account == null || post.getAccount() == account)
+                    .filter(post -> topic == null || post.getTopic() == topic)
+                    .filter(post -> tag == null || post.getTag() == tag)
+                    .filter(post -> status == null || post.getStatus().equals(status.name()))
                     .map(postMapper::toPostResponse)
                     .toList();
 
@@ -83,6 +108,67 @@ public class PostService {
 
             return CompletableFuture.completedFuture(paginatedList);
         });
+    }
+    @Async("AsyncTaskExecutor")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
+    public CompletableFuture<PostGetByIdResponse> getPostById(UUID postId) {
+        var postFuture = findPostById(postId);
+
+        return postFuture.thenApply(postMapper::toPostGetByIdResponse);
+    }
+    @Async("AsyncTaskExecutor")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
+    public CompletableFuture<PostResponse> updatePostById(UUID postId, PostUpdateRequest request) {
+        var postFuture = findPostById(postId);
+
+        return postFuture.thenCompose(post -> {
+            var deleteImageListFuture = deleteImagesByPost(post);
+            var createImageFuture = createImages(request, post);
+
+            return CompletableFuture.allOf(deleteImageListFuture, createImageFuture).thenCompose(v -> {
+                postMapper.updatePost(post, request);
+                post.setImageList(createImageFuture.join());
+
+                return CompletableFuture.completedFuture(post);
+            })
+                    .thenApply(postMapper::toPostResponse);
+        });
+    }
+    @Async("AsyncTaskExecutor")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
+    public CompletableFuture<PostResponse> deleteByChangingPostStatusById(UUID postId) {
+        var postFuture = findPostById(postId);
+
+        return postFuture.thenCompose(post -> {
+            var dailyPoint = post.getDailyPoint();
+            var pointEarned = dailyPoint.getPointEarned();
+            var wallet = post.getAccount().getWallet();
+            var balance = wallet.getBalance();
+
+            pointEarned = -pointEarned;
+            dailyPoint.setPointEarned(pointEarned);
+            balance = balance + pointEarned;
+            if(balance < 0) balance = 0;
+            wallet.setBalance(balance);
+
+            post.setStatus(PostStatus.DELETED.name());
+
+            unitOfWork.getDailyPointRepository().save(dailyPoint);
+            unitOfWork.getWalletRepository().save(wallet);
+            return CompletableFuture.completedFuture(unitOfWork.getPostRepository().save(post));
+        })
+                .thenApply(postMapper::toPostResponse);
+    }
+    @Async("AsyncTaskExecutor")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
+    public CompletableFuture<PostResponse> updatePostStatusById(UUID postId, UpdatePostStatus status) {
+        var postFuture = findPostById(postId);
+
+        return postFuture.thenCompose(post -> {
+                    post.setStatus(status.name());
+                    return CompletableFuture.completedFuture(unitOfWork.getPostRepository().save(post));
+                })
+                .thenApply(postMapper::toPostResponse);
     }
 
     @Async("AsyncTaskExecutor")
@@ -101,6 +187,41 @@ public class PostService {
         }
 
         return CompletableFuture.completedFuture(imageList);
+    }
+    @Async("AsyncTaskExecutor")
+    private CompletableFuture<List<Image>> createImages(PostUpdateRequest request, Post savedPost){
+        if (request.getImageUrlList() == null || request.getImageUrlList().isEmpty()) {
+            return CompletableFuture.completedFuture(null);
+        }
+
+        List<Image> imageList = new ArrayList<>();
+
+        for(ImageRequest imageRequest : request.getImageUrlList()){
+            Image newImage = imageMapper.toImage(imageRequest);
+            newImage.setPost(savedPost);
+            imageList.add(newImage);
+            unitOfWork.getImageRepository().save(newImage);
+        }
+
+        return CompletableFuture.completedFuture(imageList);
+    }
+    @Async("AsyncTaskExecutor")
+    private CompletableFuture<List<Image>> deleteImagesByPost(Post savedPost){
+        var imageListFuture = unitOfWork.getImageRepository().findByPost(savedPost);
+        List<Image> deletedImageList = new ArrayList<>();
+
+        return imageListFuture.thenCompose(imageList -> {
+            if(imageList.isEmpty()){
+                return CompletableFuture.completedFuture(null);
+            }
+
+            for(Image image : imageList){
+                deletedImageList.add(image);
+                unitOfWork.getImageRepository().delete(image);
+            }
+
+            return CompletableFuture.completedFuture(deletedImageList);
+        });
     }
     @Async("AsyncTaskExecutor")
     private CompletableFuture<DailyPoint> createDailyPointLog(UUID accountId, Post savedPost){
@@ -134,7 +255,7 @@ public class PostService {
                         newDailyPoint.setPointEarned(point.getPointPerPost());
                     }
 
-                    return CompletableFuture.completedFuture(newDailyPoint);
+                    return CompletableFuture.completedFuture(unitOfWork.getDailyPointRepository().save(newDailyPoint));
                 });
     }
     @Async("AsyncTaskExecutor")
@@ -207,6 +328,13 @@ public class PostService {
 
                             return CompletableFuture.completedFuture(totalCount);
                         })
+        );
+    }
+    @Async("AsyncTaskExecutor")
+    private CompletableFuture<DailyPoint> findDailyPointById(UUID dailyPointId) {
+        return CompletableFuture.supplyAsync(() ->
+                unitOfWork.getDailyPointRepository().findById(dailyPointId)
+                        .orElseThrow(() -> new AppException(ErrorCode.DAILY_POINT_NOT_FOUND))
         );
     }
 }

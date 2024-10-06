@@ -17,4 +17,7 @@ public interface TopicRepository extends JpaRepository<Topic, UUID> {
 
     @Async("AsyncTaskExecutor")
     CompletableFuture<List<Topic>> findByCategoryCategoryId(UUID categoryId);
+
+    @Async("AsyncTaskExecutor")
+    CompletableFuture<Topic> findByName(String name);
 }

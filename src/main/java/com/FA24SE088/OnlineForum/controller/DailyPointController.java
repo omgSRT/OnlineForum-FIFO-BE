@@ -33,6 +33,16 @@ public class DailyPointController {
         ).join();
     }
 
+    @Operation(summary = "Get Daily Point", description = "Get Daily Point By ID")
+    @GetMapping(path = "/get/{dailyPointId}")
+    public ApiResponse<DailyPointResponse> getAllDailyPoints(@PathVariable UUID dailyPointId){
+        return dailyPointService.getDailyPointById(dailyPointId).thenApply(dailyPointResponse ->
+                ApiResponse.<DailyPointResponse>builder()
+                        .entity(dailyPointResponse)
+                        .build()
+        ).join();
+    }
+
     @Operation(summary = "Get All Daily Point Log")
     @GetMapping(path = "/getall")
     public ApiResponse<List<DailyPointResponse>> getAllDailyPoints(@RequestParam(defaultValue = "1") int page,

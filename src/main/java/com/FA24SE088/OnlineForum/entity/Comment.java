@@ -1,5 +1,6 @@
 package com.FA24SE088.OnlineForum.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -24,6 +25,7 @@ public class Comment {
     @JoinColumn(name = "accountId")
     Account account;
 
+    @JsonIgnore
     @ManyToOne
     @JoinColumn(name = "postId")
     Post post;
