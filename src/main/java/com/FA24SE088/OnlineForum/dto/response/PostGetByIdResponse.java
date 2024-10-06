@@ -26,6 +26,14 @@ public class PostGetByIdResponse {
     Account account;
     @JsonIgnoreProperties(value = { "category.account" })
     Topic topic;
-    @JsonIgnoreProperties(value = {"account.email", "account.password", "account.bio", "account.gender", "account.address", "account.createdDate", "account.status"})
+    @JsonIgnoreProperties(value = {
+            "account.password",
+            "account.bio",
+            "account.gender",
+            "account.address",
+            "account.createdDate",
+            "account.status",
+            "account.role"
+    })
     List<Comment> commentList;
 }

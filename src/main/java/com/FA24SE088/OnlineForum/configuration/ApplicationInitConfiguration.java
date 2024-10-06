@@ -69,7 +69,7 @@ public class ApplicationInitConfiguration {
                 Account user = Account.builder()
                         .username("admin")
                         .password(passwordEncoder.encode("admin"))
-                        .role(role)
+                        .role(role1)
                         .handle("admin")
                         .createdDate(new Date())
                         .status(AccountStatus.ACTIVE.name())

@@ -21,6 +21,7 @@ public class PostResponse {
     Date createdDate;
     Date lastModifiedDate;
     String status;
+    @JsonIgnoreProperties(value = { "password", "bio", "gender", "address", "createdDate", "status", "role" })
     Account account;
     @JsonIgnoreProperties(value = { "category.account" })
     Topic topic;

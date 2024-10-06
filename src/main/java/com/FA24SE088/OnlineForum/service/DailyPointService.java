@@ -22,6 +22,7 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
+import java.time.OffsetDateTime;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
@@ -68,7 +69,17 @@ public class DailyPointService {
                         newDailyPoint.setPointEarned(point.getPointPerPost());
                     }
 
-                    return CompletableFuture.completedFuture(dailyPointMapper.toDailyPointResponse(newDailyPoint));
+                    var dailyPointFuture = findDailyPointByAccountAndPost(account, post);
+
+                    return dailyPointFuture.thenCompose(dailyPoint -> {
+                        if(dailyPoint != null){
+                            throw new AppException(ErrorCode.DAILY_POINT_ALREADY_EXIST);
+                        }
+
+                        return CompletableFuture.completedFuture(dailyPointMapper.toDailyPointResponse(
+                                unitOfWork.getDailyPointRepository().save(newDailyPoint)
+                        ));
+                    });
                 });
     }
 
@@ -82,48 +93,32 @@ public class DailyPointService {
 
     @Async("AsyncTaskExecutor")
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
-    public CompletableFuture<List<DailyPointResponse>> getAllDailyPoints(int page, int perPage) {
-        return CompletableFuture.supplyAsync(() -> {
+    public CompletableFuture<List<DailyPointResponse>> getAllDailyPoints(int page, int perPage, UUID accountId, String givenDate) {
+        var accountFuture = accountId != null
+                            ? findAccountById(accountId)
+                            : CompletableFuture.completedFuture(null);
+
+        return CompletableFuture.allOf(accountFuture).thenCompose(v -> {
+            var account = accountFuture.join();
+
+            Date date;
+            if (givenDate != null && !givenDate.isEmpty()) {
+                OffsetDateTime offsetDateTime = OffsetDateTime.parse(givenDate);
+                date = Date.from(offsetDateTime.toInstant());
+            } else {
+                date = null;
+            }
+
             var list = unitOfWork.getDailyPointRepository().findAll().stream()
+                    .filter(dailyPoint -> !dailyPoint.getAccount().equals(account))
+                    .filter(dailyPoint -> date == null || dailyPoint.getCreatedDate().compareTo(date) == 0)
                     .map(dailyPointMapper::toDailyPointResponse)
                     .toList();
 
-            return paginationUtils.convertListToPage(page, perPage, list);
+            var paginatedList = paginationUtils.convertListToPage(page, perPage, list);
+
+            return CompletableFuture.completedFuture(paginatedList);
         });
-    }
-
-    @Async("AsyncTaskExecutor")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
-    public CompletableFuture<List<DailyPointResponse>> getAllDailyPointsByAccountId(int page, int perPage, UUID accountId) {
-        var accountFuture = findAccountById(accountId);
-
-        return accountFuture.thenCompose(account ->
-            unitOfWork.getDailyPointRepository().findByAccount(account)
-                    .thenCompose(list -> {
-                        var responses = list.stream()
-                                .map(dailyPointMapper::toDailyPointResponse)
-                                .toList();
-
-                        var paginatedList = paginationUtils.convertListToPage(page, perPage, responses);
-
-                        return CompletableFuture.completedFuture(paginatedList);
-                    })
-        );
-    }
-
-    @Async("AsyncTaskExecutor")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
-    public CompletableFuture<List<DailyPointResponse>> getAllDailyPointsByDate(int page, int perPage, Date givenDate) {
-        return unitOfWork.getDailyPointRepository().findByCreatedDate(givenDate)
-                .thenCompose(list -> {
-                    var responses = list.stream()
-                            .map(dailyPointMapper::toDailyPointResponse)
-                            .toList();
-
-                    var paginatedList = paginationUtils.convertListToPage(page, perPage, responses);
-
-                    return CompletableFuture.completedFuture(paginatedList);
-                });
     }
 
     @Async("AsyncTaskExecutor")
@@ -188,5 +183,9 @@ public class DailyPointService {
         return CompletableFuture.supplyAsync(() ->
                 unitOfWork.getPointRepository().findAll().stream()
                         .toList());
+    }
+    @Async("AsyncTaskExecutor")
+    private CompletableFuture<DailyPoint> findDailyPointByAccountAndPost(Account account, Post post){
+        return unitOfWork.getDailyPointRepository().findByAccountAndPost(account, post);
     }
 }

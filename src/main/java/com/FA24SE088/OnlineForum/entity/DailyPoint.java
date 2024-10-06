@@ -1,5 +1,6 @@
 package com.FA24SE088.OnlineForum.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
@@ -22,14 +23,17 @@ public class DailyPoint {
     double pointEarned;
     Date createdDate;
 
+    @JsonIgnore
     @ManyToOne
     @JoinColumn(name = "accountId")
     Account account;
 
+    @JsonIgnore
     @ManyToOne
     @JoinColumn(name = "pointId")
     Point point;
 
+    @JsonIgnore
     @JsonIgnoreProperties(value = {"dailyPoint"}, allowSetters = true)
     @OneToOne
     @JoinColumn(name = "postId")

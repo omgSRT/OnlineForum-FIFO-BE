@@ -1,5 +1,6 @@
 package com.FA24SE088.OnlineForum.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
@@ -26,10 +27,12 @@ public class Post {
     Date lastModifiedDate;
     String status;
 
+    @JsonIgnore
     @JsonIgnoreProperties(value = { "post" }, allowSetters = true)
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
     List<Image> imageList;
 
+    @JsonIgnore
     @JsonIgnoreProperties(value = {"post"}, allowSetters = true)
     @OneToOne(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
     DailyPoint dailyPoint;
@@ -38,10 +41,12 @@ public class Post {
     @JoinColumn(name = "accountId")
     Account account;
 
+    @JsonIgnore
     @JsonIgnoreProperties(value = { "post" }, allowSetters = true)
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
     List<Upvote> upvoteList;
 
+    @JsonIgnore
     @JsonIgnoreProperties(value = { "post" }, allowSetters = true)
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
     List<Comment> commentList;
@@ -54,6 +59,7 @@ public class Post {
     @JoinColumn(name = "tagId")
     Tag tag;
 
+    @JsonIgnore
     @JsonIgnoreProperties(value = { "post" }, allowSetters = true)
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
     List<Feedback> feedbackList;

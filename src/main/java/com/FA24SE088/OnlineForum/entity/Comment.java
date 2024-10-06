@@ -25,7 +25,6 @@ public class Comment {
     @JoinColumn(name = "accountId")
     Account account;
 
-    @JsonIgnore
     @ManyToOne
     @JoinColumn(name = "postId")
     Post post;

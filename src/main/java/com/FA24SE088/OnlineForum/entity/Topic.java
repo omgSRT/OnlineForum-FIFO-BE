@@ -22,6 +22,7 @@ public class Topic {
     UUID topicId;
     String name;
 
+    @JsonIgnore
     @ManyToOne
     @JoinColumn(name = "categoryId")
     Category category;

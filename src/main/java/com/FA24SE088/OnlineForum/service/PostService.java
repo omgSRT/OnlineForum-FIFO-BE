@@ -77,7 +77,7 @@ public class PostService {
                                 return createTransaction(point.getPointPerPost(), TransactionType.CREDIT, wallet)
                                         .thenCompose(transaction -> {
                                             savedPost.setImageList(imageFuture.join());  // Set image list after creation
-                                            return CompletableFuture.completedFuture(savedPost);
+                                            return CompletableFuture.completedFuture(unitOfWork.getPostRepository().save(savedPost));
                                         });
                             });
                 })
@@ -90,7 +90,7 @@ public class PostService {
                                                              String topicName,
                                                              String tagName,
                                                              PostStatus status) {
-        var postListFuture = unitOfWork.getPostRepository().findByStatus(PostStatus.PUBLIC.name());
+        var postListFuture = findAllPosts();
         var accountFuture = accountId != null
                             ? findAccountById(accountId)
                             : CompletableFuture.completedFuture(null);
@@ -104,10 +104,10 @@ public class PostService {
             var tag = tagFuture.join();
 
             var list = postList.stream()
-                    .filter(post -> account == null || post.getAccount() == account)
-                    .filter(post -> topic == null || post.getTopic() == topic)
-                    .filter(post -> tag == null || post.getTag() == tag)
-                    .filter(post -> status == null || post.getStatus().equals(status.name()))
+                    .filter(post -> !post.getAccount().equals(account))
+                    .filter(post -> !post.getTopic().equals(topic))
+                    .filter(post -> !post.getTag().equals(tag))
+                    .filter(post -> status == null || !post.getStatus().equals(status.name()))
                     .map(postMapper::toPostResponse)
                     .toList();
 
@@ -236,14 +236,12 @@ public class PostService {
     @Async("AsyncTaskExecutor")
     private CompletableFuture<DailyPoint> createDailyPointLog(UUID accountId, Post savedPost){
         var accountFuture = findAccountById(accountId);
-        var postFuture = findPostById(savedPost.getPostId());
         var totalPointFuture = countUserTotalPointAtAGivenDate(accountId, new Date());
         var pointFuture = getPoint();
 
-        return CompletableFuture.allOf(accountFuture, postFuture, totalPointFuture, pointFuture)
+        return CompletableFuture.allOf(accountFuture, totalPointFuture, pointFuture)
                 .thenCompose(all -> {
                     var account = accountFuture.join();
-                    var post = postFuture.join();
                     var totalPoint = totalPointFuture.join();
                     var pointList = pointFuture.join();
                     Point point;
@@ -256,7 +254,7 @@ public class PostService {
                     DailyPoint newDailyPoint = new DailyPoint();
                     newDailyPoint.setCreatedDate(new Date());
                     newDailyPoint.setPoint(point);
-                    newDailyPoint.setPost(post);
+                    newDailyPoint.setPost(savedPost);
                     newDailyPoint.setAccount(account);
                     if(totalPoint + point.getPointPerPost() > point.getMaxPoint()){
                         newDailyPoint.setPointEarned(0);
@@ -265,7 +263,16 @@ public class PostService {
                         newDailyPoint.setPointEarned(point.getPointPerPost());
                     }
 
-                    return CompletableFuture.completedFuture(unitOfWork.getDailyPointRepository().save(newDailyPoint));
+                    var dailyPointFuture = findDailyPointByAccountAndPost(account, savedPost);
+
+                    return dailyPointFuture.thenCompose(dailyPoint -> {
+                        if(dailyPoint != null){
+                            throw new AppException(ErrorCode.DAILY_POINT_ALREADY_EXIST);
+                        }
+
+                        return CompletableFuture.completedFuture(
+                                unitOfWork.getDailyPointRepository().save(newDailyPoint));
+                    });
                 });
     }
     @Async("AsyncTaskExecutor")
@@ -298,6 +305,12 @@ public class PostService {
         return CompletableFuture.supplyAsync(() ->
                 unitOfWork.getTopicRepository().findById(topicId)
                         .orElseThrow(() -> new AppException(ErrorCode.TOPIC_NOT_FOUND))
+        );
+    }
+    @Async("AsyncTaskExecutor")
+    private CompletableFuture<List<Post>> findAllPosts() {
+        return CompletableFuture.supplyAsync(() ->
+                unitOfWork.getPostRepository().findAll()
         );
     }
     @Async("AsyncTaskExecutor")
@@ -362,5 +375,9 @@ public class PostService {
 
             return unitOfWork.getTransactionRepository().save(transaction);
         });
+    }
+    @Async("AsyncTaskExecutor")
+    private CompletableFuture<DailyPoint> findDailyPointByAccountAndPost(Account account, Post post){
+        return unitOfWork.getDailyPointRepository().findByAccountAndPost(account, post);
     }
 }
