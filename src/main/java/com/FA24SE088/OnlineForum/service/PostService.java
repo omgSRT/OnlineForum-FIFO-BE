@@ -8,6 +8,7 @@ import com.FA24SE088.OnlineForum.dto.response.PostResponse;
 import com.FA24SE088.OnlineForum.dto.response.TopicNoCategoryResponse;
 import com.FA24SE088.OnlineForum.entity.*;
 import com.FA24SE088.OnlineForum.enums.PostStatus;
+import com.FA24SE088.OnlineForum.enums.TransactionType;
 import com.FA24SE088.OnlineForum.enums.UpdatePostStatus;
 import com.FA24SE088.OnlineForum.exception.AppException;
 import com.FA24SE088.OnlineForum.exception.ErrorCode;
@@ -45,8 +46,9 @@ public class PostService {
         var accountFuture = findAccountById(request.getAccountId());
         var topicFuture = findTopicById(request.getTopicId());
         var tagFuture = findTagById(request.getTagId());
+        var pointFuture = getPoint();
 
-        return CompletableFuture.allOf(accountFuture, topicFuture, tagFuture)
+        return CompletableFuture.allOf(accountFuture, topicFuture, tagFuture, pointFuture)
                 .thenCompose(v -> {
                     var account = accountFuture.join();
                     var topic = topicFuture.join();
@@ -69,10 +71,15 @@ public class PostService {
 
                     return CompletableFuture.allOf(imageFuture, dailyPointFuture, walletFuture)
                             .thenCompose(v -> {
-                                savedPost.setImageList(imageFuture.join());
-                                return CompletableFuture.completedFuture(savedPost);
-                            })
-                            .thenApply(v -> savedPost);
+                                var point = pointFuture.join().get(0);
+                                var wallet = walletFuture.join();
+
+                                return createTransaction(point.getPointPerPost(), TransactionType.CREDIT, wallet)
+                                        .thenCompose(transaction -> {
+                                            savedPost.setImageList(imageFuture.join());  // Set image list after creation
+                                            return CompletableFuture.completedFuture(savedPost);
+                                        });
+                            });
                 })
                 .thenApply(postMapper::toPostResponse);
     }
@@ -155,7 +162,10 @@ public class PostService {
 
             unitOfWork.getDailyPointRepository().save(dailyPoint);
             unitOfWork.getWalletRepository().save(wallet);
-            return CompletableFuture.completedFuture(unitOfWork.getPostRepository().save(post));
+
+            return createTransaction(pointEarned, TransactionType.DEBIT, wallet)
+                    .thenCompose(transaction ->
+                            CompletableFuture.completedFuture(unitOfWork.getPostRepository().save(post)));
         })
                 .thenApply(postMapper::toPostResponse);
     }
@@ -305,6 +315,13 @@ public class PostService {
         );
     }
     @Async("AsyncTaskExecutor")
+    private CompletableFuture<Wallet> findWalletById(UUID walletId) {
+        return CompletableFuture.supplyAsync(() ->
+                unitOfWork.getWalletRepository().findById(walletId)
+                        .orElseThrow(() -> new AppException(ErrorCode.WALLET_NOT_FOUND))
+        );
+    }
+    @Async("AsyncTaskExecutor")
     private CompletableFuture<List<Point>> getPoint() {
         return CompletableFuture.supplyAsync(() ->
                 unitOfWork.getPointRepository().findAll().stream()
@@ -331,10 +348,19 @@ public class PostService {
         );
     }
     @Async("AsyncTaskExecutor")
-    private CompletableFuture<DailyPoint> findDailyPointById(UUID dailyPointId) {
-        return CompletableFuture.supplyAsync(() ->
-                unitOfWork.getDailyPointRepository().findById(dailyPointId)
-                        .orElseThrow(() -> new AppException(ErrorCode.DAILY_POINT_NOT_FOUND))
-        );
+    private CompletableFuture<Transaction> createTransaction(double point, TransactionType type, Wallet wallet){
+        if(wallet == null){
+            return CompletableFuture.completedFuture(null);
+        }
+
+        return CompletableFuture.supplyAsync(() -> {
+            Transaction transaction = new Transaction();
+            transaction.setType(type.name());
+            transaction.setCreatedDate(new Date());
+            transaction.setAmount(point);
+            transaction.setWallet(wallet);
+
+            return unitOfWork.getTransactionRepository().save(transaction);
+        });
     }
 }

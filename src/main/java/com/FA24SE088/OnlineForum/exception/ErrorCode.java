@@ -41,6 +41,7 @@ public enum ErrorCode {
     POINT_EARNED_LOWER_THAN_ZERO(10030, "Point earned must be greater than or equal to 0", HttpStatus.BAD_REQUEST),
     POST_NOT_FOUND(10031, "Post Not Found", HttpStatus.NOT_FOUND),
     DAILY_POINT_NOT_FOUND(10031, "Daily Point Not Found", HttpStatus.NOT_FOUND),
+    WALLET_NOT_FOUND(10032, "Wallet Not Found", HttpStatus.NOT_FOUND),
     ;
 
     private int code;
