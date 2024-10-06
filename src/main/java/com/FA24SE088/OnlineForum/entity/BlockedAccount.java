@@ -27,7 +27,7 @@ public class BlockedAccount {
 
     // Tài khoản bị chặn
     @ManyToOne
-    @JoinColumn(name = "blocked_id")
+    @JoinColumn(name = "blocked_account_id")
     Account blocked;
 
     Date blockedDate;

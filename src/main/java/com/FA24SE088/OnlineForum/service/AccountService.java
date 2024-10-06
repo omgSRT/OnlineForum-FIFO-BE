@@ -57,7 +57,7 @@ public class AccountService {
         account.setPassword(passwordEncoder.encode(request.getPassword()));
 
         if (request.getRoleName().equalsIgnoreCase("STAFF")) {
-            Role role = unitOfWork.getRoleRepository().findByName(request.getRoleName()).orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_FOUND));
+            Role role = unitOfWork.getRoleRepository().findByName(request.getRoleName());
             if (role == null) throw new AppException(ErrorCode.ROLE_NOT_FOUND);
             account.setRole(role);
 
@@ -80,7 +80,7 @@ public class AccountService {
                 account.setCategoryList(categories); // Gán toàn bộ danh sách category vào account
             }
         } else {
-            Role role = unitOfWork.getRoleRepository().findByName("USER").orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_FOUND));
+            Role role = unitOfWork.getRoleRepository().findByName("USER");
             if (role == null) throw new AppException(ErrorCode.ROLE_NOT_FOUND);
             account.setRole(role);
         }
