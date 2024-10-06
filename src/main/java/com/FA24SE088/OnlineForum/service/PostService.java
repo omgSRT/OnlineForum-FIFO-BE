@@ -166,7 +166,7 @@ public class PostService {
             return createTransaction(pointEarned, TransactionType.DEBIT, wallet)
                     .thenCompose(transaction ->
                             CompletableFuture.completedFuture(unitOfWork.getPostRepository().save(post)));
-        })
+            })
                 .thenApply(postMapper::toPostResponse);
     }
     @Async("AsyncTaskExecutor")
