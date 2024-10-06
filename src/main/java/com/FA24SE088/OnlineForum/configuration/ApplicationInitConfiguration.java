@@ -62,14 +62,14 @@ public class ApplicationInitConfiguration {
     @Order(2)
     ApplicationRunner applicationRunner() {
         return args -> {
-            Role role1 = roleRepository.findByName("ADMIN").orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_FOUND));
+            Role role = roleRepository.findByName("ADMIN").orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_FOUND));
 //            if (role1 == null) throw new RuntimeException("Chưa có role admin");
 
             if (accountRepository.findByUsername("admin").isEmpty()) {
                 Account user = Account.builder()
                         .username("admin")
                         .password(passwordEncoder.encode("admin"))
-                        .role(role1)
+                        .role(role)
                         .handle("admin")
                         .createdDate(new Date())
                         .status(AccountStatus.ACTIVE.name())

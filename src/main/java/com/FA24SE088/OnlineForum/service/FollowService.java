@@ -54,7 +54,7 @@ public class FollowService {
                 .orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND));
 
         // Kiểm tra xem đã chặn chưa
-        boolean alreadyBlocked = currentUser.getBlockedAccounts().stream()
+        boolean alreadyBlocked = currentUser.getBlockedAccountList().stream()
                 .anyMatch(blocked -> blocked.getBlocked().getAccountId().equals(accountToBlock.getAccountId()));
 
         if (!alreadyBlocked) {
