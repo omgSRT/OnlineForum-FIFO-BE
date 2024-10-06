@@ -56,7 +56,7 @@ public class DailyPointService {
                     }
                     point = pointList.get(0);
 
-                    DailyPoint newDailyPoint = dailyPointMapper.toDailyPoint(request);
+                    DailyPoint newDailyPoint = new DailyPoint();
                     newDailyPoint.setCreatedDate(new Date());
                     newDailyPoint.setPoint(point);
                     newDailyPoint.setPost(post);
