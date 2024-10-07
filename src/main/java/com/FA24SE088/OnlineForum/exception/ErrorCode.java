@@ -47,6 +47,9 @@ public enum ErrorCode {
     IMAGE_NOT_FOUND(10036, "Image Not Found", HttpStatus.NOT_FOUND),
     FEEDBACK_NOT_FOUND(10037, "Feedback Not Found", HttpStatus.NOT_FOUND),
     FEEDBACK_ALREADY_GOT_STATUS(10038, "Feedback Already Got This Status", HttpStatus.BAD_REQUEST),
+    DOCUMENT_NOT_FOUND(10039, "Document Not Found", HttpStatus.NOT_FOUND),
+    YOU_DO_NOT_HAVE_ENOUGH_POINT(10040, "You do not have enough points for this reward", HttpStatus.BAD_REQUEST),
+    REWARD_HAS_BEEN_TAKEN(10041, "This reward has been taken", HttpStatus.BAD_REQUEST),
     ;
 
     private int code;

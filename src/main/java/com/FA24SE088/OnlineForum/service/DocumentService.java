@@ -2,23 +2,22 @@ package com.FA24SE088.OnlineForum.service;
 
 import com.FA24SE088.OnlineForum.dto.request.ImageSectionRequest;
 import com.FA24SE088.OnlineForum.dto.request.SectionRequest;
-import com.FA24SE088.OnlineForum.dto.request.SourceCodeRequest;
+import com.FA24SE088.OnlineForum.dto.request.DocumentRequest;
 import com.FA24SE088.OnlineForum.dto.request.VideoSectionRequest;
 import com.FA24SE088.OnlineForum.dto.response.ImageSectionResponse;
 import com.FA24SE088.OnlineForum.dto.response.SectionResponse;
-import com.FA24SE088.OnlineForum.dto.response.SourceCodeResponse;
+import com.FA24SE088.OnlineForum.dto.response.DocumentResponse;
 import com.FA24SE088.OnlineForum.dto.response.VideoSectionResponse;
 import com.FA24SE088.OnlineForum.entity.ImageSection;
 import com.FA24SE088.OnlineForum.entity.Section;
-import com.FA24SE088.OnlineForum.entity.SourceCode;
+import com.FA24SE088.OnlineForum.entity.Document;
 import com.FA24SE088.OnlineForum.entity.VideoSection;
 import com.FA24SE088.OnlineForum.mapper.SectionMapper;
 import com.FA24SE088.OnlineForum.mapper.SourceCodeMapper;
 import com.FA24SE088.OnlineForum.repository.Repository.ImageSectionRepository;
 import com.FA24SE088.OnlineForum.repository.Repository.SectionRepository;
-import com.FA24SE088.OnlineForum.repository.Repository.SourceCodeRepository;
+import com.FA24SE088.OnlineForum.repository.Repository.DocumentRepository;
 import com.FA24SE088.OnlineForum.repository.Repository.VideoSectionRepository;
-import com.FA24SE088.OnlineForum.repository.UnitOfWork.UnitOfWork;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -35,10 +34,10 @@ import java.util.List;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Slf4j
 @Service
-public class SourceCodeService {
+public class DocumentService {
 
     @Autowired
-    private SourceCodeRepository sourceCodeRepository;
+    private DocumentRepository documentRepository;
 
     @Autowired
     private SectionRepository sectionRepository;
@@ -56,17 +55,17 @@ public class SourceCodeService {
     private SectionMapper sectionMapper;
 
     @Transactional
-    public SourceCodeResponse createSourceCode(SourceCodeRequest request) {
+    public DocumentResponse createSourceCode(DocumentRequest request) {
         // Bước 1: Tạo đối tượng SourceCode từ request
-        SourceCode sourceCode = new SourceCode();
-        sourceCode.setName(request.getName());
-        sourceCode.setImage(request.getImage());
-        sourceCode.setPrice(request.getPrice());
-        sourceCode.setType(request.getType());
-        sourceCode.setStatus(request.getStatus());
+        Document document = new Document();
+        document.setName(request.getName());
+        document.setImage(request.getImage());
+        document.setPrice(request.getPrice());
+        document.setType(request.getType());
+        document.setStatus(request.getStatus());
 
         // Lưu SourceCode vào database trước
-        sourceCode = sourceCodeRepository.save(sourceCode);
+        document = documentRepository.save(document);
 
         List<SectionResponse> sectionResponses = new ArrayList<>();
 
@@ -75,7 +74,7 @@ public class SourceCodeService {
             Section section = new Section();
             section.setCreatedDate(new Date()); // Đặt ngày hiện tại
             section.setLinkGit(sectionRequest.getLinkGit());
-            section.setSourceCode(sourceCode); // Liên kết với SourceCode vừa tạo
+            section.setDocument(document); // Liên kết với SourceCode vừa tạo
 
             // Lưu Section vào database
             section = sectionRepository.save(section);
@@ -116,12 +115,12 @@ public class SourceCodeService {
         }
 
         // Tạo phản hồi SourceCodeResponse
-        SourceCodeResponse response = new SourceCodeResponse();
-        response.setName(sourceCode.getName());
-        response.setImage(sourceCode.getImage());
-        response.setPrice(sourceCode.getPrice());
-        response.setType(sourceCode.getType());
-        response.setStatus(sourceCode.getStatus());
+        DocumentResponse response = new DocumentResponse();
+        response.setName(document.getName());
+        response.setImage(document.getImage());
+        response.setPrice(document.getPrice());
+        response.setType(document.getType());
+        response.setStatus(document.getStatus());
         response.setSectionList(sectionResponses);
 
         // Trả về đối tượng SourceCodeResponse
@@ -129,17 +128,17 @@ public class SourceCodeService {
     }
 
     @Transactional
-    public SourceCodeResponse createDocument(SourceCodeRequest request) {
-        SourceCode sourceCode = sourceCodeMapper.toSourceCode(request);
+    public DocumentResponse createDocument(DocumentRequest request) {
+        Document document = sourceCodeMapper.toSourceCode(request);
 
-        sourceCode = sourceCodeRepository.save(sourceCode);
+        document = documentRepository.save(document);
 
         List<SectionResponse> sectionResponses = new ArrayList<>();
 
         for (SectionRequest sectionRequest : request.getSectionList()) {
             Section section = sectionMapper.toSection(sectionRequest);
             section.setCreatedDate(new Date());
-            section.setSourceCode(sourceCode);
+            section.setDocument(document);
 
             section = sectionRepository.save(section);
 
@@ -171,15 +170,15 @@ public class SourceCodeService {
             sectionResponses.add(sectionResponse);
         }
 
-        SourceCodeResponse response = sourceCodeMapper.toResponse(sourceCode);
-//        response.setName(sourceCode.getName());
-//        response.setImage(sourceCode.getImage());
-//        response.setPrice(sourceCode.getPrice());
-//        response.setType(sourceCode.getType());
-//        response.setStatus(sourceCode.getStatus());
+        DocumentResponse response = sourceCodeMapper.toResponse(document);
         response.setSectionList(sectionResponses);
 
         return response;
     }
+
+    public List<Document> getAll(){
+        return documentRepository.findAll();
+    }
+
 }
 

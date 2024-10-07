@@ -15,10 +15,10 @@ import java.util.UUID;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class SourceCode {
+public class Document {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    UUID rewardId;
+    UUID documentId;
     String name;
     String image;
     double price;
@@ -26,6 +26,6 @@ public class SourceCode {
     String status;
 
     @JsonIgnoreProperties(value = {"reward"}, allowSetters = true)
-    @OneToMany(mappedBy = "sourceCode", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "document", cascade = CascadeType.ALL, orphanRemoval = true)
     List<Redeem> redeemList;
 }
