@@ -1,50 +1,50 @@
 package com.FA24SE088.OnlineForum.mapper;
 
-import com.FA24SE088.OnlineForum.dto.request.SourceCodeRequest;
-import com.FA24SE088.OnlineForum.dto.response.SourceCodeResponse;
-import com.FA24SE088.OnlineForum.entity.SourceCode;
+import com.FA24SE088.OnlineForum.dto.request.DocumentRequest;
+import com.FA24SE088.OnlineForum.dto.response.DocumentResponse;
+import com.FA24SE088.OnlineForum.entity.Document;
 import javax.annotation.processing.Generated;
 import org.springframework.stereotype.Component;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2024-10-07T16:46:18+0700",
+    date = "2024-10-07T22:51:39+0700",
     comments = "version: 1.5.5.Final, compiler: javac, environment: Java 17.0.12 (Oracle Corporation)"
 )
 @Component
 public class SourceCodeMapperImpl implements SourceCodeMapper {
 
     @Override
-    public SourceCode toSourceCode(SourceCodeRequest request) {
+    public Document toSourceCode(DocumentRequest request) {
         if ( request == null ) {
             return null;
         }
 
-        SourceCode.SourceCodeBuilder sourceCode = SourceCode.builder();
+        Document.DocumentBuilder document = Document.builder();
 
-        sourceCode.name( request.getName() );
-        sourceCode.image( request.getImage() );
-        sourceCode.price( request.getPrice() );
-        sourceCode.type( request.getType() );
-        sourceCode.status( request.getStatus() );
+        document.name( request.getName() );
+        document.image( request.getImage() );
+        document.price( request.getPrice() );
+        document.type( request.getType() );
+        document.status( request.getStatus() );
 
-        return sourceCode.build();
+        return document.build();
     }
 
     @Override
-    public SourceCodeResponse toResponse(SourceCode sourceCode) {
-        if ( sourceCode == null ) {
+    public DocumentResponse toResponse(Document document) {
+        if ( document == null ) {
             return null;
         }
 
-        SourceCodeResponse.SourceCodeResponseBuilder sourceCodeResponse = SourceCodeResponse.builder();
+        DocumentResponse.DocumentResponseBuilder documentResponse = DocumentResponse.builder();
 
-        sourceCodeResponse.name( sourceCode.getName() );
-        sourceCodeResponse.image( sourceCode.getImage() );
-        sourceCodeResponse.price( sourceCode.getPrice() );
-        sourceCodeResponse.type( sourceCode.getType() );
-        sourceCodeResponse.status( sourceCode.getStatus() );
+        documentResponse.name( document.getName() );
+        documentResponse.image( document.getImage() );
+        documentResponse.price( document.getPrice() );
+        documentResponse.type( document.getType() );
+        documentResponse.status( document.getStatus() );
 
-        return sourceCodeResponse.build();
+        return documentResponse.build();
     }
 }

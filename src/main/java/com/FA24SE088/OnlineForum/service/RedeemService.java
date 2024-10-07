@@ -51,7 +51,7 @@ public class RedeemService {
 
             Transaction transaction = Transaction.builder()
                     .amount(document.getPrice())
-                    .type(TransactionType.SUBTRACT.name())
+                    .type(TransactionType.DEBIT.name())
                     .createdDate(new Date())
                     .wallet(wallet)
                     .build();

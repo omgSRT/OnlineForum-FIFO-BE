@@ -72,6 +72,13 @@ public class ImageService {
             return CompletableFuture.completedFuture(paginatedList);
         });
     }
+    @Async("AsyncTaskExecutor")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
+    public CompletableFuture<ImageResponse> getImageById(UUID imageId){
+        var imageFuture = findImageById(imageId);
+
+        return imageFuture.thenApply(imageMapper::toImageResponse);
+    }
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
     @Async("AsyncTaskExecutor")
     public CompletableFuture<ImageResponse> deleteImageById(UUID imageId){

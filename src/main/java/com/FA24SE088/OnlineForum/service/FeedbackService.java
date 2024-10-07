@@ -39,6 +39,7 @@ public class FeedbackService {
         return postFuture.thenCompose(post -> {
             Feedback newFeedback = feedbackMapper.toFeedback(request);
             newFeedback.setStatus(FeedbackStatus.PENDING.name());
+            newFeedback.setPost(post);
 
             return CompletableFuture.completedFuture(unitOfWork.getFeedbackRepository().save(newFeedback));
         })
@@ -89,6 +90,13 @@ public class FeedbackService {
 
                     return CompletableFuture.completedFuture(paginatedList);
                 });
+    }
+    @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
+    @Async("AsyncTaskExecutor")
+    public CompletableFuture<FeedbackResponse> getFeedbackById(UUID feedbackId){
+        var feedbackFuture = findFeedbackById(feedbackId);
+
+        return feedbackFuture.thenApply(feedbackMapper::toFeedbackResponse);
     }
 
     @Async("AsyncTaskExecutor")

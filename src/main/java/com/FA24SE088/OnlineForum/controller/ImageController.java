@@ -43,6 +43,16 @@ public class ImageController {
         ).join();
     }
 
+    @Operation(summary = "Get Image", description = "Get Image By ID")
+    @GetMapping(path = "/get/{imageId}")
+    public ApiResponse<ImageResponse> getImageById(@PathVariable UUID imageId){
+        return imageService.getImageById(imageId).thenApply(imageResponse ->
+                ApiResponse.<ImageResponse>builder()
+                        .entity(imageResponse)
+                        .build()
+        ).join();
+    }
+
     @Operation(summary = "Delete Image", description = "Delete Image By ID")
     @DeleteMapping(path = "/delete/{postId}")
     public ApiResponse<ImageResponse> deleteImageById(@PathVariable UUID imageId){

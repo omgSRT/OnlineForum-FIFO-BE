@@ -10,11 +10,11 @@ import org.mapstruct.Mapping;
 public interface FeedbackMapper {
     Feedback toFeedback(FeedbackRequest request);
 
-    @Mapping(target = "postId", source = "post.postId")
-    @Mapping(target = "postTitle", source = "post.title")
-    @Mapping(target = "postContent", source = "post.content")
-    @Mapping(target = "postCreatedDate", source = "post.createdDate")
-    @Mapping(target = "postLastModifiedDate", source = "post.lastModifiedDate")
-    @Mapping(target = "postStatus", source = "post.status")
+    @Mapping(source = "post.postId", target = "postId")
+    @Mapping(source = "post.title", target = "postTitle")
+    @Mapping(source = "post.content", target = "postContent")
+    @Mapping(source = "post.createdDate", target = "postCreatedDate")
+    @Mapping(source = "post.lastModifiedDate", target = "postLastModifiedDate")
+    @Mapping(source = "post.status", target = "postStatus")
     FeedbackResponse toFeedbackResponse(Feedback feedback);
 }

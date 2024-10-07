@@ -67,4 +67,14 @@ public class FeedbackController {
                         .build()
                 ).join();
     }
+
+    @Operation(summary = "Get Feedback", description = "Get Feedback By ID")
+    @GetMapping(path = "/get/{feedbackId}")
+    public ApiResponse<FeedbackResponse> getFeedbackById(@PathVariable UUID feedbackId){
+        return feedbackService.getFeedbackById(feedbackId).thenApply(feedbackResponse ->
+                ApiResponse.<FeedbackResponse>builder()
+                        .entity(feedbackResponse)
+                        .build()
+        ).join();
+    }
 }
