@@ -86,7 +86,7 @@ public class Account {
 
     @JsonIgnore
     @JsonIgnoreProperties(value = {"account"}, allowSetters = true)
-    @OneToMany(mappedBy = "account", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "account", cascade = CascadeType.ALL)
     List<Category> categoryList;
 
     @JsonIgnore

@@ -46,6 +46,7 @@ public class AccountMapperImpl implements AccountMapper {
 
         AccountResponse.AccountResponseBuilder accountResponse = AccountResponse.builder();
 
+        accountResponse.accountId( account.getAccountId() );
         accountResponse.username( account.getUsername() );
         accountResponse.handle( account.getHandle() );
         accountResponse.email( account.getEmail() );
