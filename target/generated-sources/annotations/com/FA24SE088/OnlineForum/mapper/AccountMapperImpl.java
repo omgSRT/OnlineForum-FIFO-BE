@@ -12,8 +12,8 @@ import org.springframework.stereotype.Component;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2024-10-05T20:43:28+0700",
-    comments = "version: 1.5.5.Final, compiler: javac, environment: Java 17.0.12 (Oracle Corporation)"
+    date = "2024-10-07T12:37:14+0700",
+    comments = "version: 1.5.5.Final, compiler: javac, environment: Java 17.0.7 (Oracle Corporation)"
 )
 @Component
 public class AccountMapperImpl implements AccountMapper {
@@ -46,6 +46,7 @@ public class AccountMapperImpl implements AccountMapper {
 
         AccountResponse.AccountResponseBuilder accountResponse = AccountResponse.builder();
 
+        accountResponse.accountId( account.getAccountId() );
         accountResponse.username( account.getUsername() );
         accountResponse.handle( account.getHandle() );
         accountResponse.email( account.getEmail() );

@@ -2,6 +2,7 @@ package com.FA24SE088.OnlineForum.controller;
 
 
 import com.FA24SE088.OnlineForum.dto.request.AccountRequest;
+import com.FA24SE088.OnlineForum.dto.request.AccountUpdateCategoryRequest;
 import com.FA24SE088.OnlineForum.dto.response.AccountResponse;
 import com.FA24SE088.OnlineForum.dto.response.ApiResponse;
 import com.FA24SE088.OnlineForum.exception.AppException;
@@ -23,6 +24,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @RequiredArgsConstructor
 @RestController
@@ -56,6 +58,13 @@ public class AccountController {
                                                      @RequestParam(defaultValue = "10") int perPage) {
         return ApiResponse.<List<AccountResponse>>builder()
                 .entity(accountService.getAll(page, perPage))
+                .build();
+    }
+
+    @PostMapping("/update-category-for-staff/{id}")
+    public ApiResponse<AccountResponse> updateCategory(@PathVariable UUID id, AccountUpdateCategoryRequest request){
+        return ApiResponse.<AccountResponse>builder()
+                .entity(accountService.updateCategoryOfStaff(id, request))
                 .build();
     }
 
