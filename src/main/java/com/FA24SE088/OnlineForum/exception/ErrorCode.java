@@ -40,7 +40,10 @@ public enum ErrorCode {
     URL_NULL(10029, "URL Cannot Be Null", HttpStatus.BAD_REQUEST),
     POINT_EARNED_LOWER_THAN_ZERO(10030, "Point earned must be greater than or equal to 0", HttpStatus.BAD_REQUEST),
     POST_NOT_FOUND(10031, "Post Not Found", HttpStatus.NOT_FOUND),
-    DAILY_POINT_NOT_FOUND(10031, "Daily Point Not Found", HttpStatus.NOT_FOUND),
+    DAILY_POINT_NOT_FOUND(10032, "Daily Point Not Found", HttpStatus.NOT_FOUND),
+    DOCUMENT_NOT_FOUND(10033, "Document Not Found", HttpStatus.NOT_FOUND),
+    YOU_DO_NOT_HAVE_ENOUGH_POINT(10034, "You do not have enough points for this reward", HttpStatus.BAD_REQUEST),
+    REWARD_HAS_BEEN_TAKEN(10035, "This reward has been taken", HttpStatus.BAD_REQUEST),
     ;
 
     private int code;

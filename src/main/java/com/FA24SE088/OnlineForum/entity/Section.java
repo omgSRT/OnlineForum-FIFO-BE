@@ -26,7 +26,7 @@ public class Section {
 
     @ManyToOne
     @JoinColumn(name = "sectionId")
-    SourceCode sourceCode;
+    Document document;
 
     @JsonIgnore
     @JsonIgnoreProperties(value = { "section" }, allowSetters = true)

@@ -1,6 +1,5 @@
 package com.FA24SE088.OnlineForum.dto.response;
 
-import com.FA24SE088.OnlineForum.dto.request.SectionRequest;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -11,7 +10,7 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class SourceCodeResponse {
+public class DocumentResponse {
     String name;
     String image;
     double price;
