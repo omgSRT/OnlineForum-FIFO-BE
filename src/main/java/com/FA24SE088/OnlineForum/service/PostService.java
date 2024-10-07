@@ -116,10 +116,10 @@ public class PostService {
             var tag = tagFuture.join();
 
             var list = postList.stream()
-                    .filter(post -> account == null || post.getAccount().equals(account))
-                    .filter(post -> topic == null || post.getTopic().equals(topic))
-                    .filter(post -> tag == null || post.getTag().equals(tag))
-                    .filter(post -> status == null || post.getStatus().equals(status.name()))
+//                    .filter(post -> account == null || post.getAccount().equals(account))
+//                    .filter(post -> topic == null || post.getTopic().equals(topic))
+//                    .filter(post -> tag == null || post.getTag().equals(tag))
+//                    .filter(post -> status == null || post.getStatus().equals(status.name()))
                     .map(postMapper::toPostResponse)
                     .toList();
 

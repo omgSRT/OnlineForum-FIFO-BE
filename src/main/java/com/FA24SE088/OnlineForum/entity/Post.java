@@ -14,6 +14,7 @@ import java.util.UUID;
 
 @Getter
 @Setter
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @Entity
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Builder
@@ -22,9 +23,13 @@ import java.util.UUID;
 public class Post {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
+    @EqualsAndHashCode.Include
     UUID postId;
+    @EqualsAndHashCode.Include
     String title;
+    @EqualsAndHashCode.Include
     String content;
+    @EqualsAndHashCode.Include
     Date createdDate;
     Date lastModifiedDate;
     String status;

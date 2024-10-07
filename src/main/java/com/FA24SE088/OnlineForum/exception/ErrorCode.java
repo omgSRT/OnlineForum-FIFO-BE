@@ -44,6 +44,9 @@ public enum ErrorCode {
     WALLET_NOT_FOUND(10033, "Wallet Not Found", HttpStatus.NOT_FOUND),
     DAILY_POINT_ALREADY_EXIST(10034, "Daily Point Log Already Exist", HttpStatus.FOUND),
     MAX_POINT_LOWER_THAN_INDIVIDUAL_POINT(10035, "Max Point Must Be Greater Than Individual Point", HttpStatus.BAD_REQUEST),
+    IMAGE_NOT_FOUND(10036, "Image Not Found", HttpStatus.NOT_FOUND),
+    FEEDBACK_NOT_FOUND(10037, "Feedback Not Found", HttpStatus.NOT_FOUND),
+    FEEDBACK_ALREADY_GOT_STATUS(10038, "Feedback Already Got This Status", HttpStatus.BAD_REQUEST),
     ;
 
     private int code;
