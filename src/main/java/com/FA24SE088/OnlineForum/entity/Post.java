@@ -5,6 +5,8 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+import org.hibernate.annotations.Fetch;
+import org.hibernate.annotations.FetchProfile;
 
 import java.util.Date;
 import java.util.List;
@@ -29,7 +31,7 @@ public class Post {
 
     @JsonIgnore
     @JsonIgnoreProperties(value = { "post" }, allowSetters = true)
-    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     List<Image> imageList;
 
     @JsonIgnore

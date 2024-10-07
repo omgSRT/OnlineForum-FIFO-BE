@@ -42,7 +42,8 @@ public enum ErrorCode {
     POST_NOT_FOUND(10031, "Post Not Found", HttpStatus.NOT_FOUND),
     DAILY_POINT_NOT_FOUND(10032, "Daily Point Not Found", HttpStatus.NOT_FOUND),
     WALLET_NOT_FOUND(10033, "Wallet Not Found", HttpStatus.NOT_FOUND),
-    DAILY_POINT_ALREADY_EXIST(10034, "Daily Point Log Already Exist", HttpStatus.FOUND)
+    DAILY_POINT_ALREADY_EXIST(10034, "Daily Point Log Already Exist", HttpStatus.FOUND),
+    MAX_POINT_LOWER_THAN_INDIVIDUAL_POINT(10035, "Max Point Must Be Greater Than Individual Point", HttpStatus.BAD_REQUEST),
     ;
 
     private int code;

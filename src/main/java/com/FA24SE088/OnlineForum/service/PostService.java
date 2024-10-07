@@ -20,11 +20,13 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.Hibernate;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -64,6 +66,11 @@ public class PostService {
                     newPost.setAccount(account);
                     newPost.setTopic(topic);
                     newPost.setTag(tag);
+
+
+                    newPost.setCommentList(new ArrayList<>());
+                    newPost.setUpvoteList(new ArrayList<>());
+                    newPost.setFeedbackList(new ArrayList<>());
 
                     return CompletableFuture.completedFuture(unitOfWork.getPostRepository().save(newPost));
                 })
@@ -109,10 +116,10 @@ public class PostService {
             var tag = tagFuture.join();
 
             var list = postList.stream()
-                    .filter(post -> !post.getAccount().equals(account))
-                    .filter(post -> !post.getTopic().equals(topic))
-                    .filter(post -> !post.getTag().equals(tag))
-                    .filter(post -> status == null || !post.getStatus().equals(status.name()))
+                    .filter(post -> account == null || post.getAccount().equals(account))
+                    .filter(post -> topic == null || post.getTopic().equals(topic))
+                    .filter(post -> tag == null || post.getTag().equals(tag))
+                    .filter(post -> status == null || post.getStatus().equals(status.name()))
                     .map(postMapper::toPostResponse)
                     .toList();
 

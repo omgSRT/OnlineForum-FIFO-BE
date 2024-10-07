@@ -1,5 +1,6 @@
 package com.FA24SE088.OnlineForum.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -19,6 +20,7 @@ public class Image {
     UUID imageId;
     String url;
 
+    @JsonIgnore
     @ManyToOne
     @JoinColumn(name = "postId")
     Post post;

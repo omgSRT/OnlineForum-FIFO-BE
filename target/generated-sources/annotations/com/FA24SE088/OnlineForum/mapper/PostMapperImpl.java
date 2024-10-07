@@ -2,9 +2,11 @@ package com.FA24SE088.OnlineForum.mapper;
 
 import com.FA24SE088.OnlineForum.dto.request.PostCreateRequest;
 import com.FA24SE088.OnlineForum.dto.request.PostUpdateRequest;
+import com.FA24SE088.OnlineForum.dto.response.ImageResponse;
 import com.FA24SE088.OnlineForum.dto.response.PostGetByIdResponse;
 import com.FA24SE088.OnlineForum.dto.response.PostResponse;
 import com.FA24SE088.OnlineForum.entity.Comment;
+import com.FA24SE088.OnlineForum.entity.Image;
 import com.FA24SE088.OnlineForum.entity.Post;
 import java.util.ArrayList;
 import java.util.List;
@@ -13,7 +15,7 @@ import org.springframework.stereotype.Component;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2024-10-07T00:03:56+0700",
+    date = "2024-10-07T16:46:19+0700",
     comments = "version: 1.5.5.Final, compiler: javac, environment: Java 17.0.12 (Oracle Corporation)"
 )
 @Component
@@ -41,6 +43,7 @@ public class PostMapperImpl implements PostMapper {
 
         PostResponse.PostResponseBuilder postResponse = PostResponse.builder();
 
+        postResponse.imageList( imageListToImageResponseList( post.getImageList() ) );
         postResponse.postId( post.getPostId() );
         postResponse.title( post.getTitle() );
         postResponse.content( post.getContent() );
@@ -85,5 +88,31 @@ public class PostMapperImpl implements PostMapper {
 
         post.setTitle( postUpdateRequest.getTitle() );
         post.setContent( postUpdateRequest.getContent() );
+    }
+
+    protected ImageResponse imageToImageResponse(Image image) {
+        if ( image == null ) {
+            return null;
+        }
+
+        ImageResponse.ImageResponseBuilder imageResponse = ImageResponse.builder();
+
+        imageResponse.imageId( image.getImageId() );
+        imageResponse.url( image.getUrl() );
+
+        return imageResponse.build();
+    }
+
+    protected List<ImageResponse> imageListToImageResponseList(List<Image> list) {
+        if ( list == null ) {
+            return null;
+        }
+
+        List<ImageResponse> list1 = new ArrayList<ImageResponse>( list.size() );
+        for ( Image image : list ) {
+            list1.add( imageToImageResponse( image ) );
+        }
+
+        return list1;
     }
 }

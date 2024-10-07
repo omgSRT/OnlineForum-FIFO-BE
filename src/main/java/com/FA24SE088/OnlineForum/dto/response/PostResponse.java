@@ -1,12 +1,14 @@
 package com.FA24SE088.OnlineForum.dto.response;
 
 import com.FA24SE088.OnlineForum.entity.Account;
+import com.FA24SE088.OnlineForum.entity.Image;
 import com.FA24SE088.OnlineForum.entity.Topic;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 import java.util.Date;
+import java.util.List;
 import java.util.UUID;
 
 @Data
@@ -21,8 +23,10 @@ public class PostResponse {
     Date createdDate;
     Date lastModifiedDate;
     String status;
-    @JsonIgnoreProperties(value = { "password", "bio", "gender", "address", "createdDate", "status", "role" })
+    @JsonIgnoreProperties(value = { "password", "email", "bio", "gender", "address", "createdDate", "status", "role" })
     Account account;
     @JsonIgnoreProperties(value = { "category.account" })
     Topic topic;
+    @JsonIgnoreProperties(value = { "post" })
+    List<ImageResponse> imageList;
 }
