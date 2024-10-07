@@ -1,6 +1,7 @@
 package com.FA24SE088.OnlineForum.service;
 
 
+import com.FA24SE088.OnlineForum.dto.request.AccountUpdateCategoryRequest;
 import com.FA24SE088.OnlineForum.dto.request.AccountUpdateRequest;
 import com.FA24SE088.OnlineForum.dto.request.AccountRequest;
 import com.FA24SE088.OnlineForum.dto.response.AccountResponse;
@@ -97,6 +98,46 @@ public class AccountService {
         return response;
     }
 
+    public AccountResponse updateCategoryOfStaff(UUID id, AccountUpdateCategoryRequest request) {
+        Account account = findAccount(id);
+
+        if (account.getRole().getName().equals("STAFF")) {
+            List<Category> currentCategoryList = account.getCategoryList();
+            List<Category> newCategoryList = new ArrayList<>();
+            request.getCategoryList().forEach(cateName -> {
+                Category category = unitOfWork.getCategoryRepository().findByName(cateName)
+                        .orElseThrow(() -> new AppException(ErrorCode.CATEGORY_NOT_FOUND));
+
+                if (category.getAccount() == null || category.getAccount().getAccountId().equals(account.getAccountId())) {
+                    category.setAccount(account);
+                    newCategoryList.add(category);
+                } else {
+                    throw new AppException(ErrorCode.CATEGORY_HAS_UNDERTAKE);
+                }
+            });
+
+            // Cập nhật các category không còn thuộc staff -> set account về null
+            for (Category oldCategory : currentCategoryList) {
+                if (!newCategoryList.contains(oldCategory)) {
+                    oldCategory.setAccount(null);
+                    unitOfWork.getCategoryRepository().save(oldCategory);
+                }
+            }
+            // Xóa các category cũ trong danh sách hiện tại
+            currentCategoryList.clear();
+
+            // Thêm tất cả category mới vào danh sách hiện tại
+            currentCategoryList.addAll(newCategoryList);
+
+            unitOfWork.getAccountRepository().save(account);
+        }
+
+        return accountMapper.toResponse(account);
+    }
+
+
+
+
     public List<AccountResponse> getAll(int page, int perPage) {
         var list = unitOfWork.getAccountRepository().findAll().stream()
                 .map(accountMapper::toResponse)
@@ -116,6 +157,7 @@ public class AccountService {
         }
         return accountMapper.toResponse(account);
     }
+
 
     public void delete(UUID uuid) {
         findAccount(uuid);
