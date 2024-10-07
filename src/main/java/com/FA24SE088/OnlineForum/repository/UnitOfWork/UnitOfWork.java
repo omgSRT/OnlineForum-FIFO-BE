@@ -25,7 +25,7 @@ public class UnitOfWork {
     final PointRepository pointRepository;
     final PostRepository postRepository;
     final RedeemRepository redeemRepository;
-    final SourceCodeRepository sourceCodeRepository;
+    final DocumentRepository documentRepository;
     final ImageSectionRepository imageSectionRepository;
     final VideoSectionRepository videoSectionRepository;
     final SectionRepository sectionRepository;

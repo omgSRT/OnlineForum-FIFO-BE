@@ -26,5 +26,5 @@ public class Redeem {
 
     @ManyToOne
     @JoinColumn(name = "rewardId")
-    SourceCode sourceCode;
+    Document document;
 }
