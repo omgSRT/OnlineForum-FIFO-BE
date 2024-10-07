@@ -15,6 +15,9 @@ public interface TagRepository extends JpaRepository<Tag, UUID> {
     CompletableFuture<Boolean> existsByNameContaining(String name);
 
     @Async("AsyncTaskExecutor")
+    CompletableFuture<Boolean> existsByName(String name);
+
+    @Async("AsyncTaskExecutor")
     CompletableFuture<List<Tag>> findByNameContaining(String name);
 
     @Async("AsyncTaskExecutor")
