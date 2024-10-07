@@ -22,6 +22,8 @@ import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -43,7 +45,8 @@ public class PostService {
     @Async("AsyncTaskExecutor")
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
     public CompletableFuture<PostResponse> createPost(PostCreateRequest request) {
-        var accountFuture = findAccountById(request.getAccountId());
+        var username = getUsernameFromJwt();
+        var accountFuture = findAccountByUsername(username);
         var topicFuture = findTopicById(request.getTopicId());
         var tagFuture = findTagById(request.getTagId());
         var pointFuture = getPoint();
@@ -65,9 +68,11 @@ public class PostService {
                     return CompletableFuture.completedFuture(unitOfWork.getPostRepository().save(newPost));
                 })
                 .thenCompose(savedPost -> {
+                    var account = accountFuture.join();
+
                     CompletableFuture<List<Image>> imageFuture = createImages(request, savedPost);
-                    CompletableFuture<DailyPoint> dailyPointFuture = createDailyPointLog(request.getAccountId(), savedPost);
-                    CompletableFuture<Wallet> walletFuture = addPointToWallet(request.getAccountId());
+                    CompletableFuture<DailyPoint> dailyPointFuture = createDailyPointLog(account.getAccountId(), savedPost);
+                    CompletableFuture<Wallet> walletFuture = addPointToWallet(account.getAccountId());
 
                     return CompletableFuture.allOf(imageFuture, dailyPointFuture, walletFuture)
                             .thenCompose(v -> {
@@ -283,6 +288,11 @@ public class PostService {
 
         return CompletableFuture.allOf(walletFuture, pointFuture, totalPointFuture).thenCompose(all -> {
             var wallet = walletFuture.join();
+
+            if(wallet == null){
+                return CompletableFuture.completedFuture(null);
+            }
+
             var point = pointFuture.join().get(0);
             var currentWalletBalance = wallet.getBalance();
             var totalPoint = totalPointFuture.join();
@@ -297,6 +307,13 @@ public class PostService {
     private CompletableFuture<Account> findAccountById(UUID accountId) {
         return CompletableFuture.supplyAsync(() ->
                 unitOfWork.getAccountRepository().findById(accountId)
+                        .orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND))
+        );
+    }
+    @Async("AsyncTaskExecutor")
+    private CompletableFuture<Account> findAccountByUsername(String username) {
+        return CompletableFuture.supplyAsync(() ->
+                unitOfWork.getAccountRepository().findByUsername(username)
                         .orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND))
         );
     }
@@ -379,5 +396,13 @@ public class PostService {
     @Async("AsyncTaskExecutor")
     private CompletableFuture<DailyPoint> findDailyPointByAccountAndPost(Account account, Post post){
         return unitOfWork.getDailyPointRepository().findByAccountAndPost(account, post);
+    }
+    @Async("AsyncTaskExecutor")
+    public String getUsernameFromJwt() {
+        var authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && authentication.getPrincipal() instanceof Jwt jwt) {
+            return jwt.getClaim("username");  // Get the "username" claim from the token
+        }
+        return null;
     }
 }

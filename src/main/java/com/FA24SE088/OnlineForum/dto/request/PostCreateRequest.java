@@ -17,7 +17,6 @@ public class PostCreateRequest {
     String title;
     @NotBlank(message = "Content Cannot Be Null")
     String content;
-    UUID accountId;
     UUID topicId;
     UUID tagId;
     Set<ImageRequest> imageUrlList;

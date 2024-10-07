@@ -94,6 +94,7 @@ public class AuthenticateService {
                 .jwtID(UUID.randomUUID().toString())
                 .claim("accountId", account.getAccountId())
                 .claim("scope", buildScope(account))
+                .claim("username", account.getUsername())
                 .build();
 
         Payload payload = new Payload(jwtClaimsSet.toJSONObject());
