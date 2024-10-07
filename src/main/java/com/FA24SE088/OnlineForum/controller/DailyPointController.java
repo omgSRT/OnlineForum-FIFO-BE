@@ -33,35 +33,23 @@ public class DailyPointController {
         ).join();
     }
 
+    @Operation(summary = "Get Daily Point", description = "Get Daily Point By ID")
+    @GetMapping(path = "/get/{dailyPointId}")
+    public ApiResponse<DailyPointResponse> getAllDailyPoints(@PathVariable UUID dailyPointId){
+        return dailyPointService.getDailyPointById(dailyPointId).thenApply(dailyPointResponse ->
+                ApiResponse.<DailyPointResponse>builder()
+                        .entity(dailyPointResponse)
+                        .build()
+        ).join();
+    }
+
     @Operation(summary = "Get All Daily Point Log")
     @GetMapping(path = "/getall")
     public ApiResponse<List<DailyPointResponse>> getAllDailyPoints(@RequestParam(defaultValue = "1") int page,
-                                                                   @RequestParam(defaultValue = "10") int perPage){
-        return dailyPointService.getAllDailyPoints(page, perPage).thenApply(dailyPointResponses ->
-                ApiResponse.<List<DailyPointResponse>>builder()
-                        .entity(dailyPointResponses)
-                        .build()
-        ).join();
-    }
-
-    @Operation(summary = "Get All Daily Point Log", description = "Get All By Account ID")
-    @GetMapping(path = "/getall/by-account/{accountId}")
-    public ApiResponse<List<DailyPointResponse>> getAllDailyPointsByAccountId(@RequestParam(defaultValue = "1") int page,
-                                                                              @RequestParam(defaultValue = "10") int perPage,
-                                                                              @PathVariable UUID accountId){
-        return dailyPointService.getAllDailyPointsByAccountId(page, perPage, accountId).thenApply(dailyPointResponses ->
-                ApiResponse.<List<DailyPointResponse>>builder()
-                        .entity(dailyPointResponses)
-                        .build()
-        ).join();
-    }
-
-    @Operation(summary = "Get All Daily Point Log", description = "Get All By Given Date")
-    @GetMapping(path = "/getall/by-created-date")
-    public ApiResponse<List<DailyPointResponse>> getAllDailyPointsByCreatedDate(@RequestParam(defaultValue = "1") int page,
-                                                                                @RequestParam(defaultValue = "10") int perPage,
-                                                                                @RequestParam Date givenDate){
-        return dailyPointService.getAllDailyPointsByDate(page, perPage, givenDate).thenApply(dailyPointResponses ->
+                                                                   @RequestParam(defaultValue = "10") int perPage,
+                                                                   @RequestParam(required = false) UUID accountId,
+                                                                   @RequestParam(required = false) String givenDate){
+        return dailyPointService.getAllDailyPoints(page, perPage, accountId, givenDate).thenApply(dailyPointResponses ->
                 ApiResponse.<List<DailyPointResponse>>builder()
                         .entity(dailyPointResponses)
                         .build()

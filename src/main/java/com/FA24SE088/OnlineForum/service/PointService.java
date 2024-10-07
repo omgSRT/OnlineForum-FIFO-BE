@@ -44,6 +44,10 @@ public class PointService {
                 throw new AppException(ErrorCode.POINT_DATA_EXIST);
             }
 
+            if(request.getMaxPoint() < request.getPointPerPost()){
+                throw new AppException(ErrorCode.MAX_POINT_LOWER_THAN_INDIVIDUAL_POINT);
+            }
+
             var newPoint = pointMapper.toPoint(request);
 
             return pointMapper.toPointResponse(unitOfWork.getPointRepository().save(newPoint));

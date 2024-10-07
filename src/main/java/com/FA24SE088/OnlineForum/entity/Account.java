@@ -10,6 +10,7 @@ import org.springframework.data.redis.core.RedisHash;
 import java.util.*;
 @Getter
 @Setter
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @Entity
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Builder
@@ -18,9 +19,12 @@ import java.util.*;
 public class Account {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
+    @EqualsAndHashCode.Include
     UUID accountId;
+    @EqualsAndHashCode.Include
     String username;
     String handle;
+    @EqualsAndHashCode.Include
     String email;
     String password;
     String bio;
@@ -93,5 +97,10 @@ public class Account {
     @JsonIgnore
     @JsonIgnoreProperties(value = {"account"}, allowSetters = true)
     @OneToMany(mappedBy = "blocker", cascade = CascadeType.ALL, orphanRemoval = true)
-    List<BlockedAccount> blockedAccounts;
+    List<BlockedAccount> blockerAccountList;
+
+    @JsonIgnore
+    @JsonIgnoreProperties(value = {"account"}, allowSetters = true)
+    @OneToMany(mappedBy = "blocked", cascade = CascadeType.ALL, orphanRemoval = true)
+    List<BlockedAccount> blockedAccountList;
 }
