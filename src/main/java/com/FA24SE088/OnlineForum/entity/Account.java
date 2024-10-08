@@ -5,7 +5,6 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
-import org.springframework.data.redis.core.RedisHash;
 
 import java.util.*;
 @Getter
@@ -97,10 +96,17 @@ public class Account {
     @JsonIgnore
     @JsonIgnoreProperties(value = {"account"}, allowSetters = true)
     @OneToMany(mappedBy = "blocker", cascade = CascadeType.ALL, orphanRemoval = true)
-    List<BlockedAccount> blockerAccountList;
+    List<BlockedAccount> blockedAccounts;
 
     @JsonIgnore
     @JsonIgnoreProperties(value = {"account"}, allowSetters = true)
-    @OneToMany(mappedBy = "blocked", cascade = CascadeType.ALL, orphanRemoval = true)
-    List<BlockedAccount> blockedAccountList;
+    @OneToMany(mappedBy = "account", cascade = CascadeType.ALL, orphanRemoval = true)
+    List<Feedback> feedbackList;
+
+    @JsonIgnore
+    @JsonIgnoreProperties(value = {"account"}, allowSetters = true)
+    @OneToMany(mappedBy = "account", cascade = CascadeType.ALL, orphanRemoval = true)
+    List<Report> reportList;
+
+
 }

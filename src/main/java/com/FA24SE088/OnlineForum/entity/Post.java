@@ -69,5 +69,5 @@ public class Post {
     @JsonIgnore
     @JsonIgnoreProperties(value = { "post" }, allowSetters = true)
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
-    List<Feedback> feedbackList;
+    List<Report> reportList;
 }

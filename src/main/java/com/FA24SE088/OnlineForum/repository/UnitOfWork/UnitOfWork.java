@@ -36,4 +36,5 @@ public class UnitOfWork {
     final WalletRepository walletRepository;
     final EventRepository eventRepository;
     final BlockedAccountRepository blockedAccountRepository;
+    final ReportRepository reportRepository;
 }

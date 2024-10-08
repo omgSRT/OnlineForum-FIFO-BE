@@ -70,7 +70,7 @@ public class PostService {
 
                     newPost.setCommentList(new ArrayList<>());
                     newPost.setUpvoteList(new ArrayList<>());
-                    newPost.setFeedbackList(new ArrayList<>());
+                    newPost.setReportList(new ArrayList<>());
 
                     return CompletableFuture.completedFuture(unitOfWork.getPostRepository().save(newPost));
                 })

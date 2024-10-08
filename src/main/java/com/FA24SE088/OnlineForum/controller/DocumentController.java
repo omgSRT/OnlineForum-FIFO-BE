@@ -16,7 +16,7 @@ import java.util.List;
 
 @RequiredArgsConstructor
 @RestController
-@RequestMapping("/source-code")
+@RequestMapping("/document")
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Slf4j
 public class DocumentController {
@@ -30,8 +30,8 @@ public class DocumentController {
     }
 
     @GetMapping("/getAll")
-    public ApiResponse<List<Document>> getAll(){
-        return ApiResponse.<List<Document>>builder()
+    public ApiResponse<List<DocumentResponse>> getAll(){
+        return ApiResponse.<List<DocumentResponse>>builder()
                 .entity(documentService.getAll())
                 .build();
     }

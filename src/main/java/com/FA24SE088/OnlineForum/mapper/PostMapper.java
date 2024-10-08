@@ -28,6 +28,6 @@ public interface PostMapper {
     @Mapping(target = "commentList", ignore = true)
     @Mapping(target = "topic", ignore = true)
     @Mapping(target = "tag", ignore = true)
-    @Mapping(target = "feedbackList", ignore = true)
+    @Mapping(target = "reportList", ignore = true)
     void updatePost(@MappingTarget Post post, PostUpdateRequest postUpdateRequest);
 }

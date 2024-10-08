@@ -6,6 +6,7 @@ import com.FA24SE088.OnlineForum.dto.request.AccountUpdateCategoryRequest;
 import com.FA24SE088.OnlineForum.dto.request.RedeemRequest;
 import com.FA24SE088.OnlineForum.dto.response.AccountResponse;
 import com.FA24SE088.OnlineForum.dto.response.ApiResponse;
+import com.FA24SE088.OnlineForum.dto.response.RedeemResponse;
 import com.FA24SE088.OnlineForum.entity.Account;
 import com.FA24SE088.OnlineForum.entity.Redeem;
 import com.FA24SE088.OnlineForum.enums.SuccessReturnMessage;
@@ -31,9 +32,9 @@ public class RedeemController {
     final RedeemService redeemService;
 
     @PostMapping("/create")
-    public ApiResponse<Redeem> create(@RequestBody RedeemRequest request){
-        return ApiResponse.<Redeem>builder()
-                .entity(redeemService.create(request))
+    public ApiResponse<RedeemResponse> create(@RequestBody RedeemRequest request){
+        return ApiResponse.<RedeemResponse>builder()
+                .entity(redeemService.create_2(request))
                 .build();
     }
 
