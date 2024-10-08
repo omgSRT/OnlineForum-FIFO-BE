@@ -1,7 +1,7 @@
 package com.FA24SE088.OnlineForum.entity;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -32,9 +32,10 @@ public class Comment {
 
     @ManyToOne(cascade=CascadeType.ALL)
     @JoinColumn(name="parentCommentId")
-    @JsonBackReference
     Comment parentComment;
 
-    @OneToMany(mappedBy="parentDepartment", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy="parentComment", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonBackReference
+    @JsonIgnoreProperties({ "parentComment", "post" })
     List<Comment> replies;
 }

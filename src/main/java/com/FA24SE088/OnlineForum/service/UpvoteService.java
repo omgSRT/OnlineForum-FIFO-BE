@@ -2,6 +2,7 @@ package com.FA24SE088.OnlineForum.service;
 
 import com.FA24SE088.OnlineForum.dto.request.UpvoteRequest;
 import com.FA24SE088.OnlineForum.dto.response.UpvoteCreateDeleteResponse;
+import com.FA24SE088.OnlineForum.dto.response.UpvoteGetAllResponse;
 import com.FA24SE088.OnlineForum.dto.response.UpvoteResponse;
 import com.FA24SE088.OnlineForum.entity.Account;
 import com.FA24SE088.OnlineForum.entity.Post;
@@ -68,18 +69,24 @@ public class UpvoteService {
 
     @Async("AsyncTaskExecutor")
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
-    public CompletableFuture<List<UpvoteResponse>> getAllUpvoteByPostId(int page, int perPage, UUID postId){
+    public CompletableFuture<UpvoteGetAllResponse> getAllUpvoteByPostId(int page, int perPage, UUID postId){
         var postFuture = findPostById(postId);
 
         return postFuture.thenCompose(post -> {
             var upvoteListFuture = unitOfWork.getUpvoteRepository().findByPost(post);
 
-            return upvoteListFuture.thenApply(upvoteList ->
-                paginationUtils.convertListToPage(page, perPage,
-                        upvoteList.stream()
-                            .map(upvoteMapper::toUpvoteResponse)
-                            .toList())
-            );
+            return upvoteListFuture.thenApply(upvoteList -> {
+                var convertResponse = upvoteList.stream()
+                        .map(upvoteMapper::toUpvoteNoPostResponse)
+                        .toList();
+                var paginatedList = paginationUtils.convertListToPage(page, perPage, convertResponse);
+
+                UpvoteGetAllResponse getAllResponse = new UpvoteGetAllResponse();
+                getAllResponse.setCount(paginatedList.size());
+                getAllResponse.setNoPostResponseList(paginatedList);
+
+                return getAllResponse;
+            });
         });
     }
 

@@ -3,6 +3,7 @@ package com.FA24SE088.OnlineForum.controller;
 import com.FA24SE088.OnlineForum.dto.request.UpvoteRequest;
 import com.FA24SE088.OnlineForum.dto.response.ApiResponse;
 import com.FA24SE088.OnlineForum.dto.response.UpvoteCreateDeleteResponse;
+import com.FA24SE088.OnlineForum.dto.response.UpvoteGetAllResponse;
 import com.FA24SE088.OnlineForum.dto.response.UpvoteResponse;
 import com.FA24SE088.OnlineForum.service.UpvoteService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -33,12 +34,12 @@ public class UpvoteController {
 
     @Operation(summary = "Get All Upvotes", description = "Get All Upvote By Post")
     @GetMapping(path = "/getall/by-post/{postId}")
-    public ApiResponse<List<UpvoteResponse>> getAllUpvotesByPost(@RequestParam(defaultValue = "1") int page,
+    public ApiResponse<UpvoteGetAllResponse> getAllUpvotesByPost(@RequestParam(defaultValue = "1") int page,
                                                                  @RequestParam(defaultValue = "10") int perPage,
                                                                  @PathVariable UUID postId){
-        return upvoteService.getAllUpvoteByPostId(page, perPage, postId).thenApply(upvoteResponses ->
-                ApiResponse.<List<UpvoteResponse>>builder()
-                        .entity(upvoteResponses)
+        return upvoteService.getAllUpvoteByPostId(page, perPage, postId).thenApply(upvoteGetAllResponse ->
+                ApiResponse.<UpvoteGetAllResponse>builder()
+                        .entity(upvoteGetAllResponse)
                         .build()
         ).join();
     }

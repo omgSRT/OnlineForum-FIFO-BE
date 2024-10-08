@@ -50,7 +50,9 @@ public enum ErrorCode {
     DOCUMENT_NOT_FOUND(10039, "Document Not Found", HttpStatus.NOT_FOUND),
     YOU_DO_NOT_HAVE_ENOUGH_POINT(10040, "You do not have enough points for this reward", HttpStatus.BAD_REQUEST),
     REWARD_HAS_BEEN_TAKEN(10041, "This reward has been taken", HttpStatus.BAD_REQUEST),
-    UPVOTE_NOT_FOUND(10041, "Upvote Not Found", HttpStatus.BAD_REQUEST),
+    UPVOTE_NOT_FOUND(10042, "Upvote Not Found", HttpStatus.NOT_FOUND),
+    COMMENT_NOT_FOUND(10043, "Comment Not Found", HttpStatus.NOT_FOUND),
+    ACCOUNT_COMMENT_NOT_MATCH(10044, "Account Does not Match Comment Owner", HttpStatus.BAD_REQUEST),
     ;
 
     private int code;
