@@ -6,7 +6,7 @@ import com.FA24SE088.OnlineForum.entity.Document;
 import org.mapstruct.Mapper;
 
 @Mapper(componentModel = "spring")
-public interface SourceCodeMapper {
+public interface DocumentMapper {
 
     Document toSourceCode(DocumentRequest request);
     DocumentResponse toResponse(Document document);

@@ -52,7 +52,7 @@ public class FollowService {
         Account accountToBlock = unitOfWork.getAccountRepository().findById(accountIdToBlock)
                 .orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND));
         // Kiểm tra xem đã chặn chưa
-        boolean alreadyBlocked = currentUser.getBlockedAccountList().stream()
+        boolean alreadyBlocked = currentUser.getBlockedAccounts().stream()
                 .anyMatch(blocked -> blocked.getBlocked().getAccountId().equals(accountToBlock.getAccountId()));
 
         if (!alreadyBlocked) {

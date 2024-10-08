@@ -1,11 +1,11 @@
 package com.FA24SE088.OnlineForum.controller;
 
-import com.FA24SE088.OnlineForum.dto.request.FeedbackRequest;
+import com.FA24SE088.OnlineForum.dto.request.ReportRequest;
 import com.FA24SE088.OnlineForum.dto.response.ApiResponse;
-import com.FA24SE088.OnlineForum.dto.response.FeedbackResponse;
+import com.FA24SE088.OnlineForum.dto.response.ReportResponse;
 import com.FA24SE088.OnlineForum.enums.FeedbackStatus;
 import com.FA24SE088.OnlineForum.enums.SuccessReturnMessage;
-import com.FA24SE088.OnlineForum.service.FeedbackService;
+import com.FA24SE088.OnlineForum.service.ReportService;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -20,49 +20,49 @@ import java.util.UUID;
 @RequestMapping("/feedback")
 @Slf4j
 public class FeedbackController {
-    final FeedbackService feedbackService;
+    final ReportService reportService;
 
     @Operation(summary = "Create New Feedback")
     @PostMapping("/create")
-    public ApiResponse<FeedbackResponse> createFeedback(@RequestBody @Valid FeedbackRequest request){
-        return feedbackService.createFeedback(request).thenApply(feedbackResponse ->
-                ApiResponse.<FeedbackResponse>builder()
+    public ApiResponse<ReportResponse> createFeedback(@RequestBody @Valid ReportRequest request){
+        return reportService.createFeedback(request).thenApply(reportResponse ->
+                ApiResponse.<ReportResponse>builder()
                         .message(SuccessReturnMessage.CREATE_SUCCESS.getMessage())
-                        .entity(feedbackResponse)
+                        .entity(reportResponse)
                         .build()
         ).join();
     }
 
     @Operation(summary = "Update Feedback", description = "Change Feedback Status By ID")
     @PutMapping(path = "/update/{feedbackId}")
-    public ApiResponse<FeedbackResponse> updateFeedbackStatusById(@PathVariable UUID feedbackId,
-                                                            @RequestParam FeedbackStatus status){
-        return feedbackService.updateFeedbackStatus(feedbackId, status).thenApply(feedbackResponse ->
-                ApiResponse.<FeedbackResponse>builder()
+    public ApiResponse<ReportResponse> updateFeedbackStatusById(@PathVariable UUID feedbackId,
+                                                                @RequestParam FeedbackStatus status){
+        return reportService.updateFeedbackStatus(feedbackId, status).thenApply(reportResponse ->
+                ApiResponse.<ReportResponse>builder()
                         .message(SuccessReturnMessage.UPDATE_SUCCESS.getMessage())
-                        .entity(feedbackResponse)
+                        .entity(reportResponse)
                         .build()
         ).join();
     }
 
     @Operation(summary = "Delete Feedback", description = "Delete Feedback By ID")
     @DeleteMapping(path = "/delete/{feedbackId}")
-    public ApiResponse<FeedbackResponse> deleteFeedbackById(@PathVariable UUID feedbackId){
-        return feedbackService.deleteFeedbackById(feedbackId).thenApply(feedbackResponse ->
-                ApiResponse.<FeedbackResponse>builder()
+    public ApiResponse<ReportResponse> deleteFeedbackById(@PathVariable UUID feedbackId){
+        return reportService.deleteFeedbackById(feedbackId).thenApply(reportResponse ->
+                ApiResponse.<ReportResponse>builder()
                         .message(SuccessReturnMessage.DELETE_SUCCESS.getMessage())
-                        .entity(feedbackResponse)
+                        .entity(reportResponse)
                         .build()
                 ).join();
     }
 
     @Operation(summary = "Get All Feedbacks")
     @GetMapping(path = "/getall")
-    public ApiResponse<List<FeedbackResponse>> getAllFeedbacks(@RequestParam(defaultValue = "1") int page,
-                                                               @RequestParam(defaultValue = "10") int perPage,
-                                                               @RequestParam(required = false) UUID postId){
-        return feedbackService.getAllFeedback(page, perPage, postId).thenApply(feedbackResponses ->
-                ApiResponse.<List<FeedbackResponse>>builder()
+    public ApiResponse<List<ReportResponse>> getAllFeedbacks(@RequestParam(defaultValue = "1") int page,
+                                                             @RequestParam(defaultValue = "10") int perPage,
+                                                             @RequestParam(required = false) UUID postId){
+        return reportService.getAllFeedback(page, perPage, postId).thenApply(feedbackResponses ->
+                ApiResponse.<List<ReportResponse>>builder()
                         .entity(feedbackResponses)
                         .build()
                 ).join();
@@ -70,10 +70,10 @@ public class FeedbackController {
 
     @Operation(summary = "Get Feedback", description = "Get Feedback By ID")
     @GetMapping(path = "/get/{feedbackId}")
-    public ApiResponse<FeedbackResponse> getFeedbackById(@PathVariable UUID feedbackId){
-        return feedbackService.getFeedbackById(feedbackId).thenApply(feedbackResponse ->
-                ApiResponse.<FeedbackResponse>builder()
-                        .entity(feedbackResponse)
+    public ApiResponse<ReportResponse> getFeedbackById(@PathVariable UUID feedbackId){
+        return reportService.getFeedbackById(feedbackId).thenApply(reportResponse ->
+                ApiResponse.<ReportResponse>builder()
+                        .entity(reportResponse)
                         .build()
         ).join();
     }

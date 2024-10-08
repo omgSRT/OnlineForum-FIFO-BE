@@ -30,6 +30,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -144,7 +145,14 @@ public class AccountService {
                 .toList();
         return paginationUtils.convertListToPage(page, perPage, list);
     }
-
+    public List<AccountResponse> getAxxll(int page, int perPage, String z, String j) {
+        List<AccountResponse> result = unitOfWork.getAccountRepository().findAll().stream()
+                .map(accountMapper::toResponse)
+                .filter(x -> (z == null || (x.getEmail() != null && x.getEmail().contains(z))))
+                .filter(x -> (j == null || (x.getBio() != null && x.getBio().contains(j))))
+                .collect(Collectors.toList());
+        return paginationUtils.convertListToPage(page, perPage, result);
+    }
     private Account findAccount(UUID id) {
         return unitOfWork.getAccountRepository().findById(id).orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND));
     }

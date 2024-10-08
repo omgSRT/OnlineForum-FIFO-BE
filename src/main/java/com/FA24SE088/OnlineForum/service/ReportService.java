@@ -1,13 +1,13 @@
 package com.FA24SE088.OnlineForum.service;
 
-import com.FA24SE088.OnlineForum.dto.request.FeedbackRequest;
-import com.FA24SE088.OnlineForum.dto.response.FeedbackResponse;
-import com.FA24SE088.OnlineForum.entity.Feedback;
+import com.FA24SE088.OnlineForum.dto.request.ReportRequest;
+import com.FA24SE088.OnlineForum.dto.response.ReportResponse;
 import com.FA24SE088.OnlineForum.entity.Post;
+import com.FA24SE088.OnlineForum.entity.Report;
 import com.FA24SE088.OnlineForum.enums.FeedbackStatus;
 import com.FA24SE088.OnlineForum.exception.AppException;
 import com.FA24SE088.OnlineForum.exception.ErrorCode;
-import com.FA24SE088.OnlineForum.mapper.FeedbackMapper;
+import com.FA24SE088.OnlineForum.mapper.ReportMapper;
 import com.FA24SE088.OnlineForum.repository.UnitOfWork.UnitOfWork;
 import com.FA24SE088.OnlineForum.utils.PaginationUtils;
 import lombok.AccessLevel;
@@ -26,29 +26,29 @@ import java.util.concurrent.CompletableFuture;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Slf4j
 @Service
-public class FeedbackService {
+public class ReportService {
     final UnitOfWork unitOfWork;
-    final FeedbackMapper feedbackMapper;
+    final ReportMapper reportMapper;
     final PaginationUtils paginationUtils;
 
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
     @Async("AsyncTaskExecutor")
-    public CompletableFuture<FeedbackResponse> createFeedback(FeedbackRequest request){
+    public CompletableFuture<ReportResponse> createFeedback(ReportRequest request){
         var postFuture = findPostById(request.getPostId());
 
         return postFuture.thenCompose(post -> {
-            Feedback newFeedback = feedbackMapper.toFeedback(request);
+            Report newFeedback = reportMapper.toFeedback(request);
             newFeedback.setStatus(FeedbackStatus.PENDING.name());
             newFeedback.setPost(post);
 
-            return CompletableFuture.completedFuture(unitOfWork.getFeedbackRepository().save(newFeedback));
+            return CompletableFuture.completedFuture(unitOfWork.getReportRepository().save(newFeedback));
         })
-                .thenApply(feedbackMapper::toFeedbackResponse);
+                .thenApply(reportMapper::toFeedbackResponse);
     }
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
     @Async("AsyncTaskExecutor")
-    public CompletableFuture<FeedbackResponse> updateFeedbackStatus(UUID feedbackId, FeedbackStatus status){
-        var feedbackFuture = findFeedbackById(feedbackId);
+    public CompletableFuture<ReportResponse> updateFeedbackStatus(UUID feedbackId, FeedbackStatus status){
+        var feedbackFuture = findReportById(feedbackId);
 
         return feedbackFuture.thenCompose(feedback -> {
                     if(feedback.getStatus().equalsIgnoreCase(status.name())){
@@ -57,33 +57,33 @@ public class FeedbackService {
 
                     feedback.setStatus(status.name());
 
-                    return CompletableFuture.completedFuture(unitOfWork.getFeedbackRepository().save(feedback));
+                    return CompletableFuture.completedFuture(unitOfWork.getReportRepository().save(feedback));
                 })
-                .thenApply(feedbackMapper::toFeedbackResponse);
+                .thenApply(reportMapper::toFeedbackResponse);
     }
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
     @Async("AsyncTaskExecutor")
-    public CompletableFuture<FeedbackResponse> deleteFeedbackById(UUID feedbackId){
-        var feedbackFuture = findFeedbackById(feedbackId);
+    public CompletableFuture<ReportResponse> deleteFeedbackById(UUID feedbackId){
+        var feedbackFuture = findReportById(feedbackId);
 
         return feedbackFuture.thenCompose(feedback -> {
-                    unitOfWork.getFeedbackRepository().delete(feedback);
+                    unitOfWork.getReportRepository().delete(feedback);
 
                     return CompletableFuture.completedFuture(feedback);
                 })
-                .thenApply(feedbackMapper::toFeedbackResponse);
+                .thenApply(reportMapper::toFeedbackResponse);
     }
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
     @Async("AsyncTaskExecutor")
-    public CompletableFuture<List<FeedbackResponse>> getAllFeedback(int page, int perPage, UUID postId){
+    public CompletableFuture<List<ReportResponse>> getAllFeedback(int page, int perPage, UUID postId){
         var postFuture = postId != null
                 ? findPostById(postId)
                 : CompletableFuture.completedFuture(null);
 
         return postFuture.thenCompose(post -> {
-                    var list = unitOfWork.getFeedbackRepository().findAll().stream()
+                    var list = unitOfWork.getReportRepository().findAll().stream()
                             .filter(feedback -> post == null || feedback.getPost().equals(post))
-                            .map(feedbackMapper::toFeedbackResponse)
+                            .map(reportMapper::toFeedbackResponse)
                             .toList();
 
                     var paginatedList = paginationUtils.convertListToPage(page, perPage, list);
@@ -93,10 +93,10 @@ public class FeedbackService {
     }
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
     @Async("AsyncTaskExecutor")
-    public CompletableFuture<FeedbackResponse> getFeedbackById(UUID feedbackId){
-        var feedbackFuture = findFeedbackById(feedbackId);
+    public CompletableFuture<ReportResponse> getFeedbackById(UUID feedbackId){
+        var feedbackFuture = findReportById(feedbackId);
 
-        return feedbackFuture.thenApply(feedbackMapper::toFeedbackResponse);
+        return feedbackFuture.thenApply(reportMapper::toFeedbackResponse);
     }
 
     @Async("AsyncTaskExecutor")
@@ -107,9 +107,9 @@ public class FeedbackService {
         );
     }
     @Async("AsyncTaskExecutor")
-    private CompletableFuture<Feedback> findFeedbackById(UUID feedbackId) {
+    private CompletableFuture<Report> findReportById(UUID feedbackId) {
         return CompletableFuture.supplyAsync(() ->
-                unitOfWork.getFeedbackRepository().findById(feedbackId)
+                unitOfWork.getReportRepository().findById(feedbackId)
                         .orElseThrow(() -> new AppException(ErrorCode.FEEDBACK_NOT_FOUND))
         );
     }

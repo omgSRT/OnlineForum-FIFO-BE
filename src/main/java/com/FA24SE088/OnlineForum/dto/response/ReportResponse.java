@@ -1,6 +1,5 @@
 package com.FA24SE088.OnlineForum.dto.response;
 
-import com.FA24SE088.OnlineForum.entity.Post;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -12,7 +11,7 @@ import java.util.UUID;
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class FeedbackResponse {
+public class ReportResponse {
     UUID feedbackId;
     String title;
     String content;
