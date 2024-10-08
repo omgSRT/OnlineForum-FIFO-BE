@@ -1,10 +1,11 @@
 package com.FA24SE088.OnlineForum.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
-import java.util.Set;
+import java.util.List;
 import java.util.UUID;
 
 @Data
@@ -12,12 +13,9 @@ import java.util.UUID;
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class PostCreateRequest {
-    @NotBlank(message = "Title Cannot Be Null")
-    String title;
-    @NotBlank(message = "Content Cannot Be Null")
-    String content;
-    UUID topicId;
-    UUID tagId;
-    Set<ImageRequest> imageUrlList;
+public class ImageCreateRequest {
+    @NotBlank(message = "URL Cannot Be Null")
+    @Pattern(regexp = "^(http|https)://.*$", message = "URL Must Be Valid")
+    List<String> urls;
+    UUID postId;
 }

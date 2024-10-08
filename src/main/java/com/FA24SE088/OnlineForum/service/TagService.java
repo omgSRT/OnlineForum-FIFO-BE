@@ -37,7 +37,7 @@ public class TagService {
 
     @PreAuthorize("hasRole('ADMIN')")
     public CompletableFuture<TagResponse> createTag(TagRequest request){
-        return unitOfWork.getTagRepository().existsByNameContaining(request.getName())
+        return unitOfWork.getTagRepository().existsByName(request.getName())
                 .thenCompose(exists -> {
                     if (exists) {
                         throw new AppException(ErrorCode.NAME_EXIST);
@@ -111,7 +111,7 @@ public class TagService {
     @Async("AsyncTaskExecutor")
     @PreAuthorize("hasRole('ADMIN')")
     public CompletableFuture<TagResponse> updateTagById(UUID tagId, TagRequest request) {
-        return unitOfWork.getTagRepository().existsByNameContaining(request.getName())
+        return unitOfWork.getTagRepository().existsByName(request.getName())
                 .thenCompose(exists -> {
                     if (exists) {
                         throw new AppException(ErrorCode.NAME_EXIST);

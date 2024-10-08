@@ -7,8 +7,13 @@ import org.springframework.stereotype.Component;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
+<<<<<<< HEAD
     date = "2024-10-08T22:02:08+0700",
     comments = "version: 1.5.5.Final, compiler: javac, environment: Java 17.0.7 (Oracle Corporation)"
+=======
+    date = "2024-10-07T23:12:19+0700",
+    comments = "version: 1.5.5.Final, compiler: javac, environment: Java 17.0.12 (Oracle Corporation)"
+>>>>>>> 38a6fd1acd56c138fc4dd03f0f9a012261b21bc4
 )
 @Component
 public class SectionMapperImpl implements SectionMapper {

@@ -41,7 +41,7 @@ public class TopicService {
         var categoryFuture = findCategoryById(request.getCategoryId());
 
         return categoryFuture.thenCompose(category ->
-                unitOfWork.getTopicRepository().existsByNameContaining(request.getName())
+                unitOfWork.getTopicRepository().existsByName(request.getName())
                         .thenCompose(exists -> {
                             if (exists) {
                                 throw new AppException(ErrorCode.NAME_EXIST);
@@ -111,7 +111,7 @@ public class TopicService {
     @Async("AsyncTaskExecutor")
     @PreAuthorize("hasRole('ADMIN')")
     public CompletableFuture<TopicResponse> updateTopicById(UUID topicId, TopicUpdateRequest request) {
-        return unitOfWork.getTopicRepository().existsByNameContaining(request.getName())
+        return unitOfWork.getTopicRepository().existsByName(request.getName())
                 .thenCompose(exists -> {
                     if (exists) {
                         throw new AppException(ErrorCode.NAME_EXIST);

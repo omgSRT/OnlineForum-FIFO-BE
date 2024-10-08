@@ -19,7 +19,7 @@ import java.util.UUID;
 public class BlockedAccount {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    UUID blockedId;
+    UUID blockId;
 
     @ManyToOne
     @JoinColumn(name = "blocker_id")

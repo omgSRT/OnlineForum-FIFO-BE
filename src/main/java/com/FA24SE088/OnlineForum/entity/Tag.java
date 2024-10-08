@@ -11,6 +11,7 @@ import java.util.UUID;
 
 @Getter
 @Setter
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @Entity
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Builder
@@ -19,7 +20,9 @@ import java.util.UUID;
 public class Tag {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
+    @EqualsAndHashCode.Include
     UUID tagId;
+    @EqualsAndHashCode.Include
     String name;
 
     @JsonIgnore

@@ -11,6 +11,7 @@ import java.util.UUID;
 
 @Getter
 @Setter
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @Entity
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Builder
@@ -19,9 +20,12 @@ import java.util.UUID;
 public class Topic {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
+    @EqualsAndHashCode.Include
     UUID topicId;
+    @EqualsAndHashCode.Include
     String name;
 
+    @JsonIgnore
     @ManyToOne
     @JoinColumn(name = "categoryId")
     Category category;

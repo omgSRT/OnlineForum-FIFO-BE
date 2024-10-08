@@ -1,5 +1,4 @@
 package com.FA24SE088.OnlineForum.entity;
-
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
@@ -7,7 +6,6 @@ import lombok.experimental.FieldDefaults;
 
 import java.util.List;
 import java.util.UUID;
-
 @Getter
 @Setter
 @Entity
@@ -19,8 +17,8 @@ public class Feedback {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     UUID feedbackId;
-    String title;
     String content;
+    String title;
     String status;
 
     @ManyToOne
@@ -30,6 +28,7 @@ public class Feedback {
     @JsonIgnoreProperties(value = {"account"}, allowSetters = true)
     @OneToMany(mappedBy = "feedback", cascade = CascadeType.ALL, orphanRemoval = true)
     List<ImageFeedback> imageFeedbackList;
-
-
 }
+
+
+

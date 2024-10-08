@@ -20,6 +20,7 @@ public class Report {
     @GeneratedValue(strategy = GenerationType.UUID)
     UUID reportId;
     String content;
+    String status;
 
     @ManyToOne
     @JoinColumn(name = "accountID")
