@@ -1,7 +1,7 @@
 package com.FA24SE088.OnlineForum.mapper;
 
-import com.FA24SE088.OnlineForum.dto.request.ImageRequest;
-import com.FA24SE088.OnlineForum.entity.Image;
+import com.FA24SE088.OnlineForum.dto.request.SectionRequest;
+import com.FA24SE088.OnlineForum.entity.Section;
 import javax.annotation.processing.Generated;
 import org.springframework.stereotype.Component;
 
@@ -11,18 +11,18 @@ import org.springframework.stereotype.Component;
     comments = "version: 1.5.5.Final, compiler: javac, environment: Java 17.0.7 (Oracle Corporation)"
 )
 @Component
-public class ImageMapperImpl implements ImageMapper {
+public class SectionMapperImpl implements SectionMapper {
 
     @Override
-    public Image toImage(ImageRequest request) {
+    public Section toSection(SectionRequest request) {
         if ( request == null ) {
             return null;
         }
 
-        Image.ImageBuilder image = Image.builder();
+        Section.SectionBuilder section = Section.builder();
 
-        image.url( request.getUrl() );
+        section.linkGit( request.getLinkGit() );
 
-        return image.build();
+        return section.build();
     }
 }
