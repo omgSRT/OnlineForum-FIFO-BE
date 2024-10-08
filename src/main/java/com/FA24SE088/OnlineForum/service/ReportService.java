@@ -4,7 +4,7 @@ import com.FA24SE088.OnlineForum.dto.request.ReportRequest;
 import com.FA24SE088.OnlineForum.dto.response.ReportResponse;
 import com.FA24SE088.OnlineForum.entity.Post;
 import com.FA24SE088.OnlineForum.entity.Report;
-import com.FA24SE088.OnlineForum.enums.FeedbackStatus;
+import com.FA24SE088.OnlineForum.enums.ReportStatus;
 import com.FA24SE088.OnlineForum.exception.AppException;
 import com.FA24SE088.OnlineForum.exception.ErrorCode;
 import com.FA24SE088.OnlineForum.mapper.ReportMapper;
@@ -33,49 +33,49 @@ public class ReportService {
 
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
     @Async("AsyncTaskExecutor")
-    public CompletableFuture<ReportResponse> createFeedback(ReportRequest request){
+    public CompletableFuture<ReportResponse> createReport(ReportRequest request){
         var postFuture = findPostById(request.getPostId());
 
         return postFuture.thenCompose(post -> {
-            Report newFeedback = reportMapper.toFeedback(request);
-            newFeedback.setStatus(FeedbackStatus.PENDING.name());
-            newFeedback.setPost(post);
+            Report newReport = reportMapper.toReport(request);
+            newReport.setStatus(ReportStatus.PENDING.name());
+            newReport.setPost(post);
 
-            return CompletableFuture.completedFuture(unitOfWork.getReportRepository().save(newFeedback));
+            return CompletableFuture.completedFuture(unitOfWork.getReportRepository().save(newReport));
         })
-                .thenApply(reportMapper::toFeedbackResponse);
+                .thenApply(reportMapper::toReportResponse);
     }
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
     @Async("AsyncTaskExecutor")
-    public CompletableFuture<ReportResponse> updateFeedbackStatus(UUID feedbackId, FeedbackStatus status){
-        var feedbackFuture = findReportById(feedbackId);
+    public CompletableFuture<ReportResponse> updateReportStatus(UUID reportId, ReportStatus status){
+        var reportFuture = findReportById(reportId);
 
-        return feedbackFuture.thenCompose(feedback -> {
-                    if(feedback.getStatus().equalsIgnoreCase(status.name())){
+        return reportFuture.thenCompose(report -> {
+                    if(report.getStatus().equalsIgnoreCase(status.name())){
                         throw new AppException(ErrorCode.FEEDBACK_ALREADY_GOT_STATUS);
                     }
 
-                    feedback.setStatus(status.name());
+                    report.setStatus(status.name());
 
-                    return CompletableFuture.completedFuture(unitOfWork.getReportRepository().save(feedback));
+                    return CompletableFuture.completedFuture(unitOfWork.getReportRepository().save(report));
                 })
-                .thenApply(reportMapper::toFeedbackResponse);
+                .thenApply(reportMapper::toReportResponse);
     }
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
     @Async("AsyncTaskExecutor")
-    public CompletableFuture<ReportResponse> deleteFeedbackById(UUID feedbackId){
-        var feedbackFuture = findReportById(feedbackId);
+    public CompletableFuture<ReportResponse> deleteReportById(UUID reportId){
+        var reportFuture = findReportById(reportId);
 
-        return feedbackFuture.thenCompose(feedback -> {
-                    unitOfWork.getReportRepository().delete(feedback);
+        return reportFuture.thenCompose(report -> {
+                    unitOfWork.getReportRepository().delete(report);
 
-                    return CompletableFuture.completedFuture(feedback);
+                    return CompletableFuture.completedFuture(report);
                 })
-                .thenApply(reportMapper::toFeedbackResponse);
+                .thenApply(reportMapper::toReportResponse);
     }
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
     @Async("AsyncTaskExecutor")
-    public CompletableFuture<List<ReportResponse>> getAllFeedback(int page, int perPage, UUID postId){
+    public CompletableFuture<List<ReportResponse>> getAllReports(int page, int perPage, UUID postId){
         var postFuture = postId != null
                 ? findPostById(postId)
                 : CompletableFuture.completedFuture(null);
@@ -83,7 +83,7 @@ public class ReportService {
         return postFuture.thenCompose(post -> {
                     var list = unitOfWork.getReportRepository().findAll().stream()
                             .filter(feedback -> post == null || feedback.getPost().equals(post))
-                            .map(reportMapper::toFeedbackResponse)
+                            .map(reportMapper::toReportResponse)
                             .toList();
 
                     var paginatedList = paginationUtils.convertListToPage(page, perPage, list);
@@ -93,10 +93,10 @@ public class ReportService {
     }
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
     @Async("AsyncTaskExecutor")
-    public CompletableFuture<ReportResponse> getFeedbackById(UUID feedbackId){
-        var feedbackFuture = findReportById(feedbackId);
+    public CompletableFuture<ReportResponse> getReportById(UUID feedbackId){
+        var reportFuture = findReportById(feedbackId);
 
-        return feedbackFuture.thenApply(reportMapper::toFeedbackResponse);
+        return reportFuture.thenApply(reportMapper::toReportResponse);
     }
 
     @Async("AsyncTaskExecutor")
