@@ -8,7 +8,7 @@ import org.mapstruct.Mapping;
 
 @Mapper(componentModel = "spring")
 public interface ReportMapper {
-    Report toFeedback(ReportRequest request);
+    Report toReport(ReportRequest request);
 
     @Mapping(source = "post.postId", target = "postId")
     @Mapping(source = "post.title", target = "postTitle")
@@ -16,5 +16,5 @@ public interface ReportMapper {
     @Mapping(source = "post.createdDate", target = "postCreatedDate")
     @Mapping(source = "post.lastModifiedDate", target = "postLastModifiedDate")
     @Mapping(source = "post.status", target = "postStatus")
-    ReportResponse toFeedbackResponse(Report feedback);
+    ReportResponse toReportResponse(Report report);
 }
