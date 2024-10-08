@@ -16,7 +16,6 @@ D:\Capstone\v2\OnlineForum\src\main\java\com\FA24SE088\OnlineForum\controller\Im
 D:\Capstone\v2\OnlineForum\src\main\java\com\FA24SE088\OnlineForum\controller\PointController.java
 D:\Capstone\v2\OnlineForum\src\main\java\com\FA24SE088\OnlineForum\controller\PostController.java
 D:\Capstone\v2\OnlineForum\src\main\java\com\FA24SE088\OnlineForum\controller\RedeemController.java
-D:\Capstone\v2\OnlineForum\src\main\java\com\FA24SE088\OnlineForum\controller\TagController.java
 D:\Capstone\v2\OnlineForum\src\main\java\com\FA24SE088\OnlineForum\controller\TopicController.java
 D:\Capstone\v2\OnlineForum\src\main\java\com\FA24SE088\OnlineForum\controller\UpvoteController.java
 D:\Capstone\v2\OnlineForum\src\main\java\com\FA24SE088\OnlineForum\controller\WalletController.java
@@ -32,7 +31,6 @@ D:\Capstone\v2\OnlineForum\src\main\java\com\FA24SE088\OnlineForum\dto\request\C
 D:\Capstone\v2\OnlineForum\src\main\java\com\FA24SE088\OnlineForum\dto\request\CommentUpdateRequest.java
 D:\Capstone\v2\OnlineForum\src\main\java\com\FA24SE088\OnlineForum\dto\request\DailyPointRequest.java
 D:\Capstone\v2\OnlineForum\src\main\java\com\FA24SE088\OnlineForum\dto\request\DocumentRequest.java
-D:\Capstone\v2\OnlineForum\src\main\java\com\FA24SE088\OnlineForum\dto\request\FeedbackRequest.java
 D:\Capstone\v2\OnlineForum\src\main\java\com\FA24SE088\OnlineForum\dto\request\ImageCreateRequest.java
 D:\Capstone\v2\OnlineForum\src\main\java\com\FA24SE088\OnlineForum\dto\request\ImageRequest.java
 D:\Capstone\v2\OnlineForum\src\main\java\com\FA24SE088\OnlineForum\dto\request\ImageSectionRequest.java
@@ -43,6 +41,7 @@ D:\Capstone\v2\OnlineForum\src\main\java\com\FA24SE088\OnlineForum\dto\request\P
 D:\Capstone\v2\OnlineForum\src\main\java\com\FA24SE088\OnlineForum\dto\request\PostUpdateRequest.java
 D:\Capstone\v2\OnlineForum\src\main\java\com\FA24SE088\OnlineForum\dto\request\RedeemRequest.java
 D:\Capstone\v2\OnlineForum\src\main\java\com\FA24SE088\OnlineForum\dto\request\ReplyCreateRequest.java
+D:\Capstone\v2\OnlineForum\src\main\java\com\FA24SE088\OnlineForum\dto\request\ReportRequest.java
 D:\Capstone\v2\OnlineForum\src\main\java\com\FA24SE088\OnlineForum\dto\request\SectionRequest.java
 D:\Capstone\v2\OnlineForum\src\main\java\com\FA24SE088\OnlineForum\dto\request\TagRequest.java
 D:\Capstone\v2\OnlineForum\src\main\java\com\FA24SE088\OnlineForum\dto\request\TopicRequest.java
@@ -59,7 +58,6 @@ D:\Capstone\v2\OnlineForum\src\main\java\com\FA24SE088\OnlineForum\dto\response\
 D:\Capstone\v2\OnlineForum\src\main\java\com\FA24SE088\OnlineForum\dto\response\CommentResponse.java
 D:\Capstone\v2\OnlineForum\src\main\java\com\FA24SE088\OnlineForum\dto\response\DailyPointResponse.java
 D:\Capstone\v2\OnlineForum\src\main\java\com\FA24SE088\OnlineForum\dto\response\DocumentResponse.java
-D:\Capstone\v2\OnlineForum\src\main\java\com\FA24SE088\OnlineForum\dto\response\FeedbackResponse.java
 D:\Capstone\v2\OnlineForum\src\main\java\com\FA24SE088\OnlineForum\dto\response\ImageResponse.java
 D:\Capstone\v2\OnlineForum\src\main\java\com\FA24SE088\OnlineForum\dto\response\ImageSectionResponse.java
 D:\Capstone\v2\OnlineForum\src\main\java\com\FA24SE088\OnlineForum\dto\response\IntrospectResponse.java
@@ -67,8 +65,10 @@ D:\Capstone\v2\OnlineForum\src\main\java\com\FA24SE088\OnlineForum\dto\response\
 D:\Capstone\v2\OnlineForum\src\main\java\com\FA24SE088\OnlineForum\dto\response\PointResponse.java
 D:\Capstone\v2\OnlineForum\src\main\java\com\FA24SE088\OnlineForum\dto\response\PostGetByIdResponse.java
 D:\Capstone\v2\OnlineForum\src\main\java\com\FA24SE088\OnlineForum\dto\response\PostResponse.java
+D:\Capstone\v2\OnlineForum\src\main\java\com\FA24SE088\OnlineForum\dto\response\RedeemResponse.java
 D:\Capstone\v2\OnlineForum\src\main\java\com\FA24SE088\OnlineForum\dto\response\RefreshAccessTokenResponse.java
 D:\Capstone\v2\OnlineForum\src\main\java\com\FA24SE088\OnlineForum\dto\response\ReplyCreateResponse.java
+D:\Capstone\v2\OnlineForum\src\main\java\com\FA24SE088\OnlineForum\dto\response\ReportResponse.java
 D:\Capstone\v2\OnlineForum\src\main\java\com\FA24SE088\OnlineForum\dto\response\SectionResponse.java
 D:\Capstone\v2\OnlineForum\src\main\java\com\FA24SE088\OnlineForum\dto\response\TagResponse.java
 D:\Capstone\v2\OnlineForum\src\main\java\com\FA24SE088\OnlineForum\dto\response\TopicNoCategoryResponse.java
@@ -88,12 +88,14 @@ D:\Capstone\v2\OnlineForum\src\main\java\com\FA24SE088\OnlineForum\entity\Event.
 D:\Capstone\v2\OnlineForum\src\main\java\com\FA24SE088\OnlineForum\entity\Feedback.java
 D:\Capstone\v2\OnlineForum\src\main\java\com\FA24SE088\OnlineForum\entity\Follow.java
 D:\Capstone\v2\OnlineForum\src\main\java\com\FA24SE088\OnlineForum\entity\Image.java
+D:\Capstone\v2\OnlineForum\src\main\java\com\FA24SE088\OnlineForum\entity\ImageFeedback.java
 D:\Capstone\v2\OnlineForum\src\main\java\com\FA24SE088\OnlineForum\entity\ImageSection.java
 D:\Capstone\v2\OnlineForum\src\main\java\com\FA24SE088\OnlineForum\entity\InvalidatedToken.java
 D:\Capstone\v2\OnlineForum\src\main\java\com\FA24SE088\OnlineForum\entity\Notification.java
 D:\Capstone\v2\OnlineForum\src\main\java\com\FA24SE088\OnlineForum\entity\Point.java
 D:\Capstone\v2\OnlineForum\src\main\java\com\FA24SE088\OnlineForum\entity\Post.java
 D:\Capstone\v2\OnlineForum\src\main\java\com\FA24SE088\OnlineForum\entity\Redeem.java
+D:\Capstone\v2\OnlineForum\src\main\java\com\FA24SE088\OnlineForum\entity\Report.java
 D:\Capstone\v2\OnlineForum\src\main\java\com\FA24SE088\OnlineForum\entity\Role.java
 D:\Capstone\v2\OnlineForum\src\main\java\com\FA24SE088\OnlineForum\entity\Section.java
 D:\Capstone\v2\OnlineForum\src\main\java\com\FA24SE088\OnlineForum\entity\Tag.java
@@ -116,13 +118,13 @@ D:\Capstone\v2\OnlineForum\src\main\java\com\FA24SE088\OnlineForum\mapper\Accoun
 D:\Capstone\v2\OnlineForum\src\main\java\com\FA24SE088\OnlineForum\mapper\CategoryMapper.java
 D:\Capstone\v2\OnlineForum\src\main\java\com\FA24SE088\OnlineForum\mapper\CommentMapper.java
 D:\Capstone\v2\OnlineForum\src\main\java\com\FA24SE088\OnlineForum\mapper\DailyPointMapper.java
-D:\Capstone\v2\OnlineForum\src\main\java\com\FA24SE088\OnlineForum\mapper\FeedbackMapper.java
+D:\Capstone\v2\OnlineForum\src\main\java\com\FA24SE088\OnlineForum\mapper\DocumentMapper.java
 D:\Capstone\v2\OnlineForum\src\main\java\com\FA24SE088\OnlineForum\mapper\ImageMapper.java
 D:\Capstone\v2\OnlineForum\src\main\java\com\FA24SE088\OnlineForum\mapper\PointMapper.java
 D:\Capstone\v2\OnlineForum\src\main\java\com\FA24SE088\OnlineForum\mapper\PostMapper.java
 D:\Capstone\v2\OnlineForum\src\main\java\com\FA24SE088\OnlineForum\mapper\RedeemMapper.java
+D:\Capstone\v2\OnlineForum\src\main\java\com\FA24SE088\OnlineForum\mapper\ReportMapper.java
 D:\Capstone\v2\OnlineForum\src\main\java\com\FA24SE088\OnlineForum\mapper\SectionMapper.java
-D:\Capstone\v2\OnlineForum\src\main\java\com\FA24SE088\OnlineForum\mapper\SourceCodeMapper.java
 D:\Capstone\v2\OnlineForum\src\main\java\com\FA24SE088\OnlineForum\mapper\TagMapper.java
 D:\Capstone\v2\OnlineForum\src\main\java\com\FA24SE088\OnlineForum\mapper\TopicMapper.java
 D:\Capstone\v2\OnlineForum\src\main\java\com\FA24SE088\OnlineForum\mapper\UpvoteMapper.java
@@ -143,6 +145,7 @@ D:\Capstone\v2\OnlineForum\src\main\java\com\FA24SE088\OnlineForum\repository\Re
 D:\Capstone\v2\OnlineForum\src\main\java\com\FA24SE088\OnlineForum\repository\Repository\PointRepository.java
 D:\Capstone\v2\OnlineForum\src\main\java\com\FA24SE088\OnlineForum\repository\Repository\PostRepository.java
 D:\Capstone\v2\OnlineForum\src\main\java\com\FA24SE088\OnlineForum\repository\Repository\RedeemRepository.java
+D:\Capstone\v2\OnlineForum\src\main\java\com\FA24SE088\OnlineForum\repository\Repository\ReportRepository.java
 D:\Capstone\v2\OnlineForum\src\main\java\com\FA24SE088\OnlineForum\repository\Repository\RoleRepository.java
 D:\Capstone\v2\OnlineForum\src\main\java\com\FA24SE088\OnlineForum\repository\Repository\SectionRepository.java
 D:\Capstone\v2\OnlineForum\src\main\java\com\FA24SE088\OnlineForum\repository\Repository\TagRepository.java
@@ -158,12 +161,12 @@ D:\Capstone\v2\OnlineForum\src\main\java\com\FA24SE088\OnlineForum\service\Categ
 D:\Capstone\v2\OnlineForum\src\main\java\com\FA24SE088\OnlineForum\service\CommentService.java
 D:\Capstone\v2\OnlineForum\src\main\java\com\FA24SE088\OnlineForum\service\DailyPointService.java
 D:\Capstone\v2\OnlineForum\src\main\java\com\FA24SE088\OnlineForum\service\DocumentService.java
-D:\Capstone\v2\OnlineForum\src\main\java\com\FA24SE088\OnlineForum\service\FeedbackService.java
 D:\Capstone\v2\OnlineForum\src\main\java\com\FA24SE088\OnlineForum\service\FollowService.java
 D:\Capstone\v2\OnlineForum\src\main\java\com\FA24SE088\OnlineForum\service\ImageService.java
 D:\Capstone\v2\OnlineForum\src\main\java\com\FA24SE088\OnlineForum\service\PointService.java
 D:\Capstone\v2\OnlineForum\src\main\java\com\FA24SE088\OnlineForum\service\PostService.java
 D:\Capstone\v2\OnlineForum\src\main\java\com\FA24SE088\OnlineForum\service\RedeemService.java
+D:\Capstone\v2\OnlineForum\src\main\java\com\FA24SE088\OnlineForum\service\ReportService.java
 D:\Capstone\v2\OnlineForum\src\main\java\com\FA24SE088\OnlineForum\service\TagService.java
 D:\Capstone\v2\OnlineForum\src\main\java\com\FA24SE088\OnlineForum\service\TopicService.java
 D:\Capstone\v2\OnlineForum\src\main\java\com\FA24SE088\OnlineForum\service\UpvoteService.java
