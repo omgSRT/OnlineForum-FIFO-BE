@@ -1,10 +1,12 @@
 package com.FA24SE088.OnlineForum.service;
 
 import com.FA24SE088.OnlineForum.dto.request.RedeemRequest;
+import com.FA24SE088.OnlineForum.dto.response.RedeemResponse;
 import com.FA24SE088.OnlineForum.entity.*;
 import com.FA24SE088.OnlineForum.enums.TransactionType;
 import com.FA24SE088.OnlineForum.exception.AppException;
 import com.FA24SE088.OnlineForum.exception.ErrorCode;
+import com.FA24SE088.OnlineForum.mapper.RedeemMapper;
 import com.FA24SE088.OnlineForum.repository.UnitOfWork.UnitOfWork;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +27,8 @@ import java.util.UUID;
 public class RedeemService {
     @Autowired
     UnitOfWork unitOfWork;
+    @Autowired
+    RedeemMapper redeemMapper;
 
     private Account findAcc(UUID id){
         return unitOfWork.getAccountRepository().findById(id)
@@ -65,6 +69,40 @@ public class RedeemService {
         redeem.setCreatedDate(new Date());
         unitOfWork.getRedeemRepository().save(redeem);
         return redeem;
+    }
+
+    public RedeemResponse create_2(RedeemRequest request){
+        Account account = findAcc(request.getAccountId());
+        Document document = findSource(request.getSourceCodeId());
+        //nếu tk đã đổi phần thưởng này r thì ko cho đổi nữa
+        account.getRedeemList().forEach(redeem -> {
+            if (redeem.getDocument().getDocumentId().equals(document.getDocumentId()))
+                throw new AppException(ErrorCode.REWARD_HAS_BEEN_TAKEN);
+        });
+
+        double result = account.getWallet().getBalance() - document.getPrice();
+        if(result >= 0){
+            Wallet wallet = account.getWallet();
+            wallet.setBalance(result);
+            unitOfWork.getWalletRepository().save(wallet);
+
+            Transaction transaction = Transaction.builder()
+                    .amount(document.getPrice())
+                    .type(TransactionType.SUBTRACT.name())
+                    .createdDate(new Date())
+                    .wallet(wallet)
+                    .build();
+            unitOfWork.getTransactionRepository().save(transaction);
+        }else {
+            throw new AppException(ErrorCode.YOU_DO_NOT_HAVE_ENOUGH_POINT);
+        }
+        Redeem redeem = new Redeem();
+        redeem.setAccount(account);
+        redeem.setDocument(document);
+        redeem.setCreatedDate(new Date());
+        unitOfWork.getRedeemRepository().save(redeem);
+
+        return redeemMapper.toResponse(redeem);
     }
 
     private Account getCurrentUser(){

@@ -15,21 +15,19 @@ import java.util.UUID;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class Feedback {
+public class Report {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    UUID feedbackId;
-    String title;
+    UUID reportId;
     String content;
-    String status;
 
     @ManyToOne
     @JoinColumn(name = "accountID")
     Account account;
 
-    @JsonIgnoreProperties(value = {"account"}, allowSetters = true)
-    @OneToMany(mappedBy = "feedback", cascade = CascadeType.ALL, orphanRemoval = true)
-    List<ImageFeedback> imageFeedbackList;
+    @ManyToOne
+    @JoinColumn(name = "postID")
+    Post post;
 
 
 }

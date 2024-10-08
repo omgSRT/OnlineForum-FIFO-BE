@@ -13,7 +13,7 @@ import com.FA24SE088.OnlineForum.entity.Section;
 import com.FA24SE088.OnlineForum.entity.Document;
 import com.FA24SE088.OnlineForum.entity.VideoSection;
 import com.FA24SE088.OnlineForum.mapper.SectionMapper;
-import com.FA24SE088.OnlineForum.mapper.SourceCodeMapper;
+import com.FA24SE088.OnlineForum.mapper.DocumentMapper;
 import com.FA24SE088.OnlineForum.repository.Repository.ImageSectionRepository;
 import com.FA24SE088.OnlineForum.repository.Repository.SectionRepository;
 import com.FA24SE088.OnlineForum.repository.Repository.DocumentRepository;
@@ -49,7 +49,7 @@ public class DocumentService {
     private VideoSectionRepository videoSectionRepository;
 
     @Autowired
-    private SourceCodeMapper sourceCodeMapper;
+    private DocumentMapper documentMapper;
 
     @Autowired
     private SectionMapper sectionMapper;
@@ -129,7 +129,7 @@ public class DocumentService {
 
     @Transactional
     public DocumentResponse createDocument(DocumentRequest request) {
-        Document document = sourceCodeMapper.toSourceCode(request);
+        Document document = documentMapper.toSourceCode(request);
 
         document = documentRepository.save(document);
 
@@ -170,14 +170,16 @@ public class DocumentService {
             sectionResponses.add(sectionResponse);
         }
 
-        DocumentResponse response = sourceCodeMapper.toResponse(document);
+        DocumentResponse response = documentMapper.toResponse(document);
         response.setSectionList(sectionResponses);
 
         return response;
     }
 
-    public List<Document> getAll(){
-        return documentRepository.findAll();
+    public List<DocumentResponse> getAll(){
+        return documentRepository.findAll().stream()
+                .map(documentMapper::toResponse)
+                .toList();
     }
 
 }

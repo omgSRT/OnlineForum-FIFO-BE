@@ -94,4 +94,15 @@ public class Account {
     @JsonIgnoreProperties(value = {"account"}, allowSetters = true)
     @OneToMany(mappedBy = "blocker", cascade = CascadeType.ALL, orphanRemoval = true)
     List<BlockedAccount> blockedAccounts;
+
+    @JsonIgnore
+    @JsonIgnoreProperties(value = {"account"}, allowSetters = true)
+    @OneToMany(mappedBy = "account", cascade = CascadeType.ALL, orphanRemoval = true)
+    List<Feedback> feedbackList;
+
+    @JsonIgnore
+    @JsonIgnoreProperties(value = {"account"}, allowSetters = true)
+    @OneToMany(mappedBy = "account", cascade = CascadeType.ALL, orphanRemoval = true)
+    List<Report> reportList;
+
 }
