@@ -29,6 +29,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
@@ -176,10 +177,20 @@ public class DocumentService {
         return response;
     }
 
-    public List<DocumentResponse> getAll(){
+    public List<DocumentResponse> getAll() {
         return documentRepository.findAll().stream()
-                .map(documentMapper::toResponse)
-                .toList();
+                .map(document -> {
+                    DocumentResponse response = documentMapper.toResponse(document);
+
+                    // Ánh xạ từng section từ Document sang SectionResponse
+                    List<SectionResponse> sectionResponses = document.getSectionList().stream()
+                            .map(documentMapper::toSectionResponse)
+                            .collect(Collectors.toList());
+                    response.setSectionList(sectionResponses);
+
+                    return response;
+                })
+                .collect(Collectors.toList());
     }
 
 }
