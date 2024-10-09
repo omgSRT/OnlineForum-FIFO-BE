@@ -30,6 +30,7 @@ public class Account {
     String gender;
     String address;
     String avatar;
+    String coverImage;
     Date createdDate;
     String status;
 
@@ -107,6 +108,12 @@ public class Account {
     @JsonIgnoreProperties(value = {"account"}, allowSetters = true)
     @OneToMany(mappedBy = "account", cascade = CascadeType.ALL, orphanRemoval = true)
     List<Report> reportList;
+
+//    @OneToMany(mappedBy = "reporter")
+//    private List<ReportAccount> reportsFiled;
+
+    @OneToMany(mappedBy = "reported", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ReportAccount> reportsReceived;
 
 
 }
