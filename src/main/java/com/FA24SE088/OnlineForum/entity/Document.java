@@ -28,4 +28,8 @@ public class Document {
     @JsonIgnoreProperties(value = {"reward"}, allowSetters = true)
     @OneToMany(mappedBy = "document", cascade = CascadeType.ALL, orphanRemoval = true)
     List<Redeem> redeemList;
+
+    @JsonIgnoreProperties(value = { "document" }, allowSetters = true)
+    @OneToMany(mappedBy = "document", cascade = CascadeType.ALL, orphanRemoval = true)
+    List<Section> sectionList;
 }
