@@ -11,14 +11,14 @@ import org.springframework.stereotype.Component;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2024-10-08T22:26:56+0700",
+    date = "2024-10-09T15:15:27+0700",
     comments = "version: 1.5.5.Final, compiler: javac, environment: Java 17.0.7 (Oracle Corporation)"
 )
 @Component
 public class ReportMapperImpl implements ReportMapper {
 
     @Override
-    public Report toFeedback(ReportRequest request) {
+    public Report toReport(ReportRequest request) {
         if ( request == null ) {
             return null;
         }
@@ -31,26 +31,26 @@ public class ReportMapperImpl implements ReportMapper {
     }
 
     @Override
-    public ReportResponse toFeedbackResponse(Report feedback) {
-        if ( feedback == null ) {
+    public ReportResponse toReportResponse(Report report) {
+        if ( report == null ) {
             return null;
         }
 
         ReportResponse.ReportResponseBuilder reportResponse = ReportResponse.builder();
 
-        reportResponse.postId( feedbackPostPostId( feedback ) );
-        reportResponse.postTitle( feedbackPostTitle( feedback ) );
-        reportResponse.postContent( feedbackPostContent( feedback ) );
-        reportResponse.postCreatedDate( feedbackPostCreatedDate( feedback ) );
-        reportResponse.postLastModifiedDate( feedbackPostLastModifiedDate( feedback ) );
-        reportResponse.postStatus( feedbackPostStatus( feedback ) );
-        reportResponse.content( feedback.getContent() );
-        reportResponse.status( feedback.getStatus() );
+        reportResponse.postId( reportPostPostId( report ) );
+        reportResponse.postTitle( reportPostTitle( report ) );
+        reportResponse.postContent( reportPostContent( report ) );
+        reportResponse.postCreatedDate( reportPostCreatedDate( report ) );
+        reportResponse.postLastModifiedDate( reportPostLastModifiedDate( report ) );
+        reportResponse.postStatus( reportPostStatus( report ) );
+        reportResponse.content( report.getContent() );
+        reportResponse.status( report.getStatus() );
 
         return reportResponse.build();
     }
 
-    private UUID feedbackPostPostId(Report report) {
+    private UUID reportPostPostId(Report report) {
         if ( report == null ) {
             return null;
         }
@@ -65,7 +65,7 @@ public class ReportMapperImpl implements ReportMapper {
         return postId;
     }
 
-    private String feedbackPostTitle(Report report) {
+    private String reportPostTitle(Report report) {
         if ( report == null ) {
             return null;
         }
@@ -80,7 +80,7 @@ public class ReportMapperImpl implements ReportMapper {
         return title;
     }
 
-    private String feedbackPostContent(Report report) {
+    private String reportPostContent(Report report) {
         if ( report == null ) {
             return null;
         }
@@ -95,7 +95,7 @@ public class ReportMapperImpl implements ReportMapper {
         return content;
     }
 
-    private Date feedbackPostCreatedDate(Report report) {
+    private Date reportPostCreatedDate(Report report) {
         if ( report == null ) {
             return null;
         }
@@ -110,7 +110,7 @@ public class ReportMapperImpl implements ReportMapper {
         return createdDate;
     }
 
-    private Date feedbackPostLastModifiedDate(Report report) {
+    private Date reportPostLastModifiedDate(Report report) {
         if ( report == null ) {
             return null;
         }
@@ -125,7 +125,7 @@ public class ReportMapperImpl implements ReportMapper {
         return lastModifiedDate;
     }
 
-    private String feedbackPostStatus(Report report) {
+    private String reportPostStatus(Report report) {
         if ( report == null ) {
             return null;
         }
