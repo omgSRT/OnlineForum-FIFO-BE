@@ -5,7 +5,6 @@ import com.FA24SE088.OnlineForum.dto.request.PostCreateRequest;
 import com.FA24SE088.OnlineForum.dto.request.PostUpdateRequest;
 import com.FA24SE088.OnlineForum.dto.response.PostGetByIdResponse;
 import com.FA24SE088.OnlineForum.dto.response.PostResponse;
-import com.FA24SE088.OnlineForum.dto.response.TopicNoCategoryResponse;
 import com.FA24SE088.OnlineForum.entity.*;
 import com.FA24SE088.OnlineForum.enums.PostStatus;
 import com.FA24SE088.OnlineForum.enums.TransactionType;
@@ -20,13 +19,11 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
-import org.hibernate.Hibernate;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -85,10 +82,12 @@ public class PostService {
                             .thenCompose(v -> {
                                 var point = pointFuture.join().get(0);
                                 var wallet = walletFuture.join();
+                                var dailyPoint = dailyPointFuture.join();
 
                                 return createTransaction(point.getPointPerPost(), TransactionType.CREDIT, wallet)
                                         .thenCompose(transaction -> {
-                                            savedPost.setImageList(imageFuture.join());  // Set image list after creation
+                                            savedPost.setImageList(imageFuture.join());
+                                            savedPost.setDailyPoint(dailyPoint);
                                             return CompletableFuture.completedFuture(unitOfWork.getPostRepository().save(savedPost));
                                         });
                             });
@@ -99,15 +98,19 @@ public class PostService {
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
     public CompletableFuture<List<PostResponse>> getAllPosts(int page, int perPage,
                                                              UUID accountId,
-                                                             String topicName,
-                                                             String tagName,
+                                                             UUID topicId,
+                                                             UUID tagId,
                                                              PostStatus status) {
         var postListFuture = findAllPosts();
         var accountFuture = accountId != null
                             ? findAccountById(accountId)
                             : CompletableFuture.completedFuture(null);
-        var topicFuture = unitOfWork.getTopicRepository().findByName(topicName);
-        var tagFuture = unitOfWork.getTagRepository().findByName(tagName);
+        var topicFuture = topicId != null
+                ? findTopicById(topicId)
+                : CompletableFuture.completedFuture(null);
+        var tagFuture = tagId != null
+                ? findTagById(tagId)
+                : CompletableFuture.completedFuture(null);
 
         return CompletableFuture.allOf(postListFuture, accountFuture, topicFuture, tagFuture).thenCompose(v -> {
             var postList = postListFuture.join();
@@ -192,7 +195,6 @@ public class PostService {
                 })
                 .thenApply(postMapper::toPostResponse);
     }
-
     @Async("AsyncTaskExecutor")
     private CompletableFuture<List<Image>> createImages(PostCreateRequest request, Post savedPost){
         if (request.getImageUrlList() == null || request.getImageUrlList().isEmpty()) {
@@ -246,7 +248,7 @@ public class PostService {
         });
     }
     @Async("AsyncTaskExecutor")
-    private CompletableFuture<DailyPoint> createDailyPointLog(UUID accountId, Post savedPost){
+    private CompletableFuture<DailyPoint> createDailyPointLog(UUID accountId, Post savedPost) {
         var accountFuture = findAccountById(accountId);
         var totalPointFuture = countUserTotalPointAtAGivenDate(accountId, new Date());
         var pointFuture = getPoint();
@@ -283,7 +285,8 @@ public class PostService {
                         }
 
                         return CompletableFuture.completedFuture(
-                                unitOfWork.getDailyPointRepository().save(newDailyPoint));
+                                unitOfWork.getDailyPointRepository().save(newDailyPoint)
+                        );
                     });
                 });
     }
