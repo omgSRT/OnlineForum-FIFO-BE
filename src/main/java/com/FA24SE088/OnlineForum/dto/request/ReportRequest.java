@@ -11,7 +11,5 @@ import java.util.UUID;
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class ReportRequest {
-    String title;
-    String content;
     UUID postId;
 }

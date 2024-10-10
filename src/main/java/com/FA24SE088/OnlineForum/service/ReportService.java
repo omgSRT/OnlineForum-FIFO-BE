@@ -4,7 +4,7 @@ import com.FA24SE088.OnlineForum.dto.request.ReportRequest;
 import com.FA24SE088.OnlineForum.dto.response.ReportResponse;
 import com.FA24SE088.OnlineForum.entity.Post;
 import com.FA24SE088.OnlineForum.entity.Report;
-import com.FA24SE088.OnlineForum.enums.ReportStatus;
+import com.FA24SE088.OnlineForum.enums.ReportReason;
 import com.FA24SE088.OnlineForum.exception.AppException;
 import com.FA24SE088.OnlineForum.exception.ErrorCode;
 import com.FA24SE088.OnlineForum.mapper.ReportMapper;
@@ -33,32 +33,17 @@ public class ReportService {
 
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
     @Async("AsyncTaskExecutor")
-    public CompletableFuture<ReportResponse> createReport(ReportRequest request){
+    public CompletableFuture<ReportResponse> createReport(ReportRequest request, ReportReason reportReason){
         var postFuture = findPostById(request.getPostId());
 
         return postFuture.thenCompose(post -> {
             Report newReport = reportMapper.toReport(request);
-            newReport.setStatus(ReportStatus.PENDING.name());
+            newReport.setTitle(reportReason.getTitle());
+            newReport.setDescription(reportReason.getDescription());
             newReport.setPost(post);
 
             return CompletableFuture.completedFuture(unitOfWork.getReportRepository().save(newReport));
         })
-                .thenApply(reportMapper::toReportResponse);
-    }
-    @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
-    @Async("AsyncTaskExecutor")
-    public CompletableFuture<ReportResponse> updateReportStatus(UUID reportId, ReportStatus status){
-        var reportFuture = findReportById(reportId);
-
-        return reportFuture.thenCompose(report -> {
-                    if(report.getStatus().equalsIgnoreCase(status.name())){
-                        throw new AppException(ErrorCode.FEEDBACK_ALREADY_GOT_STATUS);
-                    }
-
-                    report.setStatus(status.name());
-
-                    return CompletableFuture.completedFuture(unitOfWork.getReportRepository().save(report));
-                })
                 .thenApply(reportMapper::toReportResponse);
     }
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
