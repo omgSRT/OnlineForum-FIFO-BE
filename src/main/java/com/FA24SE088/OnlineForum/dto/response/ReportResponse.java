@@ -14,8 +14,7 @@ import java.util.UUID;
 public class ReportResponse {
     UUID feedbackId;
     String title;
-    String content;
-    String status;
+    String description;
     UUID postId;
     String postTitle;
     String postContent;

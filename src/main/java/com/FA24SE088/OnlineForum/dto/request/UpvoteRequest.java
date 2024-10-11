@@ -10,6 +10,6 @@ import java.util.UUID;
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class ReportRequest {
+public class UpvoteRequest {
     UUID postId;
 }

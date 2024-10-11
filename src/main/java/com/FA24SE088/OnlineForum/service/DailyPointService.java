@@ -38,6 +38,7 @@ public class DailyPointService {
     final PaginationUtils paginationUtils;
 
     @Async("AsyncTaskExecutor")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
     public CompletableFuture<DailyPointResponse> createDailyPoint(DailyPointRequest request){
         var accountFuture = findAccountById(request.getAccountId());
         var postFuture = findPostById(request.getPostId());
@@ -110,8 +111,8 @@ public class DailyPointService {
             }
 
             var list = unitOfWork.getDailyPointRepository().findAll().stream()
-                    .filter(dailyPoint -> !dailyPoint.getAccount().equals(account))
-                    .filter(dailyPoint -> date == null || dailyPoint.getCreatedDate().compareTo(date) == 0)
+                    .filter(dailyPoint -> dailyPoint.getAccount().equals(account))
+                    //.filter(dailyPoint -> date == null || dailyPoint.getCreatedDate().compareTo(date) != 0)
                     .map(dailyPointMapper::toDailyPointResponse)
                     .toList();
 

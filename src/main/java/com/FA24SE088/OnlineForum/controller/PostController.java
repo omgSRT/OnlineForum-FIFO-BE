@@ -42,10 +42,10 @@ public class PostController {
     public ApiResponse<List<PostResponse>> getAllPosts(@RequestParam(defaultValue = "1") int page,
                                                         @RequestParam(defaultValue = "10") int perPage,
                                                         @RequestParam(required = false) UUID accountId,
-                                                        @RequestParam(required = false) String topicName,
-                                                        @RequestParam(required = false) String tagName,
+                                                        @RequestParam(required = false) UUID topicId,
+                                                        @RequestParam(required = false) UUID tagId,
                                                         @RequestParam(required = false) PostStatus status){
-        return postService.getAllPosts(page, perPage, accountId, topicName, tagName, status).thenApply(postResponses ->
+        return postService.getAllPosts(page, perPage, accountId, topicId, tagId, status).thenApply(postResponses ->
                 ApiResponse.<List<PostResponse>>builder()
                         .entity(postResponses)
                         .build()
