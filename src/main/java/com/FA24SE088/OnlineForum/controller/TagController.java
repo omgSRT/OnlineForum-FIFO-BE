@@ -16,7 +16,7 @@ import java.util.UUID;
 
 @RequiredArgsConstructor
 @RestController
-@RequestMapping("/report")
+@RequestMapping("/tag")
 @Slf4j
 public class TagController {
     final TagService tagService;

@@ -1,6 +1,7 @@
 package com.FA24SE088.OnlineForum.controller;
 
 import com.FA24SE088.OnlineForum.dto.request.CommentCreateRequest;
+import com.FA24SE088.OnlineForum.dto.request.CommentGetAllResponse;
 import com.FA24SE088.OnlineForum.dto.request.CommentUpdateRequest;
 import com.FA24SE088.OnlineForum.dto.request.ReplyCreateRequest;
 import com.FA24SE088.OnlineForum.dto.response.ApiResponse;
@@ -47,11 +48,11 @@ public class CommentController {
     }
     @Operation(summary = "Get All Comments")
     @GetMapping(path = "/getall")
-    public ApiResponse<List<CommentResponse>> getAllComments(@RequestParam(defaultValue = "1") int page,
-                                                             @RequestParam(defaultValue = "10") int perPage){
+    public ApiResponse<List<CommentGetAllResponse>> getAllComments(@RequestParam(defaultValue = "1") int page,
+                                                                   @RequestParam(defaultValue = "10") int perPage){
         return commentService.getAllComments(page, perPage).thenApply(
                 commentResponses ->
-                        ApiResponse.<List<CommentResponse>>builder()
+                        ApiResponse.<List<CommentGetAllResponse>>builder()
                                 .entity(commentResponses)
                                 .build()
         ).join();

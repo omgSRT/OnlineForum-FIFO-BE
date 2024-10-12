@@ -1,20 +1,19 @@
 package com.FA24SE088.OnlineForum.mapper;
 
 import com.FA24SE088.OnlineForum.dto.request.CommentCreateRequest;
+import com.FA24SE088.OnlineForum.dto.request.CommentGetAllResponse;
 import com.FA24SE088.OnlineForum.dto.request.CommentUpdateRequest;
 import com.FA24SE088.OnlineForum.dto.request.ReplyCreateRequest;
 import com.FA24SE088.OnlineForum.dto.response.CommentNoPostResponse;
 import com.FA24SE088.OnlineForum.dto.response.CommentResponse;
 import com.FA24SE088.OnlineForum.dto.response.ReplyCreateResponse;
 import com.FA24SE088.OnlineForum.entity.Comment;
-import java.util.ArrayList;
-import java.util.List;
 import javax.annotation.processing.Generated;
 import org.springframework.stereotype.Component;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2024-10-10T14:30:30+0700",
+    date = "2024-10-12T13:17:23+0700",
     comments = "version: 1.5.5.Final, compiler: javac, environment: Java 17.0.12 (Oracle Corporation)"
 )
 @Component
@@ -90,12 +89,26 @@ public class CommentMapperImpl implements CommentMapper {
         commentNoPostResponse.commentId( comment.getCommentId() );
         commentNoPostResponse.content( comment.getContent() );
         commentNoPostResponse.account( comment.getAccount() );
-        List<Comment> list = comment.getReplies();
-        if ( list != null ) {
-            commentNoPostResponse.replies( new ArrayList<Comment>( list ) );
-        }
+        commentNoPostResponse.replies( toCommentNoPostResponseList( comment.getReplies() ) );
 
         return commentNoPostResponse.build();
+    }
+
+    @Override
+    public CommentGetAllResponse toCommentGetAllResponse(Comment comment) {
+        if ( comment == null ) {
+            return null;
+        }
+
+        CommentGetAllResponse.CommentGetAllResponseBuilder commentGetAllResponse = CommentGetAllResponse.builder();
+
+        commentGetAllResponse.commentId( comment.getCommentId() );
+        commentGetAllResponse.content( comment.getContent() );
+        commentGetAllResponse.account( comment.getAccount() );
+        commentGetAllResponse.post( comment.getPost() );
+        commentGetAllResponse.parentComment( comment.getParentComment() );
+
+        return commentGetAllResponse.build();
     }
 
     @Override
