@@ -4,7 +4,7 @@ C:\Forum\OnlineForum\src\main\java\com\FA24SE088\OnlineForum\configuration\CorsC
 C:\Forum\OnlineForum\src\main\java\com\FA24SE088\OnlineForum\configuration\CustomJwtDecoder.java
 C:\Forum\OnlineForum\src\main\java\com\FA24SE088\OnlineForum\configuration\JwtAuthenticationEntryPoint.java
 C:\Forum\OnlineForum\src\main\java\com\FA24SE088\OnlineForum\configuration\SecurityConfiguration.java
-C:\Forum\OnlineForum\src\main\java\com\FA24SE088\OnlineForum\configuration\SwaggerConfig.java
+C:\Forum\OnlineForum\src\main\java\com\FA24SE088\OnlineForum\configuration\SwaggerConfiguration.java
 C:\Forum\OnlineForum\src\main\java\com\FA24SE088\OnlineForum\configuration\WebSocketConfig.java
 C:\Forum\OnlineForum\src\main\java\com\FA24SE088\OnlineForum\controller\AccountController.java
 C:\Forum\OnlineForum\src\main\java\com\FA24SE088\OnlineForum\controller\AuthenticationController.java
@@ -32,6 +32,7 @@ C:\Forum\OnlineForum\src\main\java\com\FA24SE088\OnlineForum\dto\request\Categor
 C:\Forum\OnlineForum\src\main\java\com\FA24SE088\OnlineForum\dto\request\CategoryUpdateAccountRequest.java
 C:\Forum\OnlineForum\src\main\java\com\FA24SE088\OnlineForum\dto\request\CategoryUpdateRequest.java
 C:\Forum\OnlineForum\src\main\java\com\FA24SE088\OnlineForum\dto\request\CommentCreateRequest.java
+C:\Forum\OnlineForum\src\main\java\com\FA24SE088\OnlineForum\dto\request\CommentGetAllResponse.java
 C:\Forum\OnlineForum\src\main\java\com\FA24SE088\OnlineForum\dto\request\CommentUpdateRequest.java
 C:\Forum\OnlineForum\src\main\java\com\FA24SE088\OnlineForum\dto\request\DailyPointRequest.java
 C:\Forum\OnlineForum\src\main\java\com\FA24SE088\OnlineForum\dto\request\DocumentRequest.java

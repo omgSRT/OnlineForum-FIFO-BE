@@ -23,6 +23,7 @@ public class Section {
     UUID sectionCodeId;
     Date createdDate;
     String linkGit;
+    String content;
 
     @ManyToOne
     @JoinColumn(name = "sectionId")
