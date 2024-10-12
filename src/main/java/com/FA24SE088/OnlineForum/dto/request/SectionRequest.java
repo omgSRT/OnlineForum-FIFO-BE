@@ -13,6 +13,7 @@ import java.util.List;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class SectionRequest {
     String linkGit; // Chỉ cần thông tin cần thiết
+    String content;
     List<ImageSectionRequest> imageSectionList;
     List<VideoSectionRequest> videoSectionList;
 }
