@@ -18,6 +18,7 @@ import com.FA24SE088.OnlineForum.repository.Repository.ImageSectionRepository;
 import com.FA24SE088.OnlineForum.repository.Repository.SectionRepository;
 import com.FA24SE088.OnlineForum.repository.Repository.DocumentRepository;
 import com.FA24SE088.OnlineForum.repository.Repository.VideoSectionRepository;
+import com.FA24SE088.OnlineForum.repository.UnitOfWork.UnitOfWork;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -38,22 +39,24 @@ import java.util.stream.Collectors;
 public class DocumentService {
 
     @Autowired
-    private DocumentRepository documentRepository;
+    DocumentRepository documentRepository;
 
     @Autowired
-    private SectionRepository sectionRepository;
+    SectionRepository sectionRepository;
 
     @Autowired
-    private ImageSectionRepository imageSectionRepository;
+    ImageSectionRepository imageSectionRepository;
 
     @Autowired
-    private VideoSectionRepository videoSectionRepository;
+    VideoSectionRepository videoSectionRepository;
+    @Autowired
+    UnitOfWork unitOfWork;
 
     @Autowired
-    private DocumentMapper documentMapper;
+    DocumentMapper documentMapper;
 
     @Autowired
-    private SectionMapper sectionMapper;
+    SectionMapper sectionMapper;
 
     @Transactional
     public DocumentResponse createSourceCode(DocumentRequest request) {
@@ -132,8 +135,8 @@ public class DocumentService {
     public DocumentResponse createDocument(DocumentRequest request) {
         Document document = documentMapper.toSourceCode(request);
 
-        document = documentRepository.save(document);
-
+//        document = documentRepository.save(document);
+        document = unitOfWork.getDocumentRepository().save(document);
         List<SectionResponse> sectionResponses = new ArrayList<>();
 
         for (SectionRequest sectionRequest : request.getSectionList()) {
@@ -141,7 +144,9 @@ public class DocumentService {
             section.setCreatedDate(new Date());
             section.setDocument(document);
 
-            section = sectionRepository.save(section);
+//            section = sectionRepository.save(section);
+            section = unitOfWork.getSectionRepository().save(section);
+
 
             List<ImageSectionResponse> imageResponses = new ArrayList<>();
             for (ImageSectionRequest imageRequest : sectionRequest.getImageSectionList()) {
@@ -149,7 +154,9 @@ public class DocumentService {
                 imageSection.setUrl(imageRequest.getUrl());
                 imageSection.setSection(section);
 
-                imageSection = imageSectionRepository.save(imageSection);
+//                imageSection = imageSectionRepository.save(imageSection);
+                imageSection = unitOfWork.getImageSectionRepository().save(imageSection);
+
                 imageResponses.add(new ImageSectionResponse(imageSection.getUrl()));
             }
 
@@ -159,7 +166,9 @@ public class DocumentService {
                 videoSection.setUrl(videoRequest.getUrl());
                 videoSection.setSection(section);
 
-                videoSection = videoSectionRepository.save(videoSection);
+//                videoSection = videoSectionRepository.save(videoSection);
+                videoSection = unitOfWork.getVideoSectionRepository().save(videoSection);
+
                 videoResponses.add(new VideoSectionResponse(videoSection.getUrl()));
             }
 
@@ -181,8 +190,6 @@ public class DocumentService {
         return documentRepository.findAll().stream()
                 .map(document -> {
                     DocumentResponse response = documentMapper.toResponse(document);
-
-                    // Ánh xạ từng section từ Document sang SectionResponse
                     List<SectionResponse> sectionResponses = document.getSectionList().stream()
                             .map(documentMapper::toSectionResponse)
                             .collect(Collectors.toList());

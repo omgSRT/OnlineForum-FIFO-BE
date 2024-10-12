@@ -24,6 +24,7 @@ public class Notification {
     Date createdDate;
     String type;
 
+
     @ManyToOne
     @JoinColumn(name = "accountId")
     Account account;
