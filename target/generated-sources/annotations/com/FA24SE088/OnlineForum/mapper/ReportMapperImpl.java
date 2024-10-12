@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2024-10-10T14:30:31+0700",
+    date = "2024-10-12T12:47:03+0700",
     comments = "version: 1.5.5.Final, compiler: javac, environment: Java 17.0.12 (Oracle Corporation)"
 )
 @Component
@@ -24,8 +24,6 @@ public class ReportMapperImpl implements ReportMapper {
         }
 
         Report.ReportBuilder report = Report.builder();
-
-        report.content( request.getContent() );
 
         return report.build();
     }
@@ -44,8 +42,8 @@ public class ReportMapperImpl implements ReportMapper {
         reportResponse.postCreatedDate( reportPostCreatedDate( report ) );
         reportResponse.postLastModifiedDate( reportPostLastModifiedDate( report ) );
         reportResponse.postStatus( reportPostStatus( report ) );
-        reportResponse.content( report.getContent() );
-        reportResponse.status( report.getStatus() );
+        reportResponse.title( report.getTitle() );
+        reportResponse.description( report.getDescription() );
 
         return reportResponse.build();
     }

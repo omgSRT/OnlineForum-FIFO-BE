@@ -24,17 +24,18 @@ public class Comment {
 
     @ManyToOne
     @JoinColumn(name = "accountId")
+    @JsonIgnoreProperties(value = { "password", "email", "coverImage", "bio", "gender", "address", "createdDate", "status", "role" })
     Account account;
 
     @ManyToOne
     @JoinColumn(name = "postId")
     Post post;
 
-    @ManyToOne(cascade=CascadeType.ALL)
+    @ManyToOne(cascade=CascadeType.MERGE)
     @JoinColumn(name="parentCommentId")
     Comment parentComment;
 
-    @OneToMany(mappedBy="parentComment", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy="parentComment", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     @JsonBackReference
     @JsonIgnoreProperties({ "parentComment", "post" })
     List<Comment> replies;

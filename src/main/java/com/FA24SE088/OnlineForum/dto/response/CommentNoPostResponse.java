@@ -17,7 +17,8 @@ import java.util.UUID;
 public class CommentNoPostResponse {
     UUID commentId;
     String content;
-    @JsonIgnoreProperties(value = { "password", "email", "bio", "gender", "address", "createdDate", "status", "role" })
+    @JsonIgnoreProperties(value = { "password", "email", "coverImage", "bio", "gender", "address", "createdDate", "status", "role" })
     Account account;
-    List<Comment> replies;
+    @JsonIgnoreProperties(value = { "post", "parentComment"})
+    List<CommentNoPostResponse> replies;
 }
