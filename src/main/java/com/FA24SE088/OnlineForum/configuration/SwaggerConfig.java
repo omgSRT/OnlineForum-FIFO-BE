@@ -31,8 +31,7 @@ public class SwaggerConfig implements WebMvcConfigurer {
                                                 .bearerFormat("JWT")
                                 )
                 )
-                .info(info())
-                .servers(servers());
+                .info(info());
     }
 
     private Info info() {
@@ -44,13 +43,5 @@ public class SwaggerConfig implements WebMvcConfigurer {
         license.setUrl("https://www.apache.org/licenses/LICENSE-2.0.html");
         info.setLicense(license);
         return info;
-    }
-
-    private List<Server> servers() {
-        return Arrays.asList(
-                new Server().url("http://localhost:8080").description("Local server"),
-                new Server().url("https://api.yourdomain.com").description("Production server"),
-                new Server().url("https://staging.yourdomain.com").description("Staging server")
-        );
     }
 }
