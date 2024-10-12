@@ -173,7 +173,7 @@ public class PostService {
             if(balance < 0) balance = 0;
             wallet.setBalance(balance);
 
-            post.setStatus(PostStatus.DELETED.name());
+            post.setStatus(PostStatus.HIDDEN.name());
 
             unitOfWork.getDailyPointRepository().save(dailyPoint);
             unitOfWork.getWalletRepository().save(wallet);
