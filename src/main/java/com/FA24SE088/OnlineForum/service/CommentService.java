@@ -1,6 +1,7 @@
 package com.FA24SE088.OnlineForum.service;
 
 import com.FA24SE088.OnlineForum.dto.request.CommentCreateRequest;
+import com.FA24SE088.OnlineForum.dto.request.CommentGetAllResponse;
 import com.FA24SE088.OnlineForum.dto.request.CommentUpdateRequest;
 import com.FA24SE088.OnlineForum.dto.request.ReplyCreateRequest;
 import com.FA24SE088.OnlineForum.dto.response.CommentNoPostResponse;
@@ -18,11 +19,13 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.Hibernate;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -59,6 +62,7 @@ public class CommentService {
         })
                 .thenApply(commentMapper::toCommentResponse);
     }
+    @Transactional
     @Async("AsyncTaskExecutor")
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
     public CompletableFuture<ReplyCreateResponse> createReply(ReplyCreateRequest request){
@@ -84,10 +88,10 @@ public class CommentService {
     }
     @Async("AsyncTaskExecutor")
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
-    public CompletableFuture<List<CommentResponse>> getAllComments(int page, int perPage){
+    public CompletableFuture<List<CommentGetAllResponse>> getAllComments(int page, int perPage){
         return CompletableFuture.supplyAsync(() -> {
             var list = unitOfWork.getCommentRepository().findAll().stream()
-                    .map(commentMapper::toCommentResponse)
+                    .map(commentMapper::toCommentGetAllResponse)
                     .toList();
             return paginationUtils.convertListToPage(page, perPage, list);
         });
@@ -98,8 +102,10 @@ public class CommentService {
         var postFuture = findPostById(postId);
 
         return postFuture.thenApply(post -> {
-            var list = unitOfWork.getCommentRepository().findAllByPostWithReplies(post).stream()
-                    .map(commentMapper::toCommentNoPostResponse)
+            var commentList = unitOfWork.getCommentRepository().findAllByPostWithReplies(post);
+
+            var list = commentList.stream()
+                    .map(commentMapper::toCommentNoPostResponseWithReplies)
                     .toList();
             return paginationUtils.convertListToPage(page, perPage, list);
         });
@@ -198,6 +204,7 @@ public class CommentService {
                         .orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND))
         );
     }
+    @Transactional
     @Async("AsyncTaskExecutor")
     private CompletableFuture<Comment> findCommentById(UUID commentId) {
         return CompletableFuture.supplyAsync(() ->
