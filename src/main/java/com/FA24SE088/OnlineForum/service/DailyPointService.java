@@ -1,10 +1,7 @@
 package com.FA24SE088.OnlineForum.service;
 
 import com.FA24SE088.OnlineForum.dto.request.DailyPointRequest;
-import com.FA24SE088.OnlineForum.dto.request.PointRequest;
 import com.FA24SE088.OnlineForum.dto.response.DailyPointResponse;
-import com.FA24SE088.OnlineForum.dto.response.PointResponse;
-import com.FA24SE088.OnlineForum.dto.response.TagResponse;
 import com.FA24SE088.OnlineForum.entity.Account;
 import com.FA24SE088.OnlineForum.entity.DailyPoint;
 import com.FA24SE088.OnlineForum.entity.Point;
@@ -22,7 +19,9 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
-import java.time.OffsetDateTime;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
@@ -102,17 +101,40 @@ public class DailyPointService {
         return CompletableFuture.allOf(accountFuture).thenCompose(v -> {
             var account = accountFuture.join();
 
-            Date date;
-            if (givenDate != null && !givenDate.isEmpty()) {
-                OffsetDateTime offsetDateTime = OffsetDateTime.parse(givenDate);
-                date = Date.from(offsetDateTime.toInstant());
-            } else {
-                date = null;
+            SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd");
+            Date parseDate;
+            try {
+                parseDate = givenDate == null
+                    ? null
+                    : simpleDateFormat.parse(givenDate);
+            } catch (ParseException e) {
+                throw new RuntimeException(e);
             }
 
+            Date finalParseDate = parseDate;
             var list = unitOfWork.getDailyPointRepository().findAll().stream()
-                    .filter(dailyPoint -> dailyPoint.getAccount().equals(account))
-                    //.filter(dailyPoint -> date == null || dailyPoint.getCreatedDate().compareTo(date) != 0)
+                    .filter(dailyPoint -> account == null || dailyPoint.getAccount().equals(account))
+                    .filter(dailyPoint -> {
+                        Calendar createdDateCal = Calendar.getInstance();
+                        createdDateCal.setTime(dailyPoint.getCreatedDate());
+                        createdDateCal.set(Calendar.HOUR_OF_DAY, 0);
+                        createdDateCal.set(Calendar.MINUTE, 0);
+                        createdDateCal.set(Calendar.SECOND, 0);
+                        createdDateCal.set(Calendar.MILLISECOND, 0);
+
+                        if(finalParseDate == null){
+                            return true;
+                        }
+
+                        Calendar parsedDateCal = Calendar.getInstance();
+                        parsedDateCal.setTime(finalParseDate);
+                        parsedDateCal.set(Calendar.HOUR_OF_DAY, 0);
+                        parsedDateCal.set(Calendar.MINUTE, 0);
+                        parsedDateCal.set(Calendar.SECOND, 0);
+                        parsedDateCal.set(Calendar.MILLISECOND, 0);
+
+                        return createdDateCal.getTime().equals(parsedDateCal.getTime());
+                    })
                     .map(dailyPointMapper::toDailyPointResponse)
                     .toList();
 
