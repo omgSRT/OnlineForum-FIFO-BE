@@ -48,8 +48,8 @@ public class SwaggerConfig implements WebMvcConfigurer {
 
     private List<Server> servers() {
         return Arrays.asList(
-                new Server().url("http://localhost:8080").description("Local server"),
-                new Server().url("http://103.162.14.151:8080").description("Online Production server")
+                new Server().url("http://103.162.14.151:8080").description("Online Production server"),
+                new Server().url("http://localhost:8080").description("Local server")
         );
     }
 }
