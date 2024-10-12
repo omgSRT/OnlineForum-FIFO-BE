@@ -75,7 +75,7 @@ public class PostController {
     }
 
     @Operation(summary = "Delete Post", description = "Delete Post By Changing Status")
-    @PutMapping(path = "/update/{postId}/status/deleted")
+    @PutMapping(path = "/update/{postId}/status/hidden")
     public ApiResponse<PostResponse> deletePostByChangingStatusById(@PathVariable UUID postId){
         return postService.deleteByChangingPostStatusById(postId).thenApply(postResponse ->
                 ApiResponse.<PostResponse>builder()
