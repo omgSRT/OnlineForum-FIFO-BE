@@ -2,6 +2,7 @@ package com.FA24SE088.OnlineForum.dto.response;
 
 import com.FA24SE088.OnlineForum.entity.Account;
 import com.FA24SE088.OnlineForum.entity.Image;
+import com.FA24SE088.OnlineForum.entity.Tag;
 import com.FA24SE088.OnlineForum.entity.Topic;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.*;
@@ -27,6 +28,7 @@ public class PostResponse {
     Account account;
     @JsonIgnoreProperties(value = { "category.account" })
     Topic topic;
+    Tag tag;
     @JsonIgnoreProperties(value = { "post" })
     List<ImageResponse> imageList;
 }
