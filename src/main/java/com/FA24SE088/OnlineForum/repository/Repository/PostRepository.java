@@ -16,4 +16,7 @@ import java.util.concurrent.CompletableFuture;
 public interface PostRepository extends JpaRepository<Post, UUID> {
     @Async("AsyncTaskExecutor")
     CompletableFuture<List<Post>> findByStatus(String status);
+
+    @Async("AsyncTaskExecutor")
+    CompletableFuture<List<Post>> findByAccount(Account account);
 }

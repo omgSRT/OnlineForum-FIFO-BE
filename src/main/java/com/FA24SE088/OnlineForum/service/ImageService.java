@@ -3,6 +3,7 @@ package com.FA24SE088.OnlineForum.service;
 import com.FA24SE088.OnlineForum.dto.request.ImageCreateRequest;
 import com.FA24SE088.OnlineForum.dto.response.ImageResponse;
 import com.FA24SE088.OnlineForum.dto.response.TopicNoCategoryResponse;
+import com.FA24SE088.OnlineForum.entity.Account;
 import com.FA24SE088.OnlineForum.entity.Image;
 import com.FA24SE088.OnlineForum.entity.Post;
 import com.FA24SE088.OnlineForum.exception.AppException;
@@ -16,6 +17,8 @@ import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -74,6 +77,26 @@ public class ImageService {
     }
     @Async("AsyncTaskExecutor")
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
+    public CompletableFuture<List<ImageResponse>> getAllImagesByAccount(int page, int perPage) {
+        var username = getUsernameFromJwt();
+        var accountFuture = findAccountByUsername(username);
+
+        return accountFuture.thenCompose(account ->
+            unitOfWork.getPostRepository().findByAccount(account)
+                    .thenCompose(postList -> {
+                        var list = postList.stream()
+                                .flatMap(post -> post.getImageList().stream())
+                                .map(imageMapper::toImageResponse)
+                                .toList();
+
+                        var paginatedList = paginationUtils.convertListToPage(page, perPage, list);
+
+                        return CompletableFuture.completedFuture(paginatedList);
+                    })
+        );
+    }
+    @Async("AsyncTaskExecutor")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
     public CompletableFuture<ImageResponse> getImageById(UUID imageId){
         var imageFuture = findImageById(imageId);
 
@@ -100,10 +123,32 @@ public class ImageService {
         );
     }
     @Async("AsyncTaskExecutor")
+    private CompletableFuture<Account> findAccountById(UUID accountId) {
+        return CompletableFuture.supplyAsync(() ->
+                unitOfWork.getAccountRepository().findById(accountId)
+                        .orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND))
+        );
+    }
+    @Async("AsyncTaskExecutor")
     private CompletableFuture<Image> findImageById(UUID imageId) {
         return CompletableFuture.supplyAsync(() ->
                 unitOfWork.getImageRepository().findById(imageId)
                         .orElseThrow(() -> new AppException(ErrorCode.IMAGE_NOT_FOUND))
+        );
+    }
+    @Async("AsyncTaskExecutor")
+    public String getUsernameFromJwt() {
+        var authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && authentication.getPrincipal() instanceof Jwt jwt) {
+            return jwt.getClaim("username");  // Get the "username" claim from the token
+        }
+        return null;
+    }
+    @Async("AsyncTaskExecutor")
+    private CompletableFuture<Account> findAccountByUsername(String username) {
+        return CompletableFuture.supplyAsync(() ->
+                unitOfWork.getAccountRepository().findByUsername(username)
+                        .orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND))
         );
     }
 }
