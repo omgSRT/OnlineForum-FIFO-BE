@@ -19,8 +19,8 @@ public class ImageFeedback {
     UUID imageFeedbackId;
     String url;
 
-    @ManyToOne
-    @JoinColumn(name = "feedbackID")
-    Feedback feedback;
+//    @ManyToOne
+//    @JoinColumn(name = "feedbackID")
+//    Feedback feedback;
 
 }
