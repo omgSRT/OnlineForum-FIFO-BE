@@ -54,15 +54,13 @@ public class FeedbackService {
 
     public Optional<FeedbackResponse> updateFeedback(UUID feedbackId, FeedbackRequest2 feedbackRequest) {
         Optional<Feedback> feedbackOptional = unitOfWork.getFeedbackRepository().findById(feedbackId);
+        if(!feedbackRequest.getStatus().equals(FeedbackStatus.PENDING_APPROVAL.name()) &&
+                !feedbackRequest.getStatus().equals(FeedbackStatus.APPROVED.name())){
+            throw new AppException(ErrorCode.WRONG_STATUS);
+        }
         if (feedbackOptional.isPresent()) {
             Feedback feedback = feedbackOptional.get();
-            feedback.setTitle(feedbackRequest.getTitle());
-            feedback.setContent(feedbackRequest.getContent());
             feedback.setStatus(feedbackRequest.getStatus());
-
-            Account account = getCurrentUser();
-            feedback.setAccount(account);
-
             Feedback updatedFeedback = unitOfWork.getFeedbackRepository().save(feedback);
             return Optional.of(feedbackMapper.toResponse(updatedFeedback));
         }

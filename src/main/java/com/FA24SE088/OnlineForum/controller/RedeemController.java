@@ -6,6 +6,7 @@ import com.FA24SE088.OnlineForum.dto.request.AccountUpdateCategoryRequest;
 import com.FA24SE088.OnlineForum.dto.request.RedeemRequest;
 import com.FA24SE088.OnlineForum.dto.response.AccountResponse;
 import com.FA24SE088.OnlineForum.dto.response.ApiResponse;
+import com.FA24SE088.OnlineForum.dto.response.RedeemDocumentResponse;
 import com.FA24SE088.OnlineForum.dto.response.RedeemResponse;
 import com.FA24SE088.OnlineForum.entity.Account;
 import com.FA24SE088.OnlineForum.entity.Redeem;
@@ -35,6 +36,13 @@ public class RedeemController {
     public ApiResponse<RedeemResponse> create(@RequestBody RedeemRequest request){
         return ApiResponse.<RedeemResponse>builder()
                 .entity(redeemService.create_2(request))
+                .build();
+    }
+
+    @GetMapping("/my-document")
+    public ApiResponse<RedeemDocumentResponse> getMyDocument(){
+        return ApiResponse.<RedeemDocumentResponse>builder()
+                .entity(redeemService.getDocumentRewarded())
                 .build();
     }
 

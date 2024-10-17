@@ -9,8 +9,8 @@ import lombok.experimental.FieldDefaults;
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class FeedbackRequest2 {
-    String title;
-    String content;
+//    String title;
+//    String content;
     String status;
 }
 
