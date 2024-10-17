@@ -46,6 +46,9 @@ public class TagService {
                     }
 
                     Tag newTag = tagMapper.toTag(request);
+                    if(request.getColorHex() == null || request.getColorHex().trim().isBlank()){
+                        newTag.setColorHex("#FFFFFF");
+                    }
 
                     return CompletableFuture.completedFuture(
                             tagMapper.toTagResponse(unitOfWork.getTagRepository().save(newTag))
@@ -67,23 +70,48 @@ public class TagService {
 
     @Async("AsyncTaskExecutor")
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
-    public CompletableFuture<List<TagResponse>> getAllTagsByName(int page, int perPage, String name) {
+    public CompletableFuture<List<TagResponse>> getAllTagsByFilteringNameAndColor(int page, int perPage, String name, String colorHex) {
         return CompletableFuture.supplyAsync(() -> {
-            List<TagResponse> list = new ArrayList<>();
-            if(name == null || name.trim().isBlank()){
-                list = unitOfWork.getTagRepository().findAll().stream()
-                        .map(tagMapper::toTagResponse)
-                        .toList();
-            }
-            else{
-                list = unitOfWork.getTagRepository().findByNameContaining(name).join()
-                        .stream()
-                        .map(tagMapper::toTagResponse)
-                        .toList();
-            }
+            int[] targetRgb = hexToRgb(colorHex);
+
+            List<TagResponse> list = unitOfWork.getTagRepository().findAll().stream()
+                    .filter(tag -> name == null || tag.getName().contains(name))
+                    .filter(tag -> colorDistance(targetRgb, hexToRgb(tag.getColorHex())) <= 50)
+                    .map(tagMapper::toTagResponse)
+                    .toList();
 
             return paginationUtils.convertListToPage(page, perPage, list);
         });
+    }
+
+    private int[] hexToRgb(String hexCode) {
+        if(hexCode == null || hexCode.isBlank()){
+            return null;
+        }
+        if (!hexCode.matches("^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$")) {
+            throw new AppException(ErrorCode.INVALID_HEX_FORMAT);
+        }
+        if (hexCode.length() == 7) { // e.g., #RRGGBB
+            return new int[] {
+                    Integer.valueOf(hexCode.substring(1, 3), 16),  // Red
+                    Integer.valueOf(hexCode.substring(3, 5), 16),  // Green
+                    Integer.valueOf(hexCode.substring(5, 7), 16)   // Blue
+            };
+        } else { // Handle 3-digit hex code, e.g., #RGB
+            String r = hexCode.substring(1, 2);
+            String g = hexCode.substring(2, 3);
+            String b = hexCode.substring(3, 4);
+            return new int[] {
+                    Integer.valueOf(r + r, 16),
+                    Integer.valueOf(g + g, 16),
+                    Integer.valueOf(b + b, 16)
+            };
+        }
+    }
+    private double colorDistance(int[] rgb1, int[] rgb2) {
+        return Math.sqrt(Math.pow(rgb1[0] - rgb2[0], 2) +
+                Math.pow(rgb1[1] - rgb2[1], 2) +
+                Math.pow(rgb1[2] - rgb2[2], 2));
     }
 
     @Async("AsyncTaskExecutor")

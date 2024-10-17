@@ -13,4 +13,5 @@ import java.util.UUID;
 public class TagResponse {
     UUID tagId;
     String name;
+    String colorHex;
 }

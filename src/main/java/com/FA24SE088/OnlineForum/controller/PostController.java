@@ -44,8 +44,8 @@ public class PostController {
                                                         @RequestParam(required = false) UUID accountId,
                                                         @RequestParam(required = false) UUID topicId,
                                                         @RequestParam(required = false) UUID tagId,
-                                                        @RequestParam(required = false) PostStatus status){
-        return postService.getAllPosts(page, perPage, accountId, topicId, tagId, status).thenApply(postResponses ->
+                                                        @RequestParam(required = false) List<PostStatus> statuses){
+        return postService.getAllPosts(page, perPage, accountId, topicId, tagId, statuses).thenApply(postResponses ->
                 ApiResponse.<List<PostResponse>>builder()
                         .entity(postResponses)
                         .build()
@@ -74,10 +74,10 @@ public class PostController {
                 ).join();
     }
 
-    @Operation(summary = "Delete Post", description = "Delete Post By Changing Status")
+    @Operation(summary = "Delete Post", description = "Delete Post Or Draft By Changing Status")
     @PutMapping(path = "/update/{postId}/status/hidden")
     public ApiResponse<PostResponse> deletePostByChangingStatusById(@PathVariable UUID postId){
-        return postService.deleteByChangingPostStatusById(postId).thenApply(postResponse ->
+        return postService.deleteByChangingPostOrDraftStatusById(postId).thenApply(postResponse ->
                 ApiResponse.<PostResponse>builder()
                         .message(SuccessReturnMessage.DELETE_SUCCESS.getMessage())
                         .entity(postResponse)
@@ -90,6 +90,38 @@ public class PostController {
     public ApiResponse<PostResponse> deletePostByChangingStatusById(@PathVariable UUID postId,
                                                                     @RequestParam UpdatePostStatus status){
         return postService.updatePostStatusById(postId, status).thenApply(postResponse ->
+                ApiResponse.<PostResponse>builder()
+                        .message(SuccessReturnMessage.UPDATE_SUCCESS.getMessage())
+                        .entity(postResponse)
+                        .build()
+        ).join();
+    }
+
+    @Operation(summary = "Create New Draft")
+    @PostMapping(path = "/create/draft")
+    public ApiResponse<PostResponse> createDraft(@RequestBody @Valid PostCreateRequest request){
+        return postService.createDraft(request).thenApply(postResponse ->
+                ApiResponse.<PostResponse>builder()
+                        .message(SuccessReturnMessage.CREATE_SUCCESS.getMessage())
+                        .entity(postResponse)
+                        .build()
+        ).join();
+    }
+    @Operation(summary = "Update Draft", description = "Update Draft By ID")
+    @PutMapping(path = "/update/draft/{draftId}")
+    public ApiResponse<PostResponse> updateDraft(@PathVariable UUID draftId,
+                                                 @RequestBody @Valid PostUpdateRequest request){
+        return postService.updateDraftById(draftId, request).thenApply(postResponse ->
+                ApiResponse.<PostResponse>builder()
+                        .message(SuccessReturnMessage.UPDATE_SUCCESS.getMessage())
+                        .entity(postResponse)
+                        .build()
+        ).join();
+    }
+    @Operation(summary = "Update Draft To Completed Post", description = "Update Draft To Completed Post By ID")
+    @PutMapping(path = "/update/draft/to-post/{draftId}")
+    public ApiResponse<PostResponse> updateDraftToPost(@PathVariable UUID draftId){
+        return postService.updateDraftToPostById(draftId).thenApply(postResponse ->
                 ApiResponse.<PostResponse>builder()
                         .message(SuccessReturnMessage.UPDATE_SUCCESS.getMessage())
                         .entity(postResponse)
