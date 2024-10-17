@@ -193,12 +193,10 @@ public class DocumentService {
                 !request.getStatus().equals(DocumentStatus.INACTIVE.name())){
             throw new AppException(ErrorCode.WRONG_STATUS);
         }
-        // Lấy Document từ repository dựa trên documentID
         Document document = unitOfWork.getDocumentRepository()
                 .findById(documentID)
                 .orElseThrow(() -> new AppException(ErrorCode.DOCUMENT_NOT_FOUND));
 
-        // Cập nhật thông tin cho document từ request
         document.setName(request.getName());
         document.setImage(request.getImage());
         document.setPrice(request.getPrice());
@@ -216,14 +214,12 @@ public class DocumentService {
 
             section = unitOfWork.getSectionRepository().save(section);
 
-            // Xử lý image sections
             List<ImageSectionResponse> imageResponses = new ArrayList<>();
             for (ImageSectionRequest imageRequest : sectionRequest.getImageSectionList()) {
                 ImageSection imageSection = new ImageSection();
                 imageSection.setUrl(imageRequest.getUrl());
                 imageSection.setSection(section);
 
-                // Lưu image section
                 imageSection = unitOfWork.getImageSectionRepository().save(imageSection);
 
                 imageResponses.add(new ImageSectionResponse(imageSection.getUrl()));
@@ -240,7 +236,6 @@ public class DocumentService {
                 videoResponses.add(new VideoSectionResponse(videoSection.getUrl()));
             }
 
-            // Tạo response cho mỗi section
             SectionResponse sectionResponse = new SectionResponse();
             sectionResponse.setLinkGit(section.getLinkGit());
             sectionResponse.setImageSectionList(imageResponses);
@@ -256,6 +251,7 @@ public class DocumentService {
 
         return response;
     }
+
 
 
     public List<DocumentResponse> getAll() {

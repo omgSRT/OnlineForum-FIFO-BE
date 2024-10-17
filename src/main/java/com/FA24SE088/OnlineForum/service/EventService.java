@@ -13,6 +13,7 @@ import com.FA24SE088.OnlineForum.exception.ErrorCode;
 import com.FA24SE088.OnlineForum.mapper.EventMapper;
 import com.FA24SE088.OnlineForum.mapper.RedeemMapper;
 import com.FA24SE088.OnlineForum.repository.UnitOfWork.UnitOfWork;
+import com.FA24SE088.OnlineForum.utils.PaginationUtils;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -21,10 +22,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
@@ -35,9 +34,13 @@ public class EventService {
     UnitOfWork unitOfWork;
     @Autowired
     EventMapper eventMapper;
+    @Autowired
+    PaginationUtils paginationUtils;
 
     public EventResponse createEvent(EventRequest eventRequest) {
-        validateEventDates(eventRequest.getStartDate(), eventRequest.getEndDate());
+        if (eventRequest.getEndDate() != null) {
+            validateEventDates(eventRequest.getStartDate(), eventRequest.getEndDate());
+        }
         if (!eventRequest.getStatus().equals(EventStatus.UPCOMING.name()) &&
                 !eventRequest.getStatus().equals(EventStatus.ONGOING.name()) &&
                 !eventRequest.getStatus().equals(EventStatus.CONCLUDED.name())) {
@@ -48,6 +51,44 @@ public class EventService {
             return mapToResponse(savedEvent);
         }
     }
+    public List<EventResponse> filterEvents(int page, int perPage, String title, String location, String status) {
+        List<EventResponse> result;
+
+        List<EventResponse> allEvents = unitOfWork.getEventRepository().findAll().stream()
+                .map(eventMapper::toResponse)
+                .collect(Collectors.toList());
+
+        if (title == null && location == null && status == null) {
+            result = allEvents.stream()
+                    .sorted(Comparator.comparingInt(x -> {
+                        switch (x.getStatus()) {
+                            case "ONGOING": return 1;
+                            case "UPCOMING": return 2;
+                            case "CONCLUDED": return 3;
+                            default: return 4; // Các trạng thái không xác định ở cuối
+                        }
+                    }))
+                    .toList();
+        } else {
+
+            result = allEvents.stream()
+                    .filter(x -> (title == null || (x.getTitle() != null && x.getTitle().contains(title))))
+                    .filter(x -> (location == null || (x.getLocation() != null && x.getLocation().contains(location))))
+                    .filter(x -> (status == null || (x.getStatus() != null && x.getStatus().equals(status))))
+                    .sorted(Comparator.comparingInt(x -> {
+                        switch (x.getStatus()) {
+                            case "ONGOING": return 1;
+                            case "UPCOMING": return 2;
+                            case "CONCLUDED": return 3;
+                            default: return 4;
+                        }
+                    }))
+                    .toList();
+        }
+
+        return paginationUtils.convertListToPage(page, perPage, result);
+    }
+
 
     public Optional<EventResponse> updateEvent(UUID eventId, EventRequest eventRequest) {
         Optional<Event> eventOptional = unitOfWork.getEventRepository().findById(eventId);
