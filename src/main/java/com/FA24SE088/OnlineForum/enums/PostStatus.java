@@ -4,4 +4,5 @@ public enum PostStatus {
     PUBLIC,
     PRIVATE,
     HIDDEN,
+    DRAFT,
 }

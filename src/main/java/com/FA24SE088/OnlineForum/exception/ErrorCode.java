@@ -57,7 +57,10 @@ public enum ErrorCode {
     REPORT_ACCOUNT_NOT_FOUND(10046, "Report not found", HttpStatus.BAD_REQUEST),
     PASSWORD_NOT_MATCH(10047, "Password not match", HttpStatus.BAD_REQUEST),
     DOCUMENT_HAS_BEEN_USED(10048, "There have been these users of document", HttpStatus.BAD_REQUEST),
-    INVALID_HEX_FORMAT(10049, "Color Hex Must Be a Valid Hex Code", HttpStatus.BAD_REQUEST)
+    INVALID_HEX_FORMAT(10049, "Color Hex Must Be a Valid Hex Code", HttpStatus.BAD_REQUEST),
+    DRAFT_POST_CANNOT_CHANGE_STATUS(10050, "Draft Post Status Cannot Be Changed", HttpStatus.BAD_REQUEST),
+    COMPLETED_POST_CANNOT_BE_EDIT_IN_DRAFT(10051, "Completed Post Cannot Be Edited In Draft Section", HttpStatus.BAD_REQUEST),
+    COMPLETED_POST_CANNOT_BE_UPDATE_TO_POST(10051, "Completed Post Cannot Be Updated To New Completed Post", HttpStatus.BAD_REQUEST),
     ;
 
     private int code;
