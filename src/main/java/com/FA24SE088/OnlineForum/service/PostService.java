@@ -154,7 +154,7 @@ public class PostService {
                 post.setImageList(createImageFuture.join());
                 post.setLastModifiedDate(new Date());
 
-                return CompletableFuture.completedFuture(post);
+                return CompletableFuture.completedFuture(unitOfWork.getPostRepository().save(post));
             })
                     .thenApply(postMapper::toPostResponse);
         });
@@ -263,7 +263,7 @@ public class PostService {
                         post.setImageList(createImageFuture.join());
                         post.setLastModifiedDate(new Date());
 
-                        return CompletableFuture.completedFuture(post);
+                        return CompletableFuture.completedFuture(unitOfWork.getPostRepository().save(post));
                     })
                     .thenApply(postMapper::toPostResponse);
         });
