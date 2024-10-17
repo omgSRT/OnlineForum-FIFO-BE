@@ -32,35 +32,42 @@ import java.util.UUID;
 public class EventController {
     @Autowired
     private EventService eventService;
-
-    @PostMapping("/create")
+    @Operation(summary = "Create Event", description = "Status: \n" +
+            "UPCOMING,\n" +
+            "    ONGOING,\n" +
+            "    CONCLUDED")
+    @PostMapping("/create-event")
     public ApiResponse<EventResponse> createEvent(@RequestBody EventRequest eventRequest) {
         return ApiResponse.<EventResponse>builder()
                 .entity(eventService.createEvent(eventRequest))
                 .build();
     }
 
-    @PutMapping("/{eventId}")
+    @Operation(summary = "Update Event", description = "Status: \n" +
+            "UPCOMING,\n" +
+            "    ONGOING,\n" +
+            "    CONCLUDED")
+    @PutMapping("/update/{eventId}")
     public ApiResponse<Optional<EventResponse>> updateEvent(@PathVariable UUID eventId, @RequestBody EventRequest eventRequest) {
         return ApiResponse.<Optional<EventResponse>>builder()
                 .entity(eventService.updateEvent(eventId,eventRequest))
                 .build();
     }
 
-    @DeleteMapping("/{eventId}")
+    @DeleteMapping("/delete/{eventId}")
     public ApiResponse<Void> deleteEvent(@PathVariable UUID eventId) {
         eventService.deleteEvent(eventId);
         return ApiResponse.<Void>builder().build();
     }
 
-    @GetMapping
+    @GetMapping("/get-all")
     public ApiResponse<List<EventResponse>> getAllEvents() {
         return ApiResponse.<List<EventResponse>>builder()
                 .entity(eventService.getAllEvents())
                 .build();
     }
 
-    @GetMapping("/{eventId}")
+    @GetMapping("/get-by-id/{eventId}")
     public ApiResponse<Optional<EventResponse>> getEventById(@PathVariable UUID eventId) {
         return ApiResponse.<Optional<EventResponse>>builder()
                 .entity(eventService.getEventById(eventId))
