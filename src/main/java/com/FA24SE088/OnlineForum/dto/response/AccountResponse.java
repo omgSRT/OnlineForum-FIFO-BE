@@ -19,11 +19,7 @@ import java.util.UUID;
 public class AccountResponse {
     UUID accountId;
     String username;
-    String handle;
     String email;
-    String bio;
-    String gender;
-    String address;
     String avatar;
     Date createdDate;
     String status;

@@ -21,9 +21,11 @@ public class Event {
     String title;
     Date startDate;
     Date endDate;
+    String location;
     String image;
     String content;
     String link;
+    String status;
 
     @ManyToOne
     @JoinColumn(name = "accountId")

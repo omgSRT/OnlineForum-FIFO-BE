@@ -25,9 +25,6 @@ public class Feedback {
     @JoinColumn(name = "accountID")
     Account account;
 
-//    @JsonIgnoreProperties(value = {"account"}, allowSetters = true)
-//    @OneToMany(mappedBy = "feedback", cascade = CascadeType.ALL, orphanRemoval = true)
-//    List<ImageFeedback> imageFeedbackList;
 }
 
 

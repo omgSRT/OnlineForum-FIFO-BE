@@ -2,6 +2,7 @@ package com.FA24SE088.OnlineForum.service;
 
 
 import com.FA24SE088.OnlineForum.dto.request.AccountUpdateCategoryRequest;
+import com.FA24SE088.OnlineForum.dto.request.AccountUpdateInfoRequest;
 import com.FA24SE088.OnlineForum.dto.request.AccountUpdateRequest;
 import com.FA24SE088.OnlineForum.dto.request.AccountRequest;
 import com.FA24SE088.OnlineForum.dto.response.AccountResponse;
@@ -23,6 +24,7 @@ import lombok.extern.slf4j.Slf4j;
 
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -50,11 +52,14 @@ public class AccountService {
     @Autowired
     PaginationUtils paginationUtils;
 
-    public AccountResponse create(AccountRequest request, String autoWallet) {
+    public AccountResponse create(AccountRequest request) {
         if (unitOfWork.getAccountRepository().existsByUsername(request.getUsername()))
             throw new AppException(ErrorCode.ACCOUNT_IS_EXISTED);
         if (unitOfWork.getAccountRepository().existsByEmail(request.getEmail()))
             throw new AppException(ErrorCode.EMAIL_IS_EXISTED);
+        if(!request.getPassword().equals(request.getConfirmPassword())){
+            throw new AppException(ErrorCode.PASSWORD_NOT_MATCH);
+        }
         Account account = accountMapper.toAccount(request);
         account.setPassword(passwordEncoder.encode(request.getPassword()));
 
@@ -86,12 +91,12 @@ public class AccountService {
             if (role == null) throw new AppException(ErrorCode.ROLE_NOT_FOUND);
             account.setRole(role);
         }
-        if (autoWallet.equalsIgnoreCase("yes")) {
-            Wallet wallet = new Wallet();
-            wallet.setBalance(0);
-            wallet.setAccount(account);
-            account.setWallet(wallet);
-        }
+
+        Wallet wallet = new Wallet();
+        wallet.setBalance(0);
+        wallet.setAccount(account);
+        account.setWallet(wallet);
+
         account.setCreatedDate(new Date());
         account.setStatus(AccountStatus.PENDING_APPROVAL.name());
         AccountResponse response = accountMapper.toResponse(account);
@@ -136,8 +141,36 @@ public class AccountService {
         return accountMapper.toResponse(account);
     }
 
+    public AccountResponse updateInfo(AccountUpdateInfoRequest request) {
+        Account account = getCurrentUser();
 
+        // Kiểm tra xem mật khẩu cũ có đúng không
+        if (!passwordEncoder.matches(request.getOldPassword(), account.getPassword())) {
+            throw new AppException(ErrorCode.PASSWORD_NOT_MATCH);
+        }
 
+        if (!request.getNewPass().equals(request.getConfirmPassword())) {
+            throw new AppException(ErrorCode.PASSWORD_NOT_MATCH);
+        }
+
+        // Mã hóa mật khẩu mới (encoder là mã hoá 1 chiều)
+        account.setPassword(passwordEncoder.encode(request.getNewPass()));
+
+        if (request.getAvatar() != null && !request.getAvatar().isEmpty()) {
+            account.setAvatar(request.getAvatar());
+        }
+        if (request.getCoverImage() != null && !request.getCoverImage().isEmpty()) {
+            account.setCoverImage(request.getCoverImage());
+        }
+
+        unitOfWork.getAccountRepository().save(account);
+        return accountMapper.toResponse(account);
+    }
+
+    private Account getCurrentUser(){
+        var context = SecurityContextHolder.getContext();
+        return unitOfWork.getAccountRepository().findByUsername(context.getAuthentication().getName()).orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND));
+    }
 
     public List<AccountResponse> getAll(int page, int perPage) {
         var list = unitOfWork.getAccountRepository().findAll().stream()
@@ -145,14 +178,17 @@ public class AccountService {
                 .toList();
         return paginationUtils.convertListToPage(page, perPage, list);
     }
-    public List<AccountResponse> getAxxll(int page, int perPage, String z, String j) {
+
+    public List<AccountResponse> filter(int page, int perPage, String username, String email, AccountStatus status) {
         List<AccountResponse> result = unitOfWork.getAccountRepository().findAll().stream()
                 .map(accountMapper::toResponse)
-                .filter(x -> (z == null || (x.getEmail() != null && x.getEmail().contains(z))))
-                .filter(x -> (j == null || (x.getBio() != null && x.getBio().contains(j))))
-                .collect(Collectors.toList());
+                .filter(x -> (username == null || (x.getUsername() != null && x.getUsername().contains(username))))
+                .filter(x -> (email == null || (x.getEmail() != null && x.getEmail().contains(email))))
+                .filter(x -> (status == null || (x.getStatus() != null && x.getStatus().contains(status.name()))))
+                .toList();
         return paginationUtils.convertListToPage(page, perPage, result);
     }
+
     private Account findAccount(UUID id) {
         return unitOfWork.getAccountRepository().findById(id).orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND));
     }

@@ -22,13 +22,9 @@ public class Account {
     UUID accountId;
     @EqualsAndHashCode.Include
     String username;
-    String handle;
     @EqualsAndHashCode.Include
     String email;
     String password;
-    String bio;
-    String gender;
-    String address;
     String avatar;
     String coverImage;
     Date createdDate;
