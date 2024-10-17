@@ -53,7 +53,7 @@ public class FollowService {
                 .followee(account1)
                 .status(FollowStatus.FOLLOWING.name())
                 .build();
-        return followMapper.toRespone(follow);
+        return followMapper.toRespone(unitOfWork.getFollowRepository().save(follow));
     }
 
     public void unfollow(UUID id){
