@@ -24,6 +24,8 @@ public class Tag {
     UUID tagId;
     @EqualsAndHashCode.Include
     String name;
+    @EqualsAndHashCode.Include
+    String colorHex;
 
     @JsonIgnore
     @JsonIgnoreProperties(value = { "tag" }, allowSetters = true)

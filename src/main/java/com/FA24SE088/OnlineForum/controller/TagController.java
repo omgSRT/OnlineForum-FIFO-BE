@@ -43,12 +43,13 @@ public class TagController {
         ).join();
     }
 
-    @Operation(summary = "Get All Tags", description = "Get All Topics Based On Topic Name")
-    @GetMapping(path = "/getall/by-name")
+    @Operation(summary = "Get All Tags", description = "Get All Topics Based On Topic Name And/Or Color")
+    @GetMapping(path = "/getall/by-filtering")
     public ApiResponse<List<TagResponse>> getAllTopicsByNameContaining(@RequestParam(defaultValue = "1") int page,
                                                                        @RequestParam(defaultValue = "10") int perPage,
-                                                                       @RequestParam(required = false) String name){
-        return tagService.getAllTagsByName(page, perPage, name).thenApply(tagResponses ->
+                                                                       @RequestParam(required = false) String name,
+                                                                       @RequestParam(required = false, defaultValue = "#FFFFFF") String colorHex){
+        return tagService.getAllTagsByFilteringNameAndColor(page, perPage, name, colorHex).thenApply(tagResponses ->
                 ApiResponse.<List<TagResponse>>builder()
                         .entity(tagResponses)
                         .build()

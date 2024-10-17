@@ -57,6 +57,7 @@ public enum ErrorCode {
     REPORT_ACCOUNT_NOT_FOUND(10046, "Report not found", HttpStatus.BAD_REQUEST),
     PASSWORD_NOT_MATCH(10047, "Password not match", HttpStatus.BAD_REQUEST),
     DOCUMENT_HAS_BEEN_USED(10048, "There have been these users of document", HttpStatus.BAD_REQUEST),
+    INVALID_HEX_FORMAT(10049, "Color Hex Must Be a Valid Hex Code", HttpStatus.BAD_REQUEST)
     ;
 
     private int code;
