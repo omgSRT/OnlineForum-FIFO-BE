@@ -30,7 +30,4 @@ public class ReportAccount {
     @JoinColumn(name = "reported_id")
     private Account reported;
 
-
-
-
 }

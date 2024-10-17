@@ -16,14 +16,12 @@ import java.util.List;
 public class AccountRequest {
     @Size(min = 8, max = 20, message = "User must be least 8-20 character" )
     String username;
-    String handle;
     String email;
     @Size(min = 8, max = 20, message = "Pass must be least 8-20 character" )
     String password;
-    String bio;
-    String gender;
-    String address;
+    String confirmPassword;
     String avatar;
+    String coverImage;
     String roleName;
     List<String> categoryList;
 }

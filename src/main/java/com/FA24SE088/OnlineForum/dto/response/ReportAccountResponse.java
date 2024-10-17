@@ -11,15 +11,13 @@ import java.util.UUID;
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class EventResponse {
-    private UUID eventId;
-    private String title;
-    private Date startDate;
-    private Date endDate;
-    private String location;
-    private String image;
-    private String content;
-    private String link;
+public class ReportAccountResponse {
+    private UUID reportAccountId;
+    private String reason;
+    private Date reportTime;
     private String status;
-
+    private UUID reporterId;
+    private UUID reportedId;
 }
+
+

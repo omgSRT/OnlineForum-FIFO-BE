@@ -70,7 +70,6 @@ public class ApplicationInitConfiguration {
                         .username("admin")
                         .password(passwordEncoder.encode("admin"))
                         .role(role1)
-                        .handle("admin")
                         .createdDate(new Date())
                         .status(AccountStatus.ACTIVE.name())
                         .build();

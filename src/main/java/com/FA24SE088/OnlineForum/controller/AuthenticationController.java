@@ -1,13 +1,12 @@
 package com.FA24SE088.OnlineForum.controller;
 //
 
+import com.FA24SE088.OnlineForum.dto.request.AccountRequest;
 import com.FA24SE088.OnlineForum.dto.request.AuthenticationRequest;
 import com.FA24SE088.OnlineForum.dto.request.IntrospectRequest;
 import com.FA24SE088.OnlineForum.dto.request.LogoutRequest;
-import com.FA24SE088.OnlineForum.dto.response.ApiResponse;
-import com.FA24SE088.OnlineForum.dto.response.AuthenticationResponse;
-import com.FA24SE088.OnlineForum.dto.response.IntrospectResponse;
-import com.FA24SE088.OnlineForum.dto.response.RefreshAccessTokenResponse;
+import com.FA24SE088.OnlineForum.dto.response.*;
+import com.FA24SE088.OnlineForum.service.AccountService;
 import com.FA24SE088.OnlineForum.service.AuthenticateService;
 import com.nimbusds.jose.JOSEException;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +24,7 @@ import java.text.ParseException;
 @Slf4j
 public class AuthenticationController {
     private final AuthenticateService authenticateService;
+    private final AccountService accountService;
 
     @PostMapping("/login")
     public ApiResponse<AuthenticationResponse> login(@RequestBody AuthenticationRequest request){
@@ -32,6 +32,17 @@ public class AuthenticationController {
                 .entity(authenticateService.authenticated(request))
                 .build();
     }
+
+    @PostMapping("/sign-up")
+    public ApiResponse<AccountResponse> create(@RequestBody AccountRequest request) {
+        AccountResponse response = accountService.create(request);
+//        String otp = otpService.generateOTP(request.getEmail());
+//        emailService.sendOtpEmail(request.getEmail(), "Mã OTP xác thực tài khoản", "Mã OTP của bạn là: " + otp);
+        return ApiResponse.<AccountResponse>builder()
+                .entity(response)
+                .build();
+    }
+
     @PostMapping("/introspect")
     public ApiResponse<IntrospectResponse> authenticated(@RequestBody IntrospectRequest token) throws ParseException, JOSEException {
         var result = authenticateService.introspectJWT(token);

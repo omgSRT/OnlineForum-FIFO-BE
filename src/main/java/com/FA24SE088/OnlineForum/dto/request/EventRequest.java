@@ -13,10 +13,13 @@ import java.util.List;
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class EventRequest {
-    private String title;
-    private Date startDate;
-    private Date endDate;
-    private String image;
-    private String content;
-    private String link;
+    String title;
+    Date startDate;
+    Date endDate;
+    String location;
+    String image;
+    String content;
+    String link;
+    String status;
+
 }

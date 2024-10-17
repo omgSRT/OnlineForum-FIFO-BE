@@ -8,8 +8,8 @@ import org.springframework.stereotype.Component;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2024-10-12T22:28:17+0700",
-    comments = "version: 1.5.5.Final, compiler: javac, environment: Java 20.0.2 (Oracle Corporation)"
+    date = "2024-10-17T10:37:01+0700",
+    comments = "version: 1.5.5.Final, compiler: javac, environment: Java 17.0.7 (Oracle Corporation)"
 )
 @Component
 public class EventMapperImpl implements EventMapper {
@@ -25,9 +25,11 @@ public class EventMapperImpl implements EventMapper {
         event.title( request.getTitle() );
         event.startDate( request.getStartDate() );
         event.endDate( request.getEndDate() );
+        event.location( request.getLocation() );
         event.image( request.getImage() );
         event.content( request.getContent() );
         event.link( request.getLink() );
+        event.status( request.getStatus() );
 
         return event.build();
     }
@@ -44,9 +46,11 @@ public class EventMapperImpl implements EventMapper {
         eventResponse.title( event.getTitle() );
         eventResponse.startDate( event.getStartDate() );
         eventResponse.endDate( event.getEndDate() );
+        eventResponse.location( event.getLocation() );
         eventResponse.image( event.getImage() );
         eventResponse.content( event.getContent() );
         eventResponse.link( event.getLink() );
+        eventResponse.status( event.getStatus() );
 
         return eventResponse.build();
     }

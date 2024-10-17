@@ -5,6 +5,8 @@ import com.FA24SE088.OnlineForum.dto.request.RedeemRequest;
 import com.FA24SE088.OnlineForum.dto.response.EventResponse;
 import com.FA24SE088.OnlineForum.dto.response.RedeemResponse;
 import com.FA24SE088.OnlineForum.entity.*;
+import com.FA24SE088.OnlineForum.enums.EventStatus;
+import com.FA24SE088.OnlineForum.enums.FeedbackStatus;
 import com.FA24SE088.OnlineForum.enums.TransactionType;
 import com.FA24SE088.OnlineForum.exception.AppException;
 import com.FA24SE088.OnlineForum.exception.ErrorCode;
@@ -33,24 +35,37 @@ public class EventService {
     UnitOfWork unitOfWork;
     @Autowired
     EventMapper eventMapper;
+
     public EventResponse createEvent(EventRequest eventRequest) {
         validateEventDates(eventRequest.getStartDate(), eventRequest.getEndDate());
-        Event event = eventMapper.toEvent(eventRequest);
-        Event savedEvent = unitOfWork.getEventRepository().save(event);
-        return mapToResponse(savedEvent);
+        if (!eventRequest.getStatus().equals(EventStatus.UPCOMING.name()) &&
+                !eventRequest.getStatus().equals(EventStatus.ONGOING.name()) &&
+                !eventRequest.getStatus().equals(EventStatus.CONCLUDED.name())) {
+            throw new AppException(ErrorCode.WRONG_STATUS);
+        } else {
+            Event event = eventMapper.toEvent(eventRequest);
+            Event savedEvent = unitOfWork.getEventRepository().save(event);
+            return mapToResponse(savedEvent);
+        }
     }
 
     public Optional<EventResponse> updateEvent(UUID eventId, EventRequest eventRequest) {
         Optional<Event> eventOptional = unitOfWork.getEventRepository().findById(eventId);
         validateEventDates(eventRequest.getStartDate(), eventRequest.getEndDate());
+        if (!eventRequest.getStatus().equals(EventStatus.UPCOMING.name()) &&
+                !eventRequest.getStatus().equals(EventStatus.ONGOING.name()) &&
+                !eventRequest.getStatus().equals(EventStatus.CONCLUDED.name()))
+            throw new AppException(ErrorCode.WRONG_STATUS);
         if (eventOptional.isPresent()) {
             Event event = eventOptional.get();
             event.setTitle(eventRequest.getTitle());
             event.setStartDate(eventRequest.getStartDate());
             event.setEndDate(eventRequest.getEndDate());
+            event.setLocation(eventRequest.getLocation());
             event.setImage(eventRequest.getImage());
             event.setContent(eventRequest.getContent());
             event.setLink(eventRequest.getLink());
+            event.setStatus(eventRequest.getStatus());
 
             Event updatedEvent = unitOfWork.getEventRepository().save(event);
             return Optional.of(mapToResponse(updatedEvent));
@@ -73,7 +88,7 @@ public class EventService {
     }
 
     private EventResponse mapToResponse(Event event) {
-        return new EventResponse(event.getEventId(), event.getTitle(), event.getStartDate(), event.getEndDate(), event.getImage(), event.getContent(), event.getLink());
+        return new EventResponse(event.getEventId(), event.getTitle(), event.getStartDate(), event.getEndDate(), event.getLocation(), event.getImage(), event.getContent(), event.getLink(), event.getStatus());
     }
 
     private void validateEventDates(Date startDate, Date endDate) {

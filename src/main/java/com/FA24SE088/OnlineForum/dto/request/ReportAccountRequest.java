@@ -12,8 +12,9 @@ import java.util.UUID;
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class FeedbackRequest {
-    String title;
-    String content;
+public class ReportAccountRequest {
+    private String reason;
+    private UUID reportedId;
+    private String status;
 }
 

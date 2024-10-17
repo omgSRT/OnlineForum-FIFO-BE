@@ -8,10 +8,10 @@ import com.FA24SE088.OnlineForum.dto.response.ImageSectionResponse;
 import com.FA24SE088.OnlineForum.dto.response.SectionResponse;
 import com.FA24SE088.OnlineForum.dto.response.DocumentResponse;
 import com.FA24SE088.OnlineForum.dto.response.VideoSectionResponse;
-import com.FA24SE088.OnlineForum.entity.ImageSection;
-import com.FA24SE088.OnlineForum.entity.Section;
-import com.FA24SE088.OnlineForum.entity.Document;
-import com.FA24SE088.OnlineForum.entity.VideoSection;
+import com.FA24SE088.OnlineForum.entity.*;
+import com.FA24SE088.OnlineForum.enums.DocumentStatus;
+import com.FA24SE088.OnlineForum.exception.AppException;
+import com.FA24SE088.OnlineForum.exception.ErrorCode;
 import com.FA24SE088.OnlineForum.mapper.SectionMapper;
 import com.FA24SE088.OnlineForum.mapper.DocumentMapper;
 import com.FA24SE088.OnlineForum.repository.Repository.ImageSectionRepository;
@@ -30,6 +30,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
@@ -133,9 +134,12 @@ public class DocumentService {
 
     @Transactional
     public DocumentResponse createDocument(DocumentRequest request) {
-        Document document = documentMapper.toSourceCode(request);
+        if (!request.getStatus().equals(DocumentStatus.ACTIVE.name()) &&
+                !request.getStatus().equals(DocumentStatus.INACTIVE.name())){
+            throw new AppException(ErrorCode.WRONG_STATUS);
+        }
+            Document document = documentMapper.toSourceCode(request);
 
-//        document = documentRepository.save(document);
         document = unitOfWork.getDocumentRepository().save(document);
         List<SectionResponse> sectionResponses = new ArrayList<>();
 
@@ -144,7 +148,6 @@ public class DocumentService {
             section.setCreatedDate(new Date());
             section.setDocument(document);
 
-//            section = sectionRepository.save(section);
             section = unitOfWork.getSectionRepository().save(section);
 
 
@@ -154,7 +157,6 @@ public class DocumentService {
                 imageSection.setUrl(imageRequest.getUrl());
                 imageSection.setSection(section);
 
-//                imageSection = imageSectionRepository.save(imageSection);
                 imageSection = unitOfWork.getImageSectionRepository().save(imageSection);
 
                 imageResponses.add(new ImageSectionResponse(imageSection.getUrl()));
@@ -166,7 +168,6 @@ public class DocumentService {
                 videoSection.setUrl(videoRequest.getUrl());
                 videoSection.setSection(section);
 
-//                videoSection = videoSectionRepository.save(videoSection);
                 videoSection = unitOfWork.getVideoSectionRepository().save(videoSection);
 
                 videoResponses.add(new VideoSectionResponse(videoSection.getUrl()));
@@ -186,6 +187,77 @@ public class DocumentService {
         return response;
     }
 
+    @Transactional
+    public DocumentResponse update(UUID documentID, DocumentRequest request) {
+        if (!request.getStatus().equals(DocumentStatus.ACTIVE.name()) &&
+                !request.getStatus().equals(DocumentStatus.INACTIVE.name())){
+            throw new AppException(ErrorCode.WRONG_STATUS);
+        }
+        // Lấy Document từ repository dựa trên documentID
+        Document document = unitOfWork.getDocumentRepository()
+                .findById(documentID)
+                .orElseThrow(() -> new AppException(ErrorCode.DOCUMENT_NOT_FOUND));
+
+        // Cập nhật thông tin cho document từ request
+        document.setName(request.getName());
+        document.setImage(request.getImage());
+        document.setPrice(request.getPrice());
+        document.setType(request.getType());
+        document.setStatus(request.getStatus());
+
+        // Xóa các Section cũ liên quan đến document này
+        unitOfWork.getSectionRepository().deleteAllByDocument(document);
+
+        List<SectionResponse> sectionResponses = new ArrayList<>();
+
+        for (SectionRequest sectionRequest : request.getSectionList()) {
+            Section section = sectionMapper.toSection(sectionRequest);
+            section.setDocument(document); // Gán section vào document
+
+            section = unitOfWork.getSectionRepository().save(section);
+
+            // Xử lý image sections
+            List<ImageSectionResponse> imageResponses = new ArrayList<>();
+            for (ImageSectionRequest imageRequest : sectionRequest.getImageSectionList()) {
+                ImageSection imageSection = new ImageSection();
+                imageSection.setUrl(imageRequest.getUrl());
+                imageSection.setSection(section);
+
+                // Lưu image section
+                imageSection = unitOfWork.getImageSectionRepository().save(imageSection);
+
+                imageResponses.add(new ImageSectionResponse(imageSection.getUrl()));
+            }
+
+            List<VideoSectionResponse> videoResponses = new ArrayList<>();
+            for (VideoSectionRequest videoRequest : sectionRequest.getVideoSectionList()) {
+                VideoSection videoSection = new VideoSection();
+                videoSection.setUrl(videoRequest.getUrl());
+                videoSection.setSection(section);
+
+                videoSection = unitOfWork.getVideoSectionRepository().save(videoSection);
+
+                videoResponses.add(new VideoSectionResponse(videoSection.getUrl()));
+            }
+
+            // Tạo response cho mỗi section
+            SectionResponse sectionResponse = new SectionResponse();
+            sectionResponse.setLinkGit(section.getLinkGit());
+            sectionResponse.setImageSectionList(imageResponses);
+            sectionResponse.setVideoSectionList(videoResponses);
+
+            sectionResponses.add(sectionResponse);
+        }
+
+        unitOfWork.getDocumentRepository().save(document);
+
+        DocumentResponse response = documentMapper.toResponse(document);
+        response.setSectionList(sectionResponses);
+
+        return response;
+    }
+
+
     public List<DocumentResponse> getAll() {
         return documentRepository.findAll().stream()
                 .map(document -> {
@@ -199,6 +271,19 @@ public class DocumentService {
                 })
                 .collect(Collectors.toList());
     }
+
+    @Transactional
+    public void deleteDocument(UUID documentId) {
+        Document document = unitOfWork.getDocumentRepository()
+                .findById(documentId)
+                .orElseThrow(() -> new AppException(ErrorCode.DOCUMENT_NOT_FOUND));
+        document.getRedeemList().forEach(redeem -> {
+            if(redeem.getDocument().getDocumentId().equals(documentId))
+                throw new AppException(ErrorCode.DOCUMENT_HAS_BEEN_USED);
+        });
+        unitOfWork.getDocumentRepository().delete(document);
+    }
+
 
 }
 

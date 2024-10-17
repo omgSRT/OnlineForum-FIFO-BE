@@ -53,6 +53,10 @@ public enum ErrorCode {
     UPVOTE_NOT_FOUND(10042, "Upvote Not Found", HttpStatus.NOT_FOUND),
     COMMENT_NOT_FOUND(10043, "Comment Not Found", HttpStatus.NOT_FOUND),
     ACCOUNT_COMMENT_NOT_MATCH(10044, "Account Does not Match Comment Owner", HttpStatus.BAD_REQUEST),
+    WRONG_STATUS(10045, "wrong status", HttpStatus.BAD_REQUEST),
+    REPORT_ACCOUNT_NOT_FOUND(10046, "Report not found", HttpStatus.BAD_REQUEST),
+    PASSWORD_NOT_MATCH(10047, "Password not match", HttpStatus.BAD_REQUEST),
+    DOCUMENT_HAS_BEEN_USED(10048, "There have been these users of document", HttpStatus.BAD_REQUEST),
     ;
 
     private int code;

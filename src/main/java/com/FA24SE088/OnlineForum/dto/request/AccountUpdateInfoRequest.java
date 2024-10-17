@@ -5,15 +5,16 @@ import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 import java.util.List;
-import java.util.UUID;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class FeedbackRequest {
-    String title;
-    String content;
+public class AccountUpdateInfoRequest {
+    String oldPassword;
+    String newPass;
+    String confirmPassword;
+    String avatar;
+    String coverImage;
 }
-

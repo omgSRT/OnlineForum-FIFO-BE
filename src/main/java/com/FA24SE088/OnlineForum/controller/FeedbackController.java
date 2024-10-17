@@ -4,6 +4,7 @@ package com.FA24SE088.OnlineForum.controller;
 import com.FA24SE088.OnlineForum.dto.request.AccountRequest;
 import com.FA24SE088.OnlineForum.dto.request.AccountUpdateCategoryRequest;
 import com.FA24SE088.OnlineForum.dto.request.FeedbackRequest;
+import com.FA24SE088.OnlineForum.dto.request.FeedbackRequest2;
 import com.FA24SE088.OnlineForum.dto.response.AccountResponse;
 import com.FA24SE088.OnlineForum.dto.response.ApiResponse;
 import com.FA24SE088.OnlineForum.dto.response.FeedbackResponse;
@@ -13,7 +14,8 @@ import com.FA24SE088.OnlineForum.exception.AppException;
 import com.FA24SE088.OnlineForum.exception.ErrorCode;
 import com.FA24SE088.OnlineForum.service.AccountService;
 import com.FA24SE088.OnlineForum.service.FeedbackService;
-
+import io.swagger.v3.oas.annotations.Operation;
+import jakarta.validation.constraints.NotNull;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -39,7 +41,7 @@ public class FeedbackController {
     }
 
     @PutMapping("/{id}")
-    public ApiResponse<FeedbackResponse> updateFeedback(@PathVariable UUID id, @RequestBody FeedbackRequest feedbackRequest) {
+    public ApiResponse<FeedbackResponse> updateFeedback(@PathVariable UUID id, @RequestBody FeedbackRequest2 feedbackRequest) {
         return ApiResponse.<FeedbackResponse>builder()
                 .entity(feedbackService.updateFeedback(id, feedbackRequest)
                         .orElseThrow(() -> new AppException(ErrorCode.FEEDBACK_NOT_FOUND)))
@@ -53,8 +55,6 @@ public class FeedbackController {
                         .orElseThrow(() -> new AppException(ErrorCode.FEEDBACK_NOT_FOUND)))
                 .build();
     }
-
-
     @GetMapping
     public ApiResponse<List<FeedbackResponse>> getAllFeedbacks() {
         return ApiResponse.<List<FeedbackResponse>>builder()
@@ -64,7 +64,9 @@ public class FeedbackController {
 
     @DeleteMapping("/{id}")
     public ApiResponse<Void> deleteFeedback(@PathVariable UUID id) {
-        feedbackService.deleteFeedback(id);
-        return ApiResponse.<Void>builder().build();
+       feedbackService.deleteFeedback(id);
+       return ApiResponse.<Void>builder().build();
     }
+
+
 }

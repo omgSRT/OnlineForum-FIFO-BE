@@ -3,8 +3,10 @@ package com.FA24SE088.OnlineForum.controller;
 
 import com.FA24SE088.OnlineForum.dto.request.AccountRequest;
 import com.FA24SE088.OnlineForum.dto.request.AccountUpdateCategoryRequest;
+import com.FA24SE088.OnlineForum.dto.request.AccountUpdateInfoRequest;
 import com.FA24SE088.OnlineForum.dto.response.AccountResponse;
 import com.FA24SE088.OnlineForum.dto.response.ApiResponse;
+import com.FA24SE088.OnlineForum.enums.AccountStatus;
 import com.FA24SE088.OnlineForum.exception.AppException;
 import com.FA24SE088.OnlineForum.exception.ErrorCode;
 import com.FA24SE088.OnlineForum.service.AccountService;
@@ -42,19 +44,37 @@ public class AccountController {
                 .entity(accountService.findByUsername(username))
                 .build();
     }
-    @PostMapping("/create")
-    public ApiResponse<AccountResponse> create(@RequestBody AccountRequest request,
-                                               @RequestParam(defaultValue = "yes") String autoWallet ) {
-        AccountResponse response = accountService.create(request,autoWallet);
-//        String otp = otpService.generateOTP(request.getEmail());
-//        emailService.sendOtpEmail(request.getEmail(), "Mã OTP xác thực tài khoản", "Mã OTP của bạn là: " + otp);
+//    @PostMapping("/create")
+//    public ApiResponse<AccountResponse> create(@RequestBody AccountRequest request) {
+//        AccountResponse response = accountService.create(request);
+////        String otp = otpService.generateOTP(request.getEmail());
+////        emailService.sendOtpEmail(request.getEmail(), "Mã OTP xác thực tài khoản", "Mã OTP của bạn là: " + otp);
+//        return ApiResponse.<AccountResponse>builder()
+//                .entity(response)
+//                .build();
+//    }
+
+    @PostMapping("/update-info")
+    public ApiResponse<AccountResponse> updateInfo(@RequestBody AccountUpdateInfoRequest request){
         return ApiResponse.<AccountResponse>builder()
-                .entity(response)
+                .entity(accountService.updateInfo(request))
+                .build();
+    }
+
+    @GetMapping("/filter")
+    public ApiResponse<List<AccountResponse>> getAll(@RequestParam(defaultValue = "1") int page,
+                                                     @RequestParam(defaultValue = "10") int perPage,
+                                                     @RequestParam(required = false) String username,
+                                                     @RequestParam(required = false) String email,
+                                                     @RequestParam AccountStatus status) {
+
+        return ApiResponse.<List<AccountResponse>>builder()
+                .entity(accountService.filter(page, perPage,username, email, status))
                 .build();
     }
 
     @GetMapping("/getAll")
-    public ApiResponse<List<AccountResponse>> getAll(@RequestParam(defaultValue = "1") int page,
+    public ApiResponse<List<AccountResponse>> filter(@RequestParam(defaultValue = "1") int page,
                                                      @RequestParam(defaultValue = "10") int perPage) {
         return ApiResponse.<List<AccountResponse>>builder()
                 .entity(accountService.getAll(page, perPage))
