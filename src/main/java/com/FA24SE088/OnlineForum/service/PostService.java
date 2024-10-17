@@ -41,6 +41,7 @@ public class PostService {
     final ImageMapper imageMapper;
     final PaginationUtils paginationUtils;
 
+    //region CRUD Completed Post
     @Async("AsyncTaskExecutor")
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
     public CompletableFuture<PostResponse> createPost(PostCreateRequest request) {
@@ -100,7 +101,7 @@ public class PostService {
                                                              UUID accountId,
                                                              UUID topicId,
                                                              UUID tagId,
-                                                             PostStatus status) {
+                                                             List<PostStatus> statuses) {
         var postListFuture = findAllPosts();
         var accountFuture = accountId != null
                             ? findAccountById(accountId)
@@ -122,7 +123,8 @@ public class PostService {
                     .filter(post -> account == null || post.getAccount().equals(account))
                     .filter(post -> topic == null || post.getTopic().equals(topic))
                     .filter(post -> tag == null || post.getTag().equals(tag))
-                    .filter(post -> status == null || post.getStatus().equals(status.name()))
+                    .filter(post -> statuses == null || statuses.isEmpty() ||
+                            (safeValueOf(post.getStatus()) != null && statuses.contains(safeValueOf(post.getStatus()))))
                     .map(postMapper::toPostResponse)
                     .toList();
 
@@ -150,15 +152,16 @@ public class PostService {
             return CompletableFuture.allOf(deleteImageListFuture, createImageFuture).thenCompose(v -> {
                 postMapper.updatePost(post, request);
                 post.setImageList(createImageFuture.join());
+                post.setLastModifiedDate(new Date());
 
-                return CompletableFuture.completedFuture(post);
+                return CompletableFuture.completedFuture(unitOfWork.getPostRepository().save(post));
             })
                     .thenApply(postMapper::toPostResponse);
         });
     }
     @Async("AsyncTaskExecutor")
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
-    public CompletableFuture<PostResponse> deleteByChangingPostStatusById(UUID postId) {
+    public CompletableFuture<PostResponse> deleteByChangingPostOrDraftStatusById(UUID postId) {
         var postFuture = findPostById(postId);
 
         return postFuture.thenCompose(post -> {
@@ -174,6 +177,7 @@ public class PostService {
             wallet.setBalance(balance);
 
             post.setStatus(PostStatus.HIDDEN.name());
+            post.setLastModifiedDate(new Date());
 
             unitOfWork.getDailyPointRepository().save(dailyPoint);
             unitOfWork.getWalletRepository().save(wallet);
@@ -190,11 +194,117 @@ public class PostService {
         var postFuture = findPostById(postId);
 
         return postFuture.thenCompose(post -> {
+                    if(post.getStatus().equals(PostStatus.DRAFT.name())){
+                        throw new AppException(ErrorCode.DRAFT_POST_CANNOT_CHANGE_STATUS);
+                    }
+
                     post.setStatus(status.name());
+                    post.setLastModifiedDate(new Date());
                     return CompletableFuture.completedFuture(unitOfWork.getPostRepository().save(post));
                 })
                 .thenApply(postMapper::toPostResponse);
     }
+    //endregion
+
+    //region CRUD Draft
+    @Async("AsyncTaskExecutor")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
+    public CompletableFuture<PostResponse> createDraft(PostCreateRequest request) {
+        var username = getUsernameFromJwt();
+        var accountFuture = findAccountByUsername(username);
+        var topicFuture = findTopicById(request.getTopicId());
+        var tagFuture = findTagById(request.getTagId());
+
+        return CompletableFuture.allOf(accountFuture, topicFuture, tagFuture)
+                .thenCompose(v -> {
+                    var account = accountFuture.join();
+                    var topic = topicFuture.join();
+                    var tag = tagFuture.join();
+
+                    Post newPost = postMapper.toPost(request);
+                    newPost.setCreatedDate(new Date());
+                    newPost.setLastModifiedDate(new Date());
+                    newPost.setStatus(PostStatus.DRAFT.name());
+                    newPost.setAccount(account);
+                    newPost.setTopic(topic);
+                    newPost.setTag(tag);
+
+                    newPost.setCommentList(new ArrayList<>());
+                    newPost.setUpvoteList(new ArrayList<>());
+                    newPost.setReportList(new ArrayList<>());
+
+                    return CompletableFuture.completedFuture(unitOfWork.getPostRepository().save(newPost));
+                })
+                .thenCompose(savedPost -> {
+                    CompletableFuture<List<Image>> imageFuture = createImages(request, savedPost);
+
+                    return imageFuture.thenCompose(imageList -> {
+                                savedPost.setImageList(imageFuture.join());
+                                return CompletableFuture.completedFuture(unitOfWork.getPostRepository().save(savedPost));
+                            });
+                })
+                .thenApply(postMapper::toPostResponse);
+    }
+    @Async("AsyncTaskExecutor")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
+    public CompletableFuture<PostResponse> updateDraftById(UUID draftId, PostUpdateRequest request) {
+        var postFuture = findPostById(draftId);
+
+        return postFuture.thenCompose(post -> {
+            if(!post.getStatus().equals(PostStatus.DRAFT.name())){
+                throw new AppException(ErrorCode.COMPLETED_POST_CANNOT_BE_EDIT_IN_DRAFT);
+            }
+
+            var deleteImageListFuture = deleteImagesByPost(post);
+            var createImageFuture = createImages(request, post);
+
+            return CompletableFuture.allOf(deleteImageListFuture, createImageFuture).thenCompose(v -> {
+                        postMapper.updatePost(post, request);
+                        post.setImageList(createImageFuture.join());
+                        post.setLastModifiedDate(new Date());
+
+                        return CompletableFuture.completedFuture(unitOfWork.getPostRepository().save(post));
+                    })
+                    .thenApply(postMapper::toPostResponse);
+        });
+    }
+    @Async("AsyncTaskExecutor")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
+    public CompletableFuture<PostResponse> updateDraftToPostById(UUID draftId) {
+        var username = getUsernameFromJwt();
+        var accountFuture = findAccountByUsername(username);
+        var postFuture = findPostById(draftId);
+
+        return CompletableFuture.allOf(accountFuture, postFuture).thenCompose(v -> {
+            var account = accountFuture.join();
+            var post = postFuture.join();
+
+            if(!post.getStatus().equals(PostStatus.DRAFT.name())){
+                throw new AppException(ErrorCode.COMPLETED_POST_CANNOT_BE_UPDATE_TO_POST);
+            }
+
+            var dailyPointFuture = createDailyPointLog(account.getAccountId(), post);
+            var walletFuture = addPointToWallet(account.getAccountId());
+            var pointFuture = getPoint();
+
+            return CompletableFuture.allOf(dailyPointFuture, walletFuture, pointFuture).thenCompose(voidReturnData -> {
+                var point = pointFuture.join().get(0);
+                var wallet = walletFuture.join();
+                var dailyPoint = dailyPointFuture.join();
+
+                return createTransaction(point.getPointPerPost(), TransactionType.CREDIT, wallet)
+                        .thenCompose(transaction -> {
+                            post.setDailyPoint(dailyPoint);
+                            post.setStatus(PostStatus.PUBLIC.name());
+                            post.setLastModifiedDate(new Date());
+                            return CompletableFuture.completedFuture(unitOfWork.getPostRepository().save(post));
+                        });
+            })
+                    .thenApply(postMapper::toPostResponse);
+        });
+    }
+    //endregion
+
     @Async("AsyncTaskExecutor")
     private CompletableFuture<List<Image>> createImages(PostCreateRequest request, Post savedPost){
         if (request.getImageUrlList() == null || request.getImageUrlList().isEmpty()) {
@@ -414,5 +524,12 @@ public class PostService {
             return jwt.getClaim("username");  // Get the "username" claim from the token
         }
         return null;
+    }
+    private PostStatus safeValueOf(String status) {
+        try {
+            return PostStatus.valueOf(status);
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
     }
 }
