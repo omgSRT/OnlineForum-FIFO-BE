@@ -44,8 +44,9 @@ public class PostController {
                                                         @RequestParam(required = false) UUID accountId,
                                                         @RequestParam(required = false) UUID topicId,
                                                         @RequestParam(required = false) UUID tagId,
-                                                        @RequestParam(required = false) List<PostStatus> statuses){
-        return postService.getAllPosts(page, perPage, accountId, topicId, tagId, statuses).thenApply(postResponses ->
+                                                        @RequestParam(required = false) List<PostStatus> statuses,
+                                                        @RequestParam(required = false) Boolean isFolloweeIncluded){
+        return postService.getAllPosts(page, perPage, accountId, topicId, tagId, statuses, isFolloweeIncluded).thenApply(postResponses ->
                 ApiResponse.<List<PostResponse>>builder()
                         .entity(postResponses)
                         .build()
