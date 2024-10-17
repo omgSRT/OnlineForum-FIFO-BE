@@ -70,4 +70,9 @@ public class Post {
     @JsonIgnoreProperties(value = { "post" }, allowSetters = true)
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
     List<Report> reportList;
+
+    @JsonIgnore
+    @JsonIgnoreProperties(value = {"post"}, allowSetters = true)
+    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
+    List<BookMark> bookMarkList;
 }

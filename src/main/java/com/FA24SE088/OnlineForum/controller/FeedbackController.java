@@ -32,15 +32,19 @@ import java.util.UUID;
 @Slf4j
 public class FeedbackController {
     final FeedbackService feedbackService;
-
+    @Operation(summary = "Create feedback", description = "Status: \n" +
+            "PENDING_APPROVAL,\n" +
+            " APPROVED")
     @PostMapping("/create")
     public ApiResponse<FeedbackResponse> createFeedback(@RequestBody FeedbackRequest feedbackRequest) {
         return ApiResponse.<FeedbackResponse>builder()
                 .entity(feedbackService.createFeedback(feedbackRequest))
                 .build();
     }
-
-    @PutMapping("/{id}")
+    @Operation(summary = "Update feedback", description = "Status: \n" +
+            "PENDING_APPROVAL,\n " +
+            "APPROVED")
+    @PutMapping("/update/{id}")
     public ApiResponse<FeedbackResponse> updateFeedback(@PathVariable UUID id, @RequestBody FeedbackRequest2 feedbackRequest) {
         return ApiResponse.<FeedbackResponse>builder()
                 .entity(feedbackService.updateFeedback(id, feedbackRequest)
@@ -48,21 +52,21 @@ public class FeedbackController {
                 .build();
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/get-by-id/{id}")
     public ApiResponse<FeedbackResponse> getFeedback(@PathVariable UUID id) {
         return ApiResponse.<FeedbackResponse>builder()
                 .entity(feedbackService.getFeedbackById(id)
                         .orElseThrow(() -> new AppException(ErrorCode.FEEDBACK_NOT_FOUND)))
                 .build();
     }
-    @GetMapping
+    @GetMapping("/get-all")
     public ApiResponse<List<FeedbackResponse>> getAllFeedbacks() {
         return ApiResponse.<List<FeedbackResponse>>builder()
                 .entity(feedbackService.getAllFeedbacks())
                 .build();
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/delete/{id}")
     public ApiResponse<Void> deleteFeedback(@PathVariable UUID id) {
        feedbackService.deleteFeedback(id);
        return ApiResponse.<Void>builder().build();

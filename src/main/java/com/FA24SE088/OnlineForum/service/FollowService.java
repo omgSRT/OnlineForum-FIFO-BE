@@ -1,11 +1,15 @@
 package com.FA24SE088.OnlineForum.service;
 
+import com.FA24SE088.OnlineForum.dto.response.AccountResponse;
+import com.FA24SE088.OnlineForum.dto.response.FollowResponse;
 import com.FA24SE088.OnlineForum.entity.Account;
 import com.FA24SE088.OnlineForum.entity.BlockedAccount;
 import com.FA24SE088.OnlineForum.entity.Follow;
 import com.FA24SE088.OnlineForum.enums.FollowStatus;
 import com.FA24SE088.OnlineForum.exception.AppException;
 import com.FA24SE088.OnlineForum.exception.ErrorCode;
+import com.FA24SE088.OnlineForum.mapper.AccountMapper;
+import com.FA24SE088.OnlineForum.mapper.FollowMapper;
 import com.FA24SE088.OnlineForum.repository.UnitOfWork.UnitOfWork;
 import com.FA24SE088.OnlineForum.utils.PaginationUtils;
 import lombok.AccessLevel;
@@ -28,22 +32,32 @@ import java.util.stream.Collectors;
 @Service
 public class FollowService {
     @Autowired
+    private AccountMapper accountMapper;
+    @Autowired
     UnitOfWork unitOfWork;
     @Autowired
     PaginationUtils paginationUtils;
+    @Autowired
+    FollowMapper followMapper;
 
-    private Account getCurrentUser(){
+    private Account getCurrentUser() {
         var context = SecurityContextHolder.getContext();
         return unitOfWork.getAccountRepository().findByUsername(context.getAuthentication().getName()).orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND));
     }
-    public Follow create(UUID id) {
+
+    public FollowResponse create(UUID id) {
         Account account = getCurrentUser();
         Account account1 = unitOfWork.getAccountRepository().findById(id).orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND));
-        return Follow.builder()
+        Follow follow = Follow.builder()
                 .follower(account)
                 .followee(account1)
                 .status(FollowStatus.FOLLOWING.name())
                 .build();
+        return followMapper.toRespone(follow);
+    }
+
+    public void unfollow(UUID id){
+
     }
 
     public void blockUser(UUID accountIdToBlock) {
@@ -65,6 +79,27 @@ public class FollowService {
         }
     }
 
+    public List<FollowResponse> getFollowedAccounts() {
+        Account currentUser = getCurrentUser();
+
+        List<Follow> followedAccounts = unitOfWork.getFollowRepository().findByFollower(currentUser);
+
+        return followedAccounts.stream()
+                .map(followMapper::toRespone) // Chuyển đổi sang FollowResponse
+                .collect(Collectors.toList());
+    }
+
+    public List<AccountResponse> listBlock() {
+        Account currentUser = getCurrentUser();
+
+        List<BlockedAccount> blockedAccounts = unitOfWork.getBlockedAccountRepository()
+                .findByBlocker(currentUser);
+
+        return blockedAccounts.stream()
+                .map(BlockedAccount::getBlocked)
+                .map(accountMapper::toResponse)
+                .toList();
+    }
 
 
 }

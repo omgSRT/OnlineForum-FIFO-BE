@@ -22,14 +22,14 @@ import java.util.UUID;
 public class ReportAccountController {
     final ReportAccountService reportAccountService;
 
-    @PostMapping
+    @PostMapping("/create")
     public ApiResponse<ReportAccountResponse> createReportAccount(@RequestBody ReportAccountRequest reportAccountRequest) {
         return ApiResponse.<ReportAccountResponse>builder()
                 .entity(reportAccountService.createReportAccount(reportAccountRequest))
                 .build();
     }
 
-    @PutMapping("/{id}")
+    @PutMapping("/update/{id}")
     public ApiResponse<ReportAccountResponse> updateReportAccount(@PathVariable UUID id, @RequestBody ReportAccountRequest reportAccountRequest) {
         return ApiResponse.<ReportAccountResponse>builder()
                 .entity(reportAccountService.updateReportAccount(id, reportAccountRequest)
@@ -37,7 +37,7 @@ public class ReportAccountController {
                 .build();
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/get-by-id/{id}")
     public ApiResponse<ReportAccountResponse> getReportAccount(@PathVariable UUID id) {
         return ApiResponse.<ReportAccountResponse>builder()
                 .entity(reportAccountService.getReportAccountById(id)
@@ -45,14 +45,14 @@ public class ReportAccountController {
                 .build();
     }
 
-    @GetMapping
+    @GetMapping("/get-all")
     public ApiResponse<List<ReportAccountResponse>> getAllReportAccounts() {
         return ApiResponse.<List<ReportAccountResponse>>builder()
                 .entity(reportAccountService.getAllReportAccounts())
                 .build();
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/delete/{id}")
     public ApiResponse<Void> deleteReportAccount(@PathVariable UUID id) {
         reportAccountService.deleteReportAccount(id);
         return ApiResponse.<Void>builder().build();
