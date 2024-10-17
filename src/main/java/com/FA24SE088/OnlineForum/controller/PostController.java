@@ -44,8 +44,8 @@ public class PostController {
                                                         @RequestParam(required = false) UUID accountId,
                                                         @RequestParam(required = false) UUID topicId,
                                                         @RequestParam(required = false) UUID tagId,
-                                                        @RequestParam(required = false) PostStatus status){
-        return postService.getAllPosts(page, perPage, accountId, topicId, tagId, status).thenApply(postResponses ->
+                                                        @RequestParam(required = false) List<PostStatus> statuses){
+        return postService.getAllPosts(page, perPage, accountId, topicId, tagId, statuses).thenApply(postResponses ->
                 ApiResponse.<List<PostResponse>>builder()
                         .entity(postResponses)
                         .build()

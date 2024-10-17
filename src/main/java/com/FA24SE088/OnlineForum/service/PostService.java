@@ -100,7 +100,7 @@ public class PostService {
                                                              UUID accountId,
                                                              UUID topicId,
                                                              UUID tagId,
-                                                             PostStatus status) {
+                                                             List<PostStatus> statuses) {
         var postListFuture = findAllPosts();
         var accountFuture = accountId != null
                             ? findAccountById(accountId)
@@ -122,7 +122,8 @@ public class PostService {
                     .filter(post -> account == null || post.getAccount().equals(account))
                     .filter(post -> topic == null || post.getTopic().equals(topic))
                     .filter(post -> tag == null || post.getTag().equals(tag))
-                    .filter(post -> status == null || post.getStatus().equals(status.name()))
+                    .filter(post -> statuses == null || statuses.isEmpty() ||
+                            (safeValueOf(post.getStatus()) != null && statuses.contains(safeValueOf(post.getStatus()))))
                     .map(postMapper::toPostResponse)
                     .toList();
 
@@ -414,5 +415,12 @@ public class PostService {
             return jwt.getClaim("username");  // Get the "username" claim from the token
         }
         return null;
+    }
+    private PostStatus safeValueOf(String status) {
+        try {
+            return PostStatus.valueOf(status);
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
     }
 }
