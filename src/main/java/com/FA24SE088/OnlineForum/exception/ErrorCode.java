@@ -70,6 +70,7 @@ public enum ErrorCode {
     CANNOT_UNBLOCK_SELF(10051, "Cannot unblock self", HttpStatus.BAD_REQUEST),
     BOOKMARK_ALREADY_EXISTS(10051, "Bookmark already exists", HttpStatus.BAD_REQUEST),
     BOOKMARK_NOT_FOUND(10051, "Bookmark not found", HttpStatus.NOT_FOUND),
+    UNAUTHENTICATED(10051, "Unauthenticated", HttpStatus.BAD_REQUEST),
     ;
 
     private int code;
