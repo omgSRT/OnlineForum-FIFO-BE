@@ -38,4 +38,5 @@ public class UnitOfWork {
     final BlockedAccountRepository blockedAccountRepository;
     final ReportRepository reportRepository;
     final ReportAccountRepository reportAccountRepository;
+    final BookMarkRepository bookMarkRepository;
 }

@@ -1,19 +1,13 @@
 package com.FA24SE088.OnlineForum.controller;
 
-
-import com.FA24SE088.OnlineForum.dto.request.AccountUpdateCategoryRequest;
-import com.FA24SE088.OnlineForum.dto.request.AccountUpdateInfoRequest;
+import com.FA24SE088.OnlineForum.dto.request.BlockRequest;
+import com.FA24SE088.OnlineForum.dto.request.UnfollowRequest;
 import com.FA24SE088.OnlineForum.dto.response.AccountResponse;
 import com.FA24SE088.OnlineForum.dto.response.ApiResponse;
 import com.FA24SE088.OnlineForum.dto.response.FollowResponse;
-import com.FA24SE088.OnlineForum.entity.Account;
-import com.FA24SE088.OnlineForum.entity.Follow;
-import com.FA24SE088.OnlineForum.enums.AccountStatus;
-import com.FA24SE088.OnlineForum.enums.SuccessReturnMessage;
-import com.FA24SE088.OnlineForum.service.AccountService;
+
 import com.FA24SE088.OnlineForum.service.FollowService;
 import io.swagger.v3.oas.annotations.Operation;
-import jakarta.validation.constraints.NotNull;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -41,8 +35,21 @@ public class FollowController {
 
     @Operation(summary = "Block user", description = "Block a user for the current user")
     @PostMapping("/block")
-    public ApiResponse<Void> blockUser(@RequestBody UUID accountId) {
-        followService.blockUser(accountId);
+    public ApiResponse<Void> blockUser(@RequestBody BlockRequest request) {
+        followService.blockUser(request.getAccountID());
+        return ApiResponse.<Void>builder().build();
+    }
+
+    @Operation(summary = "Unblock user", description = "Block a user for the current user")
+    @PostMapping("/unblock")
+    public ApiResponse<Void> unblockUser(@RequestBody BlockRequest request) {
+        followService.unblock(request.getAccountID());
+        return ApiResponse.<Void>builder().build();
+    }
+
+    @PostMapping("/unfollow")
+    public ApiResponse<Void> unfollow(@RequestBody UnfollowRequest request) {
+        followService.unfollow(request);
         return ApiResponse.<Void>builder().build();
     }
 

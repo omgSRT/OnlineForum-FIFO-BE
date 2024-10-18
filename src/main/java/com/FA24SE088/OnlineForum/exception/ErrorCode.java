@@ -61,6 +61,15 @@ public enum ErrorCode {
     DRAFT_POST_CANNOT_CHANGE_STATUS(10050, "Draft Post Status Cannot Be Changed", HttpStatus.BAD_REQUEST),
     COMPLETED_POST_CANNOT_BE_EDIT_IN_DRAFT(10051, "Completed Post Cannot Be Edited In Draft Section", HttpStatus.BAD_REQUEST),
     COMPLETED_POST_CANNOT_BE_UPDATE_TO_POST(10051, "Completed Post Cannot Be Updated To New Completed Post", HttpStatus.BAD_REQUEST),
+    FOLLOW_NOT_FOUND(10051, "Follow not found", HttpStatus.NOT_FOUND),
+    BLOCK_NOT_FOUND(10051, "Blocked not found", HttpStatus.NOT_FOUND),
+    ACCOUNT_HAS_BEEN_FOLLOWED(10051, "This account has been followed", HttpStatus.BAD_REQUEST),
+    CANNOT_FOLLOW_SELF(10051, "Cannot follow self", HttpStatus.BAD_REQUEST),
+    CANNOT_UNFOLLOW_SELF(10051, "Cannot unfollow self", HttpStatus.BAD_REQUEST),
+    CANNOT_BLOCK_SELF(10051, "Cannot block self", HttpStatus.BAD_REQUEST),
+    CANNOT_UNBLOCK_SELF(10051, "Cannot unblock self", HttpStatus.BAD_REQUEST),
+    BOOKMARK_ALREADY_EXISTS(10051, "Bookmark already exists", HttpStatus.BAD_REQUEST),
+    BOOKMARK_NOT_FOUND(10051, "Bookmark not found", HttpStatus.NOT_FOUND),
     ;
 
     private int code;

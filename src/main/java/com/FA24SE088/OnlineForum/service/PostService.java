@@ -25,10 +25,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
 @RequiredArgsConstructor
@@ -101,7 +98,8 @@ public class PostService {
                                                              UUID accountId,
                                                              UUID topicId,
                                                              UUID tagId,
-                                                             List<PostStatus> statuses) {
+                                                             List<PostStatus> statuses,
+                                                             Boolean IsFolloweeIncluded) {
         var postListFuture = findAllPosts();
         var accountFuture = accountId != null
                             ? findAccountById(accountId)
@@ -112,21 +110,34 @@ public class PostService {
         var tagFuture = tagId != null
                 ? findTagById(tagId)
                 : CompletableFuture.completedFuture(null);
+        var followerListFuture = getFollowerList();
 
-        return CompletableFuture.allOf(postListFuture, accountFuture, topicFuture, tagFuture).thenCompose(v -> {
+        return CompletableFuture.allOf(postListFuture, accountFuture, topicFuture, tagFuture, followerListFuture).thenCompose(v -> {
             var postList = postListFuture.join();
             var account = accountFuture.join();
             var topic = topicFuture.join();
             var tag = tagFuture.join();
+            List<Account> followerAccountList = followerListFuture.join();
 
-            var list = postList.stream()
+            var list = new ArrayList<>(postList.stream()
+                    .filter(post -> {
+                        if (IsFolloweeIncluded == null) {
+                            return true;
+                        } else if (IsFolloweeIncluded) {
+                            return followerAccountList.contains(post.getAccount());
+                        } else {
+                            return !followerAccountList.contains(post.getAccount());
+                        }
+                    })
                     .filter(post -> account == null || post.getAccount().equals(account))
                     .filter(post -> topic == null || post.getTopic().equals(topic))
                     .filter(post -> tag == null || post.getTag().equals(tag))
                     .filter(post -> statuses == null || statuses.isEmpty() ||
                             (safeValueOf(post.getStatus()) != null && statuses.contains(safeValueOf(post.getStatus()))))
                     .map(postMapper::toPostResponse)
-                    .toList();
+                    .toList());
+
+            Collections.shuffle(list);
 
             var paginatedList = paginationUtils.convertListToPage(page, perPage, list);
 
@@ -465,13 +476,6 @@ public class PostService {
         );
     }
     @Async("AsyncTaskExecutor")
-    private CompletableFuture<Wallet> findWalletById(UUID walletId) {
-        return CompletableFuture.supplyAsync(() ->
-                unitOfWork.getWalletRepository().findById(walletId)
-                        .orElseThrow(() -> new AppException(ErrorCode.WALLET_NOT_FOUND))
-        );
-    }
-    @Async("AsyncTaskExecutor")
     private CompletableFuture<List<Point>> getPoint() {
         return CompletableFuture.supplyAsync(() ->
                 unitOfWork.getPointRepository().findAll().stream()
@@ -518,7 +522,18 @@ public class PostService {
         return unitOfWork.getDailyPointRepository().findByAccountAndPost(account, post);
     }
     @Async("AsyncTaskExecutor")
-    public String getUsernameFromJwt() {
+    private CompletableFuture<List<Account>> getFollowerList(){
+        var username = getUsernameFromJwt();
+        var accountFuture = findAccountByUsername(username);
+        return accountFuture.thenCompose(account -> {
+            var followeeList = unitOfWork.getFollowRepository().findByFollower(account).stream()
+                    .map(Follow::getFollowee)
+                    .toList();
+
+            return CompletableFuture.completedFuture(followeeList);
+        });
+    }
+    private String getUsernameFromJwt() {
         var authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null && authentication.getPrincipal() instanceof Jwt jwt) {
             return jwt.getClaim("username");  // Get the "username" claim from the token
