@@ -45,7 +45,7 @@ public class BookMarkService {
     public BookMarkResponse create(UUID postId) {
         Account currentUser = getCurrentUser();
         Optional<BookMark> existingBookmark = unitOfWork.getBookMarkRepository()
-                .findByAccountAndPost(currentUser, postId);
+                .findByAccountAndPost_PostId(currentUser, postId);
 
         if (existingBookmark.isPresent()) {
             throw new AppException(ErrorCode.BOOKMARK_ALREADY_EXISTS);
@@ -63,7 +63,7 @@ public class BookMarkService {
         Account currentUser = getCurrentUser();
 
         BookMark bookMark = unitOfWork.getBookMarkRepository()
-                .findByAccountAndPost(currentUser, postId)
+                .findByAccountAndPost_PostId(currentUser, postId)
                 .orElseThrow(() -> new AppException(ErrorCode.BOOKMARK_NOT_FOUND));
 
         unitOfWork.getBookMarkRepository().delete(bookMark);

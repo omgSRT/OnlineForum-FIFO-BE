@@ -21,6 +21,7 @@ public class AccountResponse {
     String username;
     String email;
     String avatar;
+    String coverImage;
     Date createdDate;
     String status;
     Role role;

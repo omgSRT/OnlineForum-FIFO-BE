@@ -11,6 +11,7 @@ import java.util.UUID;
 
 @Repository
 public interface BookMarkRepository extends JpaRepository<BookMark, UUID> {
-    Optional<BookMark> findByAccountAndPost(Account account, UUID postId);
+    Optional<BookMark> findByAccountAndPost_PostId(Account account, UUID postId);
+
     List<BookMark> findByAccount(Account account);
 }

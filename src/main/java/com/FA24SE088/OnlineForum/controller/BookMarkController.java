@@ -10,6 +10,7 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -21,7 +22,7 @@ import java.util.UUID;
 @Slf4j
 @RequestMapping("/bookmarks")
 public class BookMarkController {
-
+    @Autowired
     private BookMarkService bookMarkService;
 
     @Operation(summary = "Create bookmark", description = "Create a new bookmark for the current user")
