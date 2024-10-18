@@ -22,27 +22,27 @@ public class OnlineForumApplication {
 		SpringApplication.run(OnlineForumApplication.class, args);
 	}
 
-	@Bean
-	public CommandLineRunner openSwaggerUI() {
-		return args -> {
-			String swaggerUIUrl = "http://localhost:8080/swagger-ui/index.html";
-			if (Desktop.isDesktopSupported()) {
-				try {
-					// Use the desktop class to open the URL
-					Desktop desktop = Desktop.getDesktop();
-					desktop.browse(new URI(swaggerUIUrl));
-				} catch (IOException | URISyntaxException e) {
-					e.printStackTrace();
-				}
-			} else {
-				// Fallback method for unsupported desktop environments
-				try {
-					Runtime.getRuntime().exec("rundll32 url.dll,FileProtocolHandler " + swaggerUIUrl);
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-			}
-		};
-	}
+//	@Bean
+//	public CommandLineRunner openSwaggerUI() {
+//		return args -> {
+//			String swaggerUIUrl = "http://localhost:8080/swagger-ui/index.html";
+//			if (Desktop.isDesktopSupported()) {
+//				try {
+//					// Use the desktop class to open the URL
+//					Desktop desktop = Desktop.getDesktop();
+//					desktop.browse(new URI(swaggerUIUrl));
+//				} catch (IOException | URISyntaxException e) {
+//					e.printStackTrace();
+//				}
+//			} else {
+//				// Fallback method for unsupported desktop environments
+//				try {
+//					Runtime.getRuntime().exec("rundll32 url.dll,FileProtocolHandler " + swaggerUIUrl);
+//				} catch (IOException e) {
+//					e.printStackTrace();
+//				}
+//			}
+//		};
+//	}
 
 }
