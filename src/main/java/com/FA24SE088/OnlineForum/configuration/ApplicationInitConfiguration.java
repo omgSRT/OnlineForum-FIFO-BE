@@ -65,10 +65,10 @@ public class ApplicationInitConfiguration {
             Role role1 = roleRepository.findByName("ADMIN");
             if (role1 == null) throw new RuntimeException("Chưa có role admin");
 
-            if (accountRepository.findByUsername("admin").isEmpty()) {
+            if (accountRepository.findByUsername("admin1234").isEmpty()) {
                 Account user = Account.builder()
-                        .username("admin")
-                        .password(passwordEncoder.encode("admin"))
+                        .username("admin1234")
+                        .password(passwordEncoder.encode("admin1234"))
                         .role(role1)
                         .createdDate(new Date())
                         .status(AccountStatus.ACTIVE.name())

@@ -1,15 +1,12 @@
 package com.FA24SE088.OnlineForum.service;
 
-import com.FA24SE088.OnlineForum.dto.response.AccountResponse;
-import com.FA24SE088.OnlineForum.dto.response.FollowResponse;
-import com.FA24SE088.OnlineForum.entity.Account;
-import com.FA24SE088.OnlineForum.entity.BlockedAccount;
-import com.FA24SE088.OnlineForum.entity.Follow;
-import com.FA24SE088.OnlineForum.enums.FollowStatus;
+import com.FA24SE088.OnlineForum.dto.response.BookMarkResponse;
+import com.FA24SE088.OnlineForum.dto.response.PostResponse;
+import com.FA24SE088.OnlineForum.entity.*;
 import com.FA24SE088.OnlineForum.exception.AppException;
 import com.FA24SE088.OnlineForum.exception.ErrorCode;
-import com.FA24SE088.OnlineForum.mapper.AccountMapper;
-import com.FA24SE088.OnlineForum.mapper.FollowMapper;
+import com.FA24SE088.OnlineForum.mapper.BookMarkMapper;
+import com.FA24SE088.OnlineForum.mapper.PostMapper;
 import com.FA24SE088.OnlineForum.repository.UnitOfWork.UnitOfWork;
 import com.FA24SE088.OnlineForum.utils.PaginationUtils;
 import lombok.AccessLevel;
@@ -22,8 +19,8 @@ import org.springframework.stereotype.Service;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
@@ -31,17 +28,60 @@ import java.util.stream.Collectors;
 @Service
 public class BookMarkService {
     @Autowired
-    private AccountMapper accountMapper;
+    private UnitOfWork unitOfWork;
     @Autowired
-    UnitOfWork unitOfWork;
+    private PaginationUtils paginationUtils;
     @Autowired
-    PaginationUtils paginationUtils;
+    private BookMarkMapper bookMarkMapper;
+    @Autowired
+    private PostMapper postMapper;
 
     private Account getCurrentUser() {
         var context = SecurityContextHolder.getContext();
-        return unitOfWork.getAccountRepository().findByUsername(context.getAuthentication().getName()).orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND));
+        return unitOfWork.getAccountRepository().findByUsername(context.getAuthentication().getName())
+                .orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND));
     }
 
+    public BookMarkResponse create(UUID postId) {
+        Account currentUser = getCurrentUser();
+        Optional<BookMark> existingBookmark = unitOfWork.getBookMarkRepository()
+                .findByAccountAndPost_PostId(currentUser, postId);
 
+        if (existingBookmark.isPresent()) {
+            throw new AppException(ErrorCode.BOOKMARK_ALREADY_EXISTS);
+        }
+
+        BookMark bookMark = new BookMark();
+        bookMark.setAccount(currentUser);
+        bookMark.setPost(unitOfWork.getPostRepository().findById(postId)
+                .orElseThrow(() -> new AppException(ErrorCode.POST_NOT_FOUND)));
+
+        BookMark savedBookMark = unitOfWork.getBookMarkRepository().save(bookMark);
+        return bookMarkMapper.toResponse(savedBookMark);
+    }
+    public void unbookmark(UUID postId) {
+        Account currentUser = getCurrentUser();
+
+        BookMark bookMark = unitOfWork.getBookMarkRepository()
+                .findByAccountAndPost_PostId(currentUser, postId)
+                .orElseThrow(() -> new AppException(ErrorCode.BOOKMARK_NOT_FOUND));
+
+        unitOfWork.getBookMarkRepository().delete(bookMark);
+    }
+
+    public List<PostResponse> listBookmarks() {
+        Account currentUser = getCurrentUser();
+        List<BookMark> bookmarks = unitOfWork.getBookMarkRepository().findByAccount(currentUser);
+//        return bookmarks.stream()
+//                .map(BookMark::getPost) // Lấy Post từ mỗi BookMark
+//                .toList();
+//    }
+        return bookmarks.stream()
+                .map(bookMark -> {
+                    Post post = bookMark.getPost();
+                    return postMapper.toPostResponse(post);
+                })
+                .toList();
+    }
 
 }

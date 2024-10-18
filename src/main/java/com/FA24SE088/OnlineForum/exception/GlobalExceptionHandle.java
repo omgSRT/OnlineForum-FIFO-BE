@@ -1,13 +1,17 @@
 package com.FA24SE088.OnlineForum.exception;
 
 import com.FA24SE088.OnlineForum.dto.response.ApiResponse;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authorization.AuthorizationDeniedException;
+import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
 import java.nio.file.AccessDeniedException;
+import java.util.HashMap;
+import java.util.Map;
 
 @ControllerAdvice
 public class GlobalExceptionHandle {
@@ -34,21 +38,21 @@ public class GlobalExceptionHandle {
         );
     }
 
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    ResponseEntity<ApiResponse> handleMethodArgumentNotValidException(MethodArgumentNotValidException exception){
-        String enumkey = exception.getFieldError().getDefaultMessage();
-        ErrorCode errorCode = ErrorCode.INVALID_ERROR_MESSAGE_KEY;
-
-        try {
-            errorCode = ErrorCode.valueOf(enumkey);
-        } catch (IllegalArgumentException e){}
-
-        ApiResponse apiResponse = new ApiResponse();
-        apiResponse.setCode(errorCode.getCode());
-        apiResponse.setMessage(errorCode.getMessage());
-
-        return ResponseEntity.status(errorCode.getStatusCode()).body(apiResponse);
-    }
+//    @ExceptionHandler(MethodArgumentNotValidException.class)
+//    ResponseEntity<ApiResponse> handleMethodArgumentNotValidException(MethodArgumentNotValidException exception){
+//        String enumkey = exception.getFieldError().getDefaultMessage();
+//        ErrorCode errorCode = ErrorCode.INVALID_ERROR_MESSAGE_KEY;
+//
+//        try {
+//            errorCode = ErrorCode.valueOf(enumkey);
+//        } catch (IllegalArgumentException e){}
+//
+//        ApiResponse apiResponse = new ApiResponse();
+//        apiResponse.setCode(errorCode.getCode());
+//        apiResponse.setMessage(errorCode.getMessage());
+//
+//        return ResponseEntity.status(errorCode.getStatusCode()).body(apiResponse);
+//    }
 
     @ExceptionHandler(IllegalStateException.class)
     ResponseEntity<ApiResponse> handleRuntimeException(IllegalStateException exception){
@@ -67,4 +71,16 @@ public class GlobalExceptionHandle {
         System.out.println(exception.toString());
         return ResponseEntity.badRequest().body(response);
     }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<?> handleValidationExceptions(MethodArgumentNotValidException ex) {
+        Map<String, String> errors = new HashMap<>();
+        ex.getBindingResult().getAllErrors().forEach((error) -> {
+            String fieldName = ((FieldError) error).getField();
+            String errorMessage = error.getDefaultMessage();
+            errors.put(fieldName, errorMessage);
+        });
+        return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);
+    }
+
 }

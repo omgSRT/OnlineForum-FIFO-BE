@@ -84,7 +84,7 @@ public class AccountService {
                         throw new AppException(ErrorCode.CATEGORY_HAS_UNDERTAKE);
                     }
                 });
-                account.setCategoryList(categories); // Gán toàn bộ danh sách category vào account
+                account.setCategoryList(categories);
             }
         } else {
             Role role = unitOfWork.getRoleRepository().findByName("USER");
@@ -143,19 +143,14 @@ public class AccountService {
 
     public AccountResponse updateInfo(AccountUpdateInfoRequest request) {
         Account account = getCurrentUser();
-
-        // Kiểm tra xem mật khẩu cũ có đúng không
         if (!passwordEncoder.matches(request.getOldPassword(), account.getPassword())) {
             throw new AppException(ErrorCode.PASSWORD_NOT_MATCH);
         }
-
         if (!request.getNewPass().equals(request.getConfirmPassword())) {
             throw new AppException(ErrorCode.PASSWORD_NOT_MATCH);
         }
-
         // Mã hóa mật khẩu mới (encoder là mã hoá 1 chiều)
         account.setPassword(passwordEncoder.encode(request.getNewPass()));
-
         if (request.getAvatar() != null && !request.getAvatar().isEmpty()) {
             account.setAvatar(request.getAvatar());
         }

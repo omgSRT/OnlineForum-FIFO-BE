@@ -22,7 +22,7 @@ public class SecurityConfiguration {
     private final String[] PUBLIC_ENDPOINTS_POST = {"/authenticate/login", "/authenticate/introspect", "/authenticate/logout",
             "/authenticate/refresh", "/email/send", "/authenticate/sign-up",
             "/daily-point/create", "/notification/create", "/notification/change/status",
-            "/account/create"};
+            "/account/create","/authenticate/sign-up"};
     private final String[] PUBLIC_ENDPOINTS_GET = {"/swagger-ui/**", "/v3/api-docs/**", "/swagger-resources/**"
     };
 
