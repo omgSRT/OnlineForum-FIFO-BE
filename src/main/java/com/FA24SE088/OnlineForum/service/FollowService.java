@@ -53,6 +53,7 @@ public class FollowService {
                 .followee(account1)
                 .status(FollowStatus.FOLLOWING.name())
                 .build();
+        unitOfWork.getFollowRepository().save(follow);
         return followMapper.toRespone(follow);
     }
 
@@ -85,8 +86,8 @@ public class FollowService {
         List<Follow> followedAccounts = unitOfWork.getFollowRepository().findByFollower(currentUser);
 
         return followedAccounts.stream()
-                .map(followMapper::toRespone) // Chuyển đổi sang FollowResponse
-                .collect(Collectors.toList());
+                .map(followMapper::toRespone)
+                .toList();
     }
 
     public List<AccountResponse> listBlock() {
