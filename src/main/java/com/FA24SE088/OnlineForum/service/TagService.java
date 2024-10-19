@@ -76,12 +76,19 @@ public class TagService {
     public CompletableFuture<List<TagResponse>> getAllTagsByFilteringNameAndColor(int page, int perPage, String name,
                                                                                   String targetColorHex) {
         return CompletableFuture.supplyAsync(() -> {
-            int[] targetRgb = hexToRgb(targetColorHex);
+            final int[] targetRgb = (targetColorHex != null) ? hexToRgb(targetColorHex) : null;
 
             List<TagResponse> list = unitOfWork.getTagRepository().findAll().stream()
                     .filter(tag -> name == null || tag.getName().contains(name))
-                    .filter(tag -> colorDistance(targetRgb, hexToRgb(tag.getBackgroundColorHex())) <= 50
-                            || colorDistance(targetRgb, hexToRgb(tag.getTextColorHex())) <= 50)
+                    .filter(tag -> {
+                        if (targetRgb == null) {
+                            return true;
+                        }
+                        String backgroundColorHex = tag.getBackgroundColorHex();
+                        String textColorHex = tag.getTextColorHex();
+                        return (backgroundColorHex != null && colorDistance(targetRgb, hexToRgb(backgroundColorHex)) <= 50)
+                                || (textColorHex != null && colorDistance(targetRgb, hexToRgb(textColorHex)) <= 50);
+                    })
                     .map(tagMapper::toTagResponse)
                     .toList();
 
