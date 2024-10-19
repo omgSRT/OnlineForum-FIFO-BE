@@ -32,7 +32,7 @@ public class AuthenticationController {
     @Operation(summary = "Login", description = "new admin account: admin1234 \n" +
             "password: admin1234")
     @PostMapping("/login")
-    public ApiResponse<AuthenticationResponse> login(@Valid @RequestBody AuthenticationRequest request){
+    public ApiResponse<AuthenticationResponse> login(@Validated @RequestBody AuthenticationRequest request){
         return ApiResponse.<AuthenticationResponse>builder()
                 .entity(authenticateService.authenticated(request))
                 .build();

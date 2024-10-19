@@ -25,6 +25,7 @@ public class Account {
     @EqualsAndHashCode.Include
     String email;
     String password;
+    String handle;
     String avatar;
     String coverImage;
     Date createdDate;

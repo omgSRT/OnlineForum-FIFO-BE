@@ -20,13 +20,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
-import springfox.documentation.spi.service.contexts.SecurityContext;
 
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
@@ -126,8 +124,8 @@ public class FollowService {
         unitOfWork.getBlockedAccountRepository().delete(blockedAccount);
     }
 
-
-    public List<FollowResponse> getFollowedAccounts() {
+//xem danh sách người mình follow
+    public List<FollowResponse> getFollows() {
         Account currentUser = getCurrentUser();
 
         List<Follow> followedAccounts = unitOfWork.getFollowRepository().findByFollower(currentUser);
@@ -136,6 +134,18 @@ public class FollowService {
                 .map(followMapper::toRespone)
                 .toList();
     }
+//xem danh sách người follow mình
+    public List<FollowResponse> getFollowers() {
+        Account currentUser = getCurrentUser();
+
+        // Lấy danh sách các đối tượng follow mà followee là người dùng hiện tại
+        List<Follow> followers = unitOfWork.getFollowRepository().findByFollowee(currentUser);
+
+        return followers.stream()
+                .map(followMapper::toRespone)
+                .toList();
+    }
+
 
     public List<AccountResponse> listBlock() {
         Account currentUser = getCurrentUser();

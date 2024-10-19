@@ -61,11 +61,19 @@ public class FollowController {
                 .build();
     }
 
-    @Operation(summary = "Get all follows", description = "")
-    @GetMapping
+    @Operation(summary = "Danh sách người mình đang follow", description = "")
+    @GetMapping("/get-follows")
     public ApiResponse<List<FollowResponse>> getAllFollows() {
         return ApiResponse.<List<FollowResponse>>builder()
-                .entity(followService.getFollowedAccounts())
+                .entity(followService.getFollows())
+                .build();
+    }
+
+    @Operation(summary = "Danh sách người đang follow mình", description = "")
+    @GetMapping("get-followers")
+    public ApiResponse<List<FollowResponse>> getAllFollowers() {
+        return ApiResponse.<List<FollowResponse>>builder()
+                .entity(followService.getFollowers())
                 .build();
     }
 

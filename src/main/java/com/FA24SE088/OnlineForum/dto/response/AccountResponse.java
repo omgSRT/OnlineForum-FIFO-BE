@@ -20,6 +20,7 @@ public class AccountResponse {
     UUID accountId;
     String username;
     String email;
+    String handle;
     String avatar;
     String coverImage;
     Date createdDate;

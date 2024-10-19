@@ -61,12 +61,12 @@ public class AuthenticateService {
     public AuthenticationResponse authenticated(AuthenticationRequest request){
         PasswordEncoder passwordEncoder = new BCryptPasswordEncoder(10);
         var account = unitOfWork.getAccountRepository().findByUsername(request.getUsername()).orElseThrow(
-                () -> new RuntimeException("ACCOUNT_NOT_EXIST")
+                () -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND)
         );
 
         boolean authenticated = passwordEncoder.matches(request.getPassword(), account.getPassword());
         if (!authenticated){
-            throw new RuntimeException("UNAUTHENTICATED");
+            throw new AppException(ErrorCode.UNAUTHENTICATED);
         }
         var token = generateToken(account, 1);
         var refreshToken = generateToken(account, 365);
