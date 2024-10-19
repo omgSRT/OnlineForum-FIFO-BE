@@ -25,7 +25,9 @@ public class Tag {
     @EqualsAndHashCode.Include
     String name;
     @EqualsAndHashCode.Include
-    String colorHex;
+    String backgroundColorHex;
+    @EqualsAndHashCode.Include
+    String textColorHex;
 
     @JsonIgnore
     @JsonIgnoreProperties(value = { "tag" }, allowSetters = true)

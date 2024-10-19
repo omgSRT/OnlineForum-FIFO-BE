@@ -17,5 +17,10 @@ public class TagRequest {
             regexp = "^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$",
             message = "Color Hex Must Be a Valid Hex Code"
     )
-    String colorHex;
+    String backgroundColorHex;
+    @Pattern(
+            regexp = "^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$",
+            message = "Color Hex Must Be a Valid Hex Code"
+    )
+    String textColorHex;
 }

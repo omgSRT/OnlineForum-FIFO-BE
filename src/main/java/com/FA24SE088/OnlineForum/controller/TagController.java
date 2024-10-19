@@ -48,8 +48,8 @@ public class TagController {
     public ApiResponse<List<TagResponse>> getAllTopicsByNameContaining(@RequestParam(defaultValue = "1") int page,
                                                                        @RequestParam(defaultValue = "10") int perPage,
                                                                        @RequestParam(required = false) String name,
-                                                                       @RequestParam(required = false, defaultValue = "#FFFFFF") String colorHex){
-        return tagService.getAllTagsByFilteringNameAndColor(page, perPage, name, colorHex).thenApply(tagResponses ->
+                                                                       @RequestParam(required = false) String targetColorHex){
+        return tagService.getAllTagsByFilteringNameAndColor(page, perPage, name, targetColorHex).thenApply(tagResponses ->
                 ApiResponse.<List<TagResponse>>builder()
                         .entity(tagResponses)
                         .build()
