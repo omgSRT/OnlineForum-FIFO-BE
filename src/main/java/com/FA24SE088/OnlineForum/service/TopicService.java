@@ -41,7 +41,7 @@ public class TopicService {
         var categoryFuture = findCategoryById(request.getCategoryId());
 
         return categoryFuture.thenCompose(category ->
-                unitOfWork.getTopicRepository().existsByName(request.getName())
+                unitOfWork.getTopicRepository().existsByNameAndCategory(request.getName(), category)
                         .thenCompose(exists -> {
                             if (exists) {
                                 throw new AppException(ErrorCode.NAME_EXIST);
@@ -58,10 +58,10 @@ public class TopicService {
 
     @Async("AsyncTaskExecutor")
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
-    public CompletableFuture<List<TopicNoCategoryResponse>> getAllTopics(int page, int perPage) {
+    public CompletableFuture<List<TopicResponse>> getAllTopics(int page, int perPage) {
         return CompletableFuture.supplyAsync(() -> {
             var list = unitOfWork.getTopicRepository().findAll().stream()
-                    .map(topicMapper::toTopicNoCategoryResponse)
+                    .map(topicMapper::toTopicResponse)
                     .toList();
 
             return paginationUtils.convertListToPage(page, perPage, list);
@@ -70,7 +70,7 @@ public class TopicService {
 
     @Async("AsyncTaskExecutor")
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
-    public CompletableFuture<List<TopicNoCategoryResponse>> getAllTopicsByCategoryId(int page, int perPage, UUID categoryId) {
+    public CompletableFuture<List<TopicResponse>> getAllTopicsByCategoryId(int page, int perPage, UUID categoryId) {
         var categoryFuture = findCategoryById(categoryId);
 
         return categoryFuture.thenCompose(category ->
@@ -78,7 +78,7 @@ public class TopicService {
                         .findByCategoryCategoryId(category.getCategoryId())
                         .thenApply(list -> {
                             var responses = list.stream()
-                                    .map(topicMapper::toTopicNoCategoryResponse)
+                                    .map(topicMapper::toTopicResponse)
                                     .toList();
                             return paginationUtils.convertListToPage(page, perPage, responses);
                         }));

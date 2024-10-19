@@ -25,7 +25,6 @@ public class Topic {
     @EqualsAndHashCode.Include
     String name;
 
-    @JsonIgnore
     @ManyToOne
     @JoinColumn(name = "categoryId")
     Category category;
