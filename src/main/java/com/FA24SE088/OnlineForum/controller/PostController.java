@@ -75,10 +75,10 @@ public class PostController {
                 ).join();
     }
 
-    @Operation(summary = "Delete Post", description = "Delete Post Or Draft By Changing Status")
+    @Operation(summary = "Delete Post", description = "Delete Post By Changing Status")
     @PutMapping(path = "/update/{postId}/status/hidden")
     public ApiResponse<PostResponse> deletePostByChangingStatusById(@PathVariable UUID postId){
-        return postService.deleteByChangingPostOrDraftStatusById(postId).thenApply(postResponse ->
+        return postService.deleteByChangingPostStatusById(postId).thenApply(postResponse ->
                 ApiResponse.<PostResponse>builder()
                         .message(SuccessReturnMessage.DELETE_SUCCESS.getMessage())
                         .entity(postResponse)
@@ -126,6 +126,16 @@ public class PostController {
                 ApiResponse.<PostResponse>builder()
                         .message(SuccessReturnMessage.UPDATE_SUCCESS.getMessage())
                         .entity(postResponse)
+                        .build()
+        ).join();
+    }
+    @Operation(summary = "Delete Drafts", description = "Delete Drafts By List Of Draft IDs")
+    @DeleteMapping(path = "/delete/draft")
+    public ApiResponse<List<PostResponse>> deleteDraftsById(@RequestBody @Valid List<UUID> draftIds){
+        return postService.deleteDraftsById(draftIds).thenApply(postResponses ->
+                ApiResponse.<List<PostResponse>>builder()
+                        .message(SuccessReturnMessage.DELETE_SUCCESS.getMessage())
+                        .entity(postResponses)
                         .build()
         ).join();
     }

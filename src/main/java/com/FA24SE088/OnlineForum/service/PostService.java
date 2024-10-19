@@ -173,7 +173,7 @@ public class PostService {
     }
     @Async("AsyncTaskExecutor")
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
-    public CompletableFuture<PostResponse> deleteByChangingPostOrDraftStatusById(UUID postId) {
+    public CompletableFuture<PostResponse> deleteByChangingPostStatusById(UUID postId) {
         var postFuture = findPostById(postId);
 
         return postFuture.thenCompose(post -> {
@@ -244,6 +244,7 @@ public class PostService {
                     newPost.setCommentList(new ArrayList<>());
                     newPost.setUpvoteList(new ArrayList<>());
                     newPost.setReportList(new ArrayList<>());
+                    newPost.setBookMarkList(new ArrayList<>());
 
                     return CompletableFuture.completedFuture(unitOfWork.getPostRepository().save(newPost));
                 })
@@ -313,6 +314,32 @@ public class PostService {
                         });
             })
                     .thenApply(postMapper::toPostResponse);
+        });
+    }
+    @Async("AsyncTaskExecutor")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
+    public CompletableFuture<List<PostResponse>> deleteDraftsById(List<UUID> draftIds) {
+        return CompletableFuture.supplyAsync(() ->
+                draftIds.stream()
+                        .map(draftId -> findPostById(draftId)
+                                .thenApply(post -> {
+                                    if (!post.getStatus().equals(PostStatus.DRAFT.name())) {
+                                        throw new AppException(ErrorCode.POST_NOT_A_DRAFT);
+                                    }
+                                    return post;
+                                }))
+                        .toList()
+        ).thenApplyAsync(postFutures -> {
+            CompletableFuture.allOf(postFutures.toArray(new CompletableFuture[0])).join();
+
+            List<Post> draftList = postFutures.stream()
+                    .map(CompletableFuture::join)
+                    .toList();
+
+            unitOfWork.getPostRepository().deleteAll(draftList);
+            return draftList.stream()
+                    .map(postMapper::toPostResponse)
+                    .toList();
         });
     }
     //endregion
