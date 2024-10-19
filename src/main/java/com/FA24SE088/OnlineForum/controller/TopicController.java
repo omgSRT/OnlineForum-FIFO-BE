@@ -34,23 +34,23 @@ public class TopicController {
 
     @Operation(summary = "Get All Topics")
     @GetMapping(path = "/getall")
-    public ApiResponse<List<TopicNoCategoryResponse>> getAllTopics(@RequestParam(defaultValue = "1") int page,
+    public ApiResponse<List<TopicResponse>> getAllTopics(@RequestParam(defaultValue = "1") int page,
                                                                    @RequestParam(defaultValue = "10") int perPage){
-        return topicService.getAllTopics(page, perPage).thenApply(topicNoCategoryResponses ->
-                ApiResponse.<List<TopicNoCategoryResponse>>builder()
-                        .entity(topicNoCategoryResponses)
+        return topicService.getAllTopics(page, perPage).thenApply(topicResponses ->
+                ApiResponse.<List<TopicResponse>>builder()
+                        .entity(topicResponses)
                         .build()
         ).join();
     }
 
     @Operation(summary = "Get All Topics", description = "Get All Topics Based On Category ID")
     @GetMapping(path = "/getall/by-category/{categoryId}")
-    public ApiResponse<List<TopicNoCategoryResponse>> getAllTopicsByCategoryId(@RequestParam(defaultValue = "1") int page,
+    public ApiResponse<List<TopicResponse>> getAllTopicsByCategoryId(@RequestParam(defaultValue = "1") int page,
                                                                                     @RequestParam(defaultValue = "10") int perPage,
                                                                                     @PathVariable UUID categoryId){
-        return topicService.getAllTopicsByCategoryId(page, perPage, categoryId).thenApply(topicNoCategoryResponses ->
-                ApiResponse.<List<TopicNoCategoryResponse>>builder()
-                        .entity(topicNoCategoryResponses)
+        return topicService.getAllTopicsByCategoryId(page, perPage, categoryId).thenApply(topicResponses ->
+                ApiResponse.<List<TopicResponse>>builder()
+                        .entity(topicResponses)
                         .build()
         ).join();
     }
