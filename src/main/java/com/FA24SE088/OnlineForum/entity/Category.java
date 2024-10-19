@@ -23,6 +23,7 @@ public class Category {
     String name;
     String image;
 
+    @JsonIgnore
     @ManyToOne
     @JoinColumn(name = "accountId")
     Account account;
