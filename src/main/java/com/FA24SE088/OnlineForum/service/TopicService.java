@@ -85,7 +85,7 @@ public class TopicService {
     }
 
     @Async("AsyncTaskExecutor")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
     public CompletableFuture<TopicResponse> getTopicById(UUID topicId) {
         return CompletableFuture.supplyAsync(() -> {
             var topic = unitOfWork.getTopicRepository().findById(topicId)
