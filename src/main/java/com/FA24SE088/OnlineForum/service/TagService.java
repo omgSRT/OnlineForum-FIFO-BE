@@ -46,8 +46,11 @@ public class TagService {
                     }
 
                     Tag newTag = tagMapper.toTag(request);
-                    if(request.getColorHex() == null || request.getColorHex().trim().isBlank()){
-                        newTag.setColorHex("#FFFFFF");
+                    if(request.getBackgroundColorHex() == null || request.getBackgroundColorHex().trim().isBlank()){
+                        newTag.setBackgroundColorHex("#4169E1");
+                    }
+                    if(request.getTextColorHex() == null || request.getTextColorHex().trim().isBlank()){
+                        newTag.setTextColorHex("#FFFFFF");
                     }
 
                     return CompletableFuture.completedFuture(
@@ -70,13 +73,22 @@ public class TagService {
 
     @Async("AsyncTaskExecutor")
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
-    public CompletableFuture<List<TagResponse>> getAllTagsByFilteringNameAndColor(int page, int perPage, String name, String colorHex) {
+    public CompletableFuture<List<TagResponse>> getAllTagsByFilteringNameAndColor(int page, int perPage, String name,
+                                                                                  String targetColorHex) {
         return CompletableFuture.supplyAsync(() -> {
-            int[] targetRgb = hexToRgb(colorHex);
+            final int[] targetRgb = (targetColorHex != null) ? hexToRgb(targetColorHex) : null;
 
             List<TagResponse> list = unitOfWork.getTagRepository().findAll().stream()
                     .filter(tag -> name == null || tag.getName().contains(name))
-                    .filter(tag -> colorDistance(targetRgb, hexToRgb(tag.getColorHex())) <= 50)
+                    .filter(tag -> {
+                        if (targetRgb == null) {
+                            return true;
+                        }
+                        String backgroundColorHex = tag.getBackgroundColorHex();
+                        String textColorHex = tag.getTextColorHex();
+                        return (backgroundColorHex != null && colorDistance(targetRgb, hexToRgb(backgroundColorHex)) <= 50)
+                                || (textColorHex != null && colorDistance(targetRgb, hexToRgb(textColorHex)) <= 50);
+                    })
                     .map(tagMapper::toTagResponse)
                     .toList();
 
