@@ -1,6 +1,8 @@
 package com.FA24SE088.OnlineForum.service;
 
+import com.FA24SE088.OnlineForum.dto.request.Wallet2Request;
 import com.FA24SE088.OnlineForum.dto.request.WalletRequest;
+import com.FA24SE088.OnlineForum.dto.response.WalletResponse;
 import com.FA24SE088.OnlineForum.entity.Account;
 import com.FA24SE088.OnlineForum.entity.Wallet;
 import com.FA24SE088.OnlineForum.exception.AppException;
@@ -33,14 +35,34 @@ public class WalletService {
         return unitOfWork.getWalletRepository().save(wallet);
     }
 
-    public void update(UUID id, double balance) {
-        Wallet wallet = getByID(id);
-        wallet.setBalance(balance);
-        unitOfWork.getWalletRepository().save(wallet);
+    public WalletResponse update(Wallet2Request request) {
+        Account account = unitOfWork.getAccountRepository().findById(request.getAccountId()).orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND));
+        Wallet response = account.getWallet();
+        if(response == null) throw new AppException(ErrorCode.WALLET_NOT_EXIST);
+        response.setBalance(request.getBalance());
+
+        unitOfWork.getWalletRepository().save(response);
+        return WalletResponse.builder()
+                .walletId(response.getWalletId())
+                .balance(response.getBalance())
+                .build();
     }
 
-    public Wallet getByID(UUID id){
-        return unitOfWork.getWalletRepository().findById(id).orElseThrow(() -> new AppException(ErrorCode.WALLET_NOT_EXIST));
+
+    public WalletResponse getWalletByAccountID(UUID id) {
+        Account account = unitOfWork.getAccountRepository().findById(id).orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND));
+        Wallet wallet = account.getWallet();
+        if(wallet == null) throw new AppException(ErrorCode.WALLET_NOT_EXIST);
+        return WalletResponse.builder()
+                .walletId(wallet.getWalletId())
+                .balance(wallet.getBalance())
+                .build();
+    }
+
+    public void delete(UUID id){
+        Account account = unitOfWork.getAccountRepository().findById(id).orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND));
+        account.setWallet(null);
+        unitOfWork.getAccountRepository().save(account);
     }
 
 

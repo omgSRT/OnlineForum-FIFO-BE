@@ -115,6 +115,7 @@ public class TopicService {
                 .thenCompose(exists -> {
                     if (exists) {
                         throw new AppException(ErrorCode.NAME_EXIST);
+
                     }
 
                     return CompletableFuture.supplyAsync(() -> {

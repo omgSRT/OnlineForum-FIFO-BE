@@ -14,6 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @RequiredArgsConstructor
 @RestController
@@ -27,7 +28,7 @@ public class DocumentController {
             "ACTIVE,\n" +
             "    INACTIVE")
     @PostMapping("/create")
-    public ApiResponse<DocumentResponse> create2(@RequestBody DocumentRequest request) {
+    public ApiResponse<DocumentResponse> create(@RequestBody DocumentRequest request) {
         return ApiResponse.<DocumentResponse>builder()
                 .entity(documentService.createDocument(request))
                 .build();
@@ -37,6 +38,13 @@ public class DocumentController {
     public ApiResponse<List<DocumentResponse>> getAll(){
         return ApiResponse.<List<DocumentResponse>>builder()
                 .entity(documentService.getAll())
+                .build();
+    }
+
+    @PostMapping("/update/{id}")
+    public ApiResponse<DocumentResponse> update(@PathVariable UUID id, @RequestBody DocumentRequest request) {
+        return ApiResponse.<DocumentResponse>builder()
+                .entity(documentService.update(id, request))
                 .build();
     }
 
