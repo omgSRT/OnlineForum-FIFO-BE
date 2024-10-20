@@ -252,20 +252,18 @@ public class DocumentService {
         return response;
     }
 
-
-
     public List<DocumentResponse> getAll() {
         return documentRepository.findAll().stream()
                 .map(document -> {
                     DocumentResponse response = documentMapper.toResponse(document);
                     List<SectionResponse> sectionResponses = document.getSectionList().stream()
                             .map(documentMapper::toSectionResponse)
-                            .collect(Collectors.toList());
+                            .toList();
                     response.setSectionList(sectionResponses);
 
                     return response;
                 })
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Transactional
@@ -279,7 +277,6 @@ public class DocumentService {
         });
         unitOfWork.getDocumentRepository().delete(document);
     }
-
 
 }
 

@@ -2,9 +2,11 @@ package com.FA24SE088.OnlineForum.controller;
 
 
 import com.FA24SE088.OnlineForum.dto.request.AccountRequest;
+import com.FA24SE088.OnlineForum.dto.request.Wallet2Request;
 import com.FA24SE088.OnlineForum.dto.request.WalletRequest;
 import com.FA24SE088.OnlineForum.dto.response.AccountResponse;
 import com.FA24SE088.OnlineForum.dto.response.ApiResponse;
+import com.FA24SE088.OnlineForum.dto.response.WalletResponse;
 import com.FA24SE088.OnlineForum.entity.Account;
 import com.FA24SE088.OnlineForum.entity.Wallet;
 import com.FA24SE088.OnlineForum.enums.SuccessReturnMessage;
@@ -35,11 +37,25 @@ public class WalletController {
                 .build();
     }
 
-    @GetMapping("/getWallet")
-    public ApiResponse<Wallet> getAll(@RequestParam UUID uuid) {
-        return ApiResponse.<Wallet>builder()
-                .entity(walletService.getByID(uuid))
+    @PutMapping("/update")
+    public ApiResponse<WalletResponse> update(@RequestBody Wallet2Request request) {
+        return ApiResponse.<WalletResponse>builder()
+                .entity(walletService.update(request))
                 .build();
+    }
+
+
+    @GetMapping("/get-by-account-id/{accountId}")
+    public ApiResponse<WalletResponse> getAll(@PathVariable UUID accountId) {
+        return ApiResponse.<WalletResponse>builder()
+                .entity(walletService.getWalletByAccountID(accountId))
+                .build();
+    }
+
+    @DeleteMapping("/delete/{accountId}")
+    public ApiResponse<Void> delete(@PathVariable UUID accountId){
+        walletService.delete(accountId);
+        return ApiResponse.<Void>builder().build();
     }
 
 }

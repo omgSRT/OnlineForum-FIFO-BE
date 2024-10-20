@@ -12,4 +12,5 @@ import java.util.concurrent.CompletableFuture;
 public interface WalletRepository extends JpaRepository<Wallet, UUID> {
     @Async("AsyncTaskExecutor")
     CompletableFuture<Wallet> findByAccountAccountId(UUID accountId);
+
 }
