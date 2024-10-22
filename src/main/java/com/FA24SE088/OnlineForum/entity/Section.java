@@ -23,6 +23,7 @@ public class Section {
     UUID sectionCodeId;
     Date createdDate;
     String linkGit;
+    @Column(columnDefinition = "MEDIUMTEXT")
     String content;
 
     @ManyToOne

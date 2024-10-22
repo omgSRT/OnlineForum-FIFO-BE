@@ -28,6 +28,7 @@ public class Post {
     @EqualsAndHashCode.Include
     String title;
     @EqualsAndHashCode.Include
+    @Column(columnDefinition = "MEDIUMTEXT")
     String content;
     @EqualsAndHashCode.Include
     Date createdDate;
