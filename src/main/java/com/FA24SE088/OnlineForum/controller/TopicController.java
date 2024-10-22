@@ -43,6 +43,17 @@ public class TopicController {
         ).join();
     }
 
+    @Operation(summary = "Get All Topics")
+    @GetMapping(path = "/popular")
+    public ApiResponse<List<TopicResponse>> getAllPopularTopics(@RequestParam(defaultValue = "1") int page,
+                                                         @RequestParam(defaultValue = "10") int perPage){
+        return topicService.getAllPopularTopics(page, perPage).thenApply(topicResponses ->
+                ApiResponse.<List<TopicResponse>>builder()
+                        .entity(topicResponses)
+                        .build()
+        ).join();
+    }
+
     @Operation(summary = "Get All Topics", description = "Get All Topics Based On Category ID")
     @GetMapping(path = "/getall/by-category/{categoryId}")
     public ApiResponse<List<TopicResponse>> getAllTopicsByCategoryId(@RequestParam(defaultValue = "1") int page,

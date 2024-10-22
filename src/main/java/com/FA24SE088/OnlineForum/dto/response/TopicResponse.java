@@ -2,8 +2,6 @@ package com.FA24SE088.OnlineForum.dto.response;
 
 import com.FA24SE088.OnlineForum.entity.Category;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -19,4 +17,5 @@ public class TopicResponse {
     String name;
     @JsonIgnoreProperties(value = { "account" })
     Category category;
+    String imageUrl;
 }

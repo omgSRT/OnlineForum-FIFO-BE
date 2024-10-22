@@ -3,6 +3,7 @@ package com.FA24SE088.OnlineForum.repository.Repository;
 import com.FA24SE088.OnlineForum.entity.Category;
 import com.FA24SE088.OnlineForum.entity.Topic;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Repository;
 
@@ -26,4 +27,7 @@ public interface TopicRepository extends JpaRepository<Topic, UUID> {
 
     @Async("AsyncTaskExecutor")
     CompletableFuture<Boolean> existsByNameAndCategory(String name, Category category);
+
+    @Query("SELECT t FROM Topic t LEFT JOIN t.postList p GROUP BY t ORDER BY COUNT(p) DESC")
+    List<Topic> findAllOrderByPostListSizeDescending();
 }
