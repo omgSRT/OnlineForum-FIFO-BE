@@ -55,10 +55,10 @@ public class PostController {
 
     @Operation(summary = "Get Post", description = "Get Post By ID")
     @GetMapping(path = "/get/{postId}")
-    public ApiResponse<PostGetByIdResponse> getPostById(@PathVariable UUID postId){
-        return postService.getPostById(postId).thenApply(postGetByIdResponse ->
-                ApiResponse.<PostGetByIdResponse>builder()
-                        .entity(postGetByIdResponse)
+    public ApiResponse<PostResponse> getPostById(@PathVariable UUID postId){
+        return postService.getPostById(postId).thenApply(postResponse ->
+                ApiResponse.<PostResponse>builder()
+                        .entity(postResponse)
                         .build()
                 ).join();
     }

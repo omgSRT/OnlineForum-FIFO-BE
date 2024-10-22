@@ -3,6 +3,7 @@ package com.FA24SE088.OnlineForum.service;
 import com.FA24SE088.OnlineForum.dto.request.ImageRequest;
 import com.FA24SE088.OnlineForum.dto.request.PostCreateRequest;
 import com.FA24SE088.OnlineForum.dto.request.PostUpdateRequest;
+import com.FA24SE088.OnlineForum.dto.response.CommentNoPostResponse;
 import com.FA24SE088.OnlineForum.dto.response.PostGetByIdResponse;
 import com.FA24SE088.OnlineForum.dto.response.PostResponse;
 import com.FA24SE088.OnlineForum.entity.*;
@@ -11,6 +12,7 @@ import com.FA24SE088.OnlineForum.enums.TransactionType;
 import com.FA24SE088.OnlineForum.enums.UpdatePostStatus;
 import com.FA24SE088.OnlineForum.exception.AppException;
 import com.FA24SE088.OnlineForum.exception.ErrorCode;
+import com.FA24SE088.OnlineForum.mapper.CommentMapper;
 import com.FA24SE088.OnlineForum.mapper.ImageMapper;
 import com.FA24SE088.OnlineForum.mapper.PostMapper;
 import com.FA24SE088.OnlineForum.repository.UnitOfWork.UnitOfWork;
@@ -36,6 +38,7 @@ public class PostService {
     final UnitOfWork unitOfWork;
     final PostMapper postMapper;
     final ImageMapper imageMapper;
+    final CommentMapper commentMapper;
     final PaginationUtils paginationUtils;
 
     //region CRUD Completed Post
@@ -85,7 +88,12 @@ public class PostService {
 
                                 return createTransaction(point.getPointPerPost(), TransactionType.CREDIT, wallet)
                                         .thenCompose(transaction -> {
-                                            savedPost.setImageList(imageFuture.join());
+                                            if(imageFuture.join() != null){
+                                                savedPost.setImageList(imageFuture.join());
+                                            }
+                                            else{
+                                                savedPost.setImageList(new ArrayList<>());
+                                            }
                                             savedPost.setDailyPoint(dailyPoint);
                                             return CompletableFuture.completedFuture(unitOfWork.getPostRepository().save(savedPost));
                                         });
@@ -147,10 +155,10 @@ public class PostService {
     }
     @Async("AsyncTaskExecutor")
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
-    public CompletableFuture<PostGetByIdResponse> getPostById(UUID postId) {
+    public CompletableFuture<PostResponse> getPostById(UUID postId) {
         var postFuture = findPostById(postId);
 
-        return postFuture.thenApply(postMapper::toPostGetByIdResponse);
+        return postFuture.thenApply(postMapper::toPostResponse);
     }
     @Async("AsyncTaskExecutor")
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
@@ -575,4 +583,5 @@ public class PostService {
             return null;
         }
     }
+
 }
