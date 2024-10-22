@@ -24,6 +24,7 @@ import lombok.extern.slf4j.Slf4j;
 
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -32,6 +33,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 
@@ -212,6 +214,14 @@ public class AccountService {
     public Account findByUsername(String username) {
         return unitOfWork.getAccountRepository().findByUsername(username)
                 .orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND));
+    }
+
+    @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
+    @Async("AsyncTaskExecutor")
+    public CompletableFuture<List<Account>> findByUsernameContainingAsync(String username) {
+        return CompletableFuture.supplyAsync(() ->
+                unitOfWork.getAccountRepository().findByUsernameContaining(username)
+        );
     }
 
     public Account findByEmail(String email) {
