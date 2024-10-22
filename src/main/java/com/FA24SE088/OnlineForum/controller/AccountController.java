@@ -1,19 +1,15 @@
 package com.FA24SE088.OnlineForum.controller;
 
 
-import com.FA24SE088.OnlineForum.dto.request.AccountRequest;
 import com.FA24SE088.OnlineForum.dto.request.AccountUpdateCategoryRequest;
 import com.FA24SE088.OnlineForum.dto.request.AccountUpdateInfoRequest;
 import com.FA24SE088.OnlineForum.dto.response.AccountResponse;
 import com.FA24SE088.OnlineForum.dto.response.ApiResponse;
 import com.FA24SE088.OnlineForum.enums.AccountStatus;
-import com.FA24SE088.OnlineForum.exception.AppException;
-import com.FA24SE088.OnlineForum.exception.ErrorCode;
 import com.FA24SE088.OnlineForum.service.AccountService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -43,6 +39,17 @@ public class AccountController {
                 .message(SuccessReturnMessage.SEARCH_SUCCESS.getMessage())
                 .entity(accountService.findByUsername(username))
                 .build();
+    }
+
+    @Operation(summary = "Find Account", description = "Find By Username Contain Any Letter")
+    @GetMapping(path = "/list/find/by-username")
+    public ApiResponse<List<Account>> findByUsernameContainingAsync(@NotNull String username) {
+        return accountService.findByUsernameContainingAsync(username).thenApply(accounts ->
+                ApiResponse.<List<Account>>builder()
+                        .message(SuccessReturnMessage.SEARCH_SUCCESS.getMessage())
+                        .entity(accounts)
+                        .build()
+        ).join();
     }
 //    @PostMapping("/create")
 //    public ApiResponse<AccountResponse> create(@RequestBody AccountRequest request) {
