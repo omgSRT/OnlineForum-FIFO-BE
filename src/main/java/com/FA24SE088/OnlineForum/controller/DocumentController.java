@@ -41,7 +41,7 @@ public class DocumentController {
                 .build();
     }
 
-    @PostMapping("/update/{id}")
+    @PutMapping("/update/{id}")
     public ApiResponse<DocumentResponse> update(@PathVariable UUID id, @RequestBody DocumentRequest request) {
         return ApiResponse.<DocumentResponse>builder()
                 .entity(documentService.update(id, request))

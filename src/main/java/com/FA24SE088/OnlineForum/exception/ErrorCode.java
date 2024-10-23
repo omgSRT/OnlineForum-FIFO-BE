@@ -72,6 +72,7 @@ public enum ErrorCode {
     BOOKMARK_NOT_FOUND(10061, "Bookmark not found", HttpStatus.NOT_FOUND),
     UNAUTHENTICATED(10062, "Unauthenticated", HttpStatus.BAD_REQUEST),
     POST_NOT_A_DRAFT(10063, "This Is A Post Not A Draft", HttpStatus.BAD_REQUEST),
+    ACCOUNT_ALREADY_BLOCKED(10064, "This Account Is Already Blocked", HttpStatus.BAD_REQUEST),
     ;
 
     private int code;

@@ -108,6 +108,9 @@ public class FollowService {
 
             unitOfWork.getBlockedAccountRepository().save(blockedAccount);
         }
+        else{
+            throw new AppException(ErrorCode.ACCOUNT_ALREADY_BLOCKED);
+        }
     }
 
     public void unblock(UUID accountIdToUnblock) {
