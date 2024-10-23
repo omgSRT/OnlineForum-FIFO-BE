@@ -200,9 +200,13 @@ public class AccountService {
     }
 
 
-    public void delete(UUID uuid) {
-        findAccount(uuid);
-        unitOfWork.getAccountRepository().deleteById(uuid);
+    public CompletableFuture<Account> delete(UUID uuid) {
+        return CompletableFuture.supplyAsync(() -> {
+            Account foundAccount = findAccount(uuid);
+            unitOfWork.getAccountRepository().delete(foundAccount);
+
+            return foundAccount;
+        });
     }
 
     public void activeAccount(Account account) {

@@ -38,7 +38,6 @@ public class PostService {
     final UnitOfWork unitOfWork;
     final PostMapper postMapper;
     final ImageMapper imageMapper;
-    final CommentMapper commentMapper;
     final PaginationUtils paginationUtils;
 
     //region CRUD Completed Post
@@ -109,10 +108,14 @@ public class PostService {
                                                              UUID tagId,
                                                              List<PostStatus> statuses,
                                                              Boolean IsFolloweeIncluded) {
+        //IsFolloweeIncluded được tạo nhằm để lọc các post mà user hiện tại follow
+
         var postListFuture = findAllPosts();
         var accountFuture = accountId != null
                             ? findAccountById(accountId)
                             : CompletableFuture.completedFuture(null);
+        var username = getUsernameFromJwt();
+        var blockedListFuture = getBlockedAccountListByUsername(username);
         var topicFuture = topicId != null
                 ? findTopicById(topicId)
                 : CompletableFuture.completedFuture(null);
@@ -127,6 +130,7 @@ public class PostService {
             var topic = topicFuture.join();
             var tag = tagFuture.join();
             List<Account> followerAccountList = followerListFuture.join();
+            List<Account> blockedAccountList = blockedListFuture.join();
 
             var list = new ArrayList<>(postList.stream()
                     .filter(post -> {
@@ -138,6 +142,7 @@ public class PostService {
                             return !followerAccountList.contains(post.getAccount());
                         }
                     })
+                    .filter(post -> !blockedAccountList.contains(post.getAccount()))
                     .filter(post -> account == null || post.getAccount().equals(account))
                     .filter(post -> topic == null || post.getTopic().equals(topic))
                     .filter(post -> tag == null || post.getTag().equals(tag))
@@ -147,6 +152,29 @@ public class PostService {
                     .toList());
 
             Collections.shuffle(list);
+
+            var paginatedList = paginationUtils.convertListToPage(page, perPage, list);
+
+            return CompletableFuture.completedFuture(paginatedList);
+        });
+    }
+    @Async("AsyncTaskExecutor")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
+    public CompletableFuture<List<PostResponse>> getAllPostsForCurrentUser(int page, int perPage) {
+        var postListFuture = findAllPosts();
+        var username = getUsernameFromJwt();
+        var accountFuture = findAccountByUsername(username);
+
+        return CompletableFuture.allOf(postListFuture, accountFuture).thenCompose(v -> {
+            var postList = postListFuture.join();
+            var account = accountFuture.join();
+
+            var list = new ArrayList<>(postList.stream()
+                    .filter(post -> post.getAccount().equals(account))
+                    .filter(post -> post.getStatus().equals(PostStatus.PUBLIC.name())
+                            || post.getStatus().equals(PostStatus.PRIVATE.name()))
+                    .map(postMapper::toPostResponse)
+                    .toList());
 
             var paginatedList = paginationUtils.convertListToPage(page, perPage, list);
 
@@ -483,6 +511,18 @@ public class PostService {
                 unitOfWork.getAccountRepository().findByUsername(username)
                         .orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND))
         );
+    }
+    @Async("AsyncTaskExecutor")
+    private CompletableFuture<List<Account>> getBlockedAccountListByUsername(String username) {
+        var accountFuture = findAccountByUsername(username);
+
+        return accountFuture.thenApply(account -> {
+            var blockedAccountEntityList = unitOfWork.getBlockedAccountRepository().findByBlocker(account);
+
+            return blockedAccountEntityList.stream()
+                    .map(BlockedAccount::getBlocked)
+                    .toList();
+        });
     }
     @Async("AsyncTaskExecutor")
     private CompletableFuture<Topic> findTopicById(UUID topicId) {

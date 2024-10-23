@@ -61,7 +61,7 @@ public class AccountController {
 //                .build();
 //    }
 
-    @PostMapping("/update-info")
+    @PutMapping("/update-info")
     public ApiResponse<AccountResponse> updateInfo(@RequestBody AccountUpdateInfoRequest request){
         return ApiResponse.<AccountResponse>builder()
                 .entity(accountService.updateInfo(request))
@@ -88,11 +88,22 @@ public class AccountController {
                 .build();
     }
 
-    @PostMapping("/update-category-for-staff/{id}")
+    @PutMapping("/update-category-for-staff/{id}")
     public ApiResponse<AccountResponse> updateCategory(@PathVariable UUID id, AccountUpdateCategoryRequest request){
         return ApiResponse.<AccountResponse>builder()
                 .entity(accountService.updateCategoryOfStaff(id, request))
                 .build();
+    }
+
+    @Operation(summary = "Delete Account", description = "Delete Account By ID")
+    @DeleteMapping(path = "/delete/{accountId}")
+    public ApiResponse<Account> deleteAccount(@PathVariable UUID accountId){
+        return accountService.delete(accountId).thenApply(account ->
+                ApiResponse.<Account>builder()
+                        .message(SuccessReturnMessage.DELETE_SUCCESS.getMessage())
+                        .entity(account)
+                        .build()
+        ).join();
     }
 
 //    @PostMapping("/verify-otp")
