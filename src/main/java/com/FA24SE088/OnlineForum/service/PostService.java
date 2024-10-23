@@ -110,7 +110,7 @@ public class PostService {
                                                              Boolean IsFolloweeIncluded) {
         //IsFolloweeIncluded được tạo nhằm để lọc các post mà user hiện tại follow
 
-        var postListFuture = findAllPosts();
+        var postListFuture = findAllPostsOrderByCreatedDateDesc();
         var accountFuture = accountId != null
                             ? findAccountById(accountId)
                             : CompletableFuture.completedFuture(null);
@@ -151,8 +151,6 @@ public class PostService {
                     .map(postMapper::toPostResponse)
                     .toList());
 
-            Collections.shuffle(list);
-
             var paginatedList = paginationUtils.convertListToPage(page, perPage, list);
 
             return CompletableFuture.completedFuture(paginatedList);
@@ -161,7 +159,7 @@ public class PostService {
     @Async("AsyncTaskExecutor")
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
     public CompletableFuture<List<PostResponse>> getAllPostsForCurrentUser(int page, int perPage) {
-        var postListFuture = findAllPosts();
+        var postListFuture = findAllPostsOrderByCreatedDateDesc();
         var username = getUsernameFromJwt();
         var accountFuture = findAccountByUsername(username);
 
@@ -535,6 +533,12 @@ public class PostService {
     private CompletableFuture<List<Post>> findAllPosts() {
         return CompletableFuture.supplyAsync(() ->
                 unitOfWork.getPostRepository().findAll()
+        );
+    }
+    @Async("AsyncTaskExecutor")
+    private CompletableFuture<List<Post>> findAllPostsOrderByCreatedDateDesc() {
+        return CompletableFuture.supplyAsync(() ->
+                unitOfWork.getPostRepository().findAllByOrderByCreatedDateDesc()
         );
     }
     @Async("AsyncTaskExecutor")

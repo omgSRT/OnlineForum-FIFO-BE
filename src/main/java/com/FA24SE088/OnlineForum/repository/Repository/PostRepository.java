@@ -19,4 +19,6 @@ public interface PostRepository extends JpaRepository<Post, UUID> {
 
     @Async("AsyncTaskExecutor")
     CompletableFuture<List<Post>> findByAccount(Account account);
+
+    List<Post> findAllByOrderByCreatedDateDesc();
 }
