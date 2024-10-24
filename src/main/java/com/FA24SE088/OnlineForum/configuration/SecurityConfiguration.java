@@ -22,7 +22,7 @@ public class SecurityConfiguration {
     private final String[] PUBLIC_ENDPOINTS_POST = {"/authenticate/login", "/authenticate/introspect", "/authenticate/logout",
             "/authenticate/refresh", "/email/send", "/authenticate/sign-up",
             "/daily-point/create", "/notification/create", "/notification/change/status",
-            "/account/create","/authenticate/sign-up"};
+            "/account/create","/authenticate/sign-up","/authenticate/resend-otp","/authenticate/verify-email"};
     private final String[] PUBLIC_ENDPOINTS_GET = {"/swagger-ui/**", "/v3/api-docs/**", "/swagger-resources/**"
     };
 
@@ -35,7 +35,7 @@ public class SecurityConfiguration {
         http.authorizeHttpRequests(request ->
                 request
                         .requestMatchers(HttpMethod.GET, PUBLIC_ENDPOINTS_GET).permitAll()
-                        .requestMatchers(HttpMethod.POST, PUBLIC_ENDPOINTS_POST).permitAll()
+                        .requestMatchers(HttpMethod.POST, "/**").permitAll()
                         .anyRequest().authenticated());
 
         http.oauth2ResourceServer(oauth2 ->

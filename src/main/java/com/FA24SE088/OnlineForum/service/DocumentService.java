@@ -31,7 +31,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
@@ -138,7 +137,7 @@ public class DocumentService {
                 !request.getStatus().equals(DocumentStatus.INACTIVE.name())){
             throw new AppException(ErrorCode.WRONG_STATUS);
         }
-            Document document = documentMapper.toSourceCode(request);
+            Document document = documentMapper.toDocument(request);
 
         document = unitOfWork.getDocumentRepository().save(document);
         List<SectionResponse> sectionResponses = new ArrayList<>();
@@ -190,29 +189,35 @@ public class DocumentService {
     @Transactional
     public DocumentResponse update(UUID documentID, DocumentRequest request) {
         if (!request.getStatus().equals(DocumentStatus.ACTIVE.name()) &&
-                !request.getStatus().equals(DocumentStatus.INACTIVE.name())){
+                !request.getStatus().equals(DocumentStatus.INACTIVE.name())) {
             throw new AppException(ErrorCode.WRONG_STATUS);
         }
+
         Document document = unitOfWork.getDocumentRepository()
                 .findById(documentID)
                 .orElseThrow(() -> new AppException(ErrorCode.DOCUMENT_NOT_FOUND));
 
-        document.setName(request.getName());
-        document.setImage(request.getImage());
-        document.setPrice(request.getPrice());
-        document.setType(request.getType());
-        document.setStatus(request.getStatus());
+        document = documentMapper.toDocument(request);
+//        // Cập nhật các trường của document
+//        document.setName(request.getName());
+//        document.setImage(request.getImage());
+//        document.setPrice(request.getPrice());
+//        document.setType(request.getType());
+//        document.setStatus(request.getStatus());
 
-        // Xóa các Section cũ liên quan đến document này
+
         unitOfWork.getSectionRepository().deleteAllByDocument(document);
 
         List<SectionResponse> sectionResponses = new ArrayList<>();
 
+        // Thêm các section mới
         for (SectionRequest sectionRequest : request.getSectionList()) {
             Section section = sectionMapper.toSection(sectionRequest);
-            section.setDocument(document); // Gán section vào document
+            section.setDocument(document);
 
+            // Lưu section mới
             section = unitOfWork.getSectionRepository().save(section);
+
 
             List<ImageSectionResponse> imageResponses = new ArrayList<>();
             for (ImageSectionRequest imageRequest : sectionRequest.getImageSectionList()) {
@@ -225,17 +230,18 @@ public class DocumentService {
                 imageResponses.add(new ImageSectionResponse(imageSection.getUrl()));
             }
 
+            // Thêm danh sách video mới cho section
             List<VideoSectionResponse> videoResponses = new ArrayList<>();
             for (VideoSectionRequest videoRequest : sectionRequest.getVideoSectionList()) {
                 VideoSection videoSection = new VideoSection();
                 videoSection.setUrl(videoRequest.getUrl());
                 videoSection.setSection(section);
-
+                // Lưu video mới
                 videoSection = unitOfWork.getVideoSectionRepository().save(videoSection);
 
                 videoResponses.add(new VideoSectionResponse(videoSection.getUrl()));
             }
-
+            // Tạo phản hồi cho section
             SectionResponse sectionResponse = new SectionResponse();
             sectionResponse.setLinkGit(section.getLinkGit());
             sectionResponse.setImageSectionList(imageResponses);
@@ -244,13 +250,16 @@ public class DocumentService {
             sectionResponses.add(sectionResponse);
         }
 
+        // Lưu cập nhật cho document
         unitOfWork.getDocumentRepository().save(document);
 
+        // Tạo phản hồi cho document
         DocumentResponse response = documentMapper.toResponse(document);
         response.setSectionList(sectionResponses);
 
         return response;
     }
+
 
     public List<DocumentResponse> getAll() {
         return documentRepository.findAll().stream()

@@ -1,6 +1,5 @@
 package com.FA24SE088.OnlineForum.exception;
 
-import com.google.api.Http;
 import lombok.Getter;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
@@ -76,6 +75,12 @@ public enum ErrorCode {
     NULL_DRAFT(10065, "Draft Must Not Be Null", HttpStatus.BAD_REQUEST),
     ACCOUNT_NOT_THE_AUTHOR_OF_POST(10066, "This Account Is Not The Author Of This Post", HttpStatus.BAD_REQUEST),
     MISSING_REQUIRED_FIELDS_IN_DRAFT(10067, "Current Draft Is Missing Required Fields Like: 'Title, Content, Tag, Topic' To Convert To Completed Post", HttpStatus.BAD_REQUEST)
+    OTP_EXPIRED(10068, "Otp expired", HttpStatus.BAD_REQUEST),
+    OTP_NOT_FOUND(10069, "Otp not found", HttpStatus.NOT_FOUND),
+    OTP_STILL_VALID(100670, "Otp still valid", HttpStatus.BAD_REQUEST),
+    EMAIL_NOT_FOUND(10071, "Email not found", HttpStatus.NOT_FOUND),
+    ACCOUNT_WAS_ACTIVE(10072, "Account was active", HttpStatus.BAD_REQUEST),
+    ACCOUNT_ALREADY_BLOCKED(10073, "This Account Is Already Blocked", HttpStatus.BAD_REQUEST),
     ;
 
     private int code;
