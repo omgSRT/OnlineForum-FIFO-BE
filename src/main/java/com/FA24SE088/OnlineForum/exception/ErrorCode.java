@@ -73,6 +73,9 @@ public enum ErrorCode {
     UNAUTHENTICATED(10062, "Unauthenticated", HttpStatus.BAD_REQUEST),
     POST_NOT_A_DRAFT(10063, "This Is A Post Not A Draft", HttpStatus.BAD_REQUEST),
     ACCOUNT_ALREADY_BLOCKED(10064, "This Account Is Already Blocked", HttpStatus.BAD_REQUEST),
+    NULL_DRAFT(10065, "Draft Must Not Be Null", HttpStatus.BAD_REQUEST),
+    ACCOUNT_NOT_THE_AUTHOR_OF_POST(10066, "This Account Is Not The Author Of This Post", HttpStatus.BAD_REQUEST),
+    MISSING_REQUIRED_FIELDS_IN_DRAFT(10067, "Current Draft Is Missing Required Fields Like: 'Title, Content, Tag, Topic' To Convert To Completed Post", HttpStatus.BAD_REQUEST)
     ;
 
     private int code;
