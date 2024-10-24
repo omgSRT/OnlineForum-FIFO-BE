@@ -10,14 +10,16 @@ import com.FA24SE088.OnlineForum.entity.ImageSection;
 import com.FA24SE088.OnlineForum.entity.Section;
 import com.FA24SE088.OnlineForum.entity.VideoSection;
 import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 
 import java.util.List;
 
 @Mapper(componentModel = "spring")
 public interface DocumentMapper {
 
-    Document toSourceCode(DocumentRequest request);
+    Document toDocument(DocumentRequest request);
 
+    @Mapping(target = "documentId",source = "documentId")
     DocumentResponse toResponse(Document document);
 
 

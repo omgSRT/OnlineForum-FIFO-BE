@@ -39,4 +39,5 @@ public class UnitOfWork {
     final ReportRepository reportRepository;
     final ReportAccountRepository reportAccountRepository;
     final BookMarkRepository bookMarkRepository;
+    final OtpRepository otpRepository;
 }
