@@ -19,4 +19,6 @@ public interface DailyPointRepository extends JpaRepository<DailyPoint, UUID> {
 
     @Async("AsyncTaskExecutor")
     CompletableFuture<DailyPoint> findByAccountAndPost(Account account, Post post);
+
+    List<DailyPoint> findAllByOrderByCreatedDateDesc();
 }
