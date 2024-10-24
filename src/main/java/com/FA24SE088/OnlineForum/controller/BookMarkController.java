@@ -34,7 +34,7 @@ public class BookMarkController {
     }
 
     @Operation(summary = "Remove bookmark", description = "Remove a bookmark for the current user")
-    @PostMapping("/remove")
+    @DeleteMapping("/remove")
     public ApiResponse<Void> removeBookmark(@RequestBody UUID postId) {
         bookMarkService.unbookmark(postId);
         return ApiResponse.<Void>builder().build();

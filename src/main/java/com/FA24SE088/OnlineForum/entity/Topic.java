@@ -24,6 +24,7 @@ public class Topic {
     UUID topicId;
     @EqualsAndHashCode.Include
     String name;
+    String imageUrl;
 
     @ManyToOne
     @JoinColumn(name = "categoryId")

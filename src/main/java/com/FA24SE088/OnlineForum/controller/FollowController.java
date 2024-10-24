@@ -41,13 +41,13 @@ public class FollowController {
     }
 
     @Operation(summary = "Unblock user", description = "Block a user for the current user")
-    @PostMapping("/unblock")
+    @DeleteMapping("/unblock")
     public ApiResponse<Void> unblockUser(@RequestBody BlockRequest request) {
         followService.unblock(request.getAccountID());
         return ApiResponse.<Void>builder().build();
     }
 
-    @PostMapping("/unfollow")
+    @DeleteMapping("/unfollow")
     public ApiResponse<Void> unfollow(@RequestBody UnfollowRequest request) {
         followService.unfollow(request);
         return ApiResponse.<Void>builder().build();

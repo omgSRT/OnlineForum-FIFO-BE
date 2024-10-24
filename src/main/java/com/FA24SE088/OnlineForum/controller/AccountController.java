@@ -1,19 +1,15 @@
 package com.FA24SE088.OnlineForum.controller;
 
 
-import com.FA24SE088.OnlineForum.dto.request.AccountRequest;
 import com.FA24SE088.OnlineForum.dto.request.AccountUpdateCategoryRequest;
 import com.FA24SE088.OnlineForum.dto.request.AccountUpdateInfoRequest;
 import com.FA24SE088.OnlineForum.dto.response.AccountResponse;
 import com.FA24SE088.OnlineForum.dto.response.ApiResponse;
 import com.FA24SE088.OnlineForum.enums.AccountStatus;
-import com.FA24SE088.OnlineForum.exception.AppException;
-import com.FA24SE088.OnlineForum.exception.ErrorCode;
 import com.FA24SE088.OnlineForum.service.AccountService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -44,6 +40,17 @@ public class AccountController {
                 .entity(accountService.findByUsername(username))
                 .build();
     }
+
+    @Operation(summary = "Find Account", description = "Find By Username Contain Any Letter")
+    @GetMapping(path = "/list/find/by-username")
+    public ApiResponse<List<Account>> findByUsernameContainingAsync(@NotNull String username) {
+        return accountService.findByUsernameContainingAsync(username).thenApply(accounts ->
+                ApiResponse.<List<Account>>builder()
+                        .message(SuccessReturnMessage.SEARCH_SUCCESS.getMessage())
+                        .entity(accounts)
+                        .build()
+        ).join();
+    }
 //    @PostMapping("/create")
 //    public ApiResponse<AccountResponse> create(@RequestBody AccountRequest request) {
 //        AccountResponse response = accountService.create(request);
@@ -54,7 +61,7 @@ public class AccountController {
 //                .build();
 //    }
 
-    @PostMapping("/update-info")
+    @PutMapping("/update-info")
     public ApiResponse<AccountResponse> updateInfo(@RequestBody AccountUpdateInfoRequest request){
         return ApiResponse.<AccountResponse>builder()
                 .entity(accountService.updateInfo(request))
@@ -81,11 +88,22 @@ public class AccountController {
                 .build();
     }
 
-    @PostMapping("/update-category-for-staff/{id}")
+    @PutMapping("/update-category-for-staff/{id}")
     public ApiResponse<AccountResponse> updateCategory(@PathVariable UUID id, AccountUpdateCategoryRequest request){
         return ApiResponse.<AccountResponse>builder()
                 .entity(accountService.updateCategoryOfStaff(id, request))
                 .build();
+    }
+
+    @Operation(summary = "Delete Account", description = "Delete Account By ID")
+    @DeleteMapping(path = "/delete/{accountId}")
+    public ApiResponse<Account> deleteAccount(@PathVariable UUID accountId){
+        return accountService.delete(accountId).thenApply(account ->
+                ApiResponse.<Account>builder()
+                        .message(SuccessReturnMessage.DELETE_SUCCESS.getMessage())
+                        .entity(account)
+                        .build()
+        ).join();
     }
 
 //    @PostMapping("/verify-otp")

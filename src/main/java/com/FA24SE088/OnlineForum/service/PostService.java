@@ -3,6 +3,7 @@ package com.FA24SE088.OnlineForum.service;
 import com.FA24SE088.OnlineForum.dto.request.ImageRequest;
 import com.FA24SE088.OnlineForum.dto.request.PostCreateRequest;
 import com.FA24SE088.OnlineForum.dto.request.PostUpdateRequest;
+import com.FA24SE088.OnlineForum.dto.response.CommentNoPostResponse;
 import com.FA24SE088.OnlineForum.dto.response.PostGetByIdResponse;
 import com.FA24SE088.OnlineForum.dto.response.PostResponse;
 import com.FA24SE088.OnlineForum.entity.*;
@@ -11,6 +12,7 @@ import com.FA24SE088.OnlineForum.enums.TransactionType;
 import com.FA24SE088.OnlineForum.enums.UpdatePostStatus;
 import com.FA24SE088.OnlineForum.exception.AppException;
 import com.FA24SE088.OnlineForum.exception.ErrorCode;
+import com.FA24SE088.OnlineForum.mapper.CommentMapper;
 import com.FA24SE088.OnlineForum.mapper.ImageMapper;
 import com.FA24SE088.OnlineForum.mapper.PostMapper;
 import com.FA24SE088.OnlineForum.repository.UnitOfWork.UnitOfWork;
@@ -85,7 +87,12 @@ public class PostService {
 
                                 return createTransaction(point.getPointPerPost(), TransactionType.CREDIT, wallet)
                                         .thenCompose(transaction -> {
-                                            savedPost.setImageList(imageFuture.join());
+                                            if(imageFuture.join() != null){
+                                                savedPost.setImageList(imageFuture.join());
+                                            }
+                                            else{
+                                                savedPost.setImageList(new ArrayList<>());
+                                            }
                                             savedPost.setDailyPoint(dailyPoint);
                                             return CompletableFuture.completedFuture(unitOfWork.getPostRepository().save(savedPost));
                                         });
@@ -101,10 +108,14 @@ public class PostService {
                                                              UUID tagId,
                                                              List<PostStatus> statuses,
                                                              Boolean IsFolloweeIncluded) {
-        var postListFuture = findAllPosts();
+        //IsFolloweeIncluded được tạo nhằm để lọc các post mà user hiện tại follow
+
+        var postListFuture = findAllPostsOrderByCreatedDateDesc();
         var accountFuture = accountId != null
                             ? findAccountById(accountId)
                             : CompletableFuture.completedFuture(null);
+        var username = getUsernameFromJwt();
+        var blockedListFuture = getBlockedAccountListByUsername(username);
         var topicFuture = topicId != null
                 ? findTopicById(topicId)
                 : CompletableFuture.completedFuture(null);
@@ -119,6 +130,7 @@ public class PostService {
             var topic = topicFuture.join();
             var tag = tagFuture.join();
             List<Account> followerAccountList = followerListFuture.join();
+            List<Account> blockedAccountList = blockedListFuture.join();
 
             var list = new ArrayList<>(postList.stream()
                     .filter(post -> {
@@ -130,6 +142,7 @@ public class PostService {
                             return !followerAccountList.contains(post.getAccount());
                         }
                     })
+                    .filter(post -> !blockedAccountList.contains(post.getAccount()))
                     .filter(post -> account == null || post.getAccount().equals(account))
                     .filter(post -> topic == null || post.getTopic().equals(topic))
                     .filter(post -> tag == null || post.getTag().equals(tag))
@@ -138,7 +151,28 @@ public class PostService {
                     .map(postMapper::toPostResponse)
                     .toList());
 
-            Collections.shuffle(list);
+            var paginatedList = paginationUtils.convertListToPage(page, perPage, list);
+
+            return CompletableFuture.completedFuture(paginatedList);
+        });
+    }
+    @Async("AsyncTaskExecutor")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
+    public CompletableFuture<List<PostResponse>> getAllPostsForCurrentUser(int page, int perPage) {
+        var postListFuture = findAllPostsOrderByCreatedDateDesc();
+        var username = getUsernameFromJwt();
+        var accountFuture = findAccountByUsername(username);
+
+        return CompletableFuture.allOf(postListFuture, accountFuture).thenCompose(v -> {
+            var postList = postListFuture.join();
+            var account = accountFuture.join();
+
+            var list = new ArrayList<>(postList.stream()
+                    .filter(post -> post.getAccount().equals(account))
+                    .filter(post -> post.getStatus().equals(PostStatus.PUBLIC.name())
+                            || post.getStatus().equals(PostStatus.PRIVATE.name()))
+                    .map(postMapper::toPostResponse)
+                    .toList());
 
             var paginatedList = paginationUtils.convertListToPage(page, perPage, list);
 
@@ -147,10 +181,10 @@ public class PostService {
     }
     @Async("AsyncTaskExecutor")
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
-    public CompletableFuture<PostGetByIdResponse> getPostById(UUID postId) {
+    public CompletableFuture<PostResponse> getPostById(UUID postId) {
         var postFuture = findPostById(postId);
 
-        return postFuture.thenApply(postMapper::toPostGetByIdResponse);
+        return postFuture.thenApply(postMapper::toPostResponse);
     }
     @Async("AsyncTaskExecutor")
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
@@ -477,6 +511,18 @@ public class PostService {
         );
     }
     @Async("AsyncTaskExecutor")
+    private CompletableFuture<List<Account>> getBlockedAccountListByUsername(String username) {
+        var accountFuture = findAccountByUsername(username);
+
+        return accountFuture.thenApply(account -> {
+            var blockedAccountEntityList = unitOfWork.getBlockedAccountRepository().findByBlocker(account);
+
+            return blockedAccountEntityList.stream()
+                    .map(BlockedAccount::getBlocked)
+                    .toList();
+        });
+    }
+    @Async("AsyncTaskExecutor")
     private CompletableFuture<Topic> findTopicById(UUID topicId) {
         return CompletableFuture.supplyAsync(() ->
                 unitOfWork.getTopicRepository().findById(topicId)
@@ -487,6 +533,12 @@ public class PostService {
     private CompletableFuture<List<Post>> findAllPosts() {
         return CompletableFuture.supplyAsync(() ->
                 unitOfWork.getPostRepository().findAll()
+        );
+    }
+    @Async("AsyncTaskExecutor")
+    private CompletableFuture<List<Post>> findAllPostsOrderByCreatedDateDesc() {
+        return CompletableFuture.supplyAsync(() ->
+                unitOfWork.getPostRepository().findAllByOrderByCreatedDateDesc()
         );
     }
     @Async("AsyncTaskExecutor")
@@ -575,4 +627,5 @@ public class PostService {
             return null;
         }
     }
+
 }

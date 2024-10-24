@@ -22,7 +22,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -49,6 +51,7 @@ public class TopicService {
 
                             Topic newTopic = topicMapper.toTopic(request);
                             newTopic.setCategory(category);
+                            newTopic.setPostList(new ArrayList<>());
 
                             return CompletableFuture.completedFuture(
                                     topicMapper.toTopicResponse(unitOfWork.getTopicRepository().save(newTopic))
@@ -61,6 +64,19 @@ public class TopicService {
     public CompletableFuture<List<TopicResponse>> getAllTopics(int page, int perPage) {
         return CompletableFuture.supplyAsync(() -> {
             var list = unitOfWork.getTopicRepository().findAll().stream()
+                    .map(topicMapper::toTopicResponse)
+                    .toList();
+
+            return paginationUtils.convertListToPage(page, perPage, list);
+        });
+    }
+
+    @Async("AsyncTaskExecutor")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
+    @Transactional(readOnly = true)
+    public CompletableFuture<List<TopicResponse>> getAllPopularTopics(int page, int perPage) {
+        return CompletableFuture.supplyAsync(() -> {
+            var list = unitOfWork.getTopicRepository().findAllOrderByPostListSizeDescending().stream()
                     .map(topicMapper::toTopicResponse)
                     .toList();
 
