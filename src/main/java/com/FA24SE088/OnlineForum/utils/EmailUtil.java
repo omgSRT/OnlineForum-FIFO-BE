@@ -28,10 +28,12 @@ public class EmailUtil {
     private String username;
 
     //chưa làm async được vì sẽ bị chặn file gửi cùng mail
-    public void sendEmail(List<String> toEmails,
-                          String body,
-                          String subject,
-                          List<MultipartFile> attachments) {
+    public void sendEmail(
+//            List<String> toEmails,
+            String toEmails,
+            String body,
+            String subject,
+            List<MultipartFile> attachments) {
         try {
             boolean hasSubject = subject != null && !subject.trim().isEmpty();
             boolean hasBody = body != null && !body.trim().isEmpty();
@@ -62,13 +64,15 @@ public class EmailUtil {
                 }
             }
 
-            if(toEmails.isEmpty()){
+            if (toEmails.isEmpty()) {
                 throw new AppException(ErrorCode.TO_EMAIL_EMPTY);
             }
-            for (String toEmail : toEmails) {
-                helper.setTo(toEmail);
-                mailSender.send(message);
-            }
+            helper.setTo(toEmails);
+            mailSender.send(message);
+//            for (String toEmail : toEmails) {
+//                helper.setTo(toEmail);
+//                mailSender.send(message);
+//            }
 
             System.out.println("All Mails Sent Successfully");
         } catch (MailException | MessagingException e) {

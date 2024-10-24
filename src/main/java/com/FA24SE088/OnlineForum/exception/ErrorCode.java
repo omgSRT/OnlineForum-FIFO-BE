@@ -1,6 +1,5 @@
 package com.FA24SE088.OnlineForum.exception;
 
-import com.google.api.Http;
 import lombok.Getter;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
@@ -72,6 +71,11 @@ public enum ErrorCode {
     BOOKMARK_NOT_FOUND(10061, "Bookmark not found", HttpStatus.NOT_FOUND),
     UNAUTHENTICATED(10062, "Unauthenticated", HttpStatus.BAD_REQUEST),
     POST_NOT_A_DRAFT(10063, "This Is A Post Not A Draft", HttpStatus.BAD_REQUEST),
+    OTP_EXPIRED(10063, "Otp expired", HttpStatus.BAD_REQUEST),
+    OTP_NOT_FOUND(10063, "Otp not found", HttpStatus.NOT_FOUND),
+    OTP_STILL_VALID(10063, "Otp still valid", HttpStatus.BAD_REQUEST),
+    EMAIL_NOT_FOUND(10063, "Email not found", HttpStatus.NOT_FOUND),
+    ACCOUNT_WAS_ACTIVE(10063, "Account was active", HttpStatus.BAD_REQUEST),
     ;
 
     private int code;

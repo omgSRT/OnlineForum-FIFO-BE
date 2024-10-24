@@ -100,6 +100,7 @@ public class AccountService {
         account.setCreatedDate(new Date());
         account.setStatus(AccountStatus.PENDING_APPROVAL.name());
         AccountResponse response = accountMapper.toResponse(account);
+        response.setAccountId(account.getAccountId());
         unitOfWork.getAccountRepository().save(account);
         return response;
     }
@@ -207,6 +208,14 @@ public class AccountService {
         account.setStatus(AccountStatus.ACTIVE.name());
     }
 
+    public AccountResponse verifyAccount(String email){
+        Account account = unitOfWork.getAccountRepository().findByEmail(email);
+        if (account != null){
+            account.setStatus(AccountStatus.ACTIVE.name());
+            unitOfWork.getAccountRepository().save(account);
+        }
+        return accountMapper.toResponse(account);
+    }
 
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
     public Account findByUsername(String username) {

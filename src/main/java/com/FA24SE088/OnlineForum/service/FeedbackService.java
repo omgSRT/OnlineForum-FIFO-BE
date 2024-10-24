@@ -2,25 +2,19 @@ package com.FA24SE088.OnlineForum.service;
 
 
 import com.FA24SE088.OnlineForum.dto.request.*;
-import com.FA24SE088.OnlineForum.dto.response.AccountResponse;
 import com.FA24SE088.OnlineForum.dto.response.FeedbackResponse;
 import com.FA24SE088.OnlineForum.entity.*;
-import com.FA24SE088.OnlineForum.enums.AccountStatus;
 import com.FA24SE088.OnlineForum.enums.FeedbackStatus;
 import com.FA24SE088.OnlineForum.exception.AppException;
 import com.FA24SE088.OnlineForum.exception.ErrorCode;
-import com.FA24SE088.OnlineForum.mapper.AccountMapper;
 import com.FA24SE088.OnlineForum.mapper.FeedbackMapper;
 import com.FA24SE088.OnlineForum.repository.UnitOfWork.UnitOfWork;
-import com.FA24SE088.OnlineForum.utils.PaginationUtils;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -46,7 +40,7 @@ public class FeedbackService {
         Account account = getCurrentUser();
         Feedback feedback = feedbackMapper.toFeedback(feedbackRequest);
         feedback.setAccount(account);
-        feedback.setStatus(FeedbackStatus.PENDING_APPROVAL.name());
+        feedback.setStatus(FeedbackStatus.PENDING.name());
         log.info(account.getAccountId().toString());
         Feedback savedFeedback = unitOfWork.getFeedbackRepository().save(feedback);
         return feedbackMapper.toResponse(savedFeedback);
@@ -54,7 +48,7 @@ public class FeedbackService {
 
     public Optional<FeedbackResponse> updateFeedback(UUID feedbackId, FeedbackRequest2 feedbackRequest) {
         Optional<Feedback> feedbackOptional = unitOfWork.getFeedbackRepository().findById(feedbackId);
-        if(!feedbackRequest.getStatus().equals(FeedbackStatus.PENDING_APPROVAL.name()) &&
+        if(!feedbackRequest.getStatus().equals(FeedbackStatus.PENDING.name()) &&
                 !feedbackRequest.getStatus().equals(FeedbackStatus.APPROVED.name())){
             throw new AppException(ErrorCode.WRONG_STATUS);
         }
