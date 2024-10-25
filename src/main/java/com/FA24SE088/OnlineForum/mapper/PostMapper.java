@@ -1,5 +1,7 @@
 package com.FA24SE088.OnlineForum.mapper;
 
+import com.FA24SE088.OnlineForum.dto.request.DraftCreateRequest;
+import com.FA24SE088.OnlineForum.dto.request.DraftUpdateRequest;
 import com.FA24SE088.OnlineForum.dto.request.PostCreateRequest;
 import com.FA24SE088.OnlineForum.dto.request.PostUpdateRequest;
 import com.FA24SE088.OnlineForum.dto.response.ImageResponse;
@@ -17,6 +19,8 @@ import java.util.List;
 public interface PostMapper {
     Post toPost(PostCreateRequest request);
 
+    Post toPost(DraftCreateRequest request);
+
     @Mapping(target = "imageList", source = "imageList")
     PostResponse toPostResponse(Post post);
 
@@ -30,4 +34,11 @@ public interface PostMapper {
     @Mapping(target = "tag", ignore = true)
     @Mapping(target = "reportList", ignore = true)
     void updatePost(@MappingTarget Post post, PostUpdateRequest postUpdateRequest);
+
+    @Mapping(target = "dailyPoint", ignore = true)
+    @Mapping(target = "account", ignore = true)
+    @Mapping(target = "upvoteList", ignore = true)
+    @Mapping(target = "commentList", ignore = true)
+    @Mapping(target = "reportList", ignore = true)
+    void updateDraft(@MappingTarget Post post, DraftUpdateRequest postUpdateRequest);
 }

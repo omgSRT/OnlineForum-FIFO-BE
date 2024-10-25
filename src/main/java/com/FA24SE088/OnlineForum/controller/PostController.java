@@ -1,5 +1,7 @@
 package com.FA24SE088.OnlineForum.controller;
 
+import com.FA24SE088.OnlineForum.dto.request.DraftCreateRequest;
+import com.FA24SE088.OnlineForum.dto.request.DraftUpdateRequest;
 import com.FA24SE088.OnlineForum.dto.request.PostCreateRequest;
 import com.FA24SE088.OnlineForum.dto.request.PostUpdateRequest;
 import com.FA24SE088.OnlineForum.dto.response.ApiResponse;
@@ -111,7 +113,7 @@ public class PostController {
 
     @Operation(summary = "Create New Draft")
     @PostMapping(path = "/create/draft")
-    public ApiResponse<PostResponse> createDraft(@RequestBody @Valid PostCreateRequest request){
+    public ApiResponse<PostResponse> createDraft(@RequestBody @Valid DraftCreateRequest request){
         return postService.createDraft(request).thenApply(postResponse ->
                 ApiResponse.<PostResponse>builder()
                         .message(SuccessReturnMessage.CREATE_SUCCESS.getMessage())
@@ -119,10 +121,31 @@ public class PostController {
                         .build()
         ).join();
     }
+    @Operation(summary = "Get All Drafts")
+    @GetMapping(path = "/getall/draft")
+    public ApiResponse<List<PostResponse>> getAllDrafts(@RequestParam(defaultValue = "1") int page,
+                                                        @RequestParam(defaultValue = "10") int perPage,
+                                                        @RequestParam(required = false) UUID accountId){
+        return postService.getAllDrafts(page, perPage, accountId).thenApply(postResponses ->
+                ApiResponse.<List<PostResponse>>builder()
+                        .entity(postResponses)
+                        .build()
+        ).join();
+    }
+    @Operation(summary = "Get All Drafts", description = "Get All Drafts For Current User")
+    @GetMapping(path = "/getall/draft/by-current-user")
+    public ApiResponse<List<PostResponse>> getAllDraftsForCurrentUser(@RequestParam(defaultValue = "1") int page,
+                                                                      @RequestParam(defaultValue = "10") int perPage){
+        return postService.getAllDraftsForCurrentUser(page, perPage).thenApply(postResponses ->
+                ApiResponse.<List<PostResponse>>builder()
+                        .entity(postResponses)
+                        .build()
+        ).join();
+    }
     @Operation(summary = "Update Draft", description = "Update Draft By ID")
     @PutMapping(path = "/update/draft/{draftId}")
     public ApiResponse<PostResponse> updateDraft(@PathVariable UUID draftId,
-                                                 @RequestBody @Valid PostUpdateRequest request){
+                                                 @RequestBody @Valid DraftUpdateRequest request){
         return postService.updateDraftById(draftId, request).thenApply(postResponse ->
                 ApiResponse.<PostResponse>builder()
                         .message(SuccessReturnMessage.UPDATE_SUCCESS.getMessage())

@@ -1,8 +1,6 @@
 package com.FA24SE088.OnlineForum.service;
 
-import com.FA24SE088.OnlineForum.dto.request.ImageRequest;
-import com.FA24SE088.OnlineForum.dto.request.PostCreateRequest;
-import com.FA24SE088.OnlineForum.dto.request.PostUpdateRequest;
+import com.FA24SE088.OnlineForum.dto.request.*;
 import com.FA24SE088.OnlineForum.dto.response.CommentNoPostResponse;
 import com.FA24SE088.OnlineForum.dto.response.PostGetByIdResponse;
 import com.FA24SE088.OnlineForum.dto.response.PostResponse;
@@ -190,14 +188,28 @@ public class PostService {
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
     public CompletableFuture<PostResponse> updatePostById(UUID postId, PostUpdateRequest request) {
         var postFuture = findPostById(postId);
+        var username = getUsernameFromJwt();
+        var accountFuture = findAccountByUsername(username);
 
-        return postFuture.thenCompose(post -> {
+        return CompletableFuture.allOf(postFuture, accountFuture).thenCompose(v -> {
+            var post = postFuture.join();
+            var account = accountFuture.join();
+
+            if(!account.equals(post.getAccount())){
+                throw new AppException(ErrorCode.ACCOUNT_NOT_THE_AUTHOR_OF_POST);
+            }
+
             var deleteImageListFuture = deleteImagesByPost(post);
             var createImageFuture = createImages(request, post);
 
-            return CompletableFuture.allOf(deleteImageListFuture, createImageFuture).thenCompose(v -> {
+            return CompletableFuture.allOf(deleteImageListFuture, createImageFuture).thenCompose(voidData -> {
                 postMapper.updatePost(post, request);
-                post.setImageList(createImageFuture.join());
+                if(createImageFuture.join() != null){
+                    post.setImageList(createImageFuture.join());
+                }
+                else{
+                    post.setImageList(new ArrayList<>());
+                }
                 post.setLastModifiedDate(new Date());
 
                 return CompletableFuture.completedFuture(unitOfWork.getPostRepository().save(post));
@@ -255,11 +267,19 @@ public class PostService {
     //region CRUD Draft
     @Async("AsyncTaskExecutor")
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
-    public CompletableFuture<PostResponse> createDraft(PostCreateRequest request) {
+    public CompletableFuture<PostResponse> createDraft(DraftCreateRequest request) {
+        if(request == null || isAllDraftCreateRequestFieldsNull(request)){
+            throw new AppException(ErrorCode.NULL_DRAFT);
+        }
+
         var username = getUsernameFromJwt();
         var accountFuture = findAccountByUsername(username);
-        var topicFuture = findTopicById(request.getTopicId());
-        var tagFuture = findTagById(request.getTagId());
+        var topicFuture = request.getTopicId() != null
+                ? findTopicById(request.getTopicId())
+                : CompletableFuture.completedFuture(null);
+        var tagFuture = request.getTagId() != null
+                ? findTagById(request.getTagId())
+                : CompletableFuture.completedFuture(null);
 
         return CompletableFuture.allOf(accountFuture, topicFuture, tagFuture)
                 .thenCompose(v -> {
@@ -272,8 +292,8 @@ public class PostService {
                     newPost.setLastModifiedDate(new Date());
                     newPost.setStatus(PostStatus.DRAFT.name());
                     newPost.setAccount(account);
-                    newPost.setTopic(topic);
-                    newPost.setTag(tag);
+                    newPost.setTopic(topic != null ? (Topic) topic : null);
+                    newPost.setTag(tag != null ? (Tag) tag : null);
 
                     newPost.setCommentList(new ArrayList<>());
                     newPost.setUpvoteList(new ArrayList<>());
@@ -286,18 +306,89 @@ public class PostService {
                     CompletableFuture<List<Image>> imageFuture = createImages(request, savedPost);
 
                     return imageFuture.thenCompose(imageList -> {
-                                savedPost.setImageList(imageFuture.join());
+                                if(imageFuture.join() != null){
+                                    savedPost.setImageList(imageFuture.join());
+                                }
+                                else{
+                                    savedPost.setImageList(new ArrayList<>());
+                                }
                                 return CompletableFuture.completedFuture(unitOfWork.getPostRepository().save(savedPost));
                             });
                 })
                 .thenApply(postMapper::toPostResponse);
     }
     @Async("AsyncTaskExecutor")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
-    public CompletableFuture<PostResponse> updateDraftById(UUID draftId, PostUpdateRequest request) {
-        var postFuture = findPostById(draftId);
+    @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
+    public CompletableFuture<List<PostResponse>> getAllDrafts(int page, int perPage,
+                                                             UUID accountId) {
+        var postListFuture = findAllPostsOrderByCreatedDateDesc();
+        var accountFuture = accountId != null
+                ? findAccountById(accountId)
+                : CompletableFuture.completedFuture(null);
 
-        return postFuture.thenCompose(post -> {
+        return CompletableFuture.allOf(postListFuture, accountFuture).thenCompose(v -> {
+            var postList = postListFuture.join();
+            var account = accountFuture.join();
+
+            var list = new ArrayList<>(postList.stream()
+                    .filter(post -> account == null || post.getAccount().equals(account))
+                    .filter(post -> post.getStatus().equals(PostStatus.DRAFT.name()))
+                    .map(postMapper::toPostResponse)
+                    .toList());
+
+            var paginatedList = paginationUtils.convertListToPage(page, perPage, list);
+
+            return CompletableFuture.completedFuture(paginatedList);
+        });
+    }
+    @Async("AsyncTaskExecutor")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
+    public CompletableFuture<List<PostResponse>> getAllDraftsForCurrentUser(int page, int perPage) {
+        var postListFuture = findAllPostsOrderByCreatedDateDesc();
+        var username = getUsernameFromJwt();
+        var accountFuture = findAccountByUsername(username);
+
+        return CompletableFuture.allOf(postListFuture, accountFuture).thenCompose(v -> {
+            var postList = postListFuture.join();
+            var account = accountFuture.join();
+
+            var list = new ArrayList<>(postList.stream()
+                    .filter(post -> post.getAccount().equals(account))
+                    .filter(post -> post.getStatus().equals(PostStatus.DRAFT.name()))
+                    .map(postMapper::toPostResponse)
+                    .toList());
+
+            var paginatedList = paginationUtils.convertListToPage(page, perPage, list);
+
+            return CompletableFuture.completedFuture(paginatedList);
+        });
+    }
+    @Async("AsyncTaskExecutor")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
+    public CompletableFuture<PostResponse> updateDraftById(UUID draftId, DraftUpdateRequest request) {
+        if(request == null || isAllDraftUpdateRequestFieldsNull(request)){
+            throw new AppException(ErrorCode.NULL_DRAFT);
+        }
+        var username = getUsernameFromJwt();
+        var accountFuture = findAccountByUsername(username);
+        var postFuture = findPostById(draftId);
+        var topicFuture = request.getTopicId() != null
+                ? findTopicById(request.getTopicId())
+                : CompletableFuture.completedFuture(null);
+        var tagFuture = request.getTagId() != null
+                ? findTagById(request.getTagId())
+                : CompletableFuture.completedFuture(null);
+
+        return CompletableFuture.allOf(postFuture, topicFuture, tagFuture, accountFuture).thenCompose(v -> {
+            var post = postFuture.join();
+            var topic = topicFuture.join();
+            var tag = tagFuture.join();
+            var account = accountFuture.join();
+
+            if(!account.equals(post.getAccount())){
+                throw new AppException(ErrorCode.ACCOUNT_NOT_THE_AUTHOR_OF_POST);
+            }
+
             if(!post.getStatus().equals(PostStatus.DRAFT.name())){
                 throw new AppException(ErrorCode.COMPLETED_POST_CANNOT_BE_EDIT_IN_DRAFT);
             }
@@ -305,9 +396,16 @@ public class PostService {
             var deleteImageListFuture = deleteImagesByPost(post);
             var createImageFuture = createImages(request, post);
 
-            return CompletableFuture.allOf(deleteImageListFuture, createImageFuture).thenCompose(v -> {
-                        postMapper.updatePost(post, request);
-                        post.setImageList(createImageFuture.join());
+            return CompletableFuture.allOf(deleteImageListFuture, createImageFuture).thenCompose(voidData -> {
+                        postMapper.updateDraft(post, request);
+                        post.setTopic(topic != null ? (Topic) topic : null);
+                        post.setTag(tag != null ? (Tag) tag : null);
+                        if(createImageFuture.join() != null){
+                            post.setImageList(createImageFuture.join());
+                        }
+                        else{
+                            post.setImageList(new ArrayList<>());
+                        }
                         post.setLastModifiedDate(new Date());
 
                         return CompletableFuture.completedFuture(unitOfWork.getPostRepository().save(post));
@@ -326,6 +424,9 @@ public class PostService {
             var account = accountFuture.join();
             var post = postFuture.join();
 
+            if(isCurrentDraftFieldsNull(post)){
+                throw new AppException(ErrorCode.MISSING_REQUIRED_FIELDS_IN_DRAFT);
+            }
             if(!post.getStatus().equals(PostStatus.DRAFT.name())){
                 throw new AppException(ErrorCode.COMPLETED_POST_CANNOT_BE_UPDATE_TO_POST);
             }
@@ -378,6 +479,7 @@ public class PostService {
     }
     //endregion
 
+    //region Smaller Modules To Assist Main Modules
     @Async("AsyncTaskExecutor")
     private CompletableFuture<List<Image>> createImages(PostCreateRequest request, Post savedPost){
         if (request.getImageUrlList() == null || request.getImageUrlList().isEmpty()) {
@@ -397,6 +499,40 @@ public class PostService {
     }
     @Async("AsyncTaskExecutor")
     private CompletableFuture<List<Image>> createImages(PostUpdateRequest request, Post savedPost){
+        if (request.getImageUrlList() == null || request.getImageUrlList().isEmpty()) {
+            return CompletableFuture.completedFuture(null);
+        }
+
+        List<Image> imageList = new ArrayList<>();
+
+        for(ImageRequest imageRequest : request.getImageUrlList()){
+            Image newImage = imageMapper.toImage(imageRequest);
+            newImage.setPost(savedPost);
+            imageList.add(newImage);
+            unitOfWork.getImageRepository().save(newImage);
+        }
+
+        return CompletableFuture.completedFuture(imageList);
+    }
+    @Async("AsyncTaskExecutor")
+    private CompletableFuture<List<Image>> createImages(DraftCreateRequest request, Post savedPost){
+        if (request.getImageUrlList() == null || request.getImageUrlList().isEmpty()) {
+            return CompletableFuture.completedFuture(null);
+        }
+
+        List<Image> imageList = new ArrayList<>();
+
+        for(ImageRequest imageRequest : request.getImageUrlList()){
+            Image newImage = imageMapper.toImage(imageRequest);
+            newImage.setPost(savedPost);
+            imageList.add(newImage);
+            unitOfWork.getImageRepository().save(newImage);
+        }
+
+        return CompletableFuture.completedFuture(imageList);
+    }
+    @Async("AsyncTaskExecutor")
+    private CompletableFuture<List<Image>> createImages(DraftUpdateRequest request, Post savedPost){
         if (request.getImageUrlList() == null || request.getImageUrlList().isEmpty()) {
             return CompletableFuture.completedFuture(null);
         }
@@ -627,5 +763,25 @@ public class PostService {
             return null;
         }
     }
-
+    public boolean isAllDraftCreateRequestFieldsNull(DraftCreateRequest request) {
+        return request.getTitle() == null &&
+                request.getContent() == null &&
+                request.getTopicId() == null &&
+                request.getTagId() == null &&
+                (request.getImageUrlList() == null || request.getImageUrlList().isEmpty());
+    }
+    public boolean isAllDraftUpdateRequestFieldsNull(DraftUpdateRequest request) {
+        return request.getTitle() == null &&
+                request.getContent() == null &&
+                request.getTopicId() == null &&
+                request.getTagId() == null &&
+                (request.getImageUrlList() == null || request.getImageUrlList().isEmpty());
+    }
+    public boolean isCurrentDraftFieldsNull(Post currentDraft) {
+        return currentDraft.getTitle() == null &&
+                currentDraft.getContent() == null &&
+                currentDraft.getTopic() == null &&
+                currentDraft.getTag() == null;
+    }
+    //endregion
 }
