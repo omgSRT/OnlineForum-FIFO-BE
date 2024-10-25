@@ -110,8 +110,8 @@ public class DailyPointService {
             } catch (ParseException e) {
                 throw new RuntimeException(e);
             }
-
             Date finalParseDate = parseDate;
+
             var list = unitOfWork.getDailyPointRepository().findAllByOrderByCreatedDateDesc().stream()
                     .filter(dailyPoint -> account == null || dailyPoint.getAccount().equals(account))
                     .filter(dailyPoint -> {

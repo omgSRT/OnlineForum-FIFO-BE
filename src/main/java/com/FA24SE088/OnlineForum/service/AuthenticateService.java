@@ -34,13 +34,13 @@ import java.util.StringJoiner;
 import java.util.UUID;
 
 @RequiredArgsConstructor
-@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
+@FieldDefaults(level = AccessLevel.PRIVATE)
 @Slf4j
 @Service
 public class AuthenticateService {
-    UnitOfWork unitOfWork;
+    final UnitOfWork unitOfWork;
     @Value("${spring.custom.jwt.secret}")
-    private String jwtSecret;
+    String jwtSecret;
 
     //Introspect JWT Token
     public IntrospectResponse introspectJWT(IntrospectRequest request) throws JOSEException, ParseException {
