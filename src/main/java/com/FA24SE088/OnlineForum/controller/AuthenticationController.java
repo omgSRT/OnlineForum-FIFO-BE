@@ -47,7 +47,11 @@ public class AuthenticationController {
     public ApiResponse<AccountResponse> create(@Valid @RequestBody AccountRequest request) {
         AccountResponse response = accountService.create(request);
         Otp otp = otpUtil.generateOtp(request.getEmail());
-        emailUtil.sendEmail(response.getEmail(), "Mã OTP của bạn là: " + otp.getOtpEmail(), "Mã OTP xác thực tài khoản", null);
+        emailUtil.sendToAnEmail(
+                response.getEmail(),
+                "Mã OTP của bạn là: " + otp.getOtpEmail(),
+                "Mã OTP xác thực tài khoản",
+                null);
         return ApiResponse.<AccountResponse>builder()
                 .entity(response)
                 .build();
@@ -65,7 +69,10 @@ public class AuthenticationController {
     @PostMapping("/resend-otp")
     public ApiResponse<Otp> resendOtp(@RequestParam String email) {
         Otp otpResponse = otpUtil.resendOtp(email);
-        emailUtil.sendEmail(email, "Mã OTP của bạn là: " + otpResponse.getOtpEmail(), "Mã OTP xác thực tài khoản", null);
+        emailUtil.sendToAnEmail(email,
+                "Mã OTP của bạn là: " + otpResponse.getOtpEmail(),
+                "Mã OTP xác thực tài khoản",
+                null);
         return ApiResponse.<Otp>builder()
                 .entity(otpResponse)
                 .build();
