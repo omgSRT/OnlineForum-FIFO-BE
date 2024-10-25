@@ -25,10 +25,8 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class FeedbackService {
-
     @Autowired
     UnitOfWork unitOfWork;
-
     @Autowired
     FeedbackMapper feedbackMapper;
 
@@ -70,7 +68,7 @@ public class FeedbackService {
         List<Feedback> feedbacks = unitOfWork.getFeedbackRepository().findAll();
         return feedbacks.stream()
                 .map(feedbackMapper::toResponse)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     public void deleteFeedback(UUID feedbackId) {
