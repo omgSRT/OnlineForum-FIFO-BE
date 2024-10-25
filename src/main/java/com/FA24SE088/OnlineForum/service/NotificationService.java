@@ -22,14 +22,12 @@ import java.util.Optional;
 import java.util.UUID;
 
 @RequiredArgsConstructor
-@FieldDefaults(level = AccessLevel.PRIVATE)
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Slf4j
 @Service
 public class NotificationService {
-    @Autowired
-    private UnitOfWork unitOfWork;
-    @Autowired
-    private NotificationMapper notificationMapper;
+    UnitOfWork unitOfWork;
+    NotificationMapper notificationMapper;
 
     private Account getCurrentUser(){
         var context = SecurityContextHolder.getContext();

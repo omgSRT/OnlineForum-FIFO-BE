@@ -26,13 +26,13 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 @RequiredArgsConstructor
-@FieldDefaults(level = AccessLevel.PRIVATE)
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Slf4j
 @Service
 public class CategoryService {
-    final UnitOfWork unitOfWork;
-    final PaginationUtils paginationUtils;
-    final CategoryMapper categoryMapper;
+    UnitOfWork unitOfWork;
+    PaginationUtils paginationUtils;
+    CategoryMapper categoryMapper;
 
     @PreAuthorize("hasRole('ADMIN')")
     public CompletableFuture<CategoryResponse> createCategory(CategoryRequest request) {

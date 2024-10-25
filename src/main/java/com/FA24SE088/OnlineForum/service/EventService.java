@@ -26,15 +26,12 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
-@FieldDefaults(level = AccessLevel.PRIVATE)
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Slf4j
 @Service
 public class EventService {
-    @Autowired
     UnitOfWork unitOfWork;
-    @Autowired
     EventMapper eventMapper;
-    @Autowired
     PaginationUtils paginationUtils;
 
     public EventResponse createEvent(EventRequest eventRequest) {
@@ -56,7 +53,7 @@ public class EventService {
 
         List<EventResponse> allEvents = unitOfWork.getEventRepository().findAll().stream()
                 .map(eventMapper::toResponse)
-                .collect(Collectors.toList());
+                .toList();
 
         if (title == null && location == null && status == null) {
             result = allEvents.stream()
@@ -137,5 +134,4 @@ public class EventService {
             throw new IllegalArgumentException("Start date cannot be after end date.");
         }
     }
-
 }

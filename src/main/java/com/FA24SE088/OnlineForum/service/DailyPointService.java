@@ -28,13 +28,13 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 @RequiredArgsConstructor
-@FieldDefaults(level = AccessLevel.PRIVATE)
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Slf4j
 @Service
 public class DailyPointService {
-    final UnitOfWork unitOfWork;
-    final DailyPointMapper dailyPointMapper;
-    final PaginationUtils paginationUtils;
+    UnitOfWork unitOfWork;
+    DailyPointMapper dailyPointMapper;
+    PaginationUtils paginationUtils;
 
     @Async("AsyncTaskExecutor")
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
@@ -110,8 +110,8 @@ public class DailyPointService {
             } catch (ParseException e) {
                 throw new RuntimeException(e);
             }
-
             Date finalParseDate = parseDate;
+
             var list = unitOfWork.getDailyPointRepository().findAllByOrderByCreatedDateDesc().stream()
                     .filter(dailyPoint -> account == null || dailyPoint.getAccount().equals(account))
                     .filter(dailyPoint -> {

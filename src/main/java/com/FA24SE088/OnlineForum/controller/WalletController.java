@@ -29,7 +29,7 @@ import java.util.UUID;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Slf4j
 public class WalletController {
-    final WalletService walletService;
+    WalletService walletService;
     @PostMapping("/create")
     public ApiResponse<Wallet> create(@RequestBody WalletRequest request) {
         return ApiResponse.<Wallet>builder()

@@ -30,15 +30,11 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
-@FieldDefaults(level = AccessLevel.PRIVATE)
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Slf4j
 @Service
 public class ReportAccountService {
-
-    @Autowired
     UnitOfWork unitOfWork;
-
-    @Autowired
     ReportAccountMapper reportAccountMapper;
 
     private Account getCurrentUser() {

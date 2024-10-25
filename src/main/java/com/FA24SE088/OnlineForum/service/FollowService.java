@@ -27,17 +27,13 @@ import java.util.Optional;
 import java.util.UUID;
 
 @RequiredArgsConstructor
-@FieldDefaults(level = AccessLevel.PRIVATE)
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Slf4j
 @Service
 public class FollowService {
-    @Autowired
-    private AccountMapper accountMapper;
-    @Autowired
+    AccountMapper accountMapper;
     UnitOfWork unitOfWork;
-    @Autowired
     PaginationUtils paginationUtils;
-    @Autowired
     FollowMapper followMapper;
 
     private Account getCurrentUser() {
@@ -161,6 +157,4 @@ public class FollowService {
                 .map(accountMapper::toResponse)
                 .toList();
     }
-
-
 }

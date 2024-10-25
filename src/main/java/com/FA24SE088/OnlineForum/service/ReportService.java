@@ -23,13 +23,13 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 @RequiredArgsConstructor
-@FieldDefaults(level = AccessLevel.PRIVATE)
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Slf4j
 @Service
 public class ReportService {
-    final UnitOfWork unitOfWork;
-    final ReportMapper reportMapper;
-    final PaginationUtils paginationUtils;
+    UnitOfWork unitOfWork;
+    ReportMapper reportMapper;
+    PaginationUtils paginationUtils;
 
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
     @Async("AsyncTaskExecutor")

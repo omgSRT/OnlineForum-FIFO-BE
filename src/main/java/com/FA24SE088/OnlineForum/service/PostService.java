@@ -29,14 +29,14 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
 @RequiredArgsConstructor
-@FieldDefaults(level = AccessLevel.PRIVATE)
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Slf4j
 @Service
 public class PostService {
-    final UnitOfWork unitOfWork;
-    final PostMapper postMapper;
-    final ImageMapper imageMapper;
-    final PaginationUtils paginationUtils;
+    UnitOfWork unitOfWork;
+    PostMapper postMapper;
+    ImageMapper imageMapper;
+    PaginationUtils paginationUtils;
 
     //region CRUD Completed Post
     @Async("AsyncTaskExecutor")
