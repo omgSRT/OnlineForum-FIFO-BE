@@ -77,6 +77,7 @@ public enum ErrorCode {
     EMAIL_NOT_FOUND(10066, "Email not found", HttpStatus.NOT_FOUND),
     ACCOUNT_WAS_ACTIVE(10067, "Account was active", HttpStatus.BAD_REQUEST),
     ACCOUNT_ALREADY_BLOCKED(10068, "This Account Is Already Blocked", HttpStatus.BAD_REQUEST),
+    NOTIFICATION_NOT_FOUND(10066, "Notification not found", HttpStatus.NOT_FOUND),
     ;
 
     private int code;
