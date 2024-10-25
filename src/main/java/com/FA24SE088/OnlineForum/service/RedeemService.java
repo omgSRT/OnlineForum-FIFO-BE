@@ -25,13 +25,11 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
-@FieldDefaults(level = AccessLevel.PRIVATE)
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Slf4j
 @Service
 public class RedeemService {
-    @Autowired
     UnitOfWork unitOfWork;
-    @Autowired
     RedeemMapper redeemMapper;
 
     private Account findAcc(UUID id){
@@ -136,6 +134,4 @@ public class RedeemService {
         Account account = getCurrentUser();
         return account.getRedeemList();
     }
-
-
 }

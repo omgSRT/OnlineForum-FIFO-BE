@@ -22,8 +22,7 @@ import java.util.UUID;
 @Slf4j
 @RequestMapping("/bookmarks")
 public class BookMarkController {
-    @Autowired
-    private BookMarkService bookMarkService;
+    BookMarkService bookMarkService;
 
     @Operation(summary = "Create bookmark", description = "Create a new bookmark for the current user")
     @PostMapping("/create")

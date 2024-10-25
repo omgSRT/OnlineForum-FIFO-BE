@@ -34,11 +34,11 @@ import java.util.StringJoiner;
 import java.util.UUID;
 
 @RequiredArgsConstructor
-@FieldDefaults(level = AccessLevel.PRIVATE)
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Slf4j
 @Service
 public class AuthenticateService {
-    final UnitOfWork unitOfWork;
+    UnitOfWork unitOfWork;
     @Value("${spring.custom.jwt.secret}")
     private String jwtSecret;
 

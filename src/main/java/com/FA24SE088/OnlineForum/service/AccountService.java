@@ -40,18 +40,13 @@ import java.util.stream.Collectors;
 import org.springframework.security.access.prepost.PreAuthorize;
 
 @RequiredArgsConstructor
-@FieldDefaults(level = AccessLevel.PRIVATE)
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Slf4j
 @Service
 public class AccountService {
-
-    @Autowired
     UnitOfWork unitOfWork;
-    @Autowired
     AccountMapper accountMapper;
-    @Autowired
     PasswordEncoder passwordEncoder;
-    @Autowired
     PaginationUtils paginationUtils;
 
     public AccountResponse create(AccountRequest request) {

@@ -23,7 +23,7 @@ import java.util.UUID;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Slf4j
 public class NotificationController {
-    final NotificationService notificationService;
+    NotificationService notificationService;
 
     @Operation(summary = "Create notification", description = "Creates a new notification for the current user")
     @PostMapping("/create")

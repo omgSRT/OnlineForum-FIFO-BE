@@ -27,7 +27,8 @@ import java.util.UUID;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Slf4j
 public class FeedbackController {
-    final FeedbackService feedbackService;
+    FeedbackService feedbackService;
+
     @Operation(summary = "Create feedback", description = "Status: \n" +
             "PENDING_APPROVAL,\n" +
             " APPROVED")

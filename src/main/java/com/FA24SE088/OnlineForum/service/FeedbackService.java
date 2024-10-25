@@ -21,13 +21,11 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
-@FieldDefaults(level = AccessLevel.PRIVATE)
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Slf4j
 @Service
 public class FeedbackService {
-    @Autowired
     UnitOfWork unitOfWork;
-    @Autowired
     FeedbackMapper feedbackMapper;
 
     private Account getCurrentUser(){

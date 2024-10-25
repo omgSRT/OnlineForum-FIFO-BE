@@ -8,7 +8,9 @@ import com.FA24SE088.OnlineForum.dto.response.UpvoteResponse;
 import com.FA24SE088.OnlineForum.service.UpvoteService;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
+import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
@@ -18,9 +20,10 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/upvote")
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Slf4j
 public class UpvoteController {
-    final UpvoteService upvoteService;
+    UpvoteService upvoteService;
 
     @Operation(summary = "Add Or Remove Upvote From A Post")
     @PostMapping(path = "/add-or-delete")

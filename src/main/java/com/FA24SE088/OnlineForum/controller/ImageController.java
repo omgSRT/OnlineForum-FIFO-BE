@@ -6,7 +6,9 @@ import com.FA24SE088.OnlineForum.dto.response.ImageResponse;
 import com.FA24SE088.OnlineForum.enums.SuccessReturnMessage;
 import com.FA24SE088.OnlineForum.service.ImageService;
 import io.swagger.v3.oas.annotations.Operation;
+import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,9 +18,10 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/image")
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Slf4j
 public class ImageController {
-    final ImageService imageService;
+    ImageService imageService;
 
     @Operation(summary = "Add New Images To Post")
     @PostMapping(path = "/create")

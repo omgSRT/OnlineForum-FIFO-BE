@@ -10,7 +10,6 @@ import com.FA24SE088.OnlineForum.service.AccountService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -30,7 +29,7 @@ import java.util.UUID;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Slf4j
 public class AccountController {
-    final AccountService accountService;
+    AccountService accountService;
 
     @Operation(summary = "Find Account", description = "Find By Username")
     @GetMapping(path = "/find/by-username")

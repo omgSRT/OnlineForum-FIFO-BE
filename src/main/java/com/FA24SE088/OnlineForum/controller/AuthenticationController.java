@@ -13,7 +13,9 @@ import com.FA24SE088.OnlineForum.utils.OtpUtil;
 import com.nimbusds.jose.JOSEException;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
+import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
@@ -25,13 +27,14 @@ import java.util.List;
 
 @RestController
 @RequestMapping(path = "/authenticate")
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @RequiredArgsConstructor
 @Slf4j
 public class AuthenticationController {
-    private final AuthenticateService authenticateService;
-    private final AccountService accountService;
-    private final EmailUtil emailUtil;
-    private final OtpUtil otpUtil;
+    AuthenticateService authenticateService;
+    AccountService accountService;
+    EmailUtil emailUtil;
+    OtpUtil otpUtil;
 
     @Operation(summary = "Login", description = "new admin account: admin1234 \n" +
             "password: admin1234")

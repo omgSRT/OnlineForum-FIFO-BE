@@ -30,13 +30,13 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 @RequiredArgsConstructor
-@FieldDefaults(level = AccessLevel.PRIVATE)
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Slf4j
 @Service
 public class TopicService {
-    final UnitOfWork unitOfWork;
-    final PaginationUtils paginationUtils;
-    final TopicMapper topicMapper;
+    UnitOfWork unitOfWork;
+    PaginationUtils paginationUtils;
+    TopicMapper topicMapper;
 
     @PreAuthorize("hasRole('ADMIN')")
     public CompletableFuture<TopicResponse> createTopic(TopicRequest request){

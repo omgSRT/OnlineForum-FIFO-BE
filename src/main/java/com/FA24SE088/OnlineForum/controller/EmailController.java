@@ -4,7 +4,9 @@ import com.FA24SE088.OnlineForum.dto.response.ApiResponse;
 import com.FA24SE088.OnlineForum.enums.SuccessReturnMessage;
 import com.FA24SE088.OnlineForum.utils.EmailUtil;
 import io.swagger.v3.oas.annotations.Operation;
+import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -19,9 +21,10 @@ import java.util.List;
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/email")
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Slf4j
 public class EmailController {
-    final EmailUtil emailUtil;
+    EmailUtil emailUtil;
 
     @Operation(summary = "Send An Email to multiple participants")
     @PostMapping(value = "/send", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)

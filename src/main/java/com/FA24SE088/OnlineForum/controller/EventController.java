@@ -30,8 +30,8 @@ import java.util.UUID;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Slf4j
 public class EventController {
-    @Autowired
-    private EventService eventService;
+    EventService eventService;
+
     @Operation(summary = "Create Event", description = "Status: \n" +
             "UPCOMING,\n" +
             "    ONGOING,\n" +

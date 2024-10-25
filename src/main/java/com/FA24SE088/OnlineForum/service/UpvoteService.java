@@ -27,13 +27,13 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 @RequiredArgsConstructor
-@FieldDefaults(level = AccessLevel.PRIVATE)
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Slf4j
 @Service
 public class UpvoteService {
-    final UnitOfWork unitOfWork;
-    final UpvoteMapper upvoteMapper;
-    final PaginationUtils paginationUtils;
+    UnitOfWork unitOfWork;
+    UpvoteMapper upvoteMapper;
+    PaginationUtils paginationUtils;
 
     @Async("AsyncTaskExecutor")
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")

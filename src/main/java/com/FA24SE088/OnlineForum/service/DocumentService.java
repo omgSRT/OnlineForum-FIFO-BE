@@ -33,29 +33,12 @@ import java.util.List;
 import java.util.UUID;
 
 @RequiredArgsConstructor
-@FieldDefaults(level = AccessLevel.PRIVATE)
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Slf4j
 @Service
 public class DocumentService {
-
-    @Autowired
-    DocumentRepository documentRepository;
-
-    @Autowired
-    SectionRepository sectionRepository;
-
-    @Autowired
-    ImageSectionRepository imageSectionRepository;
-
-    @Autowired
-    VideoSectionRepository videoSectionRepository;
-    @Autowired
     UnitOfWork unitOfWork;
-
-    @Autowired
     DocumentMapper documentMapper;
-
-    @Autowired
     SectionMapper sectionMapper;
 
     @Transactional
@@ -69,7 +52,7 @@ public class DocumentService {
         document.setStatus(request.getStatus());
 
         // Lưu SourceCode vào database trước
-        document = documentRepository.save(document);
+        document = unitOfWork.getDocumentRepository().save(document);
 
         List<SectionResponse> sectionResponses = new ArrayList<>();
 
@@ -81,7 +64,7 @@ public class DocumentService {
             section.setDocument(document); // Liên kết với SourceCode vừa tạo
 
             // Lưu Section vào database
-            section = sectionRepository.save(section);
+            section = unitOfWork.getSectionRepository().save(section);
 
             List<ImageSectionResponse> imageResponses = new ArrayList<>();
             for (ImageSectionRequest imageRequest : sectionRequest.getImageSectionList()) {
@@ -90,7 +73,7 @@ public class DocumentService {
                 imageSection.setSection(section);
 
                 // Lưu ImageSection vào database
-                imageSection = imageSectionRepository.save(imageSection);
+                imageSection = unitOfWork.getImageSectionRepository().save(imageSection);
 
                 // Tạo phản hồi ImageSectionResponse
                 imageResponses.add(new ImageSectionResponse(imageSection.getUrl()));
@@ -103,7 +86,7 @@ public class DocumentService {
                 videoSection.setSection(section);
 
                 // Lưu VideoSection vào database
-                videoSection = videoSectionRepository.save(videoSection);
+                videoSection = unitOfWork.getVideoSectionRepository().save(videoSection);
 
                 // Tạo phản hồi VideoSectionResponse
                 videoResponses.add(new VideoSectionResponse(videoSection.getUrl()));
@@ -262,7 +245,7 @@ public class DocumentService {
 
 
     public List<DocumentResponse> getAll() {
-        return documentRepository.findAll().stream()
+        return unitOfWork.getDocumentRepository().findAll().stream()
                 .map(document -> {
                     DocumentResponse response = documentMapper.toResponse(document);
                     List<SectionResponse> sectionResponses = document.getSectionList().stream()
@@ -286,6 +269,5 @@ public class DocumentService {
         });
         unitOfWork.getDocumentRepository().delete(document);
     }
-
 }
 

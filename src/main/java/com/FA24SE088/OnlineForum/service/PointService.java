@@ -24,13 +24,13 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 @RequiredArgsConstructor
-@FieldDefaults(level = AccessLevel.PRIVATE)
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Slf4j
 @Service
 public class PointService {
-    final UnitOfWork unitOfWork;
-    final PointMapper pointMapper;
-    final PaginationUtils paginationUtils;
+    UnitOfWork unitOfWork;
+    PointMapper pointMapper;
+    PaginationUtils paginationUtils;
 
     @Async("AsyncTaskExecutor")
     @PreAuthorize("hasRole('ADMIN')")
