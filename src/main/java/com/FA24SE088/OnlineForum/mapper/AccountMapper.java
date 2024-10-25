@@ -14,7 +14,7 @@ import java.lang.annotation.Target;
 public interface AccountMapper {
     @Mapping(target = "categoryList", ignore = true)
     Account toAccount(AccountRequest request);
-//    @Mapping(source = "accountId", target = "accountId")
+
     AccountResponse toResponse(Account account);
 
     void updateAccount(@MappingTarget Account account, AccountUpdateRequest request);

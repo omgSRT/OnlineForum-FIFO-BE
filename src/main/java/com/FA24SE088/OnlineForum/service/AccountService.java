@@ -101,6 +101,8 @@ public class AccountService {
 
         account.setCreatedDate(new Date());
         account.setStatus(AccountStatus.PENDING_APPROVAL.name());
+        String handle = String.format("@%s", request.getUsername());
+        account.setHandle(handle);
         AccountResponse response = accountMapper.toResponse(account);
         response.setAccountId(account.getAccountId());
         unitOfWork.getAccountRepository().save(account);
