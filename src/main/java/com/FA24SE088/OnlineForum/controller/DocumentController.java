@@ -41,10 +41,20 @@ public class DocumentController {
                 .build();
     }
 
+    @Operation(summary = "Update Document", description = "Status: \n" +
+            "ACTIVE,\n" +
+            "    INACTIVE")
     @PutMapping("/update/{id}")
     public ApiResponse<DocumentResponse> update(@PathVariable UUID id, @RequestBody DocumentRequest request) {
         return ApiResponse.<DocumentResponse>builder()
                 .entity(documentService.update(id, request))
+                .build();
+    }
+
+    @DeleteMapping("/delete/{id}")
+    public ApiResponse<DocumentResponse> update(@PathVariable UUID id) {
+        documentService.deleteDocument(id);
+        return ApiResponse.<DocumentResponse>builder()
                 .build();
     }
 

@@ -43,7 +43,6 @@ public class AuthenticateService {
     @Value("${spring.custom.jwt.secret}")
     String jwtSecret;
 
-    //Introspect JWT Token
     public IntrospectResponse introspectJWT(IntrospectRequest request) throws JOSEException, ParseException {
         String token = request.getToken();
         boolean invalid =true;
@@ -85,7 +84,6 @@ public class AuthenticateService {
         Instant nowInstant = now.toInstant();
         Instant expirationInstant = nowInstant.plus(expirationDay, ChronoUnit.DAYS);
         Date expirationTime = Date.from(expirationInstant);
-        //Date expirationTime = new Date(now.getTime() + 24 * 60 * 60 * 1000);
 
         JWSHeader header = new JWSHeader(JWSAlgorithm.HS512);
 

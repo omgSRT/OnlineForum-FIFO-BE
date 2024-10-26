@@ -11,6 +11,7 @@ import com.FA24SE088.OnlineForum.entity.Section;
 import com.FA24SE088.OnlineForum.entity.VideoSection;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.mapstruct.MappingTarget;
 
 import java.util.List;
 
@@ -34,6 +35,8 @@ public interface DocumentMapper {
 
 
     List<SectionResponse> mapSections(List<Section> sections);
+
+    void updateDocumentFromRequest (@MappingTarget Document document, DocumentRequest request);
 
 
 }
