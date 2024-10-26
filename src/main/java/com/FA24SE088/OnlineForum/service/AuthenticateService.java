@@ -64,7 +64,6 @@ public class AuthenticateService {
         var account = unitOfWork.getAccountRepository().findByUsername(request.getUsername()).orElseThrow(
                 () -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND)
         );
-
         boolean authenticated = passwordEncoder.matches(request.getPassword(), account.getPassword());
         if (!authenticated){
             throw new AppException(ErrorCode.UNAUTHENTICATED);
