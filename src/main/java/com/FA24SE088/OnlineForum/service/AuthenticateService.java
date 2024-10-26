@@ -8,6 +8,7 @@ import com.FA24SE088.OnlineForum.dto.response.IntrospectResponse;
 import com.FA24SE088.OnlineForum.dto.response.RefreshAccessTokenResponse;
 import com.FA24SE088.OnlineForum.entity.Account;
 import com.FA24SE088.OnlineForum.entity.InvalidatedToken;
+import com.FA24SE088.OnlineForum.enums.AccountStatus;
 import com.FA24SE088.OnlineForum.exception.AppException;
 import com.FA24SE088.OnlineForum.exception.ErrorCode;
 
@@ -67,6 +68,9 @@ public class AuthenticateService {
         boolean authenticated = passwordEncoder.matches(request.getPassword(), account.getPassword());
         if (!authenticated){
             throw new AppException(ErrorCode.UNAUTHENTICATED);
+        }
+        if(account.getStatus().equals(AccountStatus.PENDING_APPROVAL.name())){
+            throw new AppException(ErrorCode.ACCOUNT_HAS_NOT_BEEN_AUTHENTICATED);
         }
         var token = generateToken(account, 1);
         var refreshToken = generateToken(account, 365);

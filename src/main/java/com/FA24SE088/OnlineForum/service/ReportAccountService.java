@@ -10,6 +10,7 @@ import com.FA24SE088.OnlineForum.entity.Account;
 import com.FA24SE088.OnlineForum.entity.Feedback;
 import com.FA24SE088.OnlineForum.entity.ReportAccount;
 import com.FA24SE088.OnlineForum.enums.FeedbackStatus;
+import com.FA24SE088.OnlineForum.enums.ReportAccountReason;
 import com.FA24SE088.OnlineForum.exception.AppException;
 import com.FA24SE088.OnlineForum.exception.ErrorCode;
 import com.FA24SE088.OnlineForum.mapper.FeedbackMapper;
@@ -47,19 +48,40 @@ public class ReportAccountService {
                 .orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND));
     }
 
-    public ReportAccountResponse createReportAccount(ReportAccountRequest reportAccountRequest) {
+//    public ReportAccountResponse createReportAccount(ReportAccountRequest reportAccountRequest) {
+//        Account reporter = getCurrentUser();
+//        Account reported = unitOfWork.getAccountRepository()
+//                .findById(reportAccountRequest.getReportedId())
+//                .orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND));
+//
+//        ReportAccount reportAccount = reportAccountMapper.toReportAccount(reportAccountRequest);
+//        reportAccount.setReporter(reporter);
+//        reportAccount.setReported(reported);
+//        reportAccount.setReportTime(new Date());
+//        reportAccount.setStatus("PENDING");
+//
+//        ReportAccount savedReportAccount = unitOfWork.getReportAccountRepository().save(reportAccount);
+//        return reportAccountMapper.toResponse(savedReportAccount);
+//    }
+
+    public ReportAccountResponse createReportAccount(UUID reportedId, ReportAccountReason reason) {
         Account reporter = getCurrentUser();
         Account reported = unitOfWork.getAccountRepository()
-                .findById(reportAccountRequest.getReportedId())
+                .findById(reportedId)
                 .orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND));
 
-        ReportAccount reportAccount = reportAccountMapper.toReportAccount(reportAccountRequest);
-        reportAccount.setReporter(reporter);
-        reportAccount.setReported(reported);
-        reportAccount.setReportTime(new Date());
-        reportAccount.setStatus("PENDING");
+        ReportAccount reportAccount = ReportAccount.builder()
+                .reason(reason.getMessage())
+                .reporter(reporter)
+                .reported(reported)
+                .status("PENDING")
+                .reportTime(new Date())
+                .build();
+
 
         ReportAccount savedReportAccount = unitOfWork.getReportAccountRepository().save(reportAccount);
+        savedReportAccount.setReporter(reporter);
+        savedReportAccount.setReported(reported);
         return reportAccountMapper.toResponse(savedReportAccount);
     }
 
@@ -86,7 +108,7 @@ public class ReportAccountService {
         List<ReportAccount> reportAccounts = unitOfWork.getReportAccountRepository().findAll();
         return reportAccounts.stream()
                 .map(reportAccountMapper::toResponse)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     public void deleteReportAccount(UUID reportAccountId) {
