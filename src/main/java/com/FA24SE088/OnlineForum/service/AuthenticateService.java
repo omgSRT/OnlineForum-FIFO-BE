@@ -41,7 +41,7 @@ import java.util.UUID;
 public class AuthenticateService {
     final UnitOfWork unitOfWork;
     @Value("${spring.custom.jwt.secret}")
-    private String jwtSecret;
+    String jwtSecret;
 
     //Introspect JWT Token
     public IntrospectResponse introspectJWT(IntrospectRequest request) throws JOSEException, ParseException {

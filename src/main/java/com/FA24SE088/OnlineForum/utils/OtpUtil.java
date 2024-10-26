@@ -118,10 +118,6 @@ public class OtpUtil {
             throw new AppException(ErrorCode.OTP_STILL_VALID);
         }
 
-
         return generateOtp(email);
     }
-
-
-
 }

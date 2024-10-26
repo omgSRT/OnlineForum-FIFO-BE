@@ -21,8 +21,9 @@ import java.util.UUID;
 @RequestMapping("/notification")
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Slf4j
-public class NotificationController extends TextWebSocketHandler {
-    final NotificationService notificationService;
+public class NotificationController {
+    NotificationService notificationService;
+
 
     @GetMapping("/get-by-id/{id}")
     public ApiResponse<NotificationResponse> getNotification(@PathVariable UUID id) {

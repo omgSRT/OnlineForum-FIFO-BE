@@ -21,7 +21,7 @@ import java.util.UUID;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Slf4j
 public class ReportAccountController {
-    final ReportAccountService reportAccountService;
+    ReportAccountService reportAccountService;
 
     @PostMapping("/create")
     public ApiResponse<ReportAccountResponse> createReportAccount(@RequestParam UUID reported, ReportAccountReason reportAccountReasons) {

@@ -28,14 +28,13 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 @RequiredArgsConstructor
-@FieldDefaults(level = AccessLevel.PRIVATE)
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Slf4j
 @Service
 public class TagService {
-    final UnitOfWork unitOfWork;
-    final PaginationUtils paginationUtils;
-    @Autowired
-    final TagMapper tagMapper;
+    UnitOfWork unitOfWork;
+    PaginationUtils paginationUtils;
+    TagMapper tagMapper;
 
     @PreAuthorize("hasRole('ADMIN')")
     public CompletableFuture<TagResponse> createTag(TagRequest request){

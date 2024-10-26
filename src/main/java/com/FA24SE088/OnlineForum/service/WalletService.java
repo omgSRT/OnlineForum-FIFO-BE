@@ -18,11 +18,10 @@ import org.springframework.stereotype.Service;
 import java.util.UUID;
 
 @RequiredArgsConstructor
-@FieldDefaults(level = AccessLevel.PRIVATE)
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Slf4j
 @Service
 public class WalletService {
-    @Autowired
     UnitOfWork unitOfWork;
 
     public Wallet create(WalletRequest request) {
@@ -64,6 +63,4 @@ public class WalletService {
         account.setWallet(null);
         unitOfWork.getAccountRepository().save(account);
     }
-
-
 }

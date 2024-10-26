@@ -23,18 +23,14 @@ import java.util.Optional;
 import java.util.UUID;
 
 @RequiredArgsConstructor
-@FieldDefaults(level = AccessLevel.PRIVATE)
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Slf4j
 @Service
 public class BookMarkService {
-    @Autowired
-    private UnitOfWork unitOfWork;
-    @Autowired
-    private PaginationUtils paginationUtils;
-    @Autowired
-    private BookMarkMapper bookMarkMapper;
-    @Autowired
-    private PostMapper postMapper;
+    UnitOfWork unitOfWork;
+    PaginationUtils paginationUtils;
+    BookMarkMapper bookMarkMapper;
+    PostMapper postMapper;
 
     private Account getCurrentUser() {
         var context = SecurityContextHolder.getContext();

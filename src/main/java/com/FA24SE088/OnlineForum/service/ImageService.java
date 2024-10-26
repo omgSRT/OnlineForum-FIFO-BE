@@ -27,13 +27,13 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 @RequiredArgsConstructor
-@FieldDefaults(level = AccessLevel.PRIVATE)
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Slf4j
 @Service
 public class ImageService {
-    final UnitOfWork unitOfWork;
-    final ImageMapper imageMapper;
-    final PaginationUtils paginationUtils;
+    UnitOfWork unitOfWork;
+    ImageMapper imageMapper;
+    PaginationUtils paginationUtils;
 
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
     @Async("AsyncTaskExecutor")

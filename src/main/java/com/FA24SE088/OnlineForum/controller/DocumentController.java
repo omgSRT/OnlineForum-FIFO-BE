@@ -22,7 +22,7 @@ import java.util.UUID;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Slf4j
 public class DocumentController {
-    final DocumentService documentService;
+    DocumentService documentService;
 
     @Operation(summary = "Create Document", description = "Status: \n" +
             "ACTIVE,\n" +

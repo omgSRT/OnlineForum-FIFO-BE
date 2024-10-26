@@ -8,7 +8,9 @@ import com.FA24SE088.OnlineForum.enums.SuccessReturnMessage;
 import com.FA24SE088.OnlineForum.service.ReportService;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
+import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
@@ -18,9 +20,10 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/report")
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Slf4j
 public class ReportController {
-    final ReportService reportService;
+    ReportService reportService;
 
     @Operation(summary = "Create New Post Report")
     @PostMapping("/create")

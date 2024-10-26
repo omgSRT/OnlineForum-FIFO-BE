@@ -23,7 +23,7 @@ import java.util.UUID;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Slf4j
 public class FollowController {
-    final FollowService followService;
+    FollowService followService;
 
     @Operation(summary = "Create follow", description = "Create a new follow for the current user")
     @PostMapping("/create")
