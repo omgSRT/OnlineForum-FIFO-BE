@@ -84,6 +84,7 @@ public enum ErrorCode {
     MISSING_REQUIRED_FIELDS_IN_DRAFT(10067, "Current Draft Is Missing Required Fields Like: 'Title, Content, Tag, Topic' To Convert To Completed Post", HttpStatus.BAD_REQUEST),
     TRANSACTION_NOT_FOUND(10068, "Transaction Not Found", HttpStatus.NOT_FOUND),
     INVALID_EMAIL(10069, "Invalid Email Format", HttpStatus.BAD_REQUEST),
+    FEEDBACK_JUST_FOR_USER(10069, "Feedback is for users only", HttpStatus.BAD_REQUEST),
     REQUEST_NULL(10068, "Request null", HttpStatus.NOT_FOUND),
     ;
 
