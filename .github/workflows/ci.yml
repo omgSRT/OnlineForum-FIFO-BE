@@ -40,11 +40,16 @@ jobs:
           chmod 600 private_key.pem
           mkdir -p ~/.ssh
           ssh-keyscan -H 103.162.14.151 >> ~/.ssh/known_hosts
+          
+          # Hiển thị thông tin về private key
+          ssh-keygen -l -f private_key.pem
+
           # Copy .jar file to the server
           scp -i private_key.pem target/*.jar root@103.162.14.151:/opt/deployment
           # Run the deployment script on the server to start the app
           ssh -i private_key.pem root@103.162.14.151 'bash /opt/deployment/start_myapp.sh'
           rm private_key.pem
+
 
 #    - name: Update dependency graph
 #      uses: advanced-security/maven-dependency-submission-action@571e99aab1055c2e71a1e2309b9691de18d6b7d6
