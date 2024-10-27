@@ -4,7 +4,6 @@ package com.FA24SE088.OnlineForum.controller;
 import com.FA24SE088.OnlineForum.dto.request.DocumentRequest;
 import com.FA24SE088.OnlineForum.dto.response.ApiResponse;
 import com.FA24SE088.OnlineForum.dto.response.DocumentResponse;
-import com.FA24SE088.OnlineForum.entity.Document;
 import com.FA24SE088.OnlineForum.service.DocumentService;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.AccessLevel;
