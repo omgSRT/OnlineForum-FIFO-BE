@@ -6,6 +6,7 @@ import com.FA24SE088.OnlineForum.dto.request.FeedbackRequest2;
 import com.FA24SE088.OnlineForum.dto.response.ApiResponse;
 import com.FA24SE088.OnlineForum.dto.response.FeedbackResponse;
 import com.FA24SE088.OnlineForum.enums.FeedbackStatus;
+import com.FA24SE088.OnlineForum.enums.FeedbackUpdateStatus;
 import com.FA24SE088.OnlineForum.exception.AppException;
 import com.FA24SE088.OnlineForum.exception.ErrorCode;
 
@@ -43,9 +44,10 @@ public class FeedbackController {
             "PENDING_APPROVAL,\n " +
             "APPROVED")
     @PutMapping("/update/{id}")
-    public ApiResponse<FeedbackResponse> updateFeedback(@PathVariable UUID id, @RequestBody FeedbackRequest2 feedbackRequest) {
+    public ApiResponse<FeedbackResponse> updateFeedback(@PathVariable UUID id,
+                                                        @RequestParam(defaultValue = "REJECTED") FeedbackUpdateStatus status) {
         return ApiResponse.<FeedbackResponse>builder()
-                .entity(feedbackService.updateFeedback(id, feedbackRequest)
+                .entity(feedbackService.updateFeedback(id, status)
                         .orElseThrow(() -> new AppException(ErrorCode.FEEDBACK_NOT_FOUND)))
                 .build();
     }
