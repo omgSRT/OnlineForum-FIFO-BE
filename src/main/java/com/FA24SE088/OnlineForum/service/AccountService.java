@@ -58,6 +58,7 @@ public class AccountService {
             throw new AppException(ErrorCode.PASSWORD_NOT_MATCH);
         }
         Account account = accountMapper.toAccount(request);
+        account.setHandle(request.getUsername());
         account.setPassword(passwordEncoder.encode(request.getPassword()));
 
         if (request.getRoleName().equalsIgnoreCase("STAFF")) {
@@ -157,7 +158,6 @@ public class AccountService {
         if (request.getCoverImage() != null && !request.getCoverImage().isEmpty()) {
             account.setCoverImage(request.getCoverImage());
         }
-
         unitOfWork.getAccountRepository().save(account);
         return accountMapper.toResponse(account);
     }

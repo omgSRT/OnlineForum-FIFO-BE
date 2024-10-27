@@ -17,5 +17,6 @@ public interface FeedbackMapper {
     Feedback toFeedback(FeedbackRequest request);
     @Mapping(target = "feedbackId",source = "feedbackId")
     @Mapping(target = "accountId",source = "account.accountId")
+    @Mapping(target = "createdDate",source = "createdDate")
     FeedbackResponse toResponse(Feedback feedback);
 }

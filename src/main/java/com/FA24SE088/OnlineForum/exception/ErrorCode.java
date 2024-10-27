@@ -77,12 +77,15 @@ public enum ErrorCode {
     EMAIL_NOT_FOUND(10066, "Email not found", HttpStatus.NOT_FOUND),
     ACCOUNT_WAS_ACTIVE(10067, "Account was active", HttpStatus.BAD_REQUEST),
     ACCOUNT_ALREADY_BLOCKED(10068, "This Account Is Already Blocked", HttpStatus.BAD_REQUEST),
+    ACCOUNT_HAS_NOT_BEEN_AUTHENTICATED(10068, "The account has not been authenticated", HttpStatus.BAD_REQUEST),
     NOTIFICATION_NOT_FOUND(10066, "Notification not found", HttpStatus.NOT_FOUND),
     NULL_DRAFT(10065, "Draft Must Not Be Null", HttpStatus.BAD_REQUEST),
     ACCOUNT_NOT_THE_AUTHOR_OF_POST(10066, "This Account Is Not The Author Of This Post", HttpStatus.BAD_REQUEST),
     MISSING_REQUIRED_FIELDS_IN_DRAFT(10067, "Current Draft Is Missing Required Fields Like: 'Title, Content, Tag, Topic' To Convert To Completed Post", HttpStatus.BAD_REQUEST),
     TRANSACTION_NOT_FOUND(10068, "Transaction Not Found", HttpStatus.NOT_FOUND),
-    INVALID_EMAIL(10069, "Invalid Email Format", HttpStatus.BAD_REQUEST)
+    INVALID_EMAIL(10069, "Invalid Email Format", HttpStatus.BAD_REQUEST),
+    FEEDBACK_JUST_FOR_USER(10069, "Feedback is for users only", HttpStatus.BAD_REQUEST),
+    REQUEST_NULL(10068, "Request null", HttpStatus.NOT_FOUND),
     ;
 
     private int code;

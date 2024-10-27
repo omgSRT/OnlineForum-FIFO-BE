@@ -23,6 +23,7 @@ public class Section {
     UUID sectionCodeId;
     Date createdDate;
     String linkGit;
+    Integer sectionOrder;
     @Column(columnDefinition = "MEDIUMTEXT")
     String content;
 

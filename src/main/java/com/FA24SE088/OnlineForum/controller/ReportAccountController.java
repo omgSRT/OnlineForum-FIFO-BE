@@ -3,6 +3,7 @@ package com.FA24SE088.OnlineForum.controller;
 import com.FA24SE088.OnlineForum.dto.request.ReportAccountRequest;
 import com.FA24SE088.OnlineForum.dto.response.ApiResponse;
 import com.FA24SE088.OnlineForum.dto.response.ReportAccountResponse;
+import com.FA24SE088.OnlineForum.enums.ReportAccountReason;
 import com.FA24SE088.OnlineForum.exception.AppException;
 import com.FA24SE088.OnlineForum.exception.ErrorCode;
 import com.FA24SE088.OnlineForum.service.ReportAccountService;
@@ -23,9 +24,9 @@ public class ReportAccountController {
     ReportAccountService reportAccountService;
 
     @PostMapping("/create")
-    public ApiResponse<ReportAccountResponse> createReportAccount(@RequestBody ReportAccountRequest reportAccountRequest) {
+    public ApiResponse<ReportAccountResponse> createReportAccount(@RequestParam UUID reported, ReportAccountReason reportAccountReasons) {
         return ApiResponse.<ReportAccountResponse>builder()
-                .entity(reportAccountService.createReportAccount(reportAccountRequest))
+                .entity(reportAccountService.createReportAccount(reported,reportAccountReasons))
                 .build();
     }
 
