@@ -15,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
@@ -29,12 +30,16 @@ public class FeedbackService {
     UnitOfWork unitOfWork;
     FeedbackMapper feedbackMapper;
 
-    private Account getCurrentUser(){
+    private Account getCurrentUser() {
         var context = SecurityContextHolder.getContext();
         return unitOfWork.getAccountRepository().findByUsername(context.getAuthentication().getName()).orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND));
     }
+
     public FeedbackResponse createFeedback(FeedbackRequest feedbackRequest) {
         Account account = getCurrentUser();
+        if (!account.getRole().getName().equals("USER")){
+            throw new AppException(ErrorCode.FEEDBACK_JUST_FOR_USER);
+        }
         Feedback feedback = feedbackMapper.toFeedback(feedbackRequest);
         feedback.setAccount(account);
         feedback.setStatus(FeedbackStatus.PENDING.name());
@@ -69,10 +74,31 @@ public class FeedbackService {
                 .toList();
     }
 
+    public List<FeedbackResponse> filter(UUID id,String username, FeedbackStatus status, boolean ascending) {
+        List<FeedbackResponse> list = new ArrayList<>(unitOfWork.getFeedbackRepository().findAll().stream()
+                .filter(feedback -> (id == null || (feedback.getAccount() != null && feedback.getAccount().getAccountId() != null && feedback.getAccount().getAccountId().equals(id))))
+                .filter(feedback -> (username == null ||
+                        (feedback.getAccount().getUsername() != null && feedback.getAccount().getUsername().contains(username))))
+                .filter(feedback -> (status == null || (feedback.getStatus() != null && feedback.getStatus().contains(status.name()))))
+                .map(feedbackMapper::toResponse)
+                .toList());
+        list.sort((f1, f2) -> {
+            if (ascending) {
+                return f1.getCreatedDate().compareTo(f2.getCreatedDate());
+            } else {
+                return f2.getCreatedDate().compareTo(f1.getCreatedDate());
+            }
+        });
+
+        return list;
+    }
+
+
+
     public void deleteFeedback(UUID feedbackId) {
         if (unitOfWork.getFeedbackRepository().existsById(feedbackId)) {
             unitOfWork.getFeedbackRepository().deleteById(feedbackId);
-        }else {
+        } else {
             throw new AppException(ErrorCode.FEEDBACK_NOT_FOUND);
         }
     }

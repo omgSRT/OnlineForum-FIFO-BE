@@ -27,10 +27,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
@@ -116,42 +113,58 @@ public class DocumentService {
 
     @Transactional
     public DocumentResponse createDocument(DocumentRequest request) {
+        if (request == null) {
+            throw new AppException(ErrorCode.REQUEST_NULL);
+        }
+
         if (!request.getStatus().equals(DocumentStatus.ACTIVE.name()) &&
-                !request.getStatus().equals(DocumentStatus.INACTIVE.name())){
+                !request.getStatus().equals(DocumentStatus.INACTIVE.name())) {
             throw new AppException(ErrorCode.WRONG_STATUS);
         }
-            Document document = documentMapper.toDocument(request);
 
+        Document document = documentMapper.toDocument(request);
         document = unitOfWork.getDocumentRepository().save(document);
+
         List<SectionResponse> sectionResponses = new ArrayList<>();
+        int index = 0;
 
         for (SectionRequest sectionRequest : request.getSectionList()) {
+            if (sectionRequest == null) {
+                continue;
+            }
+
             Section section = sectionMapper.toSection(sectionRequest);
             section.setCreatedDate(new Date());
             section.setDocument(document);
+            section.setSectionOrder(index++);
 
             section = unitOfWork.getSectionRepository().save(section);
 
-
             List<ImageSectionResponse> imageResponses = new ArrayList<>();
             for (ImageSectionRequest imageRequest : sectionRequest.getImageSectionList()) {
+                if (imageRequest == null || imageRequest.getUrl() == null) {
+                    continue;
+                }
+
                 ImageSection imageSection = new ImageSection();
                 imageSection.setUrl(imageRequest.getUrl());
                 imageSection.setSection(section);
 
                 imageSection = unitOfWork.getImageSectionRepository().save(imageSection);
-
                 imageResponses.add(new ImageSectionResponse(imageSection.getUrl()));
             }
 
             List<VideoSectionResponse> videoResponses = new ArrayList<>();
             for (VideoSectionRequest videoRequest : sectionRequest.getVideoSectionList()) {
+                if (videoRequest == null || videoRequest.getUrl() == null) {
+                    continue;
+                }
+
                 VideoSection videoSection = new VideoSection();
                 videoSection.setUrl(videoRequest.getUrl());
                 videoSection.setSection(section);
 
                 videoSection = unitOfWork.getVideoSectionRepository().save(videoSection);
-
                 videoResponses.add(new VideoSectionResponse(videoSection.getUrl()));
             }
 
@@ -168,6 +181,7 @@ public class DocumentService {
 
         return response;
     }
+
 
     @Transactional
     public DocumentResponse update(UUID documentID, DocumentRequest request) {
@@ -180,27 +194,21 @@ public class DocumentService {
                 .findById(documentID)
                 .orElseThrow(() -> new AppException(ErrorCode.DOCUMENT_NOT_FOUND));
 
-        document = documentMapper.toDocument(request);
-//        // Cập nhật các trường của document
-//        document.setName(request.getName());
-//        document.setImage(request.getImage());
-//        document.setPrice(request.getPrice());
-//        document.setType(request.getType());
-//        document.setStatus(request.getStatus());
+        documentMapper.updateDocumentFromRequest(document, request);
 
+        unitOfWork.getDocumentRepository().save(document);
 
         unitOfWork.getSectionRepository().deleteAllByDocument(document);
+        document.getSectionList().clear();
 
         List<SectionResponse> sectionResponses = new ArrayList<>();
-
-        // Thêm các section mới
+        int index = 0;
         for (SectionRequest sectionRequest : request.getSectionList()) {
             Section section = sectionMapper.toSection(sectionRequest);
             section.setDocument(document);
+            section.setSectionOrder(index++);
 
-            // Lưu section mới
             section = unitOfWork.getSectionRepository().save(section);
-
 
             List<ImageSectionResponse> imageResponses = new ArrayList<>();
             for (ImageSectionRequest imageRequest : sectionRequest.getImageSectionList()) {
@@ -209,22 +217,19 @@ public class DocumentService {
                 imageSection.setSection(section);
 
                 imageSection = unitOfWork.getImageSectionRepository().save(imageSection);
-
                 imageResponses.add(new ImageSectionResponse(imageSection.getUrl()));
             }
 
-            // Thêm danh sách video mới cho section
             List<VideoSectionResponse> videoResponses = new ArrayList<>();
             for (VideoSectionRequest videoRequest : sectionRequest.getVideoSectionList()) {
                 VideoSection videoSection = new VideoSection();
                 videoSection.setUrl(videoRequest.getUrl());
                 videoSection.setSection(section);
-                // Lưu video mới
-                videoSection = unitOfWork.getVideoSectionRepository().save(videoSection);
 
+                videoSection = unitOfWork.getVideoSectionRepository().save(videoSection);
                 videoResponses.add(new VideoSectionResponse(videoSection.getUrl()));
             }
-            // Tạo phản hồi cho section
+
             SectionResponse sectionResponse = new SectionResponse();
             sectionResponse.setLinkGit(section.getLinkGit());
             sectionResponse.setImageSectionList(imageResponses);
@@ -233,22 +238,19 @@ public class DocumentService {
             sectionResponses.add(sectionResponse);
         }
 
-        // Lưu cập nhật cho document
-        unitOfWork.getDocumentRepository().save(document);
-
-        // Tạo phản hồi cho document
         DocumentResponse response = documentMapper.toResponse(document);
         response.setSectionList(sectionResponses);
 
         return response;
     }
 
-
     public List<DocumentResponse> getAll() {
         return unitOfWork.getDocumentRepository().findAll().stream()
                 .map(document -> {
                     DocumentResponse response = documentMapper.toResponse(document);
+                    // Sắp xếp Section theo order trước khi tạo response
                     List<SectionResponse> sectionResponses = document.getSectionList().stream()
+                            .sorted(Comparator.comparingInt(Section::getSectionOrder))
                             .map(documentMapper::toSectionResponse)
                             .toList();
                     response.setSectionList(sectionResponses);
@@ -257,6 +259,9 @@ public class DocumentService {
                 })
                 .toList();
     }
+
+
+
 
     @Transactional
     public void deleteDocument(UUID documentId) {

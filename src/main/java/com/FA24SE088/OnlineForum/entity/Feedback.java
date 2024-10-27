@@ -1,10 +1,11 @@
 package com.FA24SE088.OnlineForum.entity;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+import org.hibernate.annotations.CreationTimestamp;
 
-import java.util.List;
+import java.time.LocalDateTime;
+
 import java.util.UUID;
 @Getter
 @Setter
@@ -20,6 +21,9 @@ public class Feedback {
     String content;
     String title;
     String status;
+
+    @CreationTimestamp
+    LocalDateTime createdDate;
 
     @ManyToOne
     @JoinColumn(name = "accountID")

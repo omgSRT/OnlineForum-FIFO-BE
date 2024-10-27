@@ -1,7 +1,6 @@
 package com.FA24SE088.OnlineForum.controller;
 
 
-
 import com.FA24SE088.OnlineForum.dto.request.FeedbackRequest;
 import com.FA24SE088.OnlineForum.dto.request.FeedbackRequest2;
 import com.FA24SE088.OnlineForum.dto.response.ApiResponse;
@@ -40,6 +39,7 @@ public class FeedbackController {
                 .entity(feedbackService.createFeedback(feedbackRequest))
                 .build();
     }
+
     @Operation(summary = "Update feedback", description = "Status: \n" +
             "PENDING_APPROVAL,\n " +
             "APPROVED")
@@ -52,6 +52,18 @@ public class FeedbackController {
                 .build();
     }
 
+    @GetMapping("/filter")
+    public ApiResponse<List<FeedbackResponse>> filter(
+            @RequestParam(required = false) UUID accountId,
+            @RequestParam(required = false) String username,
+            @RequestParam(required = false) FeedbackStatus status,
+            @RequestParam(defaultValue = "true") boolean acsending) {
+        return ApiResponse.<List<FeedbackResponse>>builder()
+                .entity(feedbackService.filter(accountId,username, status, acsending))
+                .build();
+    }
+
+
     @GetMapping("/get-by-id/{id}")
     public ApiResponse<FeedbackResponse> getFeedback(@PathVariable UUID id) {
         return ApiResponse.<FeedbackResponse>builder()
@@ -59,6 +71,7 @@ public class FeedbackController {
                         .orElseThrow(() -> new AppException(ErrorCode.FEEDBACK_NOT_FOUND)))
                 .build();
     }
+
     @GetMapping("/get-all")
     public ApiResponse<List<FeedbackResponse>> getAllFeedbacks() {
         return ApiResponse.<List<FeedbackResponse>>builder()
@@ -68,8 +81,8 @@ public class FeedbackController {
 
     @DeleteMapping("/delete/{id}")
     public ApiResponse<Void> deleteFeedback(@PathVariable UUID id) {
-       feedbackService.deleteFeedback(id);
-       return ApiResponse.<Void>builder().build();
+        feedbackService.deleteFeedback(id);
+        return ApiResponse.<Void>builder().build();
     }
 
 
