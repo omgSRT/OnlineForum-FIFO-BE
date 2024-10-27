@@ -37,8 +37,7 @@ jobs:
           SERVER_USER: root
         run: |
           echo "$SERVER_SSH_KEY" > private_key.pem
-          chmod 600 private_key.pem
-          # Create the .ssh directory and add the server to known_hosts
+          chmod 400 private_key.pem
           mkdir -p ~/.ssh
           ssh-keyscan -H $SERVER_IP >> ~/.ssh/known_hosts
           # Copy .jar file to the server
