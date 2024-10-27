@@ -38,7 +38,8 @@ jobs:
         run: |
           echo "$SERVER_SSH_KEY" > private_key.pem
           chmod 600 private_key.pem
-          # Add server to known_hosts to avoid host verification errors
+          # Create the .ssh directory and add the server to known_hosts
+          mkdir -p ~/.ssh
           ssh-keyscan -H $SERVER_IP >> ~/.ssh/known_hosts
           # Copy .jar file to the server
           scp -i private_key.pem target/*.jar $SERVER_USER@$SERVER_IP:/opt/deployment
