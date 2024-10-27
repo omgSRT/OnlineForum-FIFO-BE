@@ -5,6 +5,7 @@ import com.FA24SE088.OnlineForum.dto.request.*;
 import com.FA24SE088.OnlineForum.dto.response.FeedbackResponse;
 import com.FA24SE088.OnlineForum.entity.*;
 import com.FA24SE088.OnlineForum.enums.FeedbackStatus;
+import com.FA24SE088.OnlineForum.enums.FeedbackUpdateStatus;
 import com.FA24SE088.OnlineForum.exception.AppException;
 import com.FA24SE088.OnlineForum.exception.ErrorCode;
 import com.FA24SE088.OnlineForum.mapper.FeedbackMapper;
@@ -42,15 +43,14 @@ public class FeedbackService {
         return feedbackMapper.toResponse(savedFeedback);
     }
 
-    public Optional<FeedbackResponse> updateFeedback(UUID feedbackId, FeedbackRequest2 feedbackRequest) {
+    public Optional<FeedbackResponse> updateFeedback(UUID feedbackId, FeedbackUpdateStatus status) {
         Optional<Feedback> feedbackOptional = unitOfWork.getFeedbackRepository().findById(feedbackId);
-        if(!feedbackRequest.getStatus().equals(FeedbackStatus.PENDING.name()) &&
-                !feedbackRequest.getStatus().equals(FeedbackStatus.APPROVED.name())){
-            throw new AppException(ErrorCode.WRONG_STATUS);
-        }
         if (feedbackOptional.isPresent()) {
             Feedback feedback = feedbackOptional.get();
-            feedback.setStatus(feedbackRequest.getStatus());
+            if(!feedback.getStatus().equalsIgnoreCase(FeedbackStatus.PENDING.name())){
+                throw new AppException(ErrorCode.WRONG_STATUS);
+            }
+            feedback.setStatus(status.name());
             Feedback updatedFeedback = unitOfWork.getFeedbackRepository().save(feedback);
             return Optional.of(feedbackMapper.toResponse(updatedFeedback));
         }
