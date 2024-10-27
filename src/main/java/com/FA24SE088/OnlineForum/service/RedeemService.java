@@ -13,16 +13,12 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
@@ -36,7 +32,7 @@ public class RedeemService {
         return unitOfWork.getAccountRepository().findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND));
     }
-    private Document findSource(UUID id){
+    private Document findDocument(UUID id){
         return unitOfWork.getDocumentRepository().findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.DOCUMENT_NOT_FOUND));
     }
@@ -75,7 +71,7 @@ public class RedeemService {
 
     public RedeemResponse create_2(RedeemRequest request){
         Account account = findAcc(request.getAccountId());
-        Document document = findSource(request.getSourceCodeId());
+        Document document = findDocument(request.getDocumentId());
         //nếu tk đã đổi phần thưởng này r thì ko cho đổi nữa
         account.getRedeemList().forEach(redeem -> {
             if (redeem.getDocument().getDocumentId().equals(document.getDocumentId()))
