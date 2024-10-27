@@ -16,11 +16,11 @@ on:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v4
+
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
@@ -38,10 +38,12 @@ jobs:
         run: |
           echo "$SERVER_SSH_KEY" > private_key.pem
           chmod 600 private_key.pem
+          # Add server to known_hosts to avoid host verification errors
+          ssh-keyscan -H $SERVER_IP >> ~/.ssh/known_hosts
           # Copy .jar file to the server
-          scp -i private_key.pem target/*.jar root@103.162.14.151:/opt/deployment
+          scp -i private_key.pem target/*.jar $SERVER_USER@$SERVER_IP:/opt/deployment
           # Run the deployment script on the server to start the app
-          ssh -i private_key.pem root@103.162.14.151 'bash /opt/deployment/start_myapp.sh'
+          ssh -i private_key.pem $SERVER_USER@$SERVER_IP 'bash /opt/deployment/start_myapp.sh'
           rm private_key.pem
 
 #    - name: Update dependency graph
