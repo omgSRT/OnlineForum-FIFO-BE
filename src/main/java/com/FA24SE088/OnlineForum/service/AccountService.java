@@ -197,7 +197,6 @@ public class AccountService {
         return accountMapper.toResponse(account);
     }
 
-
     public CompletableFuture<Account> delete(UUID uuid) {
         return CompletableFuture.supplyAsync(() -> {
             Account foundAccount = findAccount(uuid);

@@ -1,8 +1,10 @@
 package com.FA24SE088.OnlineForum.service;
 
+import com.FA24SE088.OnlineForum.dto.request.AccountChangePasswordRequest;
 import com.FA24SE088.OnlineForum.dto.request.AuthenticationRequest;
 import com.FA24SE088.OnlineForum.dto.request.IntrospectRequest;
 import com.FA24SE088.OnlineForum.dto.request.LogoutRequest;
+import com.FA24SE088.OnlineForum.dto.response.AccountResponse;
 import com.FA24SE088.OnlineForum.dto.response.AuthenticationResponse;
 import com.FA24SE088.OnlineForum.dto.response.IntrospectResponse;
 import com.FA24SE088.OnlineForum.dto.response.RefreshAccessTokenResponse;
@@ -12,7 +14,9 @@ import com.FA24SE088.OnlineForum.enums.AccountStatus;
 import com.FA24SE088.OnlineForum.exception.AppException;
 import com.FA24SE088.OnlineForum.exception.ErrorCode;
 
+import com.FA24SE088.OnlineForum.mapper.AccountMapper;
 import com.FA24SE088.OnlineForum.repository.UnitOfWork.UnitOfWork;
+import com.FA24SE088.OnlineForum.utils.EmailUtil;
 import com.nimbusds.jose.*;
 import com.nimbusds.jose.crypto.MACSigner;
 import com.nimbusds.jose.crypto.MACVerifier;
@@ -33,6 +37,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.StringJoiner;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
@@ -40,6 +45,8 @@ import java.util.UUID;
 @Service
 public class AuthenticateService {
     final UnitOfWork unitOfWork;
+    final EmailUtil emailUtil;
+    final AccountMapper accountMapper;
     @Value("${spring.custom.jwt.secret}")
     String jwtSecret;
 
@@ -160,6 +167,49 @@ public class AuthenticateService {
                 .build();
 
         unitOfWork.getInvalidateTokenRepository().save(invalidatedToken);
+    }
+
+    public CompletableFuture<Void> forgetPassword(String email){
+        var foundAccountFuture = unitOfWork.getAccountRepository().findByEmailIgnoreCase(email)
+                .thenApply(optionalAccount -> optionalAccount.orElseThrow(() ->
+                        new AppException(ErrorCode.ACCOUNT_NOT_FOUND)));
+
+        return foundAccountFuture.thenCompose(account -> {
+            String emailBody = "<html>"
+                    + "<body>"
+                    + "<p><strong>FIFO Password Reset</strong></p>"
+                    + "<p>We heard that you lost your FIFO password. Sorry about that!</p>"
+                    + "<p>But don’t worry! You can use the following button to reset your password:</p>"
+                    + "<a href=\"https://your-reset-url.com/reset?email=" + account.getEmail() + "\" "
+                    + "style=\"display: inline-block; padding: 10px 20px; font-size: 16px; color: white; "
+                    + "background-color: #4CAF50; text-decoration: none; border-radius: 5px;\">"
+                    + "Reset Password"
+                    + "</a>"
+                    + "</body>"
+                    + "</html>";
+
+            emailUtil.sendToAnEmail(account.getEmail(),
+                    emailBody,
+                    "Please Reset Your Password",
+                    null);
+
+            return CompletableFuture.completedFuture(null);
+        });
+    }
+    public CompletableFuture<AccountResponse> changePassword(String email, AccountChangePasswordRequest request){
+        var foundAccountFuture = unitOfWork.getAccountRepository().findByEmailIgnoreCase(email)
+                .thenApply(optionalAccount -> optionalAccount.orElseThrow(() ->
+                        new AppException(ErrorCode.ACCOUNT_NOT_FOUND)));
+        return foundAccountFuture.thenCompose(account -> {
+            if(!request.getPassword().equals(request.getConfirmPassword())){
+                throw new AppException(ErrorCode.PASSWORD_NOT_MATCH);
+            }
+
+            account.setPassword(request.getPassword());
+
+            return CompletableFuture.completedFuture(unitOfWork.getAccountRepository().save(account));
+        })
+                .thenApply(accountMapper::toResponse);
     }
 
     private SignedJWT verifyToken(String token) throws JOSEException, ParseException {
