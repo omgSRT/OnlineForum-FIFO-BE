@@ -106,8 +106,6 @@ public class Account {
     @OneToMany(mappedBy = "account", cascade = CascadeType.ALL, orphanRemoval = true)
     List<Report> reportList;
 
-//    @OneToMany(mappedBy = "reporter")
-//    private List<ReportAccount> reportsFiled;
 
     @JsonIgnore
     @OneToMany(mappedBy = "reported", cascade = CascadeType.ALL, orphanRemoval = true)

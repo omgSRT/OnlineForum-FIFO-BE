@@ -44,58 +44,62 @@ public class RewardService {
             throw new AppException(ErrorCode.WRONG_STATUS);
         }
 
+        // Tạo đối tượng Reward từ request
         Reward reward = rewardMapper.toReward(request);
         reward = unitOfWork.getRewardRepository().save(reward);
 
         List<SectionResponse> sectionResponses = new ArrayList<>();
+
+        // Xử lý tạo Section cùng các đối tượng liên quan
         for (int sectionIndex = 0; sectionIndex < request.getSectionList().size(); sectionIndex++) {
             SectionRequest sectionRequest = request.getSectionList().get(sectionIndex);
             if (sectionRequest == null) continue;
 
             Section section = sectionMapper.toSection(sectionRequest);
             section.setReward(reward);
-            section.setNumber(sectionIndex); // Thiết lập field number cho Section
+            section.setNumber(sectionIndex); // Thiết lập số thứ tự cho Section
             section = unitOfWork.getSectionRepository().save(section);
 
             List<ContentSectionResponse> contentSectionResponses = new ArrayList<>();
 
+            // Xử lý tạo ContentSection
             for (int contentIndex = 0; contentIndex < sectionRequest.getContentSectionList().size(); contentIndex++) {
                 ContentSectionRequest contentSectionRequest = sectionRequest.getContentSectionList().get(contentIndex);
                 if (contentSectionRequest == null) continue;
 
-                // Tạo ContentSection và thiết lập field number
                 ContentSection contentSection = ContentSection.builder()
                         .content(contentSectionRequest.getContent())
                         .code(contentSectionRequest.getCode())
                         .section(section)
-                        .number(contentIndex) // Thiết lập field number cho ContentSection
+                        .number(contentIndex) // Thiết lập số thứ tự cho ContentSection
                         .build();
 
-                // Lưu ContentSection
                 contentSection = unitOfWork.getContentSectionRepository().save(contentSection);
 
                 List<MediaResponse> mediaResponses = new ArrayList<>();
-                for (int mediaIndex = 0; mediaIndex < contentSectionRequest.getMediaList().size(); mediaIndex++) {
-                    MediaRequest mediaRequest = contentSectionRequest.getMediaList().get(mediaIndex);
+
+                // Xử lý tạo Media
+                for (MediaRequest mediaRequest : contentSectionRequest.getMediaList()) {
                     if (mediaRequest == null) continue;
 
-                    // Tạo Media và thiết lập field number
                     Media media = Media.builder()
                             .link(mediaRequest.getLink())
                             .contentSection(contentSection)
-                            .number(mediaIndex) // Thiết lập field number cho Media
                             .build();
 
-                    // Lưu Media
                     media = unitOfWork.getMediaRepository().save(media);
                     mediaResponses.add(new MediaResponse(media.getLink()));
                 }
 
-                // Thêm ContentSectionResponse
-                contentSectionResponses.add(new ContentSectionResponse(contentSection.getContent(), contentSection.getCode(), mediaResponses));
+                // Thêm ContentSectionResponse với danh sách Media
+                contentSectionResponses.add(new ContentSectionResponse(
+                        contentSection.getContent(),
+                        contentSection.getCode(),
+                        mediaResponses // Đảm bảo rằng đây là danh sách MediaResponse
+                ));
             }
 
-            // Thêm SectionResponse
+            // Tạo SectionResponse với danh sách ContentSectionResponses
             SectionResponse sectionResponse = SectionResponse.builder()
                     .title(section.getTitle())
                     .contentSectionResponses(contentSectionResponses)
@@ -103,11 +107,11 @@ public class RewardService {
             sectionResponses.add(sectionResponse);
         }
 
+        // Tạo RewardResponse và thiết lập danh sách SectionResponses
         RewardResponse response = rewardMapper.toResponse(reward);
         response.setSectionList(sectionResponses);
         return response;
     }
-
 
 
     @Transactional(readOnly = true)
@@ -297,21 +301,21 @@ public class RewardService {
 //        return response;
 //    }
 
-//    public List<DocumentResponse> getAll() {
-//        return unitOfWork.getDocumentRepository().findAll().stream()
-//                .map(document -> {
-//                    DocumentResponse response = documentMapper.toResponse(document);
-//                    // Sắp xếp Section theo order trước khi tạo response
-//                    List<SectionResponse> sectionResponses = document.getSectionList().stream()
-//                            .sorted(Comparator.comparingInt(Section::getSectionOrder))
-//                            .map(documentMapper::toSectionResponse)
-//                            .toList();
-//                    response.setSectionList(sectionResponses);
-//
-//                    return response;
-//                })
-//                .toList();
-//    }
+    public List<RewardResponse> getAll1() {
+        return unitOfWork.getRewardRepository().findAll().stream()
+                .map(document -> {
+                    RewardResponse response = rewardMapper.toResponse(document);
+                    // Sắp xếp Section theo order trước khi tạo response
+                    List<SectionResponse> sectionResponses = document.getSectionList().stream()
+                            .sorted(Comparator.comparingInt(Section::getNumber))
+                            .map(rewardMapper::toSectionResponse)
+                            .toList();
+                    response.setSectionList(sectionResponses);
+
+                    return response;
+                })
+                .toList();
+    }
 
 
     @Transactional

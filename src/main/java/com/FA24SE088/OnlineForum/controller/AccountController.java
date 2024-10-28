@@ -50,15 +50,6 @@ public class AccountController {
                         .build()
         ).join();
     }
-//    @PostMapping("/create")
-//    public ApiResponse<AccountResponse> create(@RequestBody AccountRequest request) {
-//        AccountResponse response = accountService.create(request);
-////        String otp = otpService.generateOTP(request.getEmail());
-////        emailService.sendOtpEmail(request.getEmail(), "Mã OTP xác thực tài khoản", "Mã OTP của bạn là: " + otp);
-//        return ApiResponse.<AccountResponse>builder()
-//                .entity(response)
-//                .build();
-//    }
 
     @PutMapping("/update-info")
     public ApiResponse<AccountResponse> updateInfo(@RequestBody AccountUpdateInfoRequest request){
@@ -87,6 +78,13 @@ public class AccountController {
                 .build();
     }
 
+    @GetMapping("/get-by-id/{id}")
+    public ApiResponse<AccountResponse> findById(@PathVariable UUID id) {
+        return ApiResponse.<AccountResponse>builder()
+                .entity(accountService.findById(id))
+                .build();
+    }
+
     @PutMapping("/update-category-for-staff/{id}")
     public ApiResponse<AccountResponse> updateCategory(@PathVariable UUID id, AccountUpdateCategoryRequest request){
         return ApiResponse.<AccountResponse>builder()
@@ -105,15 +103,4 @@ public class AccountController {
         ).join();
     }
 
-//    @PostMapping("/verify-otp")
-//    public ApiResponse<Void> verifyAccount(@RequestParam String email, @RequestParam String otp) {
-//        if (!otpService.validateOTP(email, otp)) {
-//            throw new AppException(ErrorCode.WRONG_OTP);
-//        }
-//        Account account = accountService.findByEmail(email);
-//        accountService.activeAccount(account);
-//        otpService.clearOTP(email);
-//        return ApiResponse.<Void>builder()
-//                .build();
-//    }
 }

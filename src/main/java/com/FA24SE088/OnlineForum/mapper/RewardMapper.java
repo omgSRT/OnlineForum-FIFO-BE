@@ -1,10 +1,7 @@
 package com.FA24SE088.OnlineForum.mapper;
 
 import com.FA24SE088.OnlineForum.dto.request.RewardRequest;
-import com.FA24SE088.OnlineForum.dto.response.RewardResponse;
-import com.FA24SE088.OnlineForum.dto.response.MediaResponse;
-import com.FA24SE088.OnlineForum.dto.response.SectionResponse;
-import com.FA24SE088.OnlineForum.dto.response.VideoSectionResponse;
+import com.FA24SE088.OnlineForum.dto.response.*;
 import com.FA24SE088.OnlineForum.entity.Reward;
 import com.FA24SE088.OnlineForum.entity.ContentSection;
 import com.FA24SE088.OnlineForum.entity.Section;
@@ -25,10 +22,12 @@ public interface RewardMapper {
 
 
     // Ánh xạ từ Section sang SectionResponse
+    @Mapping(target = "contentSectionResponses", source = "contentSectionList")
     SectionResponse toSectionResponse(Section section);
+    ContentSectionResponse toContentSectionResponse(ContentSection contentSection);
 
     // Ánh xạ từ ImageSection sang ImageSectionResponse
-    MediaResponse toImageSectionResponse(ContentSection contentSection);
+    MediaResponse toImageSectionResponse(Media media);
 
     // Ánh xạ từ VideoSection sang VideoSectionResponse
     VideoSectionResponse toVideoSectionResponse(Media media);

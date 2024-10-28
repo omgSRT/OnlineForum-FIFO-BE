@@ -93,8 +93,6 @@ public class FeedbackService {
         return list;
     }
 
-
-
     public void deleteFeedback(UUID feedbackId) {
         if (unitOfWork.getFeedbackRepository().existsById(feedbackId)) {
             unitOfWork.getFeedbackRepository().deleteById(feedbackId);
