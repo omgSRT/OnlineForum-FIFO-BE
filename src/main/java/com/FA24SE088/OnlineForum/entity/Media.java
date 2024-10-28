@@ -13,13 +13,14 @@ import java.util.UUID;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ImageSection {
+public class Media {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    UUID imageSectionId;
-    String url;
+    UUID mediaId;
+    String link;
+    Integer number;
 
     @ManyToOne
-    @JoinColumn(name = "sectionId")
-    Section section;
+    @JoinColumn(name = "contentSectionId")
+    ContentSection contentSection;
 }
