@@ -8,6 +8,6 @@ import lombok.experimental.FieldDefaults;
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class ImageSectionRequest {
-    String url;
+public class MediaRequest {
+    String link;
 }

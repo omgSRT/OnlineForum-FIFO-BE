@@ -32,9 +32,9 @@ public class RedeemService {
         return unitOfWork.getAccountRepository().findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND));
     }
-    private Document findDocument(UUID id){
-        return unitOfWork.getDocumentRepository().findById(id)
-                .orElseThrow(() -> new AppException(ErrorCode.DOCUMENT_NOT_FOUND));
+    private Reward findDocument(UUID id){
+        return unitOfWork.getRewardRepository().findById(id)
+                .orElseThrow(() -> new AppException(ErrorCode.REWARD_NOT_FOUND));
     }
 //    public Redeem create(RedeemRequest request){
 //        Account account = findAcc(request.getAccountId());
@@ -71,21 +71,21 @@ public class RedeemService {
 
     public RedeemResponse create_2(RedeemRequest request){
         Account account = findAcc(request.getAccountId());
-        Document document = findDocument(request.getDocumentId());
+        Reward reward = findDocument(request.getDocumentId());
         //nếu tk đã đổi phần thưởng này r thì ko cho đổi nữa
         account.getRedeemList().forEach(redeem -> {
-            if (redeem.getDocument().getDocumentId().equals(document.getDocumentId()))
+            if (redeem.getReward().getDocumentId().equals(reward.getDocumentId()))
                 throw new AppException(ErrorCode.REWARD_HAS_BEEN_TAKEN);
         });
 
-        double result = account.getWallet().getBalance() - document.getPrice();
+        double result = account.getWallet().getBalance() - reward.getPrice();
         if(result >= 0){
             Wallet wallet = account.getWallet();
             wallet.setBalance(result);
             unitOfWork.getWalletRepository().save(wallet);
 
             Transaction transaction = Transaction.builder()
-                    .amount(document.getPrice())
+                    .amount(reward.getPrice())
                     .type(TransactionType.DEBIT.name())
                     .createdDate(new Date())
                     .wallet(wallet)
@@ -96,7 +96,7 @@ public class RedeemService {
         }
         Redeem redeem = new Redeem();
         redeem.setAccount(account);
-        redeem.setDocument(document);
+        redeem.setReward(reward);
         redeem.setCreatedDate(new Date());
         unitOfWork.getRedeemRepository().save(redeem);
 
@@ -111,12 +111,12 @@ public class RedeemService {
         List<Redeem> ofAccount = unitOfWork.getRedeemRepository()
                 .findByAccount_AccountId(account.getAccountId());
 
-        List<Document> documents = ofAccount.stream()
-                .map(Redeem::getDocument) // Lấy document từ mỗi redeem
+        List<Reward> rewards = ofAccount.stream()
+                .map(Redeem::getReward) // Lấy document từ mỗi redeem
                 .toList();
 
         RedeemDocumentResponse response = new RedeemDocumentResponse();
-        response.setDocument(documents);
+        response.setReward(rewards);
         return response;
     }
 

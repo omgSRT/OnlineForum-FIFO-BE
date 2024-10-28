@@ -7,5 +7,5 @@ import org.springframework.stereotype.Repository;
 import java.util.UUID;
 
 @Repository
-public interface DocumentRepository extends JpaRepository<Reward, UUID> {
+public interface RewardRepository extends JpaRepository<Reward, UUID> {
 }

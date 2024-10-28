@@ -10,8 +10,7 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class ContentSectionRequest {
-    String content;
-    String code;
-    List<MediaRequest> mediaList;
+public class SectionRequest {
+    String title;
+    List<ContentSectionRequest> contentSectionList;
 }

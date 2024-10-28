@@ -1,6 +1,5 @@
 package com.FA24SE088.OnlineForum.dto.request;
 
-import com.FA24SE088.OnlineForum.entity.Section;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -11,10 +10,8 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class SectionRequest {
-    String linkGit; // Chỉ cần thông tin cần thiết
+public class ContentSectionRequest {
     String content;
-    List<ImageSectionRequest> imageSectionList;
-    List<VideoSectionRequest> videoSectionList;
+    String code;
+    List<MediaRequest> mediaList;
 }
-

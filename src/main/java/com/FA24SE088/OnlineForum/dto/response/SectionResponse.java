@@ -10,7 +10,6 @@ import java.util.List;
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class SectionResponse {
-    String linkGit;
-    List<ImageSectionResponse> imageSectionList;
-    List<VideoSectionResponse> videoSectionList;
+    private String title;
+    List<ContentSectionResponse> contentSectionResponses;
 }

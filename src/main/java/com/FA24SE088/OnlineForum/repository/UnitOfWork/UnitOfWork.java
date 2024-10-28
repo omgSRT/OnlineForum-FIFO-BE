@@ -25,7 +25,7 @@ public class UnitOfWork {
     final PointRepository pointRepository;
     final PostRepository postRepository;
     final RedeemRepository redeemRepository;
-    final DocumentRepository documentRepository;
+    final RewardRepository rewardRepository;
     final ImageSectionRepository imageSectionRepository;
     final VideoSectionRepository videoSectionRepository;
     final SectionRepository sectionRepository;
@@ -40,4 +40,6 @@ public class UnitOfWork {
     final ReportAccountRepository reportAccountRepository;
     final BookMarkRepository bookMarkRepository;
     final OtpRepository otpRepository;
+    final ContentSectionRepository contentSectionRepository;
+    final MediaRepository mediaRepository;
 }

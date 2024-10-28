@@ -1,14 +1,11 @@
 package com.FA24SE088.OnlineForum.dto.response;
 
-import com.FA24SE088.OnlineForum.entity.Account;
-import com.FA24SE088.OnlineForum.entity.Document;
+import com.FA24SE088.OnlineForum.entity.Reward;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
-import java.util.Date;
 import java.util.List;
-import java.util.UUID;
 
 @Data
 @NoArgsConstructor
@@ -17,5 +14,5 @@ import java.util.UUID;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class RedeemDocumentResponse {
     @JsonIgnoreProperties(value = {"redeemList"}, allowSetters = true)
-    List<Document> document;
+    List<Reward> reward;
 }
