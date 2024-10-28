@@ -30,9 +30,7 @@ import java.util.UUID;
 public class FeedbackController {
     FeedbackService feedbackService;
 
-    @Operation(summary = "Create feedback", description = "Status: \n" +
-            "PENDING_APPROVAL,\n" +
-            " APPROVED")
+    @Operation(summary = "Create feedback", description = "Status: APPROVED,REJECTED")
     @PostMapping("/create")
     public ApiResponse<FeedbackResponse> createFeedback(@RequestBody FeedbackRequest feedbackRequest) {
         return ApiResponse.<FeedbackResponse>builder()
@@ -40,9 +38,7 @@ public class FeedbackController {
                 .build();
     }
 
-    @Operation(summary = "Update feedback", description = "Status: \n" +
-            "PENDING_APPROVAL,\n " +
-            "APPROVED")
+    @Operation(summary = "Update feedback", description = "Status: APPROVED,REJECTED")
     @PutMapping("/update/{id}")
     public ApiResponse<FeedbackResponse> updateFeedback(@PathVariable UUID id,
                                                         @RequestParam(defaultValue = "REJECTED") FeedbackUpdateStatus status) {
