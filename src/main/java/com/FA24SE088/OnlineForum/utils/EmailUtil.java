@@ -129,6 +129,53 @@ public class EmailUtil {
             throw new AppException(ErrorCode.SEND_MAIL_FAILED);
         }
     }
+    public void sendToAnEmailWithHTMLEnabled(
+            String toEmail,
+            String body,
+            String subject,
+            List<MultipartFile> attachments) {
+
+        if ((subject == null || subject.trim().isEmpty()) &&
+                (body == null || body.trim().isEmpty()) &&
+                (attachments == null || attachments.isEmpty())) {
+            throw new AppException(ErrorCode.EMAIL_CONTENT_BLANK);
+        }
+
+        if (!isValidEmail(toEmail)) {
+            throw new AppException(ErrorCode.INVALID_EMAIL);
+        }
+
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true);
+
+            helper.setFrom(username);
+            helper.setTo(toEmail);
+            helper.setSubject(subject == null ? "" : subject);
+            helper.setText(body == null ? "" : body);
+
+            if (attachments != null) {
+                for (MultipartFile attachment : attachments) {
+                    if (!attachment.isEmpty()) {
+                        String attachmentName = attachment.getOriginalFilename();
+                        if (attachmentName == null || attachmentName.isBlank()) {
+                            attachmentName = "attachment_" + System.currentTimeMillis();
+                        }
+                        helper.addAttachment(attachmentName, attachment);
+                    }
+                }
+            }
+
+            assert body != null;
+            helper.setText(body, true);
+            mailSender.send(message);
+            System.out.println("Mail Sent Successfully to " + toEmail);
+
+        } catch (MailException | MessagingException e) {
+            log.error("Failed to send email to {}: {}", toEmail, e.getMessage());
+            throw new AppException(ErrorCode.SEND_MAIL_FAILED);
+        }
+    }
     public void sendSimpleEmail(String toEmail, String body, String subject) {
         SimpleMailMessage message = new SimpleMailMessage();
         message.setTo(toEmail);
