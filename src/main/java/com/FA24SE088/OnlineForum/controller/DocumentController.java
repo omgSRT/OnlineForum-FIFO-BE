@@ -50,12 +50,12 @@ public class DocumentController {
                 .build();
     }
 
-//    @DeleteMapping("/delete/{id}")
-//    public ApiResponse<DocumentResponse> update(@PathVariable UUID id) {
-//        documentService.deleteDocument(id);
-//        return ApiResponse.<DocumentResponse>builder()
-//                .build();
-//    }
+    @DeleteMapping("/delete/{id}")
+    public ApiResponse<DocumentResponse> update(@PathVariable UUID id) {
+        documentService.deleteDocument(id);
+        return ApiResponse.<DocumentResponse>builder()
+                .build();
+    }
 
 
 }
