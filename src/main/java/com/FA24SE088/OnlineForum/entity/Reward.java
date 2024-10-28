@@ -15,7 +15,7 @@ import java.util.UUID;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class Document {
+public class Reward {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     UUID documentId;
@@ -26,10 +26,10 @@ public class Document {
     String status;
 
     @JsonIgnoreProperties(value = {"reward"}, allowSetters = true)
-    @OneToMany(mappedBy = "document", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "reward", cascade = CascadeType.ALL, orphanRemoval = true)
     List<Redeem> redeemList;
 
     @JsonIgnoreProperties(value = { "document" }, allowSetters = true)
-    @OneToMany(mappedBy = "document", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "reward", cascade = CascadeType.ALL, orphanRemoval = true)
     List<Section> sectionList;
 }

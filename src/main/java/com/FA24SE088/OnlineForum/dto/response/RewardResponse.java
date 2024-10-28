@@ -11,7 +11,7 @@ import java.util.UUID;
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class DocumentResponse {
+public class RewardResponse {
     UUID documentId;
     String name;
     String image;
