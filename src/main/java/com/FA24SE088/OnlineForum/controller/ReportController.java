@@ -3,7 +3,7 @@ package com.FA24SE088.OnlineForum.controller;
 import com.FA24SE088.OnlineForum.dto.request.ReportRequest;
 import com.FA24SE088.OnlineForum.dto.response.ApiResponse;
 import com.FA24SE088.OnlineForum.dto.response.ReportResponse;
-import com.FA24SE088.OnlineForum.enums.ReportReason;
+import com.FA24SE088.OnlineForum.enums.ReportPostReason;
 import com.FA24SE088.OnlineForum.enums.SuccessReturnMessage;
 import com.FA24SE088.OnlineForum.service.ReportService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -28,7 +28,7 @@ public class ReportController {
     @Operation(summary = "Create New Post Report")
     @PostMapping("/create")
     public ApiResponse<ReportResponse> createReport(@RequestBody @Valid ReportRequest request,
-                                                    @RequestParam ReportReason reportReason){
+                                                    @RequestParam ReportPostReason reportReason){
         return reportService.createReport(request, reportReason).thenApply(reportResponse ->
                 ApiResponse.<ReportResponse>builder()
                         .message(SuccessReturnMessage.CREATE_SUCCESS.getMessage())

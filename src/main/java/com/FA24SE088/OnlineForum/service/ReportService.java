@@ -4,7 +4,7 @@ import com.FA24SE088.OnlineForum.dto.request.ReportRequest;
 import com.FA24SE088.OnlineForum.dto.response.ReportResponse;
 import com.FA24SE088.OnlineForum.entity.Post;
 import com.FA24SE088.OnlineForum.entity.Report;
-import com.FA24SE088.OnlineForum.enums.ReportReason;
+import com.FA24SE088.OnlineForum.enums.ReportPostReason;
 import com.FA24SE088.OnlineForum.exception.AppException;
 import com.FA24SE088.OnlineForum.exception.ErrorCode;
 import com.FA24SE088.OnlineForum.mapper.ReportMapper;
@@ -33,13 +33,13 @@ public class ReportService {
 
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
     @Async("AsyncTaskExecutor")
-    public CompletableFuture<ReportResponse> createReport(ReportRequest request, ReportReason reportReason){
+    public CompletableFuture<ReportResponse> createReport(ReportRequest request, ReportPostReason reportPostReason){
         var postFuture = findPostById(request.getPostId());
 
         return postFuture.thenCompose(post -> {
             Report newReport = reportMapper.toReport(request);
-            newReport.setTitle(reportReason.getTitle());
-            newReport.setDescription(reportReason.getDescription());
+            newReport.setTitle(reportPostReason.name());
+            newReport.setDescription(reportPostReason.getMessage());
             newReport.setPost(post);
 
             return CompletableFuture.completedFuture(unitOfWork.getReportRepository().save(newReport));
