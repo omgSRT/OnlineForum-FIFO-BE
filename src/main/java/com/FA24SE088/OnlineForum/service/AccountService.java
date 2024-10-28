@@ -196,7 +196,7 @@ public class AccountService {
         }
         return accountMapper.toResponse(account);
     }
-
+    
     public AccountResponse findById(UUID id){
         Account account = unitOfWork.getAccountRepository().findById(id).orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND));
         return accountMapper.toResponse(account);

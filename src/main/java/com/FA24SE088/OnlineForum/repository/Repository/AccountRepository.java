@@ -17,4 +17,7 @@ public interface AccountRepository extends JpaRepository<Account, UUID> {
     boolean existsByUsername(String username);
     boolean existsByEmail(String email);
     List<Account> findByUsernameContaining(String username);
+
+    @Async("AsyncTaskExecutor")
+    CompletableFuture<Optional<Account>> findByEmailIgnoreCase(String email);
 }

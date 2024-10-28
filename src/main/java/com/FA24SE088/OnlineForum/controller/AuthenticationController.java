@@ -6,6 +6,7 @@ import com.FA24SE088.OnlineForum.dto.response.*;
 import com.FA24SE088.OnlineForum.entity.Account;
 import com.FA24SE088.OnlineForum.entity.Otp;
 import com.FA24SE088.OnlineForum.enums.AccountStatus;
+import com.FA24SE088.OnlineForum.enums.SuccessReturnMessage;
 import com.FA24SE088.OnlineForum.service.AccountService;
 import com.FA24SE088.OnlineForum.service.AuthenticateService;
 import com.FA24SE088.OnlineForum.utils.EmailUtil;
@@ -101,5 +102,26 @@ public class AuthenticationController {
         return ApiResponse.<RefreshAccessTokenResponse>builder()
                 .entity(authenticateService.generateNewAccessTokenFromRefreshToken(refreshToken, username))
                 .build();
+    }
+
+    @PostMapping("/forget-password")
+    public ApiResponse<Void> forgotPassword(String email){
+        return authenticateService.forgetPassword(email).thenApply(v ->
+                ApiResponse.<Void>builder()
+                        .message(SuccessReturnMessage.SEND_SUCCESS.getMessage())
+                        .entity(null)
+                        .build()
+        ).join();
+    }
+
+    @PutMapping("/change-password")
+    public ApiResponse<AccountResponse> changePassword(String email,
+                                                       @RequestBody @Valid AccountChangePasswordRequest request){
+        return authenticateService.changePassword(email, request).thenApply(accountResponse ->
+                ApiResponse.<AccountResponse>builder()
+                        .message(SuccessReturnMessage.CHANGE_SUCCESS.getMessage())
+                        .entity(accountResponse)
+                        .build()
+        ).join();
     }
 }
