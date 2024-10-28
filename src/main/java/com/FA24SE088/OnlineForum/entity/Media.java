@@ -19,7 +19,7 @@ public class VideoSection {
     UUID videoSectionId;
     String url;
 
-    @ManyToOne
-    @JoinColumn(name = "sectionId")
-    Section section;
+//    @ManyToOne
+//    @JoinColumn(name = "sectionId")
+//    Section section;
 }

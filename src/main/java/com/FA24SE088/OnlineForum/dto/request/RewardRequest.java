@@ -16,6 +16,6 @@ public class DocumentRequest {
     double price;
     String type;
     String status;
-    List<SectionRequest> sectionList;
+    List<ContentSectionRequest> sectionList;
 
 }
