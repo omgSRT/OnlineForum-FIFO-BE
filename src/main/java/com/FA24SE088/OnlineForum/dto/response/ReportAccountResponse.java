@@ -1,5 +1,7 @@
 package com.FA24SE088.OnlineForum.dto.response;
 
+import com.FA24SE088.OnlineForum.entity.Account;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -12,12 +14,14 @@ import java.util.UUID;
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class ReportAccountResponse {
-    private UUID reportAccountId;
-    private String reason;
-    private Date reportTime;
-    private String status;
-    private UUID reporterId;
-    private UUID reportedId;
+    UUID reportAccountId;
+    String reason;
+    Date reportTime;
+    String status;
+    @JsonIgnoreProperties(value = { "password","followerList","redeemList","dailyPointList","postList","upvoteList","commentList","categoryList","eventList","blockedAccounts","feedbackList","reportList","reportsReceived","bookMarkList","followeeList", "address", "createdDate", "status", "role" })
+    Account reporter;//người đi report
+    @JsonIgnoreProperties(value = { "password","followerList","redeemList","dailyPointList","postList","upvoteList","commentList","categoryList","eventList","blockedAccounts","feedbackList","reportList","reportsReceived","bookMarkList","followeeList", "address", "createdDate", "status", "role" })
+    Account reported;//người bị report
 }
 
 

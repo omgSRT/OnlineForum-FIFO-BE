@@ -4,22 +4,16 @@ import lombok.Getter;
 
 @Getter
 public enum ReportAccountReason {
-    SPAMMING("Account is Spamming in Forum"),
-    HARASSMENT("Account Engages in Harassment or Bullying"),
-    INAPPROPRIATE_LANGUAGE("Account Uses Inappropriate Language"),
-    FAKE_ACCOUNT("Account Appears to be Fake or Fraudulent"),
-    IMPERSONATION("Account is Impersonating Someone Else"),
-    OFFENSIVE_CONTENT("Account Shares Offensive or Harmful Content"),
-    SELF_PROMOTION("Account Engages in Excessive Self-Promotion"),
-    SCAM_ATTEMPT("Account Attempts to Scam or Defraud Others"),
-    COPYRIGHT_VIOLATION("Account Shares Copyrighted Content Without Permission"),
-    PRIVACY_VIOLATION("Account Violates Privacy of Others"),
-    MALICIOUS_LINKS("Account Shares Malicious or Unsafe Links"),
-    FALSE_INFORMATION("Account Spreads False or Misleading Information"),
-    UNAUTHORIZED_ADVERTISING("Account Posts Unauthorized Advertising"),
-    HATE_SPEECH("Account Engages in Hate Speech"),
-    ILLEGAL_ACTIVITIES("Account Encourages or Engages in Illegal Activities");
-
+    HATE("Slurs, Racist or sexist stereotypes, Dehumanization, Incitement of fear or discrimination, Hateful references, Hateful symbols & logos"),
+    ABUSE_AND_HARASSMENT("Insults, Unwanted Sexual Content & Graphic Objectification, Unwanted NSFW & Graphic Content, Violent Event Denial, Targeted Harassment and Inciting Harassment"),
+    VIOLENT_SPEECH("Violent Threats, Wish of Harm, Glorification of Violence, Incitement of Violence, Coded Incitement of Violence"),
+    CHILD_SAFETY("Child sexual exploitation, grooming, physical child abuse, underage user"),
+    PRIVACY("Sharing private information, threatening to share/expose private information, sharing non-consensual intimate images, sharing images of me that I don’t want on the platform"),
+    SPAM("Fake engagement, scams, fake accounts, malicious links"),
+    SUICIDE_OR_SELF_HARM("Encouraging, promoting, providing instructions or sharing strategies for self-harm."),
+    SENSITIVE_OR_DISTURBING_MEDIA("Graphic Content, Gratuitous Gore, Adult Nudity & Sexual Behavior, Violent Sexual Conduct, Bestiality & Necrophilia, Media depicting a deceased individual"),
+    IMPERSONATION("Pretending to be someone else, including non-compliant parody/fan accounts"),
+    VIOLENT_AND_HATEFUL_ENTITIES("Violent extremism and terrorism, hate groups & networks"),
     ;
 
     private String message;
