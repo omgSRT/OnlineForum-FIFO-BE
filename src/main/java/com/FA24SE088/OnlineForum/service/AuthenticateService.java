@@ -188,7 +188,7 @@ public class AuthenticateService {
                     + "</body>"
                     + "</html>";
 
-            emailUtil.sendToAnEmail(account.getEmail(),
+            emailUtil.sendToAnEmailWithHTMLEnabled(account.getEmail(),
                     emailBody,
                     "Please Reset Your Password",
                     null);
