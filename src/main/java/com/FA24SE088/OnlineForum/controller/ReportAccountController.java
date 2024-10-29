@@ -4,9 +4,11 @@ import com.FA24SE088.OnlineForum.dto.request.ReportAccountRequest;
 import com.FA24SE088.OnlineForum.dto.response.ApiResponse;
 import com.FA24SE088.OnlineForum.dto.response.ReportAccountResponse;
 import com.FA24SE088.OnlineForum.enums.ReportAccountReason;
+import com.FA24SE088.OnlineForum.enums.ReportAccountStatus;
 import com.FA24SE088.OnlineForum.exception.AppException;
 import com.FA24SE088.OnlineForum.exception.ErrorCode;
 import com.FA24SE088.OnlineForum.service.ReportAccountService;
+import io.swagger.v3.oas.annotations.Operation;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -30,10 +32,11 @@ public class ReportAccountController {
                 .build();
     }
 
+    @Operation(summary = "Create report account", description = "Status: APPROVED,REJECTED")
     @PutMapping("/update/{id}")
-    public ApiResponse<ReportAccountResponse> updateReportAccount(@PathVariable UUID id, @RequestBody ReportAccountRequest reportAccountRequest) {
+    public ApiResponse<ReportAccountResponse> updateReportAccount(@PathVariable UUID id, ReportAccountStatus status) {
         return ApiResponse.<ReportAccountResponse>builder()
-                .entity(reportAccountService.updateReportAccount(id, reportAccountRequest)
+                .entity(reportAccountService.updateReportAccount(id, status)
                         .orElseThrow(() -> new AppException(ErrorCode.REPORT_ACCOUNT_NOT_FOUND)))
                 .build();
     }

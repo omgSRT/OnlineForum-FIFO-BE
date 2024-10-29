@@ -13,8 +13,6 @@ import java.util.UUID;
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class ReportAccountRequest {
-    private String reason;
-    private UUID reportedId;
     private String status;
 }
 

@@ -29,8 +29,8 @@ public class SwaggerConfiguration implements WebMvcConfigurer {
                                                 .bearerFormat("JWT")
                                 )
                 )
-                .info(info())
-                .servers(servers());
+                .info(info());
+//                .servers(servers());
     }
     private Info info() {
         Info info = new Info();
@@ -42,10 +42,10 @@ public class SwaggerConfiguration implements WebMvcConfigurer {
         info.setLicense(license);
         return info;
     }
-    private List<Server> servers() {
-        return Arrays.asList(
-                new Server().url("http://103.162.14.151:8080").description("Online Production server"),
-                new Server().url("http://localhost:8080").description("Local server")
-        );
-    }
+//    private List<Server> servers() {
+//        return Arrays.asList(
+//                new Server().url("http://103.162.14.151:8080").description("Online Production server"),
+//                new Server().url("http://localhost:8080").description("Local server")
+//        );
+//    }
 }
