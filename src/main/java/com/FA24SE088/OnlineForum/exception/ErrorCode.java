@@ -98,7 +98,9 @@ public enum ErrorCode {
     DUPLICATE_CATEGORY(10077, "Duplicate Category", HttpStatus.BAD_REQUEST),
     PRODUCT_NOT_FOUND(10077, "Product not found",HttpStatus.NOT_FOUND),
     INVALID_REQUEST_BODY(10077, "Invalid Request Body", HttpStatus.BAD_REQUEST),
-    CREATE_PAYMENT_FAILED(10077, "Create payment failed", HttpStatus.BAD_REQUEST);
+    CREATE_PAYMENT_FAILED(10077, "Create payment failed", HttpStatus.BAD_REQUEST),
+    REPORT_POST_REASON_NOT_FOUND(10078, "Report Post Reason Cannot Be Null", HttpStatus.BAD_REQUEST),
+    CANNOT_REPORT_SELF_POST(10077, "Can't Report Post That Made By You", HttpStatus.BAD_REQUEST),
     ;
 
     private int code;
