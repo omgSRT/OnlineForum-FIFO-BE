@@ -18,6 +18,7 @@ public class ReportAccount {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     UUID reportAccountId;
+    String title;
     String reason;
     Date reportTime;
     String status;

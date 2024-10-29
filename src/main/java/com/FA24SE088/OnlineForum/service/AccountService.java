@@ -11,6 +11,8 @@ import com.FA24SE088.OnlineForum.entity.Category;
 import com.FA24SE088.OnlineForum.entity.Role;
 import com.FA24SE088.OnlineForum.entity.Wallet;
 import com.FA24SE088.OnlineForum.enums.AccountStatus;
+
+import com.FA24SE088.OnlineForum.enums.RoleAccount;
 import com.FA24SE088.OnlineForum.exception.AppException;
 import com.FA24SE088.OnlineForum.exception.ErrorCode;
 import com.FA24SE088.OnlineForum.mapper.AccountMapper;
@@ -49,7 +51,7 @@ public class AccountService {
     PasswordEncoder passwordEncoder;
     PaginationUtils paginationUtils;
 
-    public AccountResponse create(AccountRequest request) {
+    public AccountResponse create(AccountRequest request, RoleAccount roleUser) {
         if (unitOfWork.getAccountRepository().existsByUsername(request.getUsername()))
             throw new AppException(ErrorCode.ACCOUNT_IS_EXISTED);
         if (unitOfWork.getAccountRepository().existsByEmail(request.getEmail()))
@@ -61,8 +63,8 @@ public class AccountService {
         account.setHandle(request.getUsername());
         account.setPassword(passwordEncoder.encode(request.getPassword()));
 
-        if (request.getRoleName().equalsIgnoreCase("STAFF")) {
-            Role role = unitOfWork.getRoleRepository().findByName(request.getRoleName());
+        if (roleUser.name().equalsIgnoreCase("STAFF")) {
+            Role role = unitOfWork.getRoleRepository().findByName(roleUser.name());
             if (role == null) throw new AppException(ErrorCode.ROLE_NOT_FOUND);
             account.setRole(role);
 
@@ -81,8 +83,10 @@ public class AccountService {
                     } else {
                         throw new AppException(ErrorCode.CATEGORY_HAS_UNDERTAKE);
                     }
+
                 });
                 account.setCategoryList(categories);
+
             }
         } else {
             Role role = unitOfWork.getRoleRepository().findByName("USER");
@@ -99,9 +103,9 @@ public class AccountService {
         account.setStatus(AccountStatus.PENDING_APPROVAL.name());
         String handle = String.format("@%s", request.getUsername());
         account.setHandle(handle);
+        unitOfWork.getAccountRepository().save(account);
         AccountResponse response = accountMapper.toResponse(account);
         response.setAccountId(account.getAccountId());
-        unitOfWork.getAccountRepository().save(account);
         return response;
     }
 

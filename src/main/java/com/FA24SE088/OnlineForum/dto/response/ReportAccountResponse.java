@@ -15,6 +15,7 @@ import java.util.UUID;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class ReportAccountResponse {
     UUID reportAccountId;
+    String title;
     String reason;
     Date reportTime;
     String status;
