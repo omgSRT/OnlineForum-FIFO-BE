@@ -36,42 +36,9 @@ public class RedeemService {
         return unitOfWork.getRewardRepository().findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.REWARD_NOT_FOUND));
     }
-//    public Redeem create(RedeemRequest request){
-//        Account account = findAcc(request.getAccountId());
-//        Document document = findSource(request.getSourceCodeId());
-//        //nếu tk đã đổi phần thưởng này r thì ko cho đổi nữa
-//        account.getRedeemList().forEach(redeem -> {
-//            if (redeem.getDocument().getDocumentId().equals(document.getDocumentId()))
-//                throw new AppException(ErrorCode.REWARD_HAS_BEEN_TAKEN);
-//        });
-//
-//        double result = account.getWallet().getBalance() - document.getPrice();
-//        if(result >= 0){
-//            Wallet wallet = account.getWallet();
-//            wallet.setBalance(result);
-//            unitOfWork.getWalletRepository().save(wallet);
-//
-//            Transaction transaction = Transaction.builder()
-//                    .amount(document.getPrice())
-//                    .type(TransactionType.DEBIT.name())
-//                    .createdDate(new Date())
-//                    .wallet(wallet)
-//                    .build();
-//            unitOfWork.getTransactionRepository().save(transaction);
-//        }else {
-//            throw new AppException(ErrorCode.YOU_DO_NOT_HAVE_ENOUGH_POINT);
-//        }
-//        Redeem redeem = new Redeem();
-//        redeem.setAccount(account);
-//        redeem.setDocument(document);
-//        redeem.setCreatedDate(new Date());
-//        unitOfWork.getRedeemRepository().save(redeem);
-//        return redeem;
-//    }
-
     public RedeemResponse create_2(RedeemRequest request){
         Account account = findAcc(request.getAccountId());
-        Reward reward = findDocument(request.getDocumentId());
+        Reward reward = findDocument(request.getRewardId());
         //nếu tk đã đổi phần thưởng này r thì ko cho đổi nữa
         account.getRedeemList().forEach(redeem -> {
             if (redeem.getReward().getDocumentId().equals(reward.getDocumentId()))

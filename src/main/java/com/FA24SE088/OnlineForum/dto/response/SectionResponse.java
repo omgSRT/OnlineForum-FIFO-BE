@@ -11,5 +11,6 @@ import java.util.List;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class SectionResponse {
     private String title;
+    private Integer number;
     List<ContentSectionResponse> contentSectionResponses;
 }

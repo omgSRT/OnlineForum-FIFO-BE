@@ -14,5 +14,6 @@ import java.util.List;
 public class ContentSectionResponse {
     String content;
     String code;
+    Integer number;
     List<MediaResponse> mediaList;
 }

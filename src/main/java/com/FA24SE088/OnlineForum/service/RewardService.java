@@ -88,13 +88,14 @@ public class RewardService {
                             .build();
 
                     media = unitOfWork.getMediaRepository().save(media);
-                    mediaResponses.add(new MediaResponse(media.getLink()));
+                    mediaResponses.add(new MediaResponse(media.getNumber(), media.getLink()));
                 }
 
                 // Thêm ContentSectionResponse với danh sách Media
                 contentSectionResponses.add(new ContentSectionResponse(
                         contentSection.getContent(),
                         contentSection.getCode(),
+                        contentSection.getNumber(),
                         mediaResponses // Đảm bảo rằng đây là danh sách MediaResponse
                 ));
             }
@@ -129,12 +130,13 @@ public class RewardService {
                     List<MediaResponse> mediaResponses = new ArrayList<>();
 
                     for (Media media : contentSection.getMedias()) { // Assuming `ContentSection` has a getMediaList() method
-                        mediaResponses.add(new MediaResponse(media.getLink()));
+                        mediaResponses.add(new MediaResponse(media.getNumber(),media.getLink()));
                     }
 
                     contentSectionResponses.add(new ContentSectionResponse(
                             contentSection.getContent(),
                             contentSection.getCode(),
+                            contentSection.getNumber(),
                             mediaResponses
                     ));
                 }
@@ -221,10 +223,10 @@ public class RewardService {
                             .number(mediaIndex++)
                             .build();
                     media = unitOfWork.getMediaRepository().save(media);
-                    mediaResponses.add(new MediaResponse(media.getLink()));
+                    mediaResponses.add(new MediaResponse(media.getNumber(),media.getLink()));
                 }
 
-                contentSectionResponses.add(new ContentSectionResponse(contentSection.getContent(), contentSection.getCode(), mediaResponses));
+                contentSectionResponses.add(new ContentSectionResponse(contentSection.getContent(), contentSection.getCode(),contentSection.getNumber(), mediaResponses));
             }
 
             SectionResponse sectionResponse = SectionResponse.builder()

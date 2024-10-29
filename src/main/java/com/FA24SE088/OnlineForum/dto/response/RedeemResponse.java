@@ -18,6 +18,6 @@ public class RedeemResponse {
     Date createdDate;
     @JsonIgnoreProperties(value = {"redeemList","notificationList","followeeList","followerList","dailyPointList","postList","upvoteList","commentList","categoryList","eventList"}, allowSetters = true)
     Account account;
-    @JsonIgnoreProperties(value = {"redeemList"}, allowSetters = true)
+    @JsonIgnoreProperties(value = {"redeemList","sectionList"}, allowSetters = true)
     Reward reward;
 }
