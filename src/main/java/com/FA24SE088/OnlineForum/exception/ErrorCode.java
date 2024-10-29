@@ -88,8 +88,10 @@ public enum ErrorCode {
     REQUEST_NULL(10071, "Request null", HttpStatus.NOT_FOUND),
     BLANK_PASSWORD(10072, "Password Cannot Be Blank", HttpStatus.BAD_REQUEST),
     BLANK_CONFIRM_PASSWORD(10073, "Confirm Password Cannot Be Blank", HttpStatus.BAD_REQUEST),
-    YOU_HAVE_REPORTED_THIS_ACCOUNT(10073, "You have reported this account", HttpStatus.BAD_REQUEST),
-    CANNOT_REPORT_YOURSELF(10073, "Can't report yourself", HttpStatus.BAD_REQUEST),
+    STAFF_NOT_SUPERVISE_CATEGORY(10074, "Staff Doesnt Supervise Same Category As Post", HttpStatus.BAD_REQUEST),
+    REPORT_POST_NOT_PENDING(10075, "Only Report Post With Status Pending Can be Updated", HttpStatus.BAD_REQUEST),
+    YOU_HAVE_REPORTED_THIS_ACCOUNT(10076, "You have reported this account", HttpStatus.BAD_REQUEST),
+    CANNOT_REPORT_YOURSELF(10077, "Can't report yourself", HttpStatus.BAD_REQUEST),
     ;
 
     private int code;

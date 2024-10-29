@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
+import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
@@ -21,6 +22,8 @@ public class Report {
     UUID reportId;
     String title;
     String description;
+    Date reportTime;
+    String status;
 
     @ManyToOne
     @JoinColumn(name = "accountID")

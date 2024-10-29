@@ -49,13 +49,29 @@ public class PostController {
                                                         @RequestParam(required = false) UUID accountId,
                                                         @RequestParam(required = false) UUID topicId,
                                                         @RequestParam(required = false) UUID tagId,
+                                                        @RequestParam(required = false) UUID categoryId,
                                                         @RequestParam(required = false) List<PostStatus> statuses,
                                                         @RequestParam(required = false) Boolean isFolloweeIncluded){
-        return postService.getAllPosts(page, perPage, accountId, topicId, tagId, statuses, isFolloweeIncluded).thenApply(postResponses ->
+        return postService.getAllPosts(page, perPage, accountId, topicId, tagId, categoryId, statuses, isFolloweeIncluded).thenApply(postResponses ->
                 ApiResponse.<List<PostResponse>>builder()
                         .entity(postResponses)
                         .build()
                 ).join();
+    }
+
+    @Operation(summary = "Get All Posts For Staff")
+    @GetMapping(path = "/getall/for-current-staff")
+    public ApiResponse<List<PostResponse>> getAllPostsForStaff(@RequestParam(defaultValue = "1") int page,
+                                                       @RequestParam(defaultValue = "10") int perPage,
+                                                       @RequestParam(required = false) UUID topicId,
+                                                       @RequestParam(required = false) UUID tagId,
+                                                       @RequestParam(required = false) UUID categoryId,
+                                                       @RequestParam(required = false) Boolean isFolloweeIncluded){
+        return postService.getAllPostsForCurrentStaff(page, perPage, topicId, tagId, categoryId, isFolloweeIncluded).thenApply(postResponses ->
+                ApiResponse.<List<PostResponse>>builder()
+                        .entity(postResponses)
+                        .build()
+        ).join();
     }
 
     @Operation(summary = "Get All Posts", description = "Get All Posts For Current User")

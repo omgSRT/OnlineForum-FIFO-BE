@@ -9,5 +9,7 @@ import org.mapstruct.Mapper;
 public interface DailyPointMapper {
     DailyPoint toDailyPoint(DailyPointRequest request);
 
+    DailyPoint toDailyPoint(DailyPoint dailyPoint);
+
     DailyPointResponse toDailyPointResponse(DailyPoint dailyPoint);
 }
