@@ -1,10 +1,8 @@
 package com.FA24SE088.OnlineForum.service;
 
 import com.FA24SE088.OnlineForum.dto.request.ReportRequest;
-import com.FA24SE088.OnlineForum.dto.response.FeedbackResponse;
 import com.FA24SE088.OnlineForum.dto.response.ReportResponse;
 import com.FA24SE088.OnlineForum.entity.Account;
-import com.FA24SE088.OnlineForum.entity.Feedback;
 import com.FA24SE088.OnlineForum.entity.Post;
 import com.FA24SE088.OnlineForum.entity.Report;
 import com.FA24SE088.OnlineForum.enums.*;
@@ -25,7 +23,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.Date;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
@@ -75,13 +72,13 @@ public class ReportService {
     }
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
     @Async("AsyncTaskExecutor")
-    public CompletableFuture<List<ReportResponse>> getAllReports(int page, int perPage, UUID postId, List<ReportPostStatus> reportPostStatusList){
+    public CompletableFuture<List<ReportResponse>> filterAllReports(int page, int perPage, UUID postId, List<ReportPostStatus> reportPostStatusList){
         var postFuture = postId != null
                 ? findPostById(postId)
                 : CompletableFuture.completedFuture(null);
 
         return postFuture.thenCompose(post -> {
-                    var list = unitOfWork.getReportRepository().findAll().stream()
+                    var list = unitOfWork.getReportRepository().findAllByOrderByReportTimeDesc().stream()
                             .filter(report -> post == null || report.getPost().equals(post))
                             .filter(report -> reportPostStatusList == null || reportPostStatusList.isEmpty() ||
                                     (safeValueOf(report.getStatus()) != null
@@ -93,6 +90,17 @@ public class ReportService {
 
                     return CompletableFuture.completedFuture(paginatedList);
                 });
+    }
+    @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
+    @Async("AsyncTaskExecutor")
+    public CompletableFuture<List<ReportResponse>> getAllReports(int page, int perPage){
+        return CompletableFuture.supplyAsync(() -> {
+            var list = unitOfWork.getReportRepository().findAllByOrderByReportTimeDesc().stream()
+                    .map(reportMapper::toReportResponse)
+                    .toList();
+
+            return paginationUtils.convertListToPage(page, perPage, list);
+        });
     }
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
     @Async("AsyncTaskExecutor")
@@ -150,7 +158,7 @@ public class ReportService {
     }
     @Async("AsyncTaskExecutor")
     private CompletableFuture<List<Report>> findReportsByAccountUsername(String username) {
-        return unitOfWork.getReportRepository().findByAccountUsernameContaining(username);
+        return unitOfWork.getReportRepository().findByAccountUsernameContainingOrderByReportTimeDesc(username);
     }
     private ReportPostStatus safeValueOf(String status) {
         try {
