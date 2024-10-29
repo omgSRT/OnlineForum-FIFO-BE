@@ -13,13 +13,16 @@ import java.util.UUID;
 @Setter
 @Entity
 @FieldDefaults(level = AccessLevel.PRIVATE)
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class Category {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
+    @EqualsAndHashCode.Include
     UUID categoryId;
+    @EqualsAndHashCode.Include
     String name;
     String image;
 

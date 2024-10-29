@@ -1,5 +1,6 @@
 package com.FA24SE088.OnlineForum.repository.Repository;
 
+import com.FA24SE088.OnlineForum.entity.Account;
 import com.FA24SE088.OnlineForum.entity.Category;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.scheduling.annotation.Async;
@@ -17,6 +18,9 @@ public interface CategoryRepository extends JpaRepository<Category, UUID> {
 
     @Async("AsyncTaskExecutor")
     CompletableFuture<List<Category>> findByAccountAccountId(UUID accountId);
+
+    @Async("AsyncTaskExecutor")
+    CompletableFuture<List<Category>> findByAccount(Account account);
 
     Optional<Category> findByName(String name);
 }

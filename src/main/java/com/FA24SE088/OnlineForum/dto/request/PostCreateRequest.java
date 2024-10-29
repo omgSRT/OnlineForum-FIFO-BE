@@ -1,6 +1,7 @@
 package com.FA24SE088.OnlineForum.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -13,9 +14,9 @@ import java.util.UUID;
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class PostCreateRequest {
-    @NotBlank(message = "Title Cannot Be Null")
+    @NotNull(message = "Title Cannot Be Null")
     String title;
-    @NotBlank(message = "Content Cannot Be Null")
+    //@NotBlank(message = "Content Cannot Be Null")
     String content;
     UUID topicId;
     UUID tagId;

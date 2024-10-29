@@ -88,6 +88,7 @@ public enum ErrorCode {
     REQUEST_NULL(10071, "Request null", HttpStatus.NOT_FOUND),
     BLANK_PASSWORD(10072, "Password Cannot Be Blank", HttpStatus.BAD_REQUEST),
     BLANK_CONFIRM_PASSWORD(10073, "Confirm Password Cannot Be Blank", HttpStatus.BAD_REQUEST),
+    STAFF_NOT_SUPERVISE_CATEGORY(10074, "Staff Doesnt Supervise Same Category As Post", HttpStatus.BAD_REQUEST),
     ;
 
     private int code;

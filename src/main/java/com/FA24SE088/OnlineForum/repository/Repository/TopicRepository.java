@@ -30,4 +30,6 @@ public interface TopicRepository extends JpaRepository<Topic, UUID> {
 
     @Query("SELECT t FROM Topic t LEFT JOIN t.postList p GROUP BY t ORDER BY COUNT(p) DESC")
     List<Topic> findAllOrderByPostListSizeDescending();
+
+    List<Topic> findByCategory(Category category);
 }

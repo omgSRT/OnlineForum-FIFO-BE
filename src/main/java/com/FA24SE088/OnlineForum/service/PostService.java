@@ -11,6 +11,7 @@ import com.FA24SE088.OnlineForum.enums.UpdatePostStatus;
 import com.FA24SE088.OnlineForum.exception.AppException;
 import com.FA24SE088.OnlineForum.exception.ErrorCode;
 import com.FA24SE088.OnlineForum.mapper.CommentMapper;
+import com.FA24SE088.OnlineForum.mapper.DailyPointMapper;
 import com.FA24SE088.OnlineForum.mapper.ImageMapper;
 import com.FA24SE088.OnlineForum.mapper.PostMapper;
 import com.FA24SE088.OnlineForum.repository.UnitOfWork.UnitOfWork;
@@ -19,6 +20,7 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.Hibernate;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -36,6 +38,7 @@ public class PostService {
     UnitOfWork unitOfWork;
     PostMapper postMapper;
     ImageMapper imageMapper;
+    DailyPointMapper dailyPointMapper;
     PaginationUtils paginationUtils;
 
     //region CRUD Completed Post
@@ -104,6 +107,7 @@ public class PostService {
                                                              UUID accountId,
                                                              UUID topicId,
                                                              UUID tagId,
+                                                             UUID categoryId,
                                                              List<PostStatus> statuses,
                                                              Boolean IsFolloweeIncluded) {
         //IsFolloweeIncluded được tạo nhằm để lọc các post mà user hiện tại follow
@@ -114,6 +118,9 @@ public class PostService {
                             : CompletableFuture.completedFuture(null);
         var username = getUsernameFromJwt();
         var blockedListFuture = getBlockedAccountListByUsername(username);
+        var categoryFuture = categoryId != null
+                ? findCategoryById(categoryId)
+                : CompletableFuture.completedFuture(null);
         var topicFuture = topicId != null
                 ? findTopicById(topicId)
                 : CompletableFuture.completedFuture(null);
@@ -122,9 +129,11 @@ public class PostService {
                 : CompletableFuture.completedFuture(null);
         var followerListFuture = getFollowerList();
 
-        return CompletableFuture.allOf(postListFuture, accountFuture, topicFuture, tagFuture, followerListFuture).thenCompose(v -> {
+        return CompletableFuture.allOf(postListFuture, accountFuture, topicFuture,
+                tagFuture, followerListFuture, blockedListFuture).thenCompose(v -> {
             var postList = postListFuture.join();
             var account = accountFuture.join();
+            var category = categoryFuture.join();
             var topic = topicFuture.join();
             var tag = tagFuture.join();
             List<Account> followerAccountList = followerListFuture.join();
@@ -142,6 +151,8 @@ public class PostService {
                     })
                     .filter(post -> !blockedAccountList.contains(post.getAccount()))
                     .filter(post -> account == null || post.getAccount().equals(account))
+                    .filter(post -> category == null
+                            || (post.getTopic().getCategory() != null && post.getTopic().getCategory().equals(category)))
                     .filter(post -> topic == null || (post.getTopic() != null && post.getTopic().equals(topic)))
                     .filter(post -> tag == null || (post.getTag() != null && post.getTag().equals(tag)))
                     .filter(post -> statuses == null || statuses.isEmpty() ||
@@ -152,6 +163,76 @@ public class PostService {
             var paginatedList = paginationUtils.convertListToPage(page, perPage, list);
 
             return CompletableFuture.completedFuture(paginatedList);
+        });
+    }
+    @Async("AsyncTaskExecutor")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
+    public CompletableFuture<List<PostResponse>> getAllPostsForCurrentStaff(int page, int perPage,
+                                                             UUID topicId,
+                                                             UUID tagId,
+                                                             UUID categoryId,
+                                                             Boolean IsFolloweeIncluded) {
+        //IsFolloweeIncluded được tạo nhằm để lọc các post mà user hiện tại follow
+
+        var postListFuture = findAllPostsOrderByCreatedDateDesc();
+        var username = getUsernameFromJwt();
+        var accountFuture = findAccountByUsername(username);
+        var categoryFuture = categoryId != null
+                ? findCategoryById(categoryId)
+                : CompletableFuture.completedFuture(null);
+        var topicFuture = topicId != null
+                ? findTopicById(topicId)
+                : CompletableFuture.completedFuture(null);
+        var tagFuture = tagId != null
+                ? findTagById(tagId)
+                : CompletableFuture.completedFuture(null);
+        var followerListFuture = getFollowerList();
+
+        return CompletableFuture.allOf(postListFuture, accountFuture, topicFuture, tagFuture, followerListFuture).thenCompose(v -> {
+            var postList = postListFuture.join();
+            var account = accountFuture.join();
+            var category = categoryFuture.join();
+            var topic = topicFuture.join();
+            var tag = tagFuture.join();
+            var manageCategoryListFuture = unitOfWork.getCategoryRepository().findByAccount(account);
+
+            return manageCategoryListFuture.thenCompose(manageCategoryList -> {
+                var manageTopicList = getAllTopicsFromCategoryList(manageCategoryList);
+                List<Account> followerAccountList = followerListFuture.join();
+
+                var list = new ArrayList<>(postList.stream()
+                        .filter(post -> {
+                            if (IsFolloweeIncluded == null) {
+                                return true;
+                            } else if (IsFolloweeIncluded) {
+                                return followerAccountList.contains(post.getAccount());
+                            } else {
+                                return !followerAccountList.contains(post.getAccount());
+                            }
+                        })
+                        .filter(post -> post.getAccount().equals(account))
+                        .filter(post -> {
+                            if (category == null) {
+                                return manageCategoryList.contains(post.getTopic().getCategory());
+                            }
+                            return post.getTopic().getCategory() != null && post.getTopic().getCategory().equals(category);
+                        })
+                        .filter(post -> {
+                            if (topic == null) {
+                                return manageTopicList.contains(post.getTopic());
+                            }
+                            return post.getTopic() != null && post.getTopic().equals(topic);
+                        })
+                        .filter(post -> tag == null || (post.getTag() != null && post.getTag().equals(tag)))
+                        .filter(post -> post.getStatus() != null
+                                && post.getStatus().equals(PostStatus.PUBLIC.name()))
+                        .map(postMapper::toPostResponse)
+                        .toList());
+
+                var paginatedList = paginationUtils.convertListToPage(page, perPage, list);
+
+                return CompletableFuture.completedFuture(paginatedList);
+            });
         });
     }
     @Async("AsyncTaskExecutor")
@@ -221,12 +302,30 @@ public class PostService {
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
     public CompletableFuture<PostResponse> deleteByChangingPostStatusById(UUID postId) {
         var postFuture = findPostById(postId);
+        var username = getUsernameFromJwt();
+        var accountFuture = findAccountByUsername(username);
 
-        return postFuture.thenCompose(post -> {
+        return CompletableFuture.allOf(postFuture, accountFuture).thenCompose(v -> {
+            var account = accountFuture.join();
+            var post = postFuture.join();
             var dailyPoint = post.getDailyPoint();
             var pointEarned = dailyPoint.getPointEarned();
             var wallet = post.getAccount().getWallet();
             var balance = wallet.getBalance();
+            var categoryPost = post.getTopic().getCategory();
+
+            if(post.getStatus().equals(PostStatus.DRAFT.name())){
+                throw new AppException(ErrorCode.DRAFT_POST_CANNOT_CHANGE_STATUS);
+            }
+
+            if(account.getRole().getName().equals("USER") &&
+                    !account.equals(post.getAccount())){
+                    throw new AppException(ErrorCode.ACCOUNT_NOT_THE_AUTHOR_OF_POST);
+            }
+            if(account.getRole().getName().equals("STAFF") &&
+                    !account.getCategoryList().contains(categoryPost)){
+                    throw new AppException(ErrorCode.STAFF_NOT_SUPERVISE_CATEGORY);
+            }
 
             pointEarned = -pointEarned;
             dailyPoint.setPointEarned(pointEarned);
@@ -250,10 +349,25 @@ public class PostService {
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
     public CompletableFuture<PostResponse> updatePostStatusById(UUID postId, UpdatePostStatus status) {
         var postFuture = findPostById(postId);
+        var username = getUsernameFromJwt();
+        var accountFuture = findAccountByUsername(username);
 
-        return postFuture.thenCompose(post -> {
+        return CompletableFuture.allOf(postFuture, accountFuture).thenCompose(v -> {
+                    var account = accountFuture.join();
+                    var post = postFuture.join();
+                    var categoryPost = post.getTopic().getCategory();
+
                     if(post.getStatus().equals(PostStatus.DRAFT.name())){
                         throw new AppException(ErrorCode.DRAFT_POST_CANNOT_CHANGE_STATUS);
+                    }
+
+                    if(account.getRole().getName().equals("USER") &&
+                                !account.equals(post.getAccount())){
+                        throw new AppException(ErrorCode.ACCOUNT_NOT_THE_AUTHOR_OF_POST);
+                    }
+                    if(account.getRole().getName().equals("STAFF") &&
+                                !account.getCategoryList().contains(categoryPost)){
+                        throw new AppException(ErrorCode.STAFF_NOT_SUPERVISE_CATEGORY);
                     }
 
                     post.setStatus(status.name());
@@ -666,9 +780,10 @@ public class PostService {
         );
     }
     @Async("AsyncTaskExecutor")
-    private CompletableFuture<List<Post>> findAllPosts() {
+    private CompletableFuture<Category> findCategoryById(UUID categoryId) {
         return CompletableFuture.supplyAsync(() ->
-                unitOfWork.getPostRepository().findAll()
+                unitOfWork.getCategoryRepository().findById(categoryId)
+                        .orElseThrow(() -> new AppException(ErrorCode.CATEGORY_NOT_FOUND))
         );
     }
     @Async("AsyncTaskExecutor")
@@ -763,25 +878,37 @@ public class PostService {
             return null;
         }
     }
-    public boolean isAllDraftCreateRequestFieldsNull(DraftCreateRequest request) {
+    private boolean isAllDraftCreateRequestFieldsNull(DraftCreateRequest request) {
         return request.getTitle() == null &&
                 request.getContent() == null &&
                 request.getTopicId() == null &&
                 request.getTagId() == null &&
                 (request.getImageUrlList() == null || request.getImageUrlList().isEmpty());
     }
-    public boolean isAllDraftUpdateRequestFieldsNull(DraftUpdateRequest request) {
+    private boolean isAllDraftUpdateRequestFieldsNull(DraftUpdateRequest request) {
         return request.getTitle() == null &&
                 request.getContent() == null &&
                 request.getTopicId() == null &&
                 request.getTagId() == null &&
                 (request.getImageUrlList() == null || request.getImageUrlList().isEmpty());
     }
-    public boolean isCurrentDraftFieldsNull(Post currentDraft) {
+    private boolean isCurrentDraftFieldsNull(Post currentDraft) {
         return currentDraft.getTitle() == null &&
                 currentDraft.getContent() == null &&
                 currentDraft.getTopic() == null &&
                 currentDraft.getTag() == null;
+    }
+    private List<Topic> getAllTopicsFromCategoryList(List<Category> categoryList){
+        if(categoryList == null || categoryList.isEmpty()){
+            return new ArrayList<>();
+        }
+        List<Topic> topicList = new ArrayList<>();
+        for(Category category : categoryList){
+            List<Topic> categoryTopicList = unitOfWork.getTopicRepository().findByCategory(category);
+            topicList.addAll(categoryTopicList);
+        }
+
+        return topicList;
     }
     //endregion
 }
