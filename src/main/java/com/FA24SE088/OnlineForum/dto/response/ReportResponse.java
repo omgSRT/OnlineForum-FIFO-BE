@@ -12,9 +12,11 @@ import java.util.UUID;
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class ReportResponse {
-    UUID feedbackId;
+    UUID reportId;
     String title;
     String description;
+    Date reportTime;
+    String status;
     UUID postId;
     String postTitle;
     String postContent;
