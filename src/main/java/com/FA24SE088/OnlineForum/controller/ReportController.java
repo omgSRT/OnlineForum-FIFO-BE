@@ -50,17 +50,27 @@ public class ReportController {
                 ).join();
     }
 
-    @Operation(summary = "Get All Post Reports")
-    @GetMapping(path = "/getall")
-    public ApiResponse<List<ReportResponse>> getAllFeedbacks(@RequestParam(defaultValue = "1") int page,
+    @Operation(summary = "Filter All Post Reports", description = "Filter All Post Reports Using Post ID Or Status")
+    @GetMapping(path = "/filter")
+    public ApiResponse<List<ReportResponse>> filterAllFeedbacks(@RequestParam(defaultValue = "1") int page,
                                                              @RequestParam(defaultValue = "10") int perPage,
                                                              @RequestParam(required = false) UUID postId,
                                                              @RequestParam(required = false) List<ReportPostStatus> reportPostStatusList){
-        return reportService.getAllReports(page, perPage, postId, reportPostStatusList).thenApply(reportResponses ->
+        return reportService.filterAllReports(page, perPage, postId, reportPostStatusList).thenApply(reportResponses ->
                 ApiResponse.<List<ReportResponse>>builder()
                         .entity(reportResponses)
                         .build()
                 ).join();
+    }
+    @Operation(summary = "Get All Post Reports")
+    @GetMapping(path = "/filter")
+    public ApiResponse<List<ReportResponse>> getAllFeedbacks(@RequestParam(defaultValue = "1") int page,
+                                                                @RequestParam(defaultValue = "10") int perPage){
+        return reportService.getAllReports(page, perPage).thenApply(reportResponses ->
+                ApiResponse.<List<ReportResponse>>builder()
+                        .entity(reportResponses)
+                        .build()
+        ).join();
     }
     @Operation(summary = "Get All Post Reports By Account Username")
     @GetMapping(path = "/getall/by-username")
