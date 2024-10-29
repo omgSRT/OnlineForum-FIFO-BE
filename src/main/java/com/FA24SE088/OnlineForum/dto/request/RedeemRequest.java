@@ -13,5 +13,5 @@ import java.util.UUID;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class RedeemRequest {
     UUID accountId;
-    UUID documentId;
+    UUID rewardId;
 }
