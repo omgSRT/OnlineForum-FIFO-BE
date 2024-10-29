@@ -63,7 +63,7 @@ public class ReportController {
                 ).join();
     }
     @Operation(summary = "Get All Post Reports")
-    @GetMapping(path = "/filter")
+    @GetMapping(path = "/getall")
     public ApiResponse<List<ReportResponse>> getAllFeedbacks(@RequestParam(defaultValue = "1") int page,
                                                                 @RequestParam(defaultValue = "10") int perPage){
         return reportService.getAllReports(page, perPage).thenApply(reportResponses ->
