@@ -72,7 +72,9 @@ public class ReportService {
     }
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
     @Async("AsyncTaskExecutor")
-    public CompletableFuture<List<ReportResponse>> filterAllReports(int page, int perPage, UUID postId, List<ReportPostStatus> reportPostStatusList){
+    public CompletableFuture<List<ReportResponse>> getAllReports(int page, int perPage,
+                                                                    UUID postId, List<ReportPostStatus> reportPostStatusList,
+                                                                    String name){
         var postFuture = postId != null
                 ? findPostById(postId)
                 : CompletableFuture.completedFuture(null);
@@ -83,6 +85,7 @@ public class ReportService {
                             .filter(report -> reportPostStatusList == null || reportPostStatusList.isEmpty() ||
                                     (safeValueOf(report.getStatus()) != null
                                             && reportPostStatusList.contains(safeValueOf(report.getStatus()))))
+                            .filter(report -> name == null || name.isEmpty() || report.getAccount().getUsername().contains(name))
                             .map(reportMapper::toReportResponse)
                             .toList();
 
@@ -90,32 +93,6 @@ public class ReportService {
 
                     return CompletableFuture.completedFuture(paginatedList);
                 });
-    }
-    @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
-    @Async("AsyncTaskExecutor")
-    public CompletableFuture<List<ReportResponse>> getAllReports(int page, int perPage){
-        return CompletableFuture.supplyAsync(() -> {
-            var list = unitOfWork.getReportRepository().findAllByOrderByReportTimeDesc().stream()
-                    .map(reportMapper::toReportResponse)
-                    .toList();
-
-            return paginationUtils.convertListToPage(page, perPage, list);
-        });
-    }
-    @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
-    @Async("AsyncTaskExecutor")
-    public CompletableFuture<List<ReportResponse>> getAllReportsByAccountUsername(int page, int perPage, String username){
-        var reportListFuture = findReportsByAccountUsername(username);
-
-        return reportListFuture.thenCompose(reportList -> {
-            var reportResponseList = reportList.stream()
-                    .map(reportMapper::toReportResponse)
-                    .toList();
-
-            var paginatedList = paginationUtils.convertListToPage(page, perPage, reportResponseList);
-
-            return CompletableFuture.completedFuture(paginatedList);
-        });
     }
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
     @Async("AsyncTaskExecutor")
@@ -167,7 +144,6 @@ public class ReportService {
             return null;
         }
     }
-
     private String getUsernameFromJwt() {
         var authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null && authentication.getPrincipal() instanceof Jwt jwt) {
