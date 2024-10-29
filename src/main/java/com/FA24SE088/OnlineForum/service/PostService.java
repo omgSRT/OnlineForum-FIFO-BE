@@ -194,11 +194,12 @@ public class PostService {
             var category = categoryFuture.join();
             var topic = topicFuture.join();
             var tag = tagFuture.join();
+            List<Account> followerAccountList = followerListFuture.join();
             var manageCategoryListFuture = unitOfWork.getCategoryRepository().findByAccount(account);
 
             return manageCategoryListFuture.thenCompose(manageCategoryList -> {
                 var manageTopicList = getAllTopicsFromCategoryList(manageCategoryList);
-                List<Account> followerAccountList = followerListFuture.join();
+
 
                 var list = new ArrayList<>(postList.stream()
                         .filter(post -> {
@@ -210,18 +211,17 @@ public class PostService {
                                 return !followerAccountList.contains(post.getAccount());
                             }
                         })
-                        .filter(post -> post.getAccount().equals(account))
-                        .filter(post -> {
-                            if (category == null) {
-                                return manageCategoryList.contains(post.getTopic().getCategory());
-                            }
-                            return post.getTopic().getCategory() != null && post.getTopic().getCategory().equals(category);
-                        })
                         .filter(post -> {
                             if (topic == null) {
                                 return manageTopicList.contains(post.getTopic());
                             }
                             return post.getTopic() != null && post.getTopic().equals(topic);
+                        })
+                        .filter(post -> {
+                            if (category == null) {
+                                return post.getTopic().getCategory() != null && manageCategoryList.contains(post.getTopic().getCategory());
+                            }
+                            return post.getTopic().getCategory() != null && post.getTopic().getCategory().equals(category);
                         })
                         .filter(post -> tag == null || (post.getTag() != null && post.getTag().equals(tag)))
                         .filter(post -> post.getStatus() != null
