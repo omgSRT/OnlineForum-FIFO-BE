@@ -24,6 +24,16 @@ spring:
     jwt:
       secret: 9fpGEUpGqiplW2HJB7UDOpJScDgzJWJR5xqOP3zsJQKs8fuIQpvw37BP3hmNmb/9
 
+payment:
+  vnPay:
+    url: https://sandbox.vnpayment.vn/paymentv2/vpcpay.html
+    tmnCode: RRVZK0OS
+    secretKey: 1ABJ5HMUHJYSJ9XYYTTE4ZDYUGET4R90
+    returnUrl: http://localhost:8080/payment/vn-pay-callback
+    version: 2.1.0
+    command: pay
+    orderType: other
+
   #setup cache for project
   #  cache:
   #    type: redis

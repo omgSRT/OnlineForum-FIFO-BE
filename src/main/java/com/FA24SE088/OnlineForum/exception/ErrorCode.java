@@ -92,6 +92,13 @@ public enum ErrorCode {
     REPORT_POST_NOT_PENDING(10075, "Only Report Post With Status Pending Can be Updated", HttpStatus.BAD_REQUEST),
     YOU_HAVE_REPORTED_THIS_ACCOUNT(10076, "You have reported this account", HttpStatus.BAD_REQUEST),
     CANNOT_REPORT_YOURSELF(10077, "Can't report yourself", HttpStatus.BAD_REQUEST),
+    INVALID_PARAMETER(10077, "Invalid Parameter", HttpStatus.BAD_REQUEST),
+    NOT_FOUND(10077, "Not Found",HttpStatus.NOT_FOUND),
+    INTERNAL_SERVER_ERROR(10077, "Internal Server Error", HttpStatus.BAD_REQUEST),
+    DUPLICATE_CATEGORY(10077, "Duplicate Category", HttpStatus.BAD_REQUEST),
+    PRODUCT_NOT_FOUND(10077, "Product not found",HttpStatus.NOT_FOUND),
+    INVALID_REQUEST_BODY(10077, "Invalid Request Body", HttpStatus.BAD_REQUEST),
+    CREATE_PAYMENT_FAILED(10077, "Create payment failed", HttpStatus.BAD_REQUEST);
     ;
 
     private int code;
