@@ -15,5 +15,6 @@ import org.mapstruct.MappingTarget;
 public interface ReportAccountMapper {
     ReportAccount toReportAccount(ReportAccountRequest request);
 
+    @Mapping(target = "title", source = "title")
     ReportAccountResponse toResponse(ReportAccount account);
 }

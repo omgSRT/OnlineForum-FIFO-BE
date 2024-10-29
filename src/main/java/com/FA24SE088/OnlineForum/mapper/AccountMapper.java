@@ -15,6 +15,7 @@ public interface AccountMapper {
     @Mapping(target = "categoryList", ignore = true)
     Account toAccount(AccountRequest request);
 
+    @Mapping(target = "accountId",source = "accountId")
     AccountResponse toResponse(Account account);
 
     void updateAccount(@MappingTarget Account account, AccountUpdateRequest request);
