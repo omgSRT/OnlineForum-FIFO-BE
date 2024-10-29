@@ -38,7 +38,7 @@ public class RedeemService {
     }
     public RedeemResponse create_2(RedeemRequest request){
         Account account = findAcc(request.getAccountId());
-        Reward reward = findDocument(request.getDocumentId());
+        Reward reward = findDocument(request.getRewardId());
         //nếu tk đã đổi phần thưởng này r thì ko cho đổi nữa
         account.getRedeemList().forEach(redeem -> {
             if (redeem.getReward().getDocumentId().equals(reward.getDocumentId()))
