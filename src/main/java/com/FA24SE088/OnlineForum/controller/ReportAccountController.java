@@ -56,6 +56,16 @@ public class ReportAccountController {
                 .build();
     }
 
+    @GetMapping("/filter")
+    public ApiResponse<List<ReportAccountResponse>> filter(@RequestParam(required = false) String reporter,
+                                                           @RequestParam(required = false) String reported,
+                                                           @RequestParam(required = false, defaultValue = "PENDING") ReportAccountStatus status,
+                                                           @RequestParam(required = false, defaultValue = "true") boolean ascending) {
+        return ApiResponse.<List<ReportAccountResponse>>builder()
+                .entity(reportAccountService.filter(reporter, reported, status, ascending))
+                .build();
+    }
+
     @DeleteMapping("/delete/{id}")
     public ApiResponse<Void> deleteReportAccount(@PathVariable UUID id) {
         reportAccountService.deleteReportAccount(id);

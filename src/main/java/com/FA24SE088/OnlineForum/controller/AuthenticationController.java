@@ -6,6 +6,7 @@ import com.FA24SE088.OnlineForum.dto.response.*;
 import com.FA24SE088.OnlineForum.entity.Account;
 import com.FA24SE088.OnlineForum.entity.Otp;
 import com.FA24SE088.OnlineForum.enums.AccountStatus;
+import com.FA24SE088.OnlineForum.enums.RoleAccount;
 import com.FA24SE088.OnlineForum.enums.SuccessReturnMessage;
 import com.FA24SE088.OnlineForum.service.AccountService;
 import com.FA24SE088.OnlineForum.service.AuthenticateService;
@@ -48,8 +49,8 @@ public class AuthenticationController {
 
     @PostMapping("/sign-up")
     @Transactional
-    public ApiResponse<AccountResponse> create(@Valid @RequestBody AccountRequest request) {
-        AccountResponse response = accountService.create(request);
+    public ApiResponse<AccountResponse> create(@Valid @RequestBody AccountRequest request, RoleAccount role) {
+        AccountResponse response = accountService.create(request,role);
         Otp otp = otpUtil.generateOtp(request.getEmail());
         emailUtil.sendToAnEmail(
                 response.getEmail(),
