@@ -92,6 +92,8 @@ public enum ErrorCode {
     REPORT_POST_NOT_PENDING(10075, "Only Report Post With Status Pending Can be Updated", HttpStatus.BAD_REQUEST),
     YOU_HAVE_REPORTED_THIS_ACCOUNT(10076, "You have reported this account", HttpStatus.BAD_REQUEST),
     CANNOT_REPORT_YOURSELF(10077, "Can't report yourself", HttpStatus.BAD_REQUEST),
+    REPORT_POST_REASON_NOT_FOUND(10078, "Report Post Reason Cannot Be Null", HttpStatus.BAD_REQUEST),
+    CANNOT_REPORT_SELF_POST(10077, "Can't Report Post That Made By You", HttpStatus.BAD_REQUEST),
     ;
 
     private int code;

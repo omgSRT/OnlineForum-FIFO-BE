@@ -46,6 +46,13 @@ public class ReportService {
             var post = postFuture.join();
             var account = accountFuture.join();
 
+            if(reportPostReason == null){
+                throw new AppException(ErrorCode.REPORT_POST_REASON_NOT_FOUND);
+            }
+            if(account.equals(post.getAccount())){
+                throw new AppException(ErrorCode.CANNOT_REPORT_SELF_POST);
+            }
+
             Report newReport = reportMapper.toReport(request);
             newReport.setTitle(reportPostReason.name());
             newReport.setDescription(reportPostReason.getMessage());
