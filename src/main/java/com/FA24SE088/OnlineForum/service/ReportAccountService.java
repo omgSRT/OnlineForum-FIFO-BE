@@ -51,6 +51,9 @@ public class ReportAccountService {
         Account reported = unitOfWork.getAccountRepository()
                 .findById(reportedId)
                 .orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND));
+        if (reporter.getAccountId().equals(reported.getAccountId())){
+            throw new AppException(ErrorCode.CANNOT_REPORT_YOURSELF);
+        }
         boolean check = unitOfWork.getReportAccountRepository().existsByReporterAndReported(reporter,reported);
         if (check) throw new AppException(ErrorCode.YOU_HAVE_REPORTED_THIS_ACCOUNT);
         ReportAccount reportAccount = ReportAccount.builder()

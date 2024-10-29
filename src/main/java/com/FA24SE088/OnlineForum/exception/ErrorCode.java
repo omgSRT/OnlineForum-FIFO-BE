@@ -89,6 +89,7 @@ public enum ErrorCode {
     BLANK_PASSWORD(10072, "Password Cannot Be Blank", HttpStatus.BAD_REQUEST),
     BLANK_CONFIRM_PASSWORD(10073, "Confirm Password Cannot Be Blank", HttpStatus.BAD_REQUEST),
     YOU_HAVE_REPORTED_THIS_ACCOUNT(10073, "You have reported this account", HttpStatus.BAD_REQUEST),
+    CANNOT_REPORT_YOURSELF(10073, "Can't report yourself", HttpStatus.BAD_REQUEST),
     ;
 
     private int code;
