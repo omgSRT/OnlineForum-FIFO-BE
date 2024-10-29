@@ -23,6 +23,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
@@ -65,10 +66,9 @@ public class UpvoteService {
             });
         });
     }
-
     @Async("AsyncTaskExecutor")
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
-    public CompletableFuture<UpvoteGetAllResponse> getAllUpvoteByPostId(int page, int perPage, UUID postId){
+    public CompletableFuture<UpvoteGetAllResponse> getAllUpvoteByPostId(UUID postId){
         var postFuture = findPostById(postId);
 
         return postFuture.thenCompose(post -> {
@@ -78,22 +78,58 @@ public class UpvoteService {
                 var convertResponse = upvoteList.stream()
                         .map(upvoteMapper::toUpvoteNoPostResponse)
                         .toList();
-                var paginatedList = paginationUtils.convertListToPage(page, perPage, convertResponse);
 
                 UpvoteGetAllResponse getAllResponse = new UpvoteGetAllResponse();
-                getAllResponse.setCount(paginatedList.size());
-                getAllResponse.setNoPostResponseList(paginatedList);
+                getAllResponse.setCount(convertResponse.size());
+                getAllResponse.setNoPostResponseList(convertResponse);
 
                 return getAllResponse;
             });
         });
     }
+    @Async("AsyncTaskExecutor")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
+    public CompletableFuture<UpvoteGetAllResponse> getAllUpvoteByAccountId(UUID accountId){
+        var accountFuture = findAccountById(accountId);
+
+        return accountFuture.thenCompose(account -> {
+            var upvoteListFuture = unitOfWork.getUpvoteRepository().findByAccount(account);
+
+            return upvoteListFuture.thenApply(upvoteList -> {
+                var convertResponse = upvoteList.stream()
+                        .map(upvoteMapper::toUpvoteNoPostResponse)
+                        .toList();
+
+                UpvoteGetAllResponse getAllResponse = new UpvoteGetAllResponse();
+                getAllResponse.setCount(convertResponse.size());
+                getAllResponse.setNoPostResponseList(convertResponse);
+
+                return getAllResponse;
+            });
+        });
+    }
+    @Async("AsyncTaskExecutor")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
+    public CompletableFuture<List<UpvoteResponse>> getAllUpvotes(){
+        return CompletableFuture.supplyAsync(() ->
+                unitOfWork.getUpvoteRepository().findAll().stream()
+                .map(upvoteMapper::toUpvoteResponse)
+                .toList());
+    }
+
 
     @Async("AsyncTaskExecutor")
     private CompletableFuture<Post> findPostById(UUID postId) {
         return CompletableFuture.supplyAsync(() ->
                 unitOfWork.getPostRepository().findById(postId)
                         .orElseThrow(() -> new AppException(ErrorCode.POST_NOT_FOUND))
+        );
+    }
+    @Async("AsyncTaskExecutor")
+    private CompletableFuture<Account> findAccountById(UUID accountId) {
+        return CompletableFuture.supplyAsync(() ->
+                unitOfWork.getAccountRepository().findById(accountId)
+                        .orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND))
         );
     }
     @Async("AsyncTaskExecutor")

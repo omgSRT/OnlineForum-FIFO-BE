@@ -35,14 +35,12 @@ public class UpvoteController {
                 ).join();
     }
 
-    @Operation(summary = "Get All Upvotes", description = "Get All Upvote By Post")
-    @GetMapping(path = "/getall/by-post/{postId}")
-    public ApiResponse<UpvoteGetAllResponse> getAllUpvotesByPost(@RequestParam(defaultValue = "1") int page,
-                                                                 @RequestParam(defaultValue = "10") int perPage,
-                                                                 @PathVariable UUID postId){
-        return upvoteService.getAllUpvoteByPostId(page, perPage, postId).thenApply(upvoteGetAllResponse ->
-                ApiResponse.<UpvoteGetAllResponse>builder()
-                        .entity(upvoteGetAllResponse)
+    @Operation(summary = "Get All Upvotes")
+    @GetMapping(path = "/getall")
+    public ApiResponse<List<UpvoteResponse>> getAllUpvotes(){
+        return upvoteService.getAllUpvotes().thenApply(allUpvotes ->
+                ApiResponse.<List<UpvoteResponse>>builder()
+                        .entity(allUpvotes)
                         .build()
         ).join();
     }
