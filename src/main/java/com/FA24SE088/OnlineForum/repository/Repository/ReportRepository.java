@@ -12,5 +12,7 @@ import java.util.concurrent.CompletableFuture;
 @Repository
 public interface ReportRepository extends JpaRepository<Report, UUID> {
     @Async("AsyncTaskExecutor")
-    CompletableFuture<List<Report>> findByAccountUsernameContaining(String username);
+    CompletableFuture<List<Report>> findByAccountUsernameContainingOrderByReportTimeDesc(String username);
+
+    List<Report> findAllByOrderByReportTimeDesc();
 }
