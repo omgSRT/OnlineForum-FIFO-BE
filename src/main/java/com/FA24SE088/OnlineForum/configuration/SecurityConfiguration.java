@@ -43,15 +43,6 @@ public class SecurityConfiguration {
                                 .requestMatchers(HttpMethod.POST, PUBLIC_ENDPOINTS_POST).permitAll()
                                 .requestMatchers(HttpMethod.PUT, PUBLIC_ENDPOINTS_PUT).permitAll()
                                 .anyRequest().authenticated())
-//                .oauth2Login(oauth2 -> oauth2 // Cấu hình OAuth2 Login
-//                        .loginPage("/login") // Đường dẫn đến trang đăng nhập tùy chỉnh
-//                        .defaultSuccessUrl("/home", true) // Đường dẫn đến trang thành công
-//                        .failureUrl("/login?error=true") // Đường dẫn đến trang thất bại
-//                )
-//                .oauth2Login(oauth2 -> oauth2
-//                        .defaultSuccessUrl("/login/oauth2/code/google", true) // Tự động chuyển hướng sau khi đăng nhập thành công
-//                        .failureUrl("/login?error=true") // Đường dẫn đến trang thất bại
-//                )
                 .formLogin(Customizer.withDefaults())
         ;
 
