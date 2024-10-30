@@ -38,31 +38,20 @@ public class TopicController {
     @Operation(summary = "Get All Topics")
     @GetMapping(path = "/getall")
     public ApiResponse<List<TopicResponse>> getAllTopics(@RequestParam(defaultValue = "1") int page,
-                                                                   @RequestParam(defaultValue = "10") int perPage){
-        return topicService.getAllTopics(page, perPage).thenApply(topicResponses ->
+                                                         @RequestParam(defaultValue = "10") int perPage,
+                                                         @RequestParam(required = false) UUID categoryId){
+        return topicService.getAllTopics(page, perPage, categoryId).thenApply(topicResponses ->
                 ApiResponse.<List<TopicResponse>>builder()
                         .entity(topicResponses)
                         .build()
         ).join();
     }
 
-    @Operation(summary = "Get All Topics")
+    @Operation(summary = "Get All Popular Topics")
     @GetMapping(path = "/popular")
     public ApiResponse<List<TopicResponse>> getAllPopularTopics(@RequestParam(defaultValue = "1") int page,
                                                          @RequestParam(defaultValue = "10") int perPage){
         return topicService.getAllPopularTopics(page, perPage).thenApply(topicResponses ->
-                ApiResponse.<List<TopicResponse>>builder()
-                        .entity(topicResponses)
-                        .build()
-        ).join();
-    }
-
-    @Operation(summary = "Get All Topics", description = "Get All Topics Based On Category ID")
-    @GetMapping(path = "/getall/by-category/{categoryId}")
-    public ApiResponse<List<TopicResponse>> getAllTopicsByCategoryId(@RequestParam(defaultValue = "1") int page,
-                                                                                    @RequestParam(defaultValue = "10") int perPage,
-                                                                                    @PathVariable UUID categoryId){
-        return topicService.getAllTopicsByCategoryId(page, perPage, categoryId).thenApply(topicResponses ->
                 ApiResponse.<List<TopicResponse>>builder()
                         .entity(topicResponses)
                         .build()

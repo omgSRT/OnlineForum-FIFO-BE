@@ -71,30 +71,21 @@ public class CategoryService {
 
     @Async("AsyncTaskExecutor")
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
-    public CompletableFuture<List<CategoryNoAccountResponse>> getAllCategories(int page, int perPage) {
-        return CompletableFuture.supplyAsync(() -> {
+    public CompletableFuture<List<CategoryNoAccountResponse>> getAllCategories(int page, int perPage, UUID accountId) {
+        var accountFuture = accountId != null
+                ? findAccountById(accountId)
+                : CompletableFuture.completedFuture(null);
+
+        return accountFuture.thenCompose(account -> {
             var list = unitOfWork.getCategoryRepository().findAll().stream()
+                    .filter(category -> account == null || (category.getAccount() != null && category.getAccount().equals(account)))
                     .map(categoryMapper::toCategoryNoAccountResponse)
                     .toList();
 
-            return paginationUtils.convertListToPage(page, perPage, list);
+            var paginatedList = paginationUtils.convertListToPage(page, perPage, list);
+
+            return CompletableFuture.completedFuture(paginatedList);
         });
-    }
-
-    @Async("AsyncTaskExecutor")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
-    public CompletableFuture<List<CategoryNoAccountResponse>> getAllCategoriesByAccountId(int page, int perPage, UUID accountId) {
-        var accountFuture = findAccountById(accountId);
-
-        return accountFuture.thenCompose(account ->
-                unitOfWork.getCategoryRepository()
-                        .findByAccountAccountId(account.getAccountId())
-                        .thenApply(list -> {
-                            var responses = list.stream()
-                                    .map(categoryMapper::toCategoryNoAccountResponse)
-                                    .toList();
-                            return paginationUtils.convertListToPage(page, perPage, responses);
-                        }));
     }
 
     @Async("AsyncTaskExecutor")

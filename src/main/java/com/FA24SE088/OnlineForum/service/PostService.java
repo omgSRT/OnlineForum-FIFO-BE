@@ -152,7 +152,8 @@ public class PostService {
                     .filter(post -> !blockedAccountList.contains(post.getAccount()))
                     .filter(post -> account == null || post.getAccount().equals(account))
                     .filter(post -> category == null
-                            || (post.getTopic().getCategory() != null && post.getTopic().getCategory().equals(category)))
+                            || (post.getTopic() != null &&post.getTopic().getCategory() != null
+                                        && post.getTopic().getCategory().equals(category)))
                     .filter(post -> topic == null || (post.getTopic() != null && post.getTopic().equals(topic)))
                     .filter(post -> tag == null || (post.getTag() != null && post.getTag().equals(tag)))
                     .filter(post -> statuses == null || statuses.isEmpty() ||

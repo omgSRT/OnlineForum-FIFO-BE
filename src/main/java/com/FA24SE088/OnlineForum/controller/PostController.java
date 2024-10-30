@@ -112,7 +112,7 @@ public class PostController {
     public ApiResponse<PostResponse> deletePostByChangingStatusById(@PathVariable UUID postId){
         return postService.deleteByChangingPostStatusById(postId).thenApply(postResponse ->
                 ApiResponse.<PostResponse>builder()
-                        .message(SuccessReturnMessage.DELETE_SUCCESS.getMessage())
+                        .message(SuccessReturnMessage.UPDATE_SUCCESS.getMessage())
                         .entity(postResponse)
                         .build()
         ).join();

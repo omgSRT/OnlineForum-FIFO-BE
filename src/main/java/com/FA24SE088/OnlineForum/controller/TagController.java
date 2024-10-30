@@ -35,23 +35,12 @@ public class TagController {
         ).join();
     }
 
-    @Operation(summary = "Get All Tags")
+    @Operation(summary = "Get All Tags", description = "Get All Tags With Filter")
     @GetMapping(path = "/getall")
-    public ApiResponse<List<TagResponse>> getAllTopics(@RequestParam(defaultValue = "1") int page,
-                                                       @RequestParam(defaultValue = "10") int perPage){
-        return tagService.getAllTags(page, perPage).thenApply(tagResponses ->
-                ApiResponse.<List<TagResponse>>builder()
-                        .entity(tagResponses)
-                        .build()
-        ).join();
-    }
-
-    @Operation(summary = "Get All Tags", description = "Get All Topics Based On Topic Name And/Or Color")
-    @GetMapping(path = "/getall/by-filtering")
-    public ApiResponse<List<TagResponse>> getAllTopicsByNameContaining(@RequestParam(defaultValue = "1") int page,
-                                                                       @RequestParam(defaultValue = "10") int perPage,
-                                                                       @RequestParam(required = false) String name,
-                                                                       @RequestParam(required = false) String targetColorHex){
+    public ApiResponse<List<TagResponse>> getAllTopicsBy(@RequestParam(defaultValue = "1") int page,
+                                                         @RequestParam(defaultValue = "10") int perPage,
+                                                         @RequestParam(required = false) String name,
+                                                         @RequestParam(required = false) String targetColorHex){
         return tagService.getAllTagsByFilteringNameAndColor(page, perPage, name, targetColorHex).thenApply(tagResponses ->
                 ApiResponse.<List<TagResponse>>builder()
                         .entity(tagResponses)
