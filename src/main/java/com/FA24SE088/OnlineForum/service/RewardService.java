@@ -34,89 +34,6 @@ public class RewardService {
     RewardMapper rewardMapper;
     SectionMapper sectionMapper;
 
-    @Transactional
-    public RewardResponse create(RewardRequest request) {
-        if (request == null) {
-            throw new AppException(ErrorCode.REQUEST_NULL);
-        }
-
-        if (!request.getStatus().equals(DocumentStatus.ACTIVE.name()) &&
-                !request.getStatus().equals(DocumentStatus.INACTIVE.name())) {
-            throw new AppException(ErrorCode.WRONG_STATUS);
-        }
-
-        // Tạo đối tượng Reward từ request
-        Reward reward = rewardMapper.toReward(request);
-        reward = unitOfWork.getRewardRepository().save(reward);
-
-        List<SectionResponse> sectionResponses = new ArrayList<>();
-
-        // Xử lý tạo Section cùng các đối tượng liên quan
-        for (int sectionIndex = 0; sectionIndex < request.getSectionList().size(); sectionIndex++) {
-            SectionRequest sectionRequest = request.getSectionList().get(sectionIndex);
-            if (sectionRequest == null) continue;
-
-            Section section = sectionMapper.toSection(sectionRequest);
-            section.setReward(reward);
-            section.setNumber(sectionIndex); // Thiết lập số thứ tự cho Section
-            section = unitOfWork.getSectionRepository().save(section);
-
-            List<ContentSectionResponse> contentSectionResponses = new ArrayList<>();
-
-            // Xử lý tạo ContentSection
-            for (int contentIndex = 0; contentIndex < sectionRequest.getContentSectionList().size(); contentIndex++) {
-                ContentSectionRequest contentSectionRequest = sectionRequest.getContentSectionList().get(contentIndex);
-                if (contentSectionRequest == null) continue;
-
-                ContentSection contentSection = ContentSection.builder()
-                        .content(contentSectionRequest.getContent())
-                        .code(contentSectionRequest.getCode())
-                        .section(section)
-                        .number(contentIndex) // Thiết lập số thứ tự cho ContentSection
-                        .build();
-
-                contentSection = unitOfWork.getContentSectionRepository().save(contentSection);
-
-                List<MediaResponse> mediaResponses = new ArrayList<>();
-
-                // Xử lý tạo Media
-                for (MediaRequest mediaRequest : contentSectionRequest.getMediaList()) {
-                    if (mediaRequest == null) continue;
-
-                    Media media = Media.builder()
-                            .link(mediaRequest.getLink())
-                            .contentSection(contentSection)
-                            .build();
-
-                    media = unitOfWork.getMediaRepository().save(media);
-                    mediaResponses.add(new MediaResponse(media.getNumber(), media.getLink()));
-                }
-
-                // Thêm ContentSectionResponse với danh sách Media
-                contentSectionResponses.add(new ContentSectionResponse(
-                        contentSection.getContent(),
-                        contentSection.getCode(),
-                        contentSection.getNumber(),
-                        mediaResponses // Đảm bảo rằng đây là danh sách MediaResponse
-                ));
-            }
-
-            // Tạo SectionResponse với danh sách ContentSectionResponses
-            SectionResponse sectionResponse = SectionResponse.builder()
-                    .title(section.getTitle())
-                    .contentSectionResponses(contentSectionResponses)
-                    .build();
-            sectionResponses.add(sectionResponse);
-        }
-
-        // Tạo RewardResponse và thiết lập danh sách SectionResponses
-        RewardResponse response = rewardMapper.toResponse(reward);
-        response.setSectionList(sectionResponses);
-        return response;
-    }
-
-
-
 
     @Transactional
     public RewardResponse update(UUID documentID, RewardRequest request) {
@@ -257,22 +174,6 @@ public class RewardService {
 //        return response;
 //    }
 
-    public List<RewardResponse> getAll1() {
-        return unitOfWork.getRewardRepository().findAll().stream()
-                .map(document -> {
-                    RewardResponse response = rewardMapper.toResponse(document);
-                    // Sắp xếp Section theo order trước khi tạo response
-                    List<SectionResponse> sectionResponses = document.getSectionList().stream()
-                            .sorted(Comparator.comparingInt(Section::getNumber))
-                            .map(rewardMapper::toSectionResponse)
-                            .toList();
-                    response.setSectionList(sectionResponses);
-
-                    return response;
-                })
-                .toList();
-    }
-
 
     @Transactional
     public void deleteDocument(UUID documentId) {
@@ -384,56 +285,7 @@ public class RewardService {
         rewardResponse.setSectionList(sectionResponses);
         return rewardResponse;
     }
-
-//    @Transactional(readOnly = true)
-//    public List<RewardResponse> getAll() {
-//        List<Reward> rewards = unitOfWork.getRewardRepository().findAll(); // Retrieve all rewards from the database
-//        List<RewardResponse> rewardResponses = new ArrayList<>();
-//
-//        for (Reward reward : rewards) {
-//            List<SectionResponse> sectionResponses = new ArrayList<>();
-//
-//            for (Section section : reward.getSectionList()) {
-//                List<ContentSectionResponse> contentSectionResponses = new ArrayList<>();
-//
-//                for (ContentSection contentSection : section.getContentSectionList()) {
-//                    List<MediaResponse> mediaResponses = new ArrayList<>();
-//
-//                    for (Media media : contentSection.getMedias()) { // Assuming `ContentSection` has a getMediaList() method
-//                        mediaResponses.add(new MediaResponse(media.getNumber(),media.getLink()));
-//                    }
-//
-//                    contentSectionResponses.add(new ContentSectionResponse(
-//                            contentSection.getContent(),
-//                            contentSection.getCode(),
-//                            contentSection.getNumber(),
-//                            mediaResponses
-//                    ));
-//                }
-//
-//                SectionResponse sectionResponse = SectionResponse.builder()
-//                        .title(section.getTitle())
-//                        .contentSectionResponses(contentSectionResponses)
-//                        .build();
-//                sectionResponses.add(sectionResponse);
-//            }
-//
-//            RewardResponse rewardResponse = RewardResponse.builder()
-//                    .rewardId(reward.getRewardId())
-//                    .name(reward.getName())
-//                    .image(reward.getImage())
-//                    .price(reward.getPrice())
-//                    .type(reward.getType())
-//                    .status(reward.getStatus())
-//                    .sectionList(sectionResponses)
-//                    .build();
-//
-//            rewardResponses.add(rewardResponse);
-//        }
-//
-//        return rewardResponses;
-//    }
-
+    
     public List<RewardResponse> getAll() {
         return unitOfWork.getRewardRepository().findAll().stream()
                 .map(this::mapToRewardResponse)
