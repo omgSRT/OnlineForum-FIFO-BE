@@ -17,7 +17,7 @@ public interface RewardMapper {
 
     Reward toReward(RewardRequest request);
 
-    @Mapping(target = "documentId",source = "documentId")
+    @Mapping(target = "rewardId",source = "rewardId")
     RewardResponse toResponse(Reward reward);
 
 

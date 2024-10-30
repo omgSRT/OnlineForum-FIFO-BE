@@ -29,6 +29,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -51,7 +52,7 @@ public class AccountService {
     PasswordEncoder passwordEncoder;
     PaginationUtils paginationUtils;
 
-    public AccountResponse create(AccountRequest request, RoleAccount roleUser) {
+    public AccountResponse create(AccountRequest request) {
         if (unitOfWork.getAccountRepository().existsByUsername(request.getUsername()))
             throw new AppException(ErrorCode.ACCOUNT_IS_EXISTED);
         if (unitOfWork.getAccountRepository().existsByEmail(request.getEmail()))
@@ -63,8 +64,8 @@ public class AccountService {
         account.setHandle(request.getUsername());
         account.setPassword(passwordEncoder.encode(request.getPassword()));
 
-        if (roleUser.name().equalsIgnoreCase("STAFF")) {
-            Role role = unitOfWork.getRoleRepository().findByName(roleUser.name());
+        if (request.getRole().name().equalsIgnoreCase("STAFF")) {
+            Role role = unitOfWork.getRoleRepository().findByName(request.getRole().name());
             if (role == null) throw new AppException(ErrorCode.ROLE_NOT_FOUND);
             account.setRole(role);
 
@@ -107,6 +108,19 @@ public class AccountService {
         AccountResponse response = accountMapper.toResponse(account);
         response.setAccountId(account.getAccountId());
         return response;
+    }
+
+    public AccountResponse loginGG(OAuth2User oAuth2User){
+        Account account = new Account();
+        account.setEmail(oAuth2User.getAttribute("email"));
+        account.setUsername(oAuth2User.getAttribute("name"));
+        account.setAvatar(oAuth2User.getAttribute("picture"));
+        account.setStatus(AccountStatus.ACTIVE.name());
+        String handle = String.format("@%s", oAuth2User.getAttribute("name"));
+        account.setHandle(handle);
+
+        unitOfWork.getAccountRepository().save(account);
+        return accountMapper.toResponse(account);
     }
 
     public AccountResponse updateCategoryOfStaff(UUID id, AccountUpdateCategoryRequest request) {

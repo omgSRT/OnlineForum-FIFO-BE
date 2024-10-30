@@ -49,8 +49,8 @@ public class AuthenticationController {
 
     @PostMapping("/sign-up")
     @Transactional
-    public ApiResponse<AccountResponse> create(@Valid @RequestBody AccountRequest request, RoleAccount role) {
-        AccountResponse response = accountService.create(request,role);
+    public ApiResponse<AccountResponse> create(@Valid @RequestBody AccountRequest request) {
+        AccountResponse response = accountService.create(request);
         Otp otp = otpUtil.generateOtp(request.getEmail());
         emailUtil.sendToAnEmail(
                 response.getEmail(),
@@ -64,8 +64,7 @@ public class AuthenticationController {
 
     @PostMapping("/verify-email")
     public ApiResponse<AccountResponse> verifyOtp(@RequestBody OtpRequest request) {
-        boolean check = otpUtil.verifyOTP(request.getEmail(), request.getOtpEmail());
-
+        otpUtil.verifyOTP(request.getEmail(), request.getOtpEmail());
         return ApiResponse.<AccountResponse>builder()
                 .entity(accountService.verifyAccount(request.getEmail()))
                 .build();

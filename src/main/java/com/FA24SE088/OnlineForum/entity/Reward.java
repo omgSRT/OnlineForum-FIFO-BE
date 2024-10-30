@@ -18,18 +18,18 @@ import java.util.UUID;
 public class Reward {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    UUID documentId;
+    UUID rewardId;
     String name;
     String image;
     double price;
     String type;
     String status;
 
-    @JsonIgnoreProperties(value = {"reward"}, allowSetters = true)
+    @JsonIgnoreProperties(value = {"reward","account"}, allowSetters = true)
     @OneToMany(mappedBy = "reward", cascade = CascadeType.ALL, orphanRemoval = true)
     List<Redeem> redeemList;
 
-    @JsonIgnoreProperties(value = { "document" }, allowSetters = true)
+    @JsonIgnoreProperties(value = { "reward"}, allowSetters = true)
     @OneToMany(mappedBy = "reward", cascade = CascadeType.ALL, orphanRemoval = true)
     List<Section> sectionList;
 }

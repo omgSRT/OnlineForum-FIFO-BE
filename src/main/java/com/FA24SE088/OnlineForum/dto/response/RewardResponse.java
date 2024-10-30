@@ -12,7 +12,7 @@ import java.util.UUID;
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class RewardResponse {
-    UUID documentId;
+    UUID rewardId;
     String name;
     String image;
     double price;

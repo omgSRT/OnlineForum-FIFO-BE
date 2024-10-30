@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -22,7 +23,7 @@ public class SecurityConfiguration {
     private final String[] PUBLIC_ENDPOINTS_POST = {"/authenticate/login", "/authenticate/introspect", "/authenticate/logout",
             "/authenticate/refresh", "/email/send", "/authenticate/sign-up",
             "/daily-point/create", "/notification/create", "/notification/change/status",
-            "/account/create","/authenticate/sign-up","/authenticate/resend-otp", "/authenticate/verify-email",
+            "/account/create", "/authenticate/sign-up", "/authenticate/resend-otp", "/authenticate/verify-email",
             "/authenticate/forget-password"};
     private final String[] PUBLIC_ENDPOINTS_GET = {"/swagger-ui/**", "/v3/api-docs/**", "/swagger-resources/**"
     };
@@ -37,11 +38,22 @@ public class SecurityConfiguration {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
         http.authorizeHttpRequests(request ->
-                request
-                        .requestMatchers(HttpMethod.GET, PUBLIC_ENDPOINTS_GET).permitAll()
-                        .requestMatchers(HttpMethod.POST, PUBLIC_ENDPOINTS_POST).permitAll()
-                        .requestMatchers(HttpMethod.PUT, PUBLIC_ENDPOINTS_PUT).permitAll()
-                        .anyRequest().authenticated());
+                        request
+                                .requestMatchers(HttpMethod.GET, PUBLIC_ENDPOINTS_GET).permitAll()
+                                .requestMatchers(HttpMethod.POST, PUBLIC_ENDPOINTS_POST).permitAll()
+                                .requestMatchers(HttpMethod.PUT, PUBLIC_ENDPOINTS_PUT).permitAll()
+                                .anyRequest().authenticated())
+//                .oauth2Login(oauth2 -> oauth2 // Cấu hình OAuth2 Login
+//                        .loginPage("/login") // Đường dẫn đến trang đăng nhập tùy chỉnh
+//                        .defaultSuccessUrl("/home", true) // Đường dẫn đến trang thành công
+//                        .failureUrl("/login?error=true") // Đường dẫn đến trang thất bại
+//                )
+//                .oauth2Login(oauth2 -> oauth2
+//                        .defaultSuccessUrl("/login/oauth2/code/google", true) // Tự động chuyển hướng sau khi đăng nhập thành công
+//                        .failureUrl("/login?error=true") // Đường dẫn đến trang thất bại
+//                )
+                .formLogin(Customizer.withDefaults())
+        ;
 
         http.oauth2ResourceServer(oauth2 ->
                 oauth2.jwt(jwtConfigurer ->
@@ -54,7 +66,6 @@ public class SecurityConfiguration {
 
         return http.build();
     }
-
 
 
     @Bean
