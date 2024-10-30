@@ -285,7 +285,7 @@ public class RewardService {
         rewardResponse.setSectionList(sectionResponses);
         return rewardResponse;
     }
-    
+
     public List<RewardResponse> getAll() {
         return unitOfWork.getRewardRepository().findAll().stream()
                 .map(this::mapToRewardResponse)

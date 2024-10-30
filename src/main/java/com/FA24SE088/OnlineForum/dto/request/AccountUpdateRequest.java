@@ -13,7 +13,9 @@ public class AccountUpdateRequest {
     String handle;
     String email;
     String bio;
-    String gender;
-    String address;
+    String phone;
     String avatar;
+    String coverImage;
+
+
 }
