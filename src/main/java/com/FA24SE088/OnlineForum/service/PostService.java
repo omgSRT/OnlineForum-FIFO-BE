@@ -281,16 +281,18 @@ public class PostService {
                 throw new AppException(ErrorCode.ACCOUNT_NOT_THE_AUTHOR_OF_POST);
             }
 
-            var deleteImageListFuture = deleteImagesByPost(post);
-            var createImageFuture = createImages(request, post);
+            CompletableFuture<List<Image>> deleteImageListFuture = CompletableFuture.completedFuture(null);
+            CompletableFuture<List<Image>> createImageFuture = CompletableFuture.completedFuture(null);
+            if (request.getImageUrlList() != null && !request.getImageUrlList().isEmpty()) {
+                deleteImageListFuture = deleteImagesByPost(post);
+                createImageFuture = createImages(request, post);
+            }
 
-            return CompletableFuture.allOf(deleteImageListFuture, createImageFuture).thenCompose(voidData -> {
+            CompletableFuture<List<Image>> finalCreateImageFuture = createImageFuture;
+            return CompletableFuture.allOf(deleteImageListFuture, createImageFuture, finalCreateImageFuture).thenCompose(voidData -> {
                 postMapper.updatePost(post, request);
-                if(createImageFuture.join() != null){
-                    post.setImageList(createImageFuture.join());
-                }
-                else{
-                    post.setImageList(new ArrayList<>());
+                if (request.getImageUrlList() != null && !request.getImageUrlList().isEmpty()) {
+                    post.setImageList(finalCreateImageFuture.join() != null ? finalCreateImageFuture.join() : new ArrayList<>());
                 }
                 post.setLastModifiedDate(new Date());
 
