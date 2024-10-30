@@ -19,7 +19,6 @@ spring:
             required: true
           ssl:
             trust: smtp.gmail.com
-
   custom:
     jwt:
       secret: 9fpGEUpGqiplW2HJB7UDOpJScDgzJWJR5xqOP3zsJQKs8fuIQpvw37BP3hmNmb/9

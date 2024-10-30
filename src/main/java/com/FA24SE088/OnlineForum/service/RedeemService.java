@@ -41,7 +41,7 @@ public class RedeemService {
         Reward reward = findDocument(request.getRewardId());
         //nếu tk đã đổi phần thưởng này r thì ko cho đổi nữa
         account.getRedeemList().forEach(redeem -> {
-            if (redeem.getReward().getDocumentId().equals(reward.getDocumentId()))
+            if (redeem.getReward().getRewardId().equals(reward.getRewardId()))
                 throw new AppException(ErrorCode.REWARD_HAS_BEEN_TAKEN);
         });
 
