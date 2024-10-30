@@ -187,6 +187,7 @@ public class RewardService {
         unitOfWork.getRewardRepository().delete(reward);
     }
 
+    @Transactional
     public RewardResponse createReward(RewardRequest rewardRequest) {
         Reward reward = new Reward();
         reward.setName(rewardRequest.getName());
