@@ -16,6 +16,4 @@ public class AccountUpdateRequest {
     String phone;
     String avatar;
     String coverImage;
-
-
 }

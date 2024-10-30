@@ -162,14 +162,16 @@ public class AccountService {
 
     public AccountResponse updateInfo(AccountUpdateInfoRequest request) {
         Account account = getCurrentUser();
-        if (!passwordEncoder.matches(request.getOldPassword(), account.getPassword())) {
-            throw new AppException(ErrorCode.PASSWORD_NOT_MATCH);
+            if(request.getOldPassword() !=null && !request.getOldPassword().isEmpty()){
+                if (!passwordEncoder.matches(request.getOldPassword(), account.getPassword())) {
+                    throw new AppException(ErrorCode.PASSWORD_NOT_MATCH);
+                }
+
+            }
+        if(request.getNewPass() != null && !request.getNewPass().isEmpty()){
+            // Mã hóa mật khẩu mới (encoder là mã hoá 1 chiều)
+            account.setPassword(passwordEncoder.encode(request.getNewPass()));
         }
-        if (!request.getNewPass().equals(request.getConfirmPassword())) {
-            throw new AppException(ErrorCode.PASSWORD_NOT_MATCH);
-        }
-        // Mã hóa mật khẩu mới (encoder là mã hoá 1 chiều)
-        account.setPassword(passwordEncoder.encode(request.getNewPass()));
         if (request.getAvatar() != null && !request.getAvatar().isEmpty()) {
             account.setAvatar(request.getAvatar());
         }
