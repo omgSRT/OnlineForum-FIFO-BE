@@ -23,6 +23,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
@@ -115,54 +116,7 @@ public class RewardService {
     }
 
 
-    @Transactional(readOnly = true)
-    public List<RewardResponse> getAll() {
-        List<Reward> rewards = unitOfWork.getRewardRepository().findAll(); // Retrieve all rewards from the database
-        List<RewardResponse> rewardResponses = new ArrayList<>();
 
-        for (Reward reward : rewards) {
-            List<SectionResponse> sectionResponses = new ArrayList<>();
-
-            for (Section section : reward.getSectionList()) {
-                List<ContentSectionResponse> contentSectionResponses = new ArrayList<>();
-
-                for (ContentSection contentSection : section.getContentSectionList()) {
-                    List<MediaResponse> mediaResponses = new ArrayList<>();
-
-                    for (Media media : contentSection.getMedias()) { // Assuming `ContentSection` has a getMediaList() method
-                        mediaResponses.add(new MediaResponse(media.getNumber(),media.getLink()));
-                    }
-
-                    contentSectionResponses.add(new ContentSectionResponse(
-                            contentSection.getContent(),
-                            contentSection.getCode(),
-                            contentSection.getNumber(),
-                            mediaResponses
-                    ));
-                }
-
-                SectionResponse sectionResponse = SectionResponse.builder()
-                        .title(section.getTitle())
-                        .contentSectionResponses(contentSectionResponses)
-                        .build();
-                sectionResponses.add(sectionResponse);
-            }
-
-            RewardResponse rewardResponse = RewardResponse.builder()
-                    .documentId(reward.getDocumentId())
-                    .name(reward.getName())
-                    .image(reward.getImage())
-                    .price(reward.getPrice())
-                    .type(reward.getType())
-                    .status(reward.getStatus())
-                    .sectionList(sectionResponses)
-                    .build();
-
-            rewardResponses.add(rewardResponse);
-        }
-
-        return rewardResponses;
-    }
 
     @Transactional
     public RewardResponse update(UUID documentID, RewardRequest request) {
@@ -326,10 +280,167 @@ public class RewardService {
                 .findById(documentId)
                 .orElseThrow(() -> new AppException(ErrorCode.REWARD_NOT_FOUND));
         reward.getRedeemList().forEach(redeem -> {
-            if (redeem.getReward().getDocumentId().equals(documentId))
+            if (redeem.getReward().getRewardId().equals(documentId))
                 throw new AppException(ErrorCode.DOCUMENT_HAS_BEEN_USED);
         });
         unitOfWork.getRewardRepository().delete(reward);
     }
+
+    public RewardResponse createReward(RewardRequest rewardRequest) {
+        Reward reward = new Reward();
+        reward.setName(rewardRequest.getName());
+        reward.setImage(rewardRequest.getImage());
+        reward.setPrice(rewardRequest.getPrice());
+        reward.setType(rewardRequest.getType());
+        reward.setStatus(rewardRequest.getStatus());
+
+        List<Section> sections = new ArrayList<>();
+        int sectionNumber = 1;
+
+        for (SectionRequest sectionRequest : rewardRequest.getSectionList()) {
+            Section section = new Section();
+            section.setTitle(sectionRequest.getTitle());
+            section.setNumber(sectionNumber++);
+            section.setReward(reward);
+
+            List<ContentSection> contentSections = new ArrayList<>();
+            int contentSectionNumber = 1;
+
+            for (ContentSectionRequest contentRequest : sectionRequest.getContentSectionList()) {
+                ContentSection contentSection = new ContentSection();
+                contentSection.setContent(contentRequest.getContent());
+                contentSection.setCode(contentRequest.getCode());
+                contentSection.setNumber(contentSectionNumber++);
+                contentSection.setSection(section);
+
+                List<Media> mediaList = new ArrayList<>();
+                int mediaNumber = 1;
+
+                for (MediaRequest mediaRequest : contentRequest.getMediaList()) {
+                    Media media = new Media();
+                    media.setLink(mediaRequest.getLink());
+                    media.setNumber(mediaNumber++);
+                    media.setContentSection(contentSection);
+                    mediaList.add(media);
+                }
+
+                contentSection.setMedias(mediaList);
+                contentSections.add(contentSection);
+            }
+
+            section.setContentSectionList(contentSections);
+            sections.add(section);
+        }
+
+        reward.setSectionList(sections);
+        Reward savedReward = unitOfWork.getRewardRepository().save(reward);
+
+        return mapToRewardResponse(savedReward);
+    }
+
+
+
+    private RewardResponse mapToRewardResponse(Reward reward) {
+        RewardResponse rewardResponse = new RewardResponse();
+        rewardResponse.setRewardId(reward.getRewardId());
+        rewardResponse.setName(reward.getName());
+        rewardResponse.setImage(reward.getImage());
+        rewardResponse.setPrice(reward.getPrice());
+        rewardResponse.setType(reward.getType());
+        rewardResponse.setStatus(reward.getStatus());
+
+        List<SectionResponse> sectionResponses = reward.getSectionList().stream()
+                .sorted(Comparator.comparingInt(Section::getNumber))
+                .map(section -> {
+                    SectionResponse sectionResponse = new SectionResponse();
+                    sectionResponse.setTitle(section.getTitle());
+                    sectionResponse.setNumber(section.getNumber());
+
+                    List<ContentSectionResponse> contentResponses = section.getContentSectionList().stream()
+                            .sorted(Comparator.comparingInt(ContentSection::getNumber))
+                            .map(contentSection -> {
+                                ContentSectionResponse contentSectionResponse = new ContentSectionResponse();
+                                contentSectionResponse.setContent(contentSection.getContent());
+                                contentSectionResponse.setCode(contentSection.getCode());
+                                contentSectionResponse.setNumber(contentSection.getNumber());
+
+                                List<MediaResponse> mediaResponses = contentSection.getMedias().stream()
+                                        .sorted(Comparator.comparingInt(Media::getNumber))
+                                        .map(media -> {
+                                            MediaResponse mediaResponse = new MediaResponse();
+                                            mediaResponse.setNumber(media.getNumber());
+                                            mediaResponse.setLink(media.getLink());
+                                            return mediaResponse;
+                                        }).collect(Collectors.toList());
+
+                                contentSectionResponse.setMediaList(mediaResponses);
+                                return contentSectionResponse;
+                            }).collect(Collectors.toList());
+
+                    sectionResponse.setContentSectionResponses(contentResponses);
+                    return sectionResponse;
+                }).collect(Collectors.toList());
+
+        rewardResponse.setSectionList(sectionResponses);
+        return rewardResponse;
+    }
+
+//    @Transactional(readOnly = true)
+//    public List<RewardResponse> getAll() {
+//        List<Reward> rewards = unitOfWork.getRewardRepository().findAll(); // Retrieve all rewards from the database
+//        List<RewardResponse> rewardResponses = new ArrayList<>();
+//
+//        for (Reward reward : rewards) {
+//            List<SectionResponse> sectionResponses = new ArrayList<>();
+//
+//            for (Section section : reward.getSectionList()) {
+//                List<ContentSectionResponse> contentSectionResponses = new ArrayList<>();
+//
+//                for (ContentSection contentSection : section.getContentSectionList()) {
+//                    List<MediaResponse> mediaResponses = new ArrayList<>();
+//
+//                    for (Media media : contentSection.getMedias()) { // Assuming `ContentSection` has a getMediaList() method
+//                        mediaResponses.add(new MediaResponse(media.getNumber(),media.getLink()));
+//                    }
+//
+//                    contentSectionResponses.add(new ContentSectionResponse(
+//                            contentSection.getContent(),
+//                            contentSection.getCode(),
+//                            contentSection.getNumber(),
+//                            mediaResponses
+//                    ));
+//                }
+//
+//                SectionResponse sectionResponse = SectionResponse.builder()
+//                        .title(section.getTitle())
+//                        .contentSectionResponses(contentSectionResponses)
+//                        .build();
+//                sectionResponses.add(sectionResponse);
+//            }
+//
+//            RewardResponse rewardResponse = RewardResponse.builder()
+//                    .rewardId(reward.getRewardId())
+//                    .name(reward.getName())
+//                    .image(reward.getImage())
+//                    .price(reward.getPrice())
+//                    .type(reward.getType())
+//                    .status(reward.getStatus())
+//                    .sectionList(sectionResponses)
+//                    .build();
+//
+//            rewardResponses.add(rewardResponse);
+//        }
+//
+//        return rewardResponses;
+//    }
+
+    public List<RewardResponse> getAll() {
+        return unitOfWork.getRewardRepository().findAll().stream()
+                .map(this::mapToRewardResponse)
+                .collect(Collectors.toList());
+    }
+
+
+
 }
 

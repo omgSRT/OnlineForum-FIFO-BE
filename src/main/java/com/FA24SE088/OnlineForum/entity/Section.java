@@ -24,7 +24,7 @@ public class Section {
     Integer number;
 
     @ManyToOne
-    @JoinColumn(name = "sectionId")
+    @JoinColumn(name = "rewardId")
     Reward reward;
 
     @JsonIgnore

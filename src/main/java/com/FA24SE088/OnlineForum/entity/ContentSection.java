@@ -25,7 +25,7 @@ public class ContentSection {
     Integer number;
 
     @ManyToOne
-    @JoinColumn(name = "sectionId")
+    @JoinColumn(name = "sectionCodeId")
     Section section;
 
     @OneToMany(mappedBy = "contentSection", cascade = CascadeType.ALL, orphanRemoval = true)
