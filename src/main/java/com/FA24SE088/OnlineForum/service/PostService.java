@@ -133,11 +133,15 @@ public class PostService {
                 tagFuture, followerListFuture, blockedListFuture).thenCompose(v -> {
             var postList = postListFuture.join();
             var account = accountFuture.join();
-            var category = categoryFuture.join();
-            var topic = topicFuture.join();
+            var category = (Category) categoryFuture.join();
+            var topic = (Topic) topicFuture.join();
             var tag = tagFuture.join();
             List<Account> followerAccountList = followerListFuture.join();
             List<Account> blockedAccountList = blockedListFuture.join();
+
+            if (topic != null && category != null && !category.getTopicList().contains(topic)) {
+                throw new AppException(ErrorCode.TOPIC_NOT_BELONG_TO_CATEGORY);
+            }
 
             var list = new ArrayList<>(postList.stream()
                     .filter(post -> {

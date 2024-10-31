@@ -113,7 +113,6 @@ public class AuthenticationController {
                         .build()
         ).join();
     }
-
     @PutMapping("/change-password")
     public ApiResponse<AccountResponse> changePassword(String email,
                                                        @RequestBody @Valid AccountChangePasswordRequest request){
@@ -123,5 +122,23 @@ public class AuthenticationController {
                         .entity(accountResponse)
                         .build()
         ).join();
+    }
+    @Operation(summary = "Resend OTP Email For Forget Password")
+    @PostMapping("/resend-otp/forget-password")
+    public ApiResponse<Void> resendOtpForForgetPassword(@RequestParam String email) {
+        String emailBody = "<html>"
+                + "<body>"
+                + "<p><strong>FIFO Password Reset</strong></p>"
+                + "<p>We heard that you lost your FIFO password. Sorry about that!</p>"
+                + "<p>Don't worry! Enter This OTP To Reset Your Password: " +otpUtil.generateOtp(email)+ " </p>"
+                + "</body>"
+                + "</html>";
+        emailUtil.sendToAnEmail(email,
+                emailBody,
+                "Mã OTP xác thực tài khoản",
+                null);
+        return ApiResponse.<Void>builder()
+                .message(SuccessReturnMessage.SEND_SUCCESS.getMessage())
+                .build();
     }
 }

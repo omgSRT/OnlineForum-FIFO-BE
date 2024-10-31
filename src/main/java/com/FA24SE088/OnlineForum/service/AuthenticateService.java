@@ -17,6 +17,7 @@ import com.FA24SE088.OnlineForum.exception.ErrorCode;
 import com.FA24SE088.OnlineForum.mapper.AccountMapper;
 import com.FA24SE088.OnlineForum.repository.UnitOfWork.UnitOfWork;
 import com.FA24SE088.OnlineForum.utils.EmailUtil;
+import com.FA24SE088.OnlineForum.utils.OtpUtil;
 import com.nimbusds.jose.*;
 import com.nimbusds.jose.crypto.MACSigner;
 import com.nimbusds.jose.crypto.MACVerifier;
@@ -47,6 +48,7 @@ public class AuthenticateService {
     final UnitOfWork unitOfWork;
     final EmailUtil emailUtil;
     final AccountMapper accountMapper;
+    final OtpUtil otpUtil;
     @Value("${spring.custom.jwt.secret}")
     String jwtSecret;
 
@@ -175,20 +177,27 @@ public class AuthenticateService {
                         new AppException(ErrorCode.ACCOUNT_NOT_FOUND)));
 
         return foundAccountFuture.thenCompose(account -> {
+//            String emailBody = "<html>"
+//                    + "<body>"
+//                    + "<p><strong>FIFO Password Reset</strong></p>"
+//                    + "<p>We heard that you lost your FIFO password. Sorry about that!</p>"
+//                    + "<p>But don’t worry! You can use the following button to reset your password:</p>"
+//                    + "<a href=\"https://your-reset-url.com/reset?email=" + account.getEmail() + "\" "
+//                    + "style=\"display: inline-block; padding: 10px 20px; font-size: 16px; color: white; "
+//                    + "background-color: #4CAF50; text-decoration: none; border-radius: 5px;\">"
+//                    + "Reset Password"
+//                    + "</a>"
+//                    + "</body>"
+//                    + "</html>";
             String emailBody = "<html>"
                     + "<body>"
                     + "<p><strong>FIFO Password Reset</strong></p>"
                     + "<p>We heard that you lost your FIFO password. Sorry about that!</p>"
-                    + "<p>But don’t worry! You can use the following button to reset your password:</p>"
-                    + "<a href=\"https://your-reset-url.com/reset?email=" + account.getEmail() + "\" "
-                    + "style=\"display: inline-block; padding: 10px 20px; font-size: 16px; color: white; "
-                    + "background-color: #4CAF50; text-decoration: none; border-radius: 5px;\">"
-                    + "Reset Password"
-                    + "</a>"
+                    + "<p>Don't worry! Enter This OTP To Reset Your Password: " +otpUtil.generateOtp(account.getEmail())+ " </p>"
                     + "</body>"
                     + "</html>";
 
-            emailUtil.sendToAnEmailWithHTMLEnabled(account.getEmail(),
+            emailUtil.sendToAnEmail(account.getEmail(),
                     emailBody,
                     "Please Reset Your Password",
                     null);

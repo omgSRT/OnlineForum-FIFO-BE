@@ -15,5 +15,4 @@ import java.util.List;
 public class OtpRequest {
     String email;
     String otpEmail;
-
 }
