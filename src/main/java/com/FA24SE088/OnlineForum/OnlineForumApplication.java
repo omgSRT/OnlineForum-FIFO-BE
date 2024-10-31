@@ -15,7 +15,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 
 @SpringBootApplication(exclude = {SecurityAutoConfiguration.class})
-@EnableWebSecurity
 @EnableCaching
 @EnableAsync
 public class OnlineForumApplication {

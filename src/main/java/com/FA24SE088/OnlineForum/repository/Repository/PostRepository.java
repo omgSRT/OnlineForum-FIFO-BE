@@ -20,5 +20,11 @@ public interface PostRepository extends JpaRepository<Post, UUID> {
     @Async("AsyncTaskExecutor")
     CompletableFuture<List<Post>> findByAccount(Account account);
 
+    @Async("AsyncTaskExecutor")
+    CompletableFuture<List<Post>> findByTitleContainingIgnoreCase(String title);
+
+    @Async("AsyncTaskExecutor")
+    CompletableFuture<List<Post>> findByContentContainingIgnoreCase(String content);
+
     List<Post> findAllByOrderByCreatedDateDesc();
 }

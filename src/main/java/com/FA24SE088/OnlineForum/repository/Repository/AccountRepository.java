@@ -20,4 +20,10 @@ public interface AccountRepository extends JpaRepository<Account, UUID> {
 
     @Async("AsyncTaskExecutor")
     CompletableFuture<Optional<Account>> findByEmailIgnoreCase(String email);
+
+    @Async("AsyncTaskExecutor")
+    CompletableFuture<List<Account>> findByUsernameContainingIgnoreCase(String username);
+
+    @Async("AsyncTaskExecutor")
+    CompletableFuture<List<Account>> findByEmailContainingIgnoreCase(String email);
 }
