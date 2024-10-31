@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
+import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.UUID;
 
@@ -21,7 +22,7 @@ public class Notification {
     String title;
     String message;
     boolean isRead;
-    Date createdDate;
+    LocalDateTime createdDate;
     String type;
 
 
