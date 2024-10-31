@@ -5,6 +5,7 @@ import jakarta.validation.constraints.Size;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
+import javax.annotation.Nullable;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
@@ -19,5 +20,6 @@ public class NotificationRequest {
     String message;
     boolean isRead;
     String type;
+    @Nullable
     UUID accountId;
 }

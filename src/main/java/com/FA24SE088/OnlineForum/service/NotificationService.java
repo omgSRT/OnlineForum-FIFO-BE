@@ -8,6 +8,7 @@ import com.FA24SE088.OnlineForum.exception.AppException;
 import com.FA24SE088.OnlineForum.exception.ErrorCode;
 import com.FA24SE088.OnlineForum.mapper.NotificationMapper;
 import com.FA24SE088.OnlineForum.repository.UnitOfWork.UnitOfWork;
+import com.FA24SE088.OnlineForum.utils.DataHandler;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -28,6 +29,7 @@ import java.util.UUID;
 public class NotificationService {
     UnitOfWork unitOfWork;
     NotificationMapper notificationMapper;
+    DataHandler dataHandler;
 
     private Account getCurrentUser(){
         var context = SecurityContextHolder.getContext();
@@ -47,6 +49,26 @@ public class NotificationService {
         return notificationMapper.toResponse(savedNotification);
     }
 
+    public void sendPrivateNotification(NotificationRequest notificationRequest) {
+        var savedData = saveNotification(notificationRequest);
+        dataHandler.sendToUser(notificationRequest.getAccountId(), savedData);
+    }
+
+    private Notification saveNotification(NotificationRequest notificationRequest) {
+
+        Account account = unitOfWork.getAccountRepository().findById(notificationRequest.getAccountId()).orElseThrow(
+                () -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND)
+        );
+        Notification notification = Notification.builder()
+                .title(notificationRequest.getTitle())
+                .message(notificationRequest.getMessage())
+                .isRead(false)
+                .createdDate(new Date())
+                .type(notificationRequest.getType())
+                .account(account)
+                .build();
+        return unitOfWork.getNotificationRepository().save(notification);
+    }
     public Optional<NotificationResponse> getNotificationById(UUID notificationId) {
         Optional<Notification> notificationOptional = unitOfWork.getNotificationRepository().findById(notificationId);
         return notificationOptional.map(notificationMapper::toResponse);

@@ -4,7 +4,6 @@ package com.FA24SE088.OnlineForum.controller;
 import com.FA24SE088.OnlineForum.dto.request.RewardRequest;
 import com.FA24SE088.OnlineForum.dto.response.ApiResponse;
 import com.FA24SE088.OnlineForum.dto.response.RewardResponse;
-import com.FA24SE088.OnlineForum.entity.Reward;
 import com.FA24SE088.OnlineForum.service.RewardService;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.AccessLevel;
@@ -24,15 +23,6 @@ import java.util.UUID;
 public class RewardController {
     RewardService rewardService;
 
-//    @Operation(summary = "Create Document", description = "Status: \n" +
-//            "ACTIVE,\n" +
-//            "    INACTIVE")
-//    @PostMapping("/create")
-//    public ApiResponse<RewardResponse> create(@RequestBody RewardRequest request) {
-//        return ApiResponse.<RewardResponse>builder()
-//                .entity(rewardService.create(request))
-//                .build();
-//    }
     @PostMapping("/create-reward")
     public ApiResponse<RewardResponse> create1(@RequestBody RewardRequest request) {
         return ApiResponse.<RewardResponse>builder()
@@ -59,7 +49,7 @@ public class RewardController {
 
     @DeleteMapping("/delete/{id}")
     public ApiResponse<RewardResponse> update(@PathVariable UUID id) {
-        rewardService.deleteDocument(id);
+        rewardService.deleteReward(id);
         return ApiResponse.<RewardResponse>builder()
                 .build();
     }

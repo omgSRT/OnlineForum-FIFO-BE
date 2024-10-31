@@ -26,5 +26,6 @@ public class NotificationResponse {
     boolean isRead;
     Date createdDate;
     String type;
-    UUID accountId;
+    @JsonIgnoreProperties(value = { "password","followerList","redeemList","dailyPointList","postList","upvoteList","commentList","categoryList","eventList","blockedAccounts","feedbackList","reportList","reportsReceived","bookMarkList","followeeList", "address", "createdDate", "status"})
+    Account account;
 }

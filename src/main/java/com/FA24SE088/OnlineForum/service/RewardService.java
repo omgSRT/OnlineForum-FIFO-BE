@@ -10,6 +10,7 @@ import com.FA24SE088.OnlineForum.dto.response.RewardResponse;
 import com.FA24SE088.OnlineForum.dto.response.SectionResponse;
 import com.FA24SE088.OnlineForum.entity.*;
 import com.FA24SE088.OnlineForum.enums.DocumentStatus;
+import com.FA24SE088.OnlineForum.enums.RewardStatus;
 import com.FA24SE088.OnlineForum.exception.AppException;
 import com.FA24SE088.OnlineForum.exception.ErrorCode;
 import com.FA24SE088.OnlineForum.mapper.RewardMapper;
@@ -23,7 +24,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
@@ -176,12 +176,12 @@ public class RewardService {
 
 
     @Transactional
-    public void deleteDocument(UUID documentId) {
+    public void deleteReward(UUID rewardId) {
         Reward reward = unitOfWork.getRewardRepository()
-                .findById(documentId)
+                .findById(rewardId)
                 .orElseThrow(() -> new AppException(ErrorCode.REWARD_NOT_FOUND));
         reward.getRedeemList().forEach(redeem -> {
-            if (redeem.getReward().getRewardId().equals(documentId))
+            if (redeem.getReward().getRewardId().equals(rewardId))
                 throw new AppException(ErrorCode.DOCUMENT_HAS_BEEN_USED);
         });
         unitOfWork.getRewardRepository().delete(reward);
@@ -189,12 +189,13 @@ public class RewardService {
 
     @Transactional
     public RewardResponse createReward(RewardRequest rewardRequest) {
-        Reward reward = new Reward();
-        reward.setName(rewardRequest.getName());
-        reward.setImage(rewardRequest.getImage());
-        reward.setPrice(rewardRequest.getPrice());
-        reward.setType(rewardRequest.getType());
-        reward.setStatus(rewardRequest.getStatus());
+        Reward reward = rewardMapper.toReward(rewardRequest);
+        reward.setStatus(RewardStatus.ACTIVE.name());
+//        reward.setName(rewardRequest.getName());
+//        reward.setImage(rewardRequest.getImage());
+//        reward.setPrice(rewardRequest.getPrice());
+//        reward.setType(rewardRequest.getType());
+//        reward.setStatus(rewardRequest.getStatus());
 
         List<Section> sections = new ArrayList<>();
         int sectionNumber = 1;
@@ -273,15 +274,15 @@ public class RewardService {
                                             mediaResponse.setNumber(media.getNumber());
                                             mediaResponse.setLink(media.getLink());
                                             return mediaResponse;
-                                        }).collect(Collectors.toList());
+                                        }).toList();
 
                                 contentSectionResponse.setMediaList(mediaResponses);
                                 return contentSectionResponse;
-                            }).collect(Collectors.toList());
+                            }).toList();
 
                     sectionResponse.setContentSectionResponses(contentResponses);
                     return sectionResponse;
-                }).collect(Collectors.toList());
+                }).toList();
 
         rewardResponse.setSectionList(sectionResponses);
         return rewardResponse;
@@ -290,7 +291,7 @@ public class RewardService {
     public List<RewardResponse> getAll() {
         return unitOfWork.getRewardRepository().findAll().stream()
                 .map(this::mapToRewardResponse)
-                .collect(Collectors.toList());
+                .toList();
     }
 
 
