@@ -16,6 +16,5 @@ public interface NotificationMapper {
 
     Notification toNotification (NotificationRequest request);
 
-    @Mapping(target = "accountId",source = "account.accountId")
     NotificationResponse toResponse(Notification notification);
 }

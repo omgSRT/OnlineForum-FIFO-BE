@@ -6,6 +6,7 @@ import com.FA24SE088.OnlineForum.dto.request.AccountUpdateInfoRequest;
 import com.FA24SE088.OnlineForum.dto.response.AccountResponse;
 import com.FA24SE088.OnlineForum.dto.response.ApiResponse;
 import com.FA24SE088.OnlineForum.enums.AccountStatus;
+import com.FA24SE088.OnlineForum.enums.RoleAccount;
 import com.FA24SE088.OnlineForum.service.AccountService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -63,10 +64,11 @@ public class AccountController {
                                                      @RequestParam(defaultValue = "10") int perPage,
                                                      @RequestParam(required = false) String username,
                                                      @RequestParam(required = false) String email,
-                                                     @RequestParam AccountStatus status) {
+                                                     @RequestParam(required = false,defaultValue = "ACTIVE")AccountStatus status,
+                                                     @RequestParam(required = false)RoleAccount role) {
 
         return ApiResponse.<List<AccountResponse>>builder()
-                .entity(accountService.filter(page, perPage,username, email, status))
+                .entity(accountService.filter(page, perPage,username, email, status, role))
                 .build();
     }
 
