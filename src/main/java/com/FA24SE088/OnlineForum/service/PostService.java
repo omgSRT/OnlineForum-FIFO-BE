@@ -139,7 +139,7 @@ public class PostService {
             List<Account> followerAccountList = followerListFuture.join();
             List<Account> blockedAccountList = blockedListFuture.join();
 
-            if (topic != null && category != null && !category.getTopicList().contains(topic)) {
+            if (topic != null && category != null && !topic.getCategory().equals(category)) {
                 throw new AppException(ErrorCode.TOPIC_NOT_BELONG_TO_CATEGORY);
             }
 

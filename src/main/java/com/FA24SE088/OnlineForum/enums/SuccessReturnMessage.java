@@ -13,6 +13,7 @@ public enum SuccessReturnMessage {
     SEND_SUCCESS("Send Successfully"),
     POST_SUCCESS("Post Successfully"),
     LOGIN_SUCCESS("Login Successfully"),
+    VERIFY_SUCCESS("Verify Successfully"),
     ;
 
     private String message;

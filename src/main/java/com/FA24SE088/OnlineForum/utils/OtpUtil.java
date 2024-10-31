@@ -97,6 +97,32 @@ public class OtpUtil {
         unitOfWork.getOtpRepository().delete(otpEntity);
         return true;
     }
+    public boolean verifyOTPForForgetPassword(String email, String otp) {
+        Account account = unitOfWork.getAccountRepository().findByEmail(email);
+        if (account == null) {
+            throw new AppException(ErrorCode.ACCOUNT_NOT_FOUND);
+        }
+
+        List<Otp> otpEntities = unitOfWork.getOtpRepository().findByEmail(email);
+        if (otpEntities.isEmpty()) {
+            throw new AppException(ErrorCode.OTP_NOT_FOUND);
+        }
+
+        Otp otpEntity = otpEntities.get(0);
+
+        LocalDateTime otpCreatedTime = otpEntity.getCreateDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
+        if (Duration.between(otpCreatedTime, LocalDateTime.now()).getSeconds() > (5 * 60)) {
+            throw new AppException(ErrorCode.OTP_EXPIRED);
+        }
+
+        boolean isVerified = otpEntity.getOtpEmail().equals(otp);
+        if (!isVerified) {
+            throw new AppException(ErrorCode.WRONG_OTP);
+        }
+
+        unitOfWork.getOtpRepository().delete(otpEntity);
+        return true;
+    }
 
     public Otp resendOtp(String email) {
         Account account = unitOfWork.getAccountRepository().findByEmail(email);

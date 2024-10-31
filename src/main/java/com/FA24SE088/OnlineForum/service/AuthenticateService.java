@@ -193,11 +193,11 @@ public class AuthenticateService {
                     + "<body>"
                     + "<p><strong>FIFO Password Reset</strong></p>"
                     + "<p>We heard that you lost your FIFO password. Sorry about that!</p>"
-                    + "<p>Don't worry! Enter This OTP To Reset Your Password: " +otpUtil.generateOtp(account.getEmail())+ " </p>"
+                    + "<p>Don't worry! Enter This OTP To Reset Your Password: " +otpUtil.generateOtp(account.getEmail()).getOtpEmail()+ " </p>"
                     + "</body>"
                     + "</html>";
 
-            emailUtil.sendToAnEmail(account.getEmail(),
+            emailUtil.sendToAnEmailWithHTMLEnabled(account.getEmail(),
                     emailBody,
                     "Please Reset Your Password",
                     null);

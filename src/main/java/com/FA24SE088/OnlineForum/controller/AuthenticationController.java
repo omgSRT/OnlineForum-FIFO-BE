@@ -62,9 +62,9 @@ public class AuthenticationController {
                 .build();
     }
 
-    @PostMapping("/verify-email")
+    @PostMapping("/verify-otp")
     public ApiResponse<AccountResponse> verifyOtp(@RequestBody OtpRequest request) {
-        otpUtil.verifyOTP(request.getEmail(), request.getOtpEmail());
+        otpUtil.verifyOTP(request.getEmail(), request.getOtp());
         return ApiResponse.<AccountResponse>builder()
                 .entity(accountService.verifyAccount(request.getEmail()))
                 .build();
@@ -130,15 +130,23 @@ public class AuthenticationController {
                 + "<body>"
                 + "<p><strong>FIFO Password Reset</strong></p>"
                 + "<p>We heard that you lost your FIFO password. Sorry about that!</p>"
-                + "<p>Don't worry! Enter This OTP To Reset Your Password: " +otpUtil.generateOtp(email)+ " </p>"
+                + "<p>Don't worry! Enter This OTP To Reset Your Password: " +otpUtil.generateOtp(email).getOtpEmail()+ " </p>"
                 + "</body>"
                 + "</html>";
-        emailUtil.sendToAnEmail(email,
+        emailUtil.sendToAnEmailWithHTMLEnabled(email,
                 emailBody,
-                "Mã OTP xác thực tài khoản",
+                "Please Reset Your Password",
                 null);
         return ApiResponse.<Void>builder()
                 .message(SuccessReturnMessage.SEND_SUCCESS.getMessage())
+                .build();
+    }
+    @PostMapping("/verify-otp/forget-password")
+    public ApiResponse<AccountResponse> verifyOtpForForgetPassword(@RequestBody OtpRequest request) {
+        otpUtil.verifyOTPForForgetPassword(request.getEmail(), request.getOtp());
+        return ApiResponse.<AccountResponse>builder()
+                .message(SuccessReturnMessage.VERIFY_SUCCESS.getMessage())
+                .entity(accountService.verifyAccount(request.getEmail()))
                 .build();
     }
 }
