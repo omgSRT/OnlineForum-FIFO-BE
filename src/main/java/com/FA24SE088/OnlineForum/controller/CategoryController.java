@@ -54,20 +54,9 @@ public class CategoryController {
     @Operation(summary = "Get All Categories")
     @GetMapping(path = "/getall")
     public ApiResponse<List<CategoryNoAccountResponse>> getAllCategories(@RequestParam(defaultValue = "1") int page,
-                                                                         @RequestParam(defaultValue = "10") int perPage){
-        return categoryService.getAllCategories(page, perPage).thenApply(categoryNoAccountResponses ->
-                ApiResponse.<List<CategoryNoAccountResponse>>builder()
-                        .entity(categoryNoAccountResponses)
-                        .build()
-        ).join();
-    }
-
-    @Operation(summary = "Get All Categories", description = "Get All Categories Based On Account Managing")
-    @GetMapping(path = "/getall/by-account/{accountId}")
-    public ApiResponse<List<CategoryNoAccountResponse>> getAllCategoriesByAccountId(@RequestParam(defaultValue = "1") int page,
-                                                                                    @RequestParam(defaultValue = "10") int perPage,
-                                                                                    @PathVariable UUID accountId){
-        return categoryService.getAllCategoriesByAccountId(page, perPage, accountId).thenApply(categoryNoAccountResponses ->
+                                                                         @RequestParam(defaultValue = "10") int perPage,
+                                                                         @RequestParam(required = false) UUID accountId){
+        return categoryService.getAllCategories(page, perPage, accountId).thenApply(categoryNoAccountResponses ->
                 ApiResponse.<List<CategoryNoAccountResponse>>builder()
                         .entity(categoryNoAccountResponses)
                         .build()

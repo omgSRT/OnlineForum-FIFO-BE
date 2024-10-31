@@ -7,6 +7,7 @@ import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfi
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
 import org.springframework.scheduling.annotation.EnableAsync;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 
 import java.awt.*;
 import java.io.IOException;
@@ -14,6 +15,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 
 @SpringBootApplication(exclude = {SecurityAutoConfiguration.class})
+@EnableWebSecurity
 @EnableCaching
 @EnableAsync
 public class OnlineForumApplication {

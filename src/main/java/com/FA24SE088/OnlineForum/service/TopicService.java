@@ -61,13 +61,20 @@ public class TopicService {
 
     @Async("AsyncTaskExecutor")
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
-    public CompletableFuture<List<TopicResponse>> getAllTopics(int page, int perPage) {
-        return CompletableFuture.supplyAsync(() -> {
+    public CompletableFuture<List<TopicResponse>> getAllTopics(int page, int perPage, UUID categoryId) {
+        var categoryFuture = categoryId != null
+                ? findCategoryById(categoryId)
+                : CompletableFuture.completedFuture(null);
+
+        return categoryFuture.thenCompose(category -> {
             var list = unitOfWork.getTopicRepository().findAll().stream()
+                    .filter(topic -> category == null || topic.getCategory().equals(category))
                     .map(topicMapper::toTopicResponse)
                     .toList();
 
-            return paginationUtils.convertListToPage(page, perPage, list);
+            var paginatedList = paginationUtils.convertListToPage(page, perPage, list);
+
+            return CompletableFuture.completedFuture(paginatedList);
         });
     }
 
@@ -82,22 +89,6 @@ public class TopicService {
 
             return paginationUtils.convertListToPage(page, perPage, list);
         });
-    }
-
-    @Async("AsyncTaskExecutor")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
-    public CompletableFuture<List<TopicResponse>> getAllTopicsByCategoryId(int page, int perPage, UUID categoryId) {
-        var categoryFuture = findCategoryById(categoryId);
-
-        return categoryFuture.thenCompose(category ->
-                unitOfWork.getTopicRepository()
-                        .findByCategoryCategoryId(category.getCategoryId())
-                        .thenApply(list -> {
-                            var responses = list.stream()
-                                    .map(topicMapper::toTopicResponse)
-                                    .toList();
-                            return paginationUtils.convertListToPage(page, perPage, responses);
-                        }));
     }
 
     @Async("AsyncTaskExecutor")

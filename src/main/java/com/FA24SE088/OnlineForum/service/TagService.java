@@ -60,18 +60,6 @@ public class TagService {
 
     @Async("AsyncTaskExecutor")
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
-    public CompletableFuture<List<TagResponse>> getAllTags(int page, int perPage) {
-        return CompletableFuture.supplyAsync(() -> {
-            var list = unitOfWork.getTagRepository().findAll().stream()
-                    .map(tagMapper::toTagResponse)
-                    .toList();
-
-            return paginationUtils.convertListToPage(page, perPage, list);
-        });
-    }
-
-    @Async("AsyncTaskExecutor")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
     public CompletableFuture<List<TagResponse>> getAllTagsByFilteringNameAndColor(int page, int perPage, String name,
                                                                                   String targetColorHex) {
         return CompletableFuture.supplyAsync(() -> {
