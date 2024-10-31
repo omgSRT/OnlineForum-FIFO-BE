@@ -17,6 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
@@ -43,7 +44,7 @@ public class NotificationService {
         Notification notification = notificationMapper.toNotification(notificationRequest);
         notification.setAccount(account);
         notification.setRead(false);
-        notification.setCreatedDate(new Date());
+        notification.setCreatedDate(LocalDateTime.now());
 
         Notification savedNotification = unitOfWork.getNotificationRepository().save(notification);
         return notificationMapper.toResponse(savedNotification);
@@ -63,7 +64,7 @@ public class NotificationService {
                 .title(notificationRequest.getTitle())
                 .message(notificationRequest.getMessage())
                 .isRead(false)
-                .createdDate(new Date())
+                .createdDate(LocalDateTime.now())
                 .type(notificationRequest.getType())
                 .account(account)
                 .build();
