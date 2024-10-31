@@ -20,6 +20,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -45,12 +46,25 @@ public class FeedbackService {
         Feedback feedback = feedbackMapper.toFeedback(feedbackRequest);
         feedback.setAccount(account);
         feedback.setStatus(FeedbackStatus.PENDING.name());
-        log.info(account.getAccountId().toString());
         Feedback savedFeedback = unitOfWork.getFeedbackRepository().save(feedback);
+        Notification notification = Notification.builder()
+                .title("Feedback Noitfication")
+                .message("Your feedback send success!")
+                .isRead(false)
+                .type("Feedback")
+                .account(account)
+                .createdDate(feedback.getCreatedDate())
+                .build();
+
+        unitOfWork.getNotificationRepository().save(notification);
         //websocket
-        dataHandler.sendToUser(account.getAccountId(),savedFeedback);
-        return feedbackMapper.toResponse(savedFeedback);
+        dataHandler.sendToUser(account.getAccountId(),notification);
+
+        FeedbackResponse response = feedbackMapper.toResponse(savedFeedback);
+        response.setNotification(notification);
+        return response;
     }
+
 
     public Optional<FeedbackResponse> updateFeedback(UUID feedbackId, FeedbackUpdateStatus status) {
         Optional<Feedback> feedbackOptional = unitOfWork.getFeedbackRepository().findById(feedbackId);
@@ -61,6 +75,16 @@ public class FeedbackService {
             }
             feedback.setStatus(status.name());
             Feedback updatedFeedback = unitOfWork.getFeedbackRepository().save(feedback);
+
+            Notification notification = Notification.builder()
+                    .title("Feedback Noitfication")
+                    .message("Your feedback send success!")
+                    .isRead(false)
+                    .type("Feedback")
+                    .account(feedback.getAccount())
+                    .createdDate(feedback.getCreatedDate())
+                    .build();
+            unitOfWork.getNotificationRepository().save(notification);
             dataHandler.sendToUser(feedbackOptional.get().getAccount().getAccountId(),updatedFeedback);
             return Optional.of(feedbackMapper.toResponse(updatedFeedback));
         }
