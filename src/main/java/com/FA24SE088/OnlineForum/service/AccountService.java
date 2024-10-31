@@ -6,10 +6,7 @@ import com.FA24SE088.OnlineForum.dto.request.AccountUpdateInfoRequest;
 import com.FA24SE088.OnlineForum.dto.request.AccountUpdateRequest;
 import com.FA24SE088.OnlineForum.dto.request.AccountRequest;
 import com.FA24SE088.OnlineForum.dto.response.AccountResponse;
-import com.FA24SE088.OnlineForum.entity.Account;
-import com.FA24SE088.OnlineForum.entity.Category;
-import com.FA24SE088.OnlineForum.entity.Role;
-import com.FA24SE088.OnlineForum.entity.Wallet;
+import com.FA24SE088.OnlineForum.entity.*;
 import com.FA24SE088.OnlineForum.enums.AccountStatus;
 
 import com.FA24SE088.OnlineForum.enums.RoleAccount;
@@ -25,7 +22,6 @@ import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -37,7 +33,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
 
 
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -68,10 +63,10 @@ public class AccountService {
             Role role = unitOfWork.getRoleRepository().findByName(request.getRole().name());
             if (role == null) throw new AppException(ErrorCode.ROLE_NOT_FOUND);
             account.setRole(role);
-
-            if (request.getCategoryList() != null && !request.getCategoryList().isEmpty()) {
+            account.setFavoriteCategoryList(null);
+            if (request.getCategoryList_ForStaff() != null && !request.getCategoryList_ForStaff().isEmpty()) {
                 List<Category> categories = new ArrayList<>();
-                request.getCategoryList().forEach(categoryName -> {
+                request.getCategoryList_ForStaff().forEach(categoryName -> {
                     Category categoryEntity = unitOfWork.getCategoryRepository()
                             .findByName(categoryName)
                             .orElseThrow(() -> new AppException(ErrorCode.CATEGORY_NOT_FOUND));
@@ -86,6 +81,8 @@ public class AccountService {
                     }
 
                 });
+
+
                 account.setCategoryList(categories);
 
             }
@@ -93,6 +90,22 @@ public class AccountService {
             Role role = unitOfWork.getRoleRepository().findByName("USER");
             if (role == null) throw new AppException(ErrorCode.ROLE_NOT_FOUND);
             account.setRole(role);
+            account.setCategoryList(null);
+            if (request.getFavoriteCategoryList_ForUser() != null && !request.getFavoriteCategoryList_ForUser().isEmpty()){
+                List<FavoriteCategory> favorities = new ArrayList<>();
+                request.getFavoriteCategoryList_ForUser().forEach(favorite -> {
+                    Category category = unitOfWork.getCategoryRepository().findByName(favorite).orElseThrow(
+                            () -> new AppException(ErrorCode.CATEGORY_NOT_FOUND)
+                    );
+                    FavoriteCategory favoriteCategory = FavoriteCategory.builder()
+                            .category(category)
+                            .account(account)
+                            .build();
+                    favorities.add(favoriteCategory);
+                });
+                account.setFavoriteCategoryList(favorities);
+            }
+
         }
 
         Wallet wallet = new Wallet();
@@ -107,6 +120,7 @@ public class AccountService {
         unitOfWork.getAccountRepository().save(account);
         AccountResponse response = accountMapper.toResponse(account);
         response.setAccountId(account.getAccountId());
+        response.setFavoriteCategoryList(account.getFavoriteCategoryList());
         return response;
     }
 
@@ -194,12 +208,13 @@ public class AccountService {
         return paginationUtils.convertListToPage(page, perPage, list);
     }
 
-    public List<AccountResponse> filter(int page, int perPage, String username, String email, AccountStatus status) {
+    public List<AccountResponse> filter(int page, int perPage, String username, String email, AccountStatus status, RoleAccount role) {
         List<AccountResponse> result = unitOfWork.getAccountRepository().findAll().stream()
                 .map(accountMapper::toResponse)
                 .filter(x -> (username == null || (x.getUsername() != null && x.getUsername().contains(username))))
                 .filter(x -> (email == null || (x.getEmail() != null && x.getEmail().contains(email))))
                 .filter(x -> (status == null || (x.getStatus() != null && x.getStatus().contains(status.name()))))
+                .filter(x -> (role == null || (x.getRole() != null && x.getRole().getName().contains(role.name()))))
                 .toList();
         return paginationUtils.convertListToPage(page, perPage, result);
     }

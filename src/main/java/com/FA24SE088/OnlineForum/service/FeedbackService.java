@@ -10,6 +10,7 @@ import com.FA24SE088.OnlineForum.exception.AppException;
 import com.FA24SE088.OnlineForum.exception.ErrorCode;
 import com.FA24SE088.OnlineForum.mapper.FeedbackMapper;
 import com.FA24SE088.OnlineForum.repository.UnitOfWork.UnitOfWork;
+import com.FA24SE088.OnlineForum.utils.DataHandler;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -29,6 +30,7 @@ import java.util.stream.Collectors;
 public class FeedbackService {
     UnitOfWork unitOfWork;
     FeedbackMapper feedbackMapper;
+    DataHandler dataHandler;
 
     private Account getCurrentUser() {
         var context = SecurityContextHolder.getContext();
@@ -45,6 +47,8 @@ public class FeedbackService {
         feedback.setStatus(FeedbackStatus.PENDING.name());
         log.info(account.getAccountId().toString());
         Feedback savedFeedback = unitOfWork.getFeedbackRepository().save(feedback);
+        //websocket
+        dataHandler.sendToUser(account.getAccountId(),savedFeedback);
         return feedbackMapper.toResponse(savedFeedback);
     }
 
@@ -57,6 +61,7 @@ public class FeedbackService {
             }
             feedback.setStatus(status.name());
             Feedback updatedFeedback = unitOfWork.getFeedbackRepository().save(feedback);
+            dataHandler.sendToUser(feedbackOptional.get().getAccount().getAccountId(),updatedFeedback);
             return Optional.of(feedbackMapper.toResponse(updatedFeedback));
         }
         return Optional.empty();
