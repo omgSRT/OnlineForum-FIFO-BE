@@ -61,9 +61,9 @@ public class AuthenticationController {
                 .build();
     }
 
-    @PostMapping("/verify-email")
+    @PostMapping("/verify-otp")
     public ApiResponse<AccountResponse> verifyOtp(@RequestBody OtpRequest request) {
-        otpUtil.verifyOTP(request.getEmail(), request.getOtpEmail());
+        otpUtil.verifyOTP(request.getEmail(), request.getOtp());
         return ApiResponse.<AccountResponse>builder()
                 .entity(accountService.verifyAccount(request.getEmail()))
                 .build();
@@ -112,7 +112,6 @@ public class AuthenticationController {
                         .build()
         ).join();
     }
-
     @PutMapping("/change-password")
     public ApiResponse<AccountResponse> changePassword(String email,
                                                        @RequestBody @Valid AccountChangePasswordRequest request){
@@ -122,5 +121,31 @@ public class AuthenticationController {
                         .entity(accountResponse)
                         .build()
         ).join();
+    }
+    @Operation(summary = "Resend OTP Email For Forget Password")
+    @PostMapping("/resend-otp/forget-password")
+    public ApiResponse<Void> resendOtpForForgetPassword(@RequestParam String email) {
+        String emailBody = "<html>"
+                + "<body>"
+                + "<p><strong>FIFO Password Reset</strong></p>"
+                + "<p>We heard that you lost your FIFO password. Sorry about that!</p>"
+                + "<p>Don't worry! Enter This OTP To Reset Your Password: " +otpUtil.generateOtp(email).getOtpEmail()+ " </p>"
+                + "</body>"
+                + "</html>";
+        emailUtil.sendToAnEmailWithHTMLEnabled(email,
+                emailBody,
+                "Please Reset Your Password",
+                null);
+        return ApiResponse.<Void>builder()
+                .message(SuccessReturnMessage.SEND_SUCCESS.getMessage())
+                .build();
+    }
+    @PostMapping("/verify-otp/forget-password")
+    public ApiResponse<AccountResponse> verifyOtpForForgetPassword(@RequestBody OtpRequest request) {
+        otpUtil.verifyOTPForForgetPassword(request.getEmail(), request.getOtp());
+        return ApiResponse.<AccountResponse>builder()
+                .message(SuccessReturnMessage.VERIFY_SUCCESS.getMessage())
+                .entity(accountService.verifyAccount(request.getEmail()))
+                .build();
     }
 }
