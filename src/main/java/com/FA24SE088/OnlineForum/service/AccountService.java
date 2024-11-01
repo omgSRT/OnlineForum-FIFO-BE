@@ -63,7 +63,6 @@ public class AccountService {
             Role role = unitOfWork.getRoleRepository().findByName(request.getRole().name());
             if (role == null) throw new AppException(ErrorCode.ROLE_NOT_FOUND);
             account.setRole(role);
-            account.setFavoriteCategoryList(null);
             if (request.getCategoryList_ForStaff() != null && !request.getCategoryList_ForStaff().isEmpty()) {
                 List<Category> categories = new ArrayList<>();
                 request.getCategoryList_ForStaff().forEach(categoryName -> {
@@ -91,21 +90,6 @@ public class AccountService {
             if (role == null) throw new AppException(ErrorCode.ROLE_NOT_FOUND);
             account.setRole(role);
             account.setCategoryList(null);
-            if (request.getFavoriteCategoryList_ForUser() != null && !request.getFavoriteCategoryList_ForUser().isEmpty()){
-                List<FavoriteCategory> favorities = new ArrayList<>();
-                request.getFavoriteCategoryList_ForUser().forEach(favorite -> {
-                    Category category = unitOfWork.getCategoryRepository().findByName(favorite).orElseThrow(
-                            () -> new AppException(ErrorCode.CATEGORY_NOT_FOUND)
-                    );
-                    FavoriteCategory favoriteCategory = FavoriteCategory.builder()
-                            .category(category)
-                            .account(account)
-                            .build();
-                    favorities.add(favoriteCategory);
-                });
-                account.setFavoriteCategoryList(favorities);
-            }
-
         }
 
         Wallet wallet = new Wallet();
@@ -120,7 +104,6 @@ public class AccountService {
         unitOfWork.getAccountRepository().save(account);
         AccountResponse response = accountMapper.toResponse(account);
         response.setAccountId(account.getAccountId());
-        response.setFavoriteCategoryList(account.getFavoriteCategoryList());
         return response;
     }
 
