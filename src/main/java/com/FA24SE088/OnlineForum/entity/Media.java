@@ -17,6 +17,7 @@ public class Media {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     UUID mediaId;
+    @Column(columnDefinition = "MEDIUMTEXT")
     String link;
     Integer number;
 

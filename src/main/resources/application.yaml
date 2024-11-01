@@ -22,6 +22,14 @@ spring:
   custom:
     jwt:
       secret: 9fpGEUpGqiplW2HJB7UDOpJScDgzJWJR5xqOP3zsJQKs8fuIQpvw37BP3hmNmb/9
+  cache:
+    type: redis # Sử dụng Redis cho caching
+  data:
+    redis:
+      host: redis-14089.c334.asia-southeast2-1.gce.redns.redis-cloud.com
+      password: gQt9d6tzgYPC9GI6RCdNGvvUdKGotWNO
+      username: default
+      port: 14089
 
 payment:
   vnPay:
@@ -33,14 +41,14 @@ payment:
     command: pay
     orderType: other
 
-  #setup cache for project
-  #  cache:
-  #    type: redis
-  #  redis:
-  #     host: redis-14089.c334.asia-southeast2-1.gce.redns.redis-cloud.com
-  #     port: 14089
-  #     password: gQt9d6tzgYPC9GI6RCdNGvvUdKGotWNO
-  #     username: default
+#  setup cache for project
+#    cache:
+#      type: redis
+#    redis:
+#       host: redis-14089.c334.asia-southeast2-1.gce.redns.redis-cloud.com
+#       port: 14089
+#       password: gQt9d6tzgYPC9GI6RCdNGvvUdKGotWNO
+#       username: default
 
 #  profiles:
 #    active: dev
