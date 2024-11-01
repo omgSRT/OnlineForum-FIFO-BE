@@ -38,6 +38,7 @@ public class Post {
     @JsonIgnore
     @JsonIgnoreProperties(value = { "post" }, allowSetters = true)
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    @Column(columnDefinition = "MEDIUMTEXT")
     List<Image> imageList;
 
     @JsonIgnore
