@@ -315,41 +315,26 @@ public class PostService {
         return CompletableFuture.allOf(postFuture, accountFuture).thenCompose(v -> {
             var account = accountFuture.join();
             var post = postFuture.join();
-            var dailyPoint = post.getDailyPoint();
-            var pointEarned = dailyPoint.getPointEarned();
-            var wallet = post.getAccount().getWallet();
-            var balance = wallet.getBalance();
             var categoryPost = post.getTopic().getCategory();
 
-            if(post.getStatus().equals(PostStatus.DRAFT.name())){
+            if (post.getStatus().equals(PostStatus.DRAFT.name())) {
                 throw new AppException(ErrorCode.DRAFT_POST_CANNOT_CHANGE_STATUS);
             }
 
-            if(account.getRole().getName().equals("USER") &&
-                    !account.equals(post.getAccount())){
-                    throw new AppException(ErrorCode.ACCOUNT_NOT_THE_AUTHOR_OF_POST);
+            if (account.getRole().getName().equals("USER") &&
+                    !account.equals(post.getAccount())) {
+                throw new AppException(ErrorCode.ACCOUNT_NOT_THE_AUTHOR_OF_POST);
             }
-            if(account.getRole().getName().equals("STAFF") &&
-                    !account.getCategoryList().contains(categoryPost)){
-                    throw new AppException(ErrorCode.STAFF_NOT_SUPERVISE_CATEGORY);
+            if (account.getRole().getName().equals("STAFF") &&
+                    !account.getCategoryList().contains(categoryPost)) {
+                throw new AppException(ErrorCode.STAFF_NOT_SUPERVISE_CATEGORY);
             }
-
-            pointEarned = -pointEarned;
-            dailyPoint.setPointEarned(pointEarned);
-            balance = balance + pointEarned;
-            if(balance < 0) balance = 0;
-            wallet.setBalance(balance);
 
             post.setStatus(PostStatus.HIDDEN.name());
             post.setLastModifiedDate(new Date());
 
-            unitOfWork.getDailyPointRepository().save(dailyPoint);
-            unitOfWork.getWalletRepository().save(wallet);
-
-            return createTransaction(pointEarned, TransactionType.DEBIT, wallet)
-                    .thenCompose(transaction ->
-                            CompletableFuture.completedFuture(unitOfWork.getPostRepository().save(post)));
-            })
+            return CompletableFuture.completedFuture(unitOfWork.getPostRepository().save(post));
+        })
                 .thenApply(postMapper::toPostResponse);
     }
     @Async("AsyncTaskExecutor")
