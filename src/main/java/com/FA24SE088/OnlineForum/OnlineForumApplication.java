@@ -13,6 +13,7 @@ import java.awt.*;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.TimeZone;
 
 @SpringBootApplication(exclude = {SecurityAutoConfiguration.class})
 @EnableCaching
@@ -20,6 +21,7 @@ import java.net.URISyntaxException;
 public class OnlineForumApplication {
 
 	public static void main(String[] args) {
+		TimeZone.setDefault(TimeZone.getTimeZone("Asia/Ho_Chi_Minh"));
 		SpringApplication.run(OnlineForumApplication.class, args);
 	}
 
