@@ -29,12 +29,20 @@ import java.util.concurrent.TimeUnit;
 public class OtpUtil {
     final UnitOfWork unitOfWork;
     private final RedisTemplate<String, String> redisTemplate;
-    public void generateOtp(String email){
+    public Otp generateOtp(String email){
         Random random = new Random();
         int randomNumber = random.nextInt(9999);
         String otp = String.format("%04d", randomNumber);
 
         redisTemplate.opsForValue().set(email, otp, 5, TimeUnit.MINUTES);
+
+        Otp otp1 = Otp.builder()
+                .email(email)
+                .otpEmail(otp)
+                .createDate(new Date())
+                .build();
+        unitOfWork.getOtpRepository().save(otp1);
+        return otp1;
     }
 
     //email để tìm tài khoản tồn tại hay chưa
