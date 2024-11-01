@@ -18,6 +18,7 @@ public class Image {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     UUID imageId;
+    @Column(columnDefinition = "MEDIUMTEXT")
     String url;
 
     @JsonIgnore

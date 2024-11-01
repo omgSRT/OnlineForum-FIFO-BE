@@ -50,6 +50,8 @@ public class TransactionController {
         ).join();
     }
 
+
+
     @Operation(description = "Get Transaction", summary = "Get Transaction By ID")
     @GetMapping(path = "/get/{transactionId}")
     public ApiResponse<TransactionResponse> getTransactionById(@PathVariable UUID transactionId){
@@ -58,6 +60,14 @@ public class TransactionController {
                         .entity(transactionResponse)
                         .build()
         ).join();
+    }
+
+    @Operation(description = "Get Transaction", summary = "Get Transaction By ID")
+    @GetMapping(path = "/get-of-current-account")
+    public ApiResponse<List<TransactionResponse>> getTransactionByCurrentAccount(){
+        return ApiResponse.<List<TransactionResponse>>builder()
+                .entity(transactionService.getListByAccountId())
+                .build();
     }
 
     @Operation(description = "Delete Transaction", summary = "Delete Transaction By ID")

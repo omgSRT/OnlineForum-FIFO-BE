@@ -1,12 +1,9 @@
 package com.FA24SE088.OnlineForum.controller;
-//
+
 
 import com.FA24SE088.OnlineForum.dto.request.*;
 import com.FA24SE088.OnlineForum.dto.response.*;
-import com.FA24SE088.OnlineForum.entity.Account;
 import com.FA24SE088.OnlineForum.entity.Otp;
-import com.FA24SE088.OnlineForum.enums.AccountStatus;
-import com.FA24SE088.OnlineForum.enums.RoleAccount;
 import com.FA24SE088.OnlineForum.enums.SuccessReturnMessage;
 import com.FA24SE088.OnlineForum.service.AccountService;
 import com.FA24SE088.OnlineForum.service.AuthenticateService;
@@ -19,13 +16,13 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.List;
+
 
 @RestController
 @RequestMapping(path = "/authenticate")
@@ -37,6 +34,7 @@ public class AuthenticationController {
     AccountService accountService;
     EmailUtil emailUtil;
     OtpUtil otpUtil;
+    RedisTemplate<String, String> redisTemplate;
 
     @Operation(summary = "Login", description = "new admin account: admin1234 \n" +
             "password: admin1234")
@@ -51,10 +49,11 @@ public class AuthenticationController {
     @Transactional
     public ApiResponse<AccountResponse> create(@Valid @RequestBody AccountRequest request) {
         AccountResponse response = accountService.create(request);
-        Otp otp = otpUtil.generateOtp(request.getEmail());
+        otpUtil.generateOtp(request.getEmail());
+//        String otpFromRedis = redisTemplate.opsForValue().get(request.getEmail());
         emailUtil.sendToAnEmail(
                 response.getEmail(),
-                "Mã OTP của bạn là: " + otp.getOtpEmail(),
+                "Mã OTP của bạn là: " + redisTemplate.opsForValue().get(request.getEmail()),
                 "Mã OTP xác thực tài khoản",
                 null);
         return ApiResponse.<AccountResponse>builder()
@@ -70,17 +69,17 @@ public class AuthenticationController {
                 .build();
     }
 
-    @PostMapping("/resend-otp")
-    public ApiResponse<Otp> resendOtp(@RequestParam String email) {
-        Otp otpResponse = otpUtil.resendOtp(email);
-        emailUtil.sendToAnEmail(email,
-                "Mã OTP của bạn là: " + otpResponse.getOtpEmail(),
-                "Mã OTP xác thực tài khoản",
-                null);
-        return ApiResponse.<Otp>builder()
-                .entity(otpResponse)
-                .build();
-    }
+//    @PostMapping("/resend-otp")
+//    public ApiResponse<Otp> resendOtp(@RequestParam String email) {
+//        otpUtil.resendOtp(email);
+//        emailUtil.sendToAnEmail(email,
+//                "Mã OTP của bạn là: " + otpResponse.getOtpEmail(),
+//                "Mã OTP xác thực tài khoản",
+//                null);
+//        return ApiResponse.<Otp>builder()
+//                .entity(otpResponse)
+//                .build();
+//    }
 
 
     @PostMapping("/introspect")

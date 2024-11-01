@@ -1,6 +1,5 @@
 spring:
-  jackson:
-    time-zone: Asia/Ho_Chi_Minh
+
   jpa:
     hibernate:
       ddl-auto: update

@@ -47,6 +47,7 @@ public class FeedbackService {
         feedback.setAccount(account);
         feedback.setStatus(FeedbackStatus.PENDING.name());
         Feedback savedFeedback = unitOfWork.getFeedbackRepository().save(feedback);
+
         Notification notification = Notification.builder()
                 .title("Feedback Noitfication")
                 .message("Your feedback send success!")

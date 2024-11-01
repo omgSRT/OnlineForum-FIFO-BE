@@ -28,7 +28,9 @@ public class Account {
     String phone;
     String bio;
     String handle;
+    @Column(columnDefinition = "MEDIUMTEXT")
     String avatar;
+    @Column(columnDefinition = "MEDIUMTEXT")
     String coverImage;
     Date createdDate;
     String status;
