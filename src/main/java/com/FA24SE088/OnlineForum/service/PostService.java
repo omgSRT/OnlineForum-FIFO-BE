@@ -1,16 +1,12 @@
 package com.FA24SE088.OnlineForum.service;
 
 import com.FA24SE088.OnlineForum.dto.request.*;
-import com.FA24SE088.OnlineForum.dto.response.CommentNoPostResponse;
-import com.FA24SE088.OnlineForum.dto.response.PostGetByIdResponse;
 import com.FA24SE088.OnlineForum.dto.response.PostResponse;
 import com.FA24SE088.OnlineForum.entity.*;
 import com.FA24SE088.OnlineForum.enums.PostStatus;
-import com.FA24SE088.OnlineForum.enums.TransactionType;
 import com.FA24SE088.OnlineForum.enums.UpdatePostStatus;
 import com.FA24SE088.OnlineForum.exception.AppException;
 import com.FA24SE088.OnlineForum.exception.ErrorCode;
-import com.FA24SE088.OnlineForum.mapper.CommentMapper;
 import com.FA24SE088.OnlineForum.mapper.DailyPointMapper;
 import com.FA24SE088.OnlineForum.mapper.ImageMapper;
 import com.FA24SE088.OnlineForum.mapper.PostMapper;
@@ -20,7 +16,6 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
-import org.hibernate.Hibernate;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -82,21 +77,16 @@ public class PostService {
 
                     return CompletableFuture.allOf(imageFuture, dailyPointFuture, walletFuture)
                             .thenCompose(v -> {
-                                var point = pointFuture.join().get(0);
-                                var wallet = walletFuture.join();
                                 var dailyPoint = dailyPointFuture.join();
 
-                                return createTransaction(point.getPointPerPost(), TransactionType.CREDIT, wallet)
-                                        .thenCompose(transaction -> {
-                                            if(imageFuture.join() != null){
-                                                savedPost.setImageList(imageFuture.join());
-                                            }
-                                            else{
-                                                savedPost.setImageList(new ArrayList<>());
-                                            }
-                                            savedPost.setDailyPoint(dailyPoint);
-                                            return CompletableFuture.completedFuture(unitOfWork.getPostRepository().save(savedPost));
-                                        });
+                                if(imageFuture.join() != null){
+                                    savedPost.setImageList(imageFuture.join());
+                                }
+                                else{
+                                    savedPost.setImageList(new ArrayList<>());
+                                }
+                                savedPost.setDailyPoint(dailyPoint);
+                                return CompletableFuture.completedFuture(unitOfWork.getPostRepository().save(savedPost));
                             });
                 })
                 .thenApply(postMapper::toPostResponse);
@@ -542,17 +532,12 @@ public class PostService {
             var pointFuture = getPoint();
 
             return CompletableFuture.allOf(dailyPointFuture, walletFuture, pointFuture).thenCompose(voidReturnData -> {
-                var point = pointFuture.join().get(0);
-                var wallet = walletFuture.join();
                 var dailyPoint = dailyPointFuture.join();
 
-                return createTransaction(point.getPointPerPost(), TransactionType.CREDIT, wallet)
-                        .thenCompose(transaction -> {
-                            post.setDailyPoint(dailyPoint);
-                            post.setStatus(PostStatus.PUBLIC.name());
-                            post.setLastModifiedDate(new Date());
-                            return CompletableFuture.completedFuture(unitOfWork.getPostRepository().save(post));
-                        });
+                post.setDailyPoint(dailyPoint);
+                post.setStatus(PostStatus.PUBLIC.name());
+                post.setLastModifiedDate(new Date());
+                return CompletableFuture.completedFuture(unitOfWork.getPostRepository().save(post));
             })
                     .thenApply(postMapper::toPostResponse);
         });
@@ -825,22 +810,6 @@ public class PostService {
         );
     }
     @Async("AsyncTaskExecutor")
-    private CompletableFuture<Transaction> createTransaction(double point, TransactionType type, Wallet wallet){
-        if(wallet == null){
-            return CompletableFuture.completedFuture(null);
-        }
-
-        return CompletableFuture.supplyAsync(() -> {
-            Transaction transaction = new Transaction();
-            transaction.setType(type.name());
-            transaction.setCreatedDate(new Date());
-            transaction.setAmount(point);
-            transaction.setWallet(wallet);
-
-            return unitOfWork.getTransactionRepository().save(transaction);
-        });
-    }
-    @Async("AsyncTaskExecutor")
     private CompletableFuture<DailyPoint> findDailyPointByAccountAndPost(Account account, Post post){
         return unitOfWork.getDailyPointRepository().findByAccountAndPost(account, post);
     }
@@ -859,7 +828,7 @@ public class PostService {
     private String getUsernameFromJwt() {
         var authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null && authentication.getPrincipal() instanceof Jwt jwt) {
-            return jwt.getClaim("username");  // Get the "username" claim from the token
+            return jwt.getClaim("username");
         }
         return null;
     }
