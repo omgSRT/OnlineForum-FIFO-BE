@@ -7,6 +7,7 @@ import com.FA24SE088.OnlineForum.enums.SuccessReturnMessage;
 import com.FA24SE088.OnlineForum.enums.TransactionType;
 import com.FA24SE088.OnlineForum.service.TransactionService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -42,7 +43,8 @@ public class TransactionController {
     public ApiResponse<List<TransactionResponse>> getAllTransactions(@RequestParam(defaultValue = "1") int page,
                                                                      @RequestParam(defaultValue = "10") int perPage,
                                                                      @RequestParam(required = false) UUID accountId,
-                                                                     @RequestParam(required = false) String givenDate,
+                                                                     @Parameter(description = "Filter by date in yyyy-MM-dd format", example = "2023-10-01")
+                                                                         @RequestParam(required = false) String givenDate,
                                                                      @RequestParam(required = false, defaultValue = "false") boolean isListAscendingByCreatedDate){
         return transactionService.getAllTransaction(page, perPage, accountId, givenDate, isListAscendingByCreatedDate).thenApply(transactionResponses ->
                 ApiResponse.<List<TransactionResponse>>builder()
