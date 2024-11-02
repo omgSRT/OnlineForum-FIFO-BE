@@ -4,6 +4,7 @@ package com.FA24SE088.OnlineForum.service;
 import com.FA24SE088.OnlineForum.dto.request.*;
 import com.FA24SE088.OnlineForum.dto.response.FeedbackResponse;
 import com.FA24SE088.OnlineForum.entity.*;
+import com.FA24SE088.OnlineForum.enums.ChatEvent;
 import com.FA24SE088.OnlineForum.enums.FeedbackStatus;
 import com.FA24SE088.OnlineForum.enums.FeedbackUpdateStatus;
 import com.FA24SE088.OnlineForum.exception.AppException;
@@ -59,8 +60,8 @@ public class FeedbackService {
 
         unitOfWork.getNotificationRepository().save(notification);
         //websocket
-        dataHandler.sendToUser(account.getAccountId(),notification);
-
+//        dataHandler.sendToUser(account.getAccountId(),notification);
+        dataHandler.sendToUser2(account.getAccountId(),notification);
         FeedbackResponse response = feedbackMapper.toResponse(savedFeedback);
         response.setNotification(notification);
         return response;

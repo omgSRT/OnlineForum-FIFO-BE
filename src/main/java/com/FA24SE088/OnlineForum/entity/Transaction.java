@@ -1,5 +1,6 @@
 package com.FA24SE088.OnlineForum.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -25,4 +26,9 @@ public class Transaction {
     @ManyToOne
     @JoinColumn(name = "walletId")
     Wallet wallet;
+
+    @ManyToOne
+    @JoinColumn(name = "rewardId")
+    @JsonIgnoreProperties(value = { "transactionList"}, allowSetters = true)
+    Reward reward;
 }

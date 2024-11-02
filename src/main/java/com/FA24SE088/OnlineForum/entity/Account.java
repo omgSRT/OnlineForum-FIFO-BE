@@ -6,6 +6,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
+import java.time.LocalDateTime;
 import java.util.*;
 @Getter
 @Setter
@@ -32,7 +33,7 @@ public class Account {
     String avatar;
     @Column(columnDefinition = "MEDIUMTEXT")
     String coverImage;
-    Date createdDate;
+    LocalDateTime createdDate;
     String status;
 
 
@@ -121,8 +122,4 @@ public class Account {
     @OneToMany(mappedBy = "account", cascade = CascadeType.ALL, orphanRemoval = true)
     List<BookMark> bookMarkList;
 
-    @JsonIgnore
-    @JsonIgnoreProperties(value = { "account" }, allowSetters = true)
-    @OneToMany(mappedBy = "account", cascade = CascadeType.ALL, orphanRemoval = true)
-    List<FavoriteCategory> favoriteCategoryList;
 }

@@ -1,5 +1,6 @@
 package com.FA24SE088.OnlineForum.utils;
 
+import com.FA24SE088.OnlineForum.enums.ChatEvent;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
@@ -10,6 +11,7 @@ import org.springframework.web.socket.WebSocketMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -61,6 +63,23 @@ public class DataHandler extends TextWebSocketHandler {
             }
         } catch (JsonProcessingException e) {
             LOG.error("Failed to convert message object to JSON", e);
+        }
+    }
+
+    public void sendToUser2(UUID accountId, Object object) {
+        String eventKey = "sendNotification";
+        Map<String, Object> messageObject = new HashMap<>();
+        messageObject.put("event", eventKey);
+        messageObject.put("data", object);
+
+        try {
+            String messageJson = objectMapper.writeValueAsString(messageObject);
+            WebSocketSession session = sessions.get(accountId); // Giả sử các session được map bởi account ID
+            if (session != null && session.isOpen()) {
+                session.sendMessage(new TextMessage(messageJson));
+            }
+        } catch (Exception e) {
+            LOG.error("Failed to send notification to user: " + accountId, e);
         }
     }
 
