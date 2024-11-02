@@ -33,15 +33,16 @@ public class TransactionService {
     TransactionMapper transactionMapper;
 
     @Async("AsyncTaskExecutor")
-    public CompletableFuture<TransactionResponse> createTransaction(TransactionRequest request, TransactionType type) {
+    public CompletableFuture<TransactionResponse> createTransaction(TransactionRequest request) {
         var accountFuture = findAccountById(request.getAccountId());
         var rewardFuture = findRewardById(request.getRewardId());
 
         return CompletableFuture.allOf(accountFuture, rewardFuture).thenCompose(v -> {
                     var account = accountFuture.join();
+                    var wallet = account.getWallet();
                     var reward = rewardFuture.join();
 
-                    var checkFuture = checkTransactionExistByAccountAndReward(account, reward);
+                    var checkFuture = checkTransactionExistByWalletAndReward(wallet, reward);
 
                     return checkFuture.thenCompose(check -> {
                         if(check){
@@ -50,18 +51,8 @@ public class TransactionService {
 
                         Transaction newTransaction = transactionMapper.toTransaction(request);
                         newTransaction.setCreatedDate(new Date());
-                        newTransaction.setType(type.name());
                         newTransaction.setWallet(account.getWallet());
                         newTransaction.setReward(reward);
-
-                        var wallet = account.getWallet();
-                        var balance = wallet.getBalance();
-                        if (type.name().equals(TransactionType.CREDIT.name())) {
-                            wallet.setBalance(balance + request.getAmount());
-                        }
-                        if (type.name().equals(TransactionType.DEBIT.name())) {
-                            wallet.setBalance(balance - request.getAmount());
-                        }
 
                         unitOfWork.getWalletRepository().save(wallet);
 
@@ -99,13 +90,19 @@ public class TransactionService {
     @Async("AsyncTaskExecutor")
     public CompletableFuture<List<TransactionResponse>> getAllTransaction(int page, int perPage,
                                                                           UUID accountId,
-                                                                          String givenDate,
-                                                                          boolean isListAscendingByCreatedDate) {
+                                                                          UUID rewardId,
+                                                                          String givenDate) {
         var accountFuture = accountId != null
                 ? findAccountById(accountId)
                 : CompletableFuture.completedFuture(null);
+        var rewardFuture = rewardId != null
+                ? findRewardById(rewardId)
+                : CompletableFuture.completedFuture(null);
 
-        return accountFuture.thenCompose(account -> {
+        return CompletableFuture.allOf(accountFuture, rewardFuture).thenCompose(v -> {
+            var account = accountFuture.join();
+            var reward = rewardFuture.join();
+
             SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd");
             Date parseDate;
             try {
@@ -117,11 +114,12 @@ public class TransactionService {
             }
             Date finalParseDate = parseDate;
 
-            var transactionListFuture = findTransactionListByIsListAscendingByCreatedDate(isListAscendingByCreatedDate);
+            var transactionListFuture = unitOfWork.getTransactionRepository().findAllByOrderByCreatedDateDesc();
 
             return transactionListFuture.thenCompose(list -> {
                 var filterList = list.stream()
                         .filter(transaction -> account == null || transaction.getWallet().getAccount().equals(account))
+                        .filter(transaction -> reward == null || transaction.getReward().equals(reward))
                         .filter(transaction -> {
                             Calendar createdDateCal = Calendar.getInstance();
                             createdDateCal.setTime(transaction.getCreatedDate());
@@ -215,17 +213,6 @@ public class TransactionService {
         var transactionFuture = findTransactionById(transactionId);
 
         return transactionFuture.thenCompose(transaction -> {
-            var amount = transaction.getAmount();
-            var wallet = transaction.getWallet();
-            var balance = wallet.getBalance();
-
-            if (transaction.getType().equals(TransactionType.CREDIT.name())) {
-                wallet.setBalance(balance - amount);
-            } else if (transaction.getType().equals(TransactionType.DEBIT.name())) {
-                wallet.setBalance(balance + amount);
-            }
-
-            unitOfWork.getWalletRepository().save(wallet);
             unitOfWork.getTransactionRepository().delete(transaction);
 
             return CompletableFuture.completedFuture(transactionMapper.toTransactionResponse(transaction));
@@ -247,8 +234,8 @@ public class TransactionService {
         );
     }
     @Async("AsyncTaskExecutor")
-    private CompletableFuture<Boolean> checkTransactionExistByAccountAndReward(Account account, Reward reward){
-        return unitOfWork.getTransactionRepository().existsByAccountAndReward(account, reward);
+    private CompletableFuture<Boolean> checkTransactionExistByWalletAndReward(Wallet wallet, Reward reward){
+        return unitOfWork.getTransactionRepository().existsByWalletAndReward(wallet, reward);
     }
     @Async("AsyncTaskExecutor")
     private CompletableFuture<Transaction> findTransactionById(UUID transactionId) {

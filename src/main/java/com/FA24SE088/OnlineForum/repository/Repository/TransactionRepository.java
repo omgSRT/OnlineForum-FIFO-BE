@@ -19,6 +19,6 @@ public interface TransactionRepository extends JpaRepository<Transaction, UUID> 
     @Async("AsyncTaskExecutor")
     CompletableFuture<List<Transaction>> findAllByOrderByCreatedDateAsc();
     @Async("AsyncTaskExecutor")
-    CompletableFuture<Boolean> existsByAccountAndReward(Account account, Reward reward);
+    CompletableFuture<Boolean> existsByWalletAndReward(Wallet wallet, Reward reward);
     List<Transaction> findByWallet(Wallet wallet);
 }

@@ -28,9 +28,8 @@ public class TransactionController {
 
     @Operation(summary = "Create Transaction")
     @PostMapping(path = "/create")
-    public ApiResponse<TransactionResponse> createTransaction(@RequestBody @Valid TransactionRequest request,
-                                                              @RequestParam TransactionType type){
-        return transactionService.createTransaction(request, type).thenApply(transactionResponse ->
+    public ApiResponse<TransactionResponse> createTransaction(@RequestBody @Valid TransactionRequest request){
+        return transactionService.createTransaction(request).thenApply(transactionResponse ->
             ApiResponse.<TransactionResponse>builder()
                     .message(SuccessReturnMessage.CREATE_SUCCESS.getMessage())
                     .entity(transactionResponse)
@@ -43,10 +42,10 @@ public class TransactionController {
     public ApiResponse<List<TransactionResponse>> getAllTransactions(@RequestParam(defaultValue = "1") int page,
                                                                      @RequestParam(defaultValue = "10") int perPage,
                                                                      @RequestParam(required = false) UUID accountId,
+                                                                     @RequestParam(required = false) UUID rewardId,
                                                                      @Parameter(description = "Filter by date in yyyy-MM-dd format", example = "2023-10-01")
-                                                                         @RequestParam(required = false) String givenDate,
-                                                                     @RequestParam(required = false, defaultValue = "false") boolean isListAscendingByCreatedDate){
-        return transactionService.getAllTransaction(page, perPage, accountId, givenDate, isListAscendingByCreatedDate).thenApply(transactionResponses ->
+                                                                         @RequestParam(required = false) String givenDate){
+        return transactionService.getAllTransaction(page, perPage, accountId, rewardId, givenDate).thenApply(transactionResponses ->
                 ApiResponse.<List<TransactionResponse>>builder()
                         .entity(transactionResponses)
                         .build()

@@ -20,7 +20,6 @@ public class Transaction {
     @GeneratedValue(strategy = GenerationType.UUID)
     UUID transactionId;
     double amount;
-    String type;
     Date createdDate;
 
     @ManyToOne
