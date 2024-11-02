@@ -28,8 +28,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -97,7 +97,7 @@ public class AccountService {
         wallet.setAccount(account);
         account.setWallet(wallet);
 
-        account.setCreatedDate(new Date());
+        account.setCreatedDate(LocalDateTime.now());
         account.setStatus(AccountStatus.PENDING_APPROVAL.name());
         String handle = String.format("@%s", request.getUsername());
         account.setHandle(handle);

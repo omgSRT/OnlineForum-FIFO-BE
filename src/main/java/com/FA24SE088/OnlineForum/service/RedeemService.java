@@ -55,6 +55,7 @@ public class RedeemService {
                     .type(TransactionType.DEBIT.name())
                     .createdDate(new Date())
                     .wallet(wallet)
+                    .reward(reward)
                     .build();
             unitOfWork.getTransactionRepository().save(transaction);
         }else {

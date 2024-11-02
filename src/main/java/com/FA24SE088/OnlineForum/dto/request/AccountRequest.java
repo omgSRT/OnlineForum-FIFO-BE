@@ -34,6 +34,4 @@ public class AccountRequest {
     RoleAccount role;
     @Nullable
     List<String> categoryList_ForStaff;
-    @Nullable
-    List<String> favoriteCategoryList_ForUser;
 }

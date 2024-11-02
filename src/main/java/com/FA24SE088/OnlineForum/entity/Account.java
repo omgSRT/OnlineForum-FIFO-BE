@@ -6,6 +6,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
+import java.time.LocalDateTime;
 import java.util.*;
 @Getter
 @Setter
@@ -32,7 +33,7 @@ public class Account {
     String avatar;
     @Column(columnDefinition = "MEDIUMTEXT")
     String coverImage;
-    Date createdDate;
+    LocalDateTime createdDate;
     String status;
 
 
