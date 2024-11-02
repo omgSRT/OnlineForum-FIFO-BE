@@ -3,8 +3,6 @@ package com.FA24SE088.OnlineForum.configuration;
 import com.FA24SE088.OnlineForum.entity.Account;
 import com.FA24SE088.OnlineForum.entity.Role;
 import com.FA24SE088.OnlineForum.enums.AccountStatus;
-import com.FA24SE088.OnlineForum.exception.AppException;
-import com.FA24SE088.OnlineForum.exception.ErrorCode;
 import com.FA24SE088.OnlineForum.repository.Repository.AccountRepository;
 import com.FA24SE088.OnlineForum.repository.Repository.RoleRepository;
 
@@ -19,7 +17,7 @@ import org.springframework.core.annotation.Order;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Date;
+import java.time.LocalDateTime;
 
 @Configuration
 @RequiredArgsConstructor
@@ -70,7 +68,7 @@ public class ApplicationInitConfiguration {
                         .username("admin1234")
                         .password(passwordEncoder.encode("admin1234"))
                         .role(role1)
-                        .createdDate(new Date())
+                        .createdDate(LocalDateTime.now())
                         .status(AccountStatus.ACTIVE.name())
                         .build();
                 accountRepository.save(user);

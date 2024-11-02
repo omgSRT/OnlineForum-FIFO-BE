@@ -12,15 +12,16 @@ import org.springframework.web.socket.config.annotation.*;
 public class WebSocketConfig implements WebSocketConfigurer {
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
-        registry.addHandler(getUserHandShakeHandler(), "/websocket")
-                .setHandshakeHandler(new UserHandshakeHandler())
-                .setAllowedOrigins("*");
+//        registry.addHandler(getUserHandShakeHandler(), "/websocket")
+//                .setHandshakeHandler(new UserHandshakeHandler())
+//                .setAllowedOrigins("*");
     }
 
     @Bean
     DataHandler getUserHandShakeHandler() {
         return new DataHandler();
     }
+
 }
 
 

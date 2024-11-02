@@ -1,7 +1,6 @@
 package com.FA24SE088.OnlineForum.dto.response;
 
 import com.FA24SE088.OnlineForum.entity.Category;
-import com.FA24SE088.OnlineForum.entity.FavoriteCategory;
 import com.FA24SE088.OnlineForum.entity.Role;
 import com.FA24SE088.OnlineForum.entity.Wallet;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -29,8 +28,6 @@ public class AccountResponse {
     Role role;
     @JsonIgnoreProperties(value = {"account"}, allowSetters = true)
     List<Category> categoryList;
-    @JsonIgnoreProperties(value = {"account"}, allowSetters = true)
-    List<FavoriteCategory> favoriteCategoryList;
     @JsonIgnoreProperties(value = {"account","transactionList"}, allowSetters = true)
     Wallet wallet;
 }

@@ -32,4 +32,8 @@ public class Reward {
     @JsonIgnoreProperties(value = { "reward"}, allowSetters = true)
     @OneToMany(mappedBy = "reward", cascade = CascadeType.ALL, orphanRemoval = true)
     List<Section> sectionList;
+
+    @JsonIgnoreProperties(value = { "reward"}, allowSetters = true)
+    @OneToMany(mappedBy = "reward", cascade = CascadeType.ALL, orphanRemoval = true)
+    List<Transaction> transactionList;
 }

@@ -36,8 +36,4 @@ public class Category {
     @OneToMany(mappedBy = "category", cascade = CascadeType.ALL, orphanRemoval = true)
     List<Topic> topicList;
 
-    @JsonIgnore
-    @JsonIgnoreProperties(value = { "category" }, allowSetters = true)
-    @OneToMany(mappedBy = "category", cascade = CascadeType.ALL, orphanRemoval = true)
-    List<FavoriteCategory> favoriteCategoryList;
 }
