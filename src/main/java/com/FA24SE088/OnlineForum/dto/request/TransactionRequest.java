@@ -14,4 +14,5 @@ import java.util.UUID;
 public class TransactionRequest {
     double amount;
     UUID accountId;
+    UUID rewardId;
 }

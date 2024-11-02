@@ -121,5 +121,4 @@ public class Account {
     @JsonIgnoreProperties(value = {"account"}, allowSetters = true)
     @OneToMany(mappedBy = "account", cascade = CascadeType.ALL, orphanRemoval = true)
     List<BookMark> bookMarkList;
-
 }

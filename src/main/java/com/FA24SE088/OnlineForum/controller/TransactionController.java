@@ -7,6 +7,7 @@ import com.FA24SE088.OnlineForum.enums.SuccessReturnMessage;
 import com.FA24SE088.OnlineForum.enums.TransactionType;
 import com.FA24SE088.OnlineForum.service.TransactionService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -27,9 +28,8 @@ public class TransactionController {
 
     @Operation(summary = "Create Transaction")
     @PostMapping(path = "/create")
-    public ApiResponse<TransactionResponse> createTransaction(@RequestBody @Valid TransactionRequest request,
-                                                              @RequestParam TransactionType type){
-        return transactionService.createTransaction(request, type).thenApply(transactionResponse ->
+    public ApiResponse<TransactionResponse> createTransaction(@RequestBody @Valid TransactionRequest request){
+        return transactionService.createTransaction(request).thenApply(transactionResponse ->
             ApiResponse.<TransactionResponse>builder()
                     .message(SuccessReturnMessage.CREATE_SUCCESS.getMessage())
                     .entity(transactionResponse)
@@ -37,20 +37,34 @@ public class TransactionController {
         ).join();
     }
 
-//    @Operation(summary = "Get All Transaction")
-//    @GetMapping(path = "/getall")
-//    public ApiResponse<List<TransactionResponse>> getAllTransactions(@RequestParam(defaultValue = "1") int page,
-//                                                                     @RequestParam(defaultValue = "10") int perPage,
-//                                                                     @RequestParam(required = false) UUID accountId,
-//                                                                     @RequestParam(required = false) String givenDate){
-//        return transactionService.getAllTransaction(page, perPage, accountId, givenDate).thenApply(transactionResponses ->
-//                ApiResponse.<List<TransactionResponse>>builder()
-//                        .entity(transactionResponses)
-//                        .build()
-//        ).join();
-//    }
+    @Operation(summary = "Get All Transaction")
+    @GetMapping(path = "/getall")
+    public ApiResponse<List<TransactionResponse>> getAllTransactions(@RequestParam(defaultValue = "1") int page,
+                                                                     @RequestParam(defaultValue = "10") int perPage,
+                                                                     @RequestParam(required = false) UUID accountId,
+                                                                     @RequestParam(required = false) UUID rewardId,
+                                                                     @Parameter(description = "Filter by date in yyyy-MM-dd format", example = "2023-10-01")
+                                                                         @RequestParam(required = false) String givenDate){
+        return transactionService.getAllTransaction(page, perPage, accountId, rewardId, givenDate).thenApply(transactionResponses ->
+                ApiResponse.<List<TransactionResponse>>builder()
+                        .entity(transactionResponses)
+                        .build()
+        ).join();
+    }
 
-
+    @Operation(summary = "Get All Transaction")
+    @GetMapping(path = "/getall/by-current-user")
+    public ApiResponse<List<TransactionResponse>> getAllTransactionsForCurrentUser(@RequestParam(defaultValue = "1") int page,
+                                                                     @RequestParam(defaultValue = "10") int perPage,
+                                                                     @RequestParam(required = false) String givenDate,
+                                                                     @RequestParam(required = false, defaultValue = "false") boolean isListAscendingByCreatedDate){
+        return transactionService.getAllTransactionForCurrentUser(page, perPage, givenDate, isListAscendingByCreatedDate)
+                .thenApply(transactionResponses ->
+                    ApiResponse.<List<TransactionResponse>>builder()
+                            .entity(transactionResponses)
+                            .build()
+        ).join();
+    }
 
     @Operation(description = "Get Transaction", summary = "Get Transaction By ID")
     @GetMapping(path = "/get/{transactionId}")
@@ -62,14 +76,6 @@ public class TransactionController {
         ).join();
     }
 
-    @Operation(description = "Get Transaction", summary = "Get Transaction By ID")
-    @GetMapping(path = "/filter")
-    public ApiResponse<List<TransactionResponse>> filter(@RequestParam(required = false) TransactionType type,
-                                                   @RequestParam(defaultValue = "true") boolean ascending){
-        return ApiResponse.<List<TransactionResponse>>builder()
-                .entity(transactionService.filter(type, ascending))
-                .build();
-    }
     @Operation(description = "Get Transaction", summary = "Get Transaction By ID")
     @GetMapping(path = "/get-of-current-account")
     public ApiResponse<List<TransactionResponse>> getTransactionByCurrentAccount(){

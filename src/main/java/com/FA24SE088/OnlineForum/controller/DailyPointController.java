@@ -6,6 +6,7 @@ import com.FA24SE088.OnlineForum.dto.response.DailyPointResponse;
 import com.FA24SE088.OnlineForum.enums.SuccessReturnMessage;
 import com.FA24SE088.OnlineForum.service.DailyPointService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -51,7 +52,8 @@ public class DailyPointController {
     public ApiResponse<List<DailyPointResponse>> getAllDailyPoints(@RequestParam(defaultValue = "1") int page,
                                                                    @RequestParam(defaultValue = "10") int perPage,
                                                                    @RequestParam(required = false) UUID accountId,
-                                                                   @RequestParam(required = false) String givenDate){
+                                                                   @Parameter(description = "Filter by date in yyyy-MM-dd format", example = "2023-10-01")
+                                                                       @RequestParam(required = false) String givenDate){
         return dailyPointService.getAllDailyPoints(page, perPage, accountId, givenDate).thenApply(dailyPointResponses ->
                 ApiResponse.<List<DailyPointResponse>>builder()
                         .entity(dailyPointResponses)

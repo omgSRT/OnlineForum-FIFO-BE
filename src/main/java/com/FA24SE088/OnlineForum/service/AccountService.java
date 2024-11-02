@@ -90,7 +90,6 @@ public class AccountService {
             if (role == null) throw new AppException(ErrorCode.ROLE_NOT_FOUND);
             account.setRole(role);
             account.setCategoryList(null);
-
         }
 
         Wallet wallet = new Wallet();

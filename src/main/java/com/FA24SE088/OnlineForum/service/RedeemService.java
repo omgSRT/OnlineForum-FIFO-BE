@@ -52,7 +52,6 @@ public class RedeemService {
 
             Transaction transaction = Transaction.builder()
                     .amount(reward.getPrice())
-                    .type(TransactionType.DEBIT.name())
                     .createdDate(new Date())
                     .wallet(wallet)
                     .reward(reward)

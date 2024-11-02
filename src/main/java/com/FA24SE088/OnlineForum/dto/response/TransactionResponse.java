@@ -18,6 +18,6 @@ public class TransactionResponse {
     double amount;
     String type;
     Date createdDate;
-    @JsonIgnoreProperties(value = {"transactionList", "redeemList"})
+    @JsonIgnoreProperties(value = {"transactionList", "sectionList", "redeemList"})
     Reward reward;
 }
