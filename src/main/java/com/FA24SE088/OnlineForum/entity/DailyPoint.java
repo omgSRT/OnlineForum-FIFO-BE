@@ -38,4 +38,9 @@ public class DailyPoint {
     @OneToOne
     @JoinColumn(name = "postId")
     Post post;
+
+    @JsonIgnore
+    @ManyToOne
+    @JoinColumn(name = "typeBonusId")
+    TypeBonus typeBonus;
 }
