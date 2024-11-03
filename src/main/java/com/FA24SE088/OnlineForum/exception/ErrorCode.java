@@ -107,6 +107,11 @@ public enum ErrorCode {
     INVALID_OR_EMPTY_LINK(10090, "URL Must Be Valid or Empty", HttpStatus.BAD_REQUEST),
     END_DATE_BEFORE_START_DATE(10091, "End date must be before start date", HttpStatus.BAD_REQUEST),
     START_DATE_AFTER_TODAY(10092, "Start date cannot after today", HttpStatus.BAD_REQUEST),
+    QUANTITY_LESS_THAN_ONE(10093, "Quantity Must Be Equal Or Greater Than 1", HttpStatus.BAD_REQUEST),
+    QUANTITY_GREATER_THAN_MAX_VALUE(10094, "Quantity Must Be Equal Or Lesser Than 9 Quintillion", HttpStatus.BAD_REQUEST),
+    POINT_BONUS_LESS_THAN_ONE(10095, "Point Bonus Must Be Equal Or Greater Than 1", HttpStatus.BAD_REQUEST),
+    CANNOT_COMMENT_ON_DRAFT(10096, "Cannot Comment On Draft", HttpStatus.BAD_REQUEST),
+    TYPE_BONUS_ALREADY_EXIST(10097, "Type Bonus Already Existed", HttpStatus.BAD_REQUEST),
     ;
 
     private int code;
