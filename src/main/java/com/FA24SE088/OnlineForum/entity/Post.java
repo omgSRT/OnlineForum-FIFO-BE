@@ -43,8 +43,8 @@ public class Post {
 
     @JsonIgnore
     @JsonIgnoreProperties(value = {"post"}, allowSetters = true)
-    @OneToOne(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
-    DailyPoint dailyPoint;
+    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
+    List<DailyPoint> dailyPointList;
 
     @ManyToOne
     @JoinColumn(name = "accountId")

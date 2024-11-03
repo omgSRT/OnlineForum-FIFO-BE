@@ -26,7 +26,8 @@ import java.util.UUID;
 public class DailyPointController {
     DailyPointService dailyPointService;
 
-    @Operation(summary = "Create New Daily Point Log")
+    @Operation(summary = "Create New Daily Point Log",
+            description = "TypeBonusId Can Be Null To Use Default Point System Instead of Bonus Point")
     @PostMapping(path = "/create")
     public ApiResponse<DailyPointResponse> createDailyPoint(@RequestBody @Valid DailyPointRequest request){
         return dailyPointService.createDailyPoint(request).thenApply(dailyPointResponse ->

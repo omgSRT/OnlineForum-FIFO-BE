@@ -103,6 +103,7 @@ public enum ErrorCode {
     CANNOT_REPORT_SELF_POST(10086, "Can't Report Post That Made By You", HttpStatus.BAD_REQUEST),
     KEYWORD_LENGTH_SHORTER_THAN_ONE(10087, "Keyword Length Must Be Longer Than 2 To Search Effectively", HttpStatus.BAD_REQUEST),
     TOPIC_NOT_BELONG_TO_CATEGORY(10088, "This Topic Doesn't Belong To Given Category", HttpStatus.BAD_REQUEST),
+    TYPE_BONUS_NOT_FOUND(10089, "Type Bonus Not Found", HttpStatus.NOT_FOUND),
     ;
 
     private int code;

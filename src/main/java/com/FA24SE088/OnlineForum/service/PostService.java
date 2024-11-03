@@ -791,19 +791,31 @@ public class PostService {
     }
     @Async("AsyncTaskExecutor")
     private CompletableFuture<Double> countUserTotalPointAtAGivenDate(UUID accountId, Date givenDate){
+        Calendar parsedDateCal = Calendar.getInstance();
+        parsedDateCal.setTime(givenDate);
+        parsedDateCal.set(Calendar.HOUR_OF_DAY, 0);
+        parsedDateCal.set(Calendar.MINUTE, 0);
+        parsedDateCal.set(Calendar.SECOND, 0);
+        parsedDateCal.set(Calendar.MILLISECOND, 0);
+        Date normalizedGivenDate = parsedDateCal.getTime();
+
         var accountFuture = findAccountById(accountId);
         return accountFuture.thenCompose(account ->
-                unitOfWork.getDailyPointRepository().findByAccountAndCreatedDate(account, givenDate)
+                unitOfWork.getDailyPointRepository().findByAccount(account) // Adjust repository method as needed
                         .thenCompose(dailyPoints -> {
-                            double totalCount = 0;
-                            if(dailyPoints == null || dailyPoints.isEmpty()){
-                                totalCount = 0;
-                            }
-                            else{
-                                for(DailyPoint dailyPoint : dailyPoints){
-                                    totalCount += dailyPoint.getPointEarned();
-                                }
-                            }
+                            double totalCount = dailyPoints.stream()
+                                    .filter(dailyPoint -> {
+                                        Calendar createdDateCal = Calendar.getInstance();
+                                        createdDateCal.setTime(dailyPoint.getCreatedDate());
+                                        createdDateCal.set(Calendar.HOUR_OF_DAY, 0);
+                                        createdDateCal.set(Calendar.MINUTE, 0);
+                                        createdDateCal.set(Calendar.SECOND, 0);
+                                        createdDateCal.set(Calendar.MILLISECOND, 0);
+
+                                        return createdDateCal.getTime().equals(normalizedGivenDate);
+                                    })
+                                    .mapToDouble(DailyPoint::getPointEarned)
+                                    .sum();
 
                             return CompletableFuture.completedFuture(totalCount);
                         })
