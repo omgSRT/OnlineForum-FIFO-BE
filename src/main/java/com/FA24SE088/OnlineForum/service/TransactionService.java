@@ -73,19 +73,6 @@ public class TransactionService {
                 .map(transactionMapper::toTransactionResponse).toList();
     }
 
-    public List<TransactionResponse> filter(TransactionType type, boolean ascending){
-        List<TransactionResponse> list = new ArrayList<>(getListByAccountId().stream()
-                .filter(transactionResponse -> (type == null || (transactionResponse.getType() != null && transactionResponse.getType().contains(type.name()))))
-                .toList());
-        list.sort((f1,f2) -> {
-            if (ascending) {
-                return f1.getCreatedDate().compareTo(f2.getCreatedDate());
-            } else {
-                return f2.getCreatedDate().compareTo(f1.getCreatedDate());
-            }
-        });
-        return list;
-    }
 
     @Async("AsyncTaskExecutor")
     public CompletableFuture<List<TransactionResponse>> getAllTransaction(int page, int perPage,

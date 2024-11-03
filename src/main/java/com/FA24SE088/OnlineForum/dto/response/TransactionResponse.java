@@ -16,7 +16,6 @@ import java.util.UUID;
 public class TransactionResponse {
     UUID transactionId;
     double amount;
-    String type;
     Date createdDate;
     @JsonIgnoreProperties(value = {"transactionList", "sectionList", "redeemList"})
     Reward reward;
