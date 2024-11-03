@@ -101,13 +101,17 @@ public class DailyPointService {
 
     @Async("AsyncTaskExecutor")
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
-    public CompletableFuture<List<DailyPointResponse>> getAllDailyPoints(int page, int perPage, UUID accountId, String givenDate) {
+    public CompletableFuture<List<DailyPointResponse>> getAllDailyPoints(int page, int perPage, UUID accountId, UUID postId, String givenDate) {
         var accountFuture = accountId != null
                             ? findAccountById(accountId)
                             : CompletableFuture.completedFuture(null);
+        var postFuture = postId != null
+                ? findPostById(postId)
+                : CompletableFuture.completedFuture(null);
 
         return CompletableFuture.allOf(accountFuture).thenCompose(v -> {
             var account = accountFuture.join();
+            var post = postFuture.join();
 
             SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd");
             Date parseDate;
@@ -122,6 +126,7 @@ public class DailyPointService {
 
             var list = unitOfWork.getDailyPointRepository().findAllByOrderByCreatedDateDesc().stream()
                     .filter(dailyPoint -> account == null || dailyPoint.getAccount().equals(account))
+                    .filter(dailyPoint -> post == null || dailyPoint.getPost().equals(post))
                     .filter(dailyPoint -> {
                         Calendar createdDateCal = Calendar.getInstance();
                         createdDateCal.setTime(dailyPoint.getCreatedDate());

@@ -53,9 +53,10 @@ public class DailyPointController {
     public ApiResponse<List<DailyPointResponse>> getAllDailyPoints(@RequestParam(defaultValue = "1") int page,
                                                                    @RequestParam(defaultValue = "10") int perPage,
                                                                    @RequestParam(required = false) UUID accountId,
+                                                                   @RequestParam(required = false) UUID postId,
                                                                    @Parameter(description = "Filter by date in yyyy-MM-dd format", example = "2023-10-01")
                                                                        @RequestParam(required = false) String givenDate){
-        return dailyPointService.getAllDailyPoints(page, perPage, accountId, givenDate).thenApply(dailyPointResponses ->
+        return dailyPointService.getAllDailyPoints(page, perPage, accountId, postId, givenDate).thenApply(dailyPointResponses ->
                 ApiResponse.<List<DailyPointResponse>>builder()
                         .entity(dailyPointResponses)
                         .build()
