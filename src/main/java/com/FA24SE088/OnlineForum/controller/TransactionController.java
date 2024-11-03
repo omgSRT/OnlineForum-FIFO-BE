@@ -76,13 +76,13 @@ public class TransactionController {
         ).join();
     }
 
-    @Operation(description = "Get Transaction", summary = "Get Transaction By ID")
-    @GetMapping(path = "/get-of-current-account")
-    public ApiResponse<List<TransactionResponse>> getTransactionByCurrentAccount(){
-        return ApiResponse.<List<TransactionResponse>>builder()
-                .entity(transactionService.getListByAccountId())
-                .build();
-    }
+//    @Operation(description = "Get Transaction", summary = "Get Transaction By ID")
+//    @GetMapping(path = "/get-of-current-account")
+//    public ApiResponse<List<TransactionResponse>> getTransactionByCurrentAccount(){
+//        return ApiResponse.<List<TransactionResponse>>builder()
+//                .entity(transactionService.getListByAccountId())
+//                .build();
+//    }
 
     @Operation(description = "Delete Transaction", summary = "Delete Transaction By ID")
     @DeleteMapping(path = "/delete/{transactionId}")

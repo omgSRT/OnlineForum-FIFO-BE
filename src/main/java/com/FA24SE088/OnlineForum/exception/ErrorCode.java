@@ -105,6 +105,8 @@ public enum ErrorCode {
     TOPIC_NOT_BELONG_TO_CATEGORY(10088, "This Topic Doesn't Belong To Given Category", HttpStatus.BAD_REQUEST),
     TYPE_BONUS_NOT_FOUND(10089, "Type Bonus Not Found", HttpStatus.NOT_FOUND),
     INVALID_OR_EMPTY_LINK(10090, "URL Must Be Valid or Empty", HttpStatus.BAD_REQUEST),
+    END_DATE_BEFORE_START_DATE(10091, "End date must be before start date", HttpStatus.BAD_REQUEST),
+    START_DATE_AFTER_TODAY(10092, "Start date cannot after today", HttpStatus.BAD_REQUEST),
     ;
 
     private int code;

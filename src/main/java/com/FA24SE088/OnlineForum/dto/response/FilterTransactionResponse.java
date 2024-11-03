@@ -13,9 +13,10 @@ import java.util.List;
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class FilterTransactionResponse {
-    @JsonIgnoreProperties(value = { "password", "email", "bio", "gender", "address", "createdDate", "status", "role" })
-    List<Account> accountList;
-    List<Transaction> transactionList;
+    @JsonIgnoreProperties(value = {"wallet"})
+    List<TransactionResponse> transactionList;
+    @JsonIgnoreProperties(value = {"account","typeBonus"})
     List<DailyPoint> dailyPointList;
-
+    @JsonIgnoreProperties(value = {"account","point"})
+    List<DailyPoint> bonusPoint;
 }

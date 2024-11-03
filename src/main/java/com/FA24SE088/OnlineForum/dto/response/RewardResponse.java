@@ -19,5 +19,4 @@ public class RewardResponse {
     String type;
     String status;
     List<SectionResponse> sectionList;
-
 }
