@@ -34,7 +34,7 @@ public class Post {
     Date createdDate;
     Date lastModifiedDate;
     String status;
-    String linkSourceCode;
+    String linkFile;
 
     @JsonIgnore
     @JsonIgnoreProperties(value = { "post" }, allowSetters = true)

@@ -49,10 +49,10 @@ public class PostService {
                     var account = accountFuture.join();
                     var topic = topicFuture.join();
                     var tag = tagFuture.join();
-                    var linkSourceCode = request.getLinkSourceCode();
+                    var linkFile = request.getLinkFile();
 
                     Post newPost = postMapper.toPost(request);
-                    newPost.setLinkSourceCode(linkSourceCode == null || linkSourceCode.trim().isEmpty() ? null : linkSourceCode);
+                    newPost.setLinkFile(linkFile == null || linkFile.trim().isEmpty() ? null : linkFile);
                     newPost.setCreatedDate(new Date());
                     newPost.setLastModifiedDate(new Date());
                     newPost.setStatus(PostStatus.PUBLIC.name());
@@ -292,9 +292,9 @@ public class PostService {
                 if (request.getImageUrlList() != null && !request.getImageUrlList().isEmpty()) {
                     post.setImageList(finalCreateImageFuture.join() != null ? finalCreateImageFuture.join() : new ArrayList<>());
                 }
-                post.setLinkSourceCode(request.getLinkSourceCode() == null || request.getLinkSourceCode().trim().isEmpty()
+                post.setLinkFile(request.getLinkFile() == null || request.getLinkFile().trim().isEmpty()
                         ? null
-                        : request.getLinkSourceCode());
+                        : request.getLinkFile());
                 post.setLastModifiedDate(new Date());
 
                 return CompletableFuture.completedFuture(unitOfWork.getPostRepository().save(post));
@@ -389,10 +389,10 @@ public class PostService {
                     var account = accountFuture.join();
                     var topic = topicFuture.join();
                     var tag = tagFuture.join();
-                    var linkSourceCode = request.getLinkSourceCode();
+                    var linkFile = request.getLinkFile();
 
                     Post newPost = postMapper.toPost(request);
-                    newPost.setLinkSourceCode(linkSourceCode == null || linkSourceCode.trim().isEmpty() ? null : linkSourceCode);
+                    newPost.setLinkFile(linkFile == null || linkFile.trim().isEmpty() ? null : linkFile);
                     newPost.setCreatedDate(new Date());
                     newPost.setLastModifiedDate(new Date());
                     newPost.setStatus(PostStatus.DRAFT.name());
@@ -504,9 +504,9 @@ public class PostService {
 
             return CompletableFuture.allOf(deleteImageListFuture, createImageFuture).thenCompose(voidData -> {
                         postMapper.updateDraft(post, request);
-                        post.setLinkSourceCode(request.getLinkSourceCode() == null || request.getLinkSourceCode().trim().isEmpty()
+                        post.setLinkFile(request.getLinkFile() == null || request.getLinkFile().trim().isEmpty()
                                 ? null
-                                : request.getLinkSourceCode());
+                                : request.getLinkFile());
                         post.setTopic(topic != null ? (Topic) topic : null);
                         post.setTag(tag != null ? (Tag) tag : null);
                         if(createImageFuture.join() != null){

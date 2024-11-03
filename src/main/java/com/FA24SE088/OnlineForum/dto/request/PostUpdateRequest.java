@@ -19,5 +19,5 @@ public class PostUpdateRequest {
     String content;
     Set<ImageRequest> imageUrlList;
     @Pattern(regexp = "^(http|https)://.*|^$", message = "URL Must Be Valid or Empty")
-    String linkSourceCode;
+    String linkFile;
 }

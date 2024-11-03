@@ -23,5 +23,5 @@ public class PostCreateRequest {
     UUID tagId;
     Set<ImageRequest> imageUrlList;
     @Pattern(regexp = "^(http|https)://.*|^$", message = "URL Must Be Valid or Empty")
-    String linkSourceCode;
+    String linkFile;
 }
