@@ -103,6 +103,8 @@ public enum ErrorCode {
     CANNOT_REPORT_SELF_POST(10086, "Can't Report Post That Made By You", HttpStatus.BAD_REQUEST),
     KEYWORD_LENGTH_SHORTER_THAN_ONE(10087, "Keyword Length Must Be Longer Than 2 To Search Effectively", HttpStatus.BAD_REQUEST),
     TOPIC_NOT_BELONG_TO_CATEGORY(10088, "This Topic Doesn't Belong To Given Category", HttpStatus.BAD_REQUEST),
+    END_DATE_BEFORE_START_DATE(10089, "End date must be before start date", HttpStatus.BAD_REQUEST),
+    START_DATE_AFTER_TODAY(10089, "Start date cannot after today", HttpStatus.BAD_REQUEST),
     ;
 
     private int code;

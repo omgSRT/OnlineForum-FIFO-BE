@@ -1,5 +1,6 @@
 package com.FA24SE088.OnlineForum.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
@@ -26,6 +27,7 @@ public class Reward {
     String status;
 
     @JsonIgnoreProperties(value = {"reward","account"}, allowSetters = true)
+    @JsonIgnore
     @OneToMany(mappedBy = "reward", cascade = CascadeType.ALL, orphanRemoval = true)
     List<Redeem> redeemList;
 
