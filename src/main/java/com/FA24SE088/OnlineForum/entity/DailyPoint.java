@@ -35,7 +35,7 @@ public class DailyPoint {
 
     @JsonIgnore
     @JsonIgnoreProperties(value = {"dailyPoint"}, allowSetters = true)
-    @OneToOne
+    @ManyToOne
     @JoinColumn(name = "postId")
     Post post;
 

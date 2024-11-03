@@ -26,7 +26,7 @@ public interface PostMapper {
 
     PostGetByIdResponse toPostGetByIdResponse(Post post);
 
-    @Mapping(target = "dailyPoint", ignore = true)
+    @Mapping(target = "dailyPointList", ignore = true)
     @Mapping(target = "account", ignore = true)
     @Mapping(target = "upvoteList", ignore = true)
     @Mapping(target = "commentList", ignore = true)
@@ -35,7 +35,7 @@ public interface PostMapper {
     @Mapping(target = "reportList", ignore = true)
     void updatePost(@MappingTarget Post post, PostUpdateRequest postUpdateRequest);
 
-    @Mapping(target = "dailyPoint", ignore = true)
+    @Mapping(target = "dailyPointList", ignore = true)
     @Mapping(target = "account", ignore = true)
     @Mapping(target = "upvoteList", ignore = true)
     @Mapping(target = "commentList", ignore = true)

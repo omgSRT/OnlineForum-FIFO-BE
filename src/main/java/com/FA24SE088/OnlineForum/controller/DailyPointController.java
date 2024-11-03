@@ -26,7 +26,8 @@ import java.util.UUID;
 public class DailyPointController {
     DailyPointService dailyPointService;
 
-    @Operation(summary = "Create New Daily Point Log")
+    @Operation(summary = "Create New Daily Point Log",
+            description = "TypeBonusId Can Be Null To Use Default Point System Instead of Bonus Point")
     @PostMapping(path = "/create")
     public ApiResponse<DailyPointResponse> createDailyPoint(@RequestBody @Valid DailyPointRequest request){
         return dailyPointService.createDailyPoint(request).thenApply(dailyPointResponse ->
@@ -52,9 +53,10 @@ public class DailyPointController {
     public ApiResponse<List<DailyPointResponse>> getAllDailyPoints(@RequestParam(defaultValue = "1") int page,
                                                                    @RequestParam(defaultValue = "10") int perPage,
                                                                    @RequestParam(required = false) UUID accountId,
+                                                                   @RequestParam(required = false) UUID postId,
                                                                    @Parameter(description = "Filter by date in yyyy-MM-dd format", example = "2023-10-01")
                                                                        @RequestParam(required = false) String givenDate){
-        return dailyPointService.getAllDailyPoints(page, perPage, accountId, givenDate).thenApply(dailyPointResponses ->
+        return dailyPointService.getAllDailyPoints(page, perPage, accountId, postId, givenDate).thenApply(dailyPointResponses ->
                 ApiResponse.<List<DailyPointResponse>>builder()
                         .entity(dailyPointResponses)
                         .build()

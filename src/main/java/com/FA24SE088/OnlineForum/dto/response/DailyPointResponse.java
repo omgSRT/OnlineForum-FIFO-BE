@@ -2,8 +2,8 @@ package com.FA24SE088.OnlineForum.dto.response;
 
 import com.FA24SE088.OnlineForum.entity.Account;
 import com.FA24SE088.OnlineForum.entity.Post;
+import com.FA24SE088.OnlineForum.entity.TypeBonus;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import jakarta.validation.constraints.Min;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -23,4 +23,6 @@ public class DailyPointResponse {
     Account account;
     @JsonIgnoreProperties(value = { "account", "topic", "tag", "status" })
     Post post;
+    @JsonIgnoreProperties(value = { "dailyPointList" })
+    TypeBonus typeBonus;
 }

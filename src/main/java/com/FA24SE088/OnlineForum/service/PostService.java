@@ -7,7 +7,6 @@ import com.FA24SE088.OnlineForum.enums.PostStatus;
 import com.FA24SE088.OnlineForum.enums.UpdatePostStatus;
 import com.FA24SE088.OnlineForum.exception.AppException;
 import com.FA24SE088.OnlineForum.exception.ErrorCode;
-import com.FA24SE088.OnlineForum.mapper.DailyPointMapper;
 import com.FA24SE088.OnlineForum.mapper.ImageMapper;
 import com.FA24SE088.OnlineForum.mapper.PostMapper;
 import com.FA24SE088.OnlineForum.repository.UnitOfWork.UnitOfWork;
@@ -33,7 +32,6 @@ public class PostService {
     UnitOfWork unitOfWork;
     PostMapper postMapper;
     ImageMapper imageMapper;
-    DailyPointMapper dailyPointMapper;
     PaginationUtils paginationUtils;
 
     //region CRUD Completed Post
@@ -51,15 +49,16 @@ public class PostService {
                     var account = accountFuture.join();
                     var topic = topicFuture.join();
                     var tag = tagFuture.join();
+                    var linkFile = request.getLinkFile();
 
                     Post newPost = postMapper.toPost(request);
+                    newPost.setLinkFile(linkFile == null || linkFile.trim().isEmpty() ? null : linkFile);
                     newPost.setCreatedDate(new Date());
                     newPost.setLastModifiedDate(new Date());
                     newPost.setStatus(PostStatus.PUBLIC.name());
                     newPost.setAccount(account);
                     newPost.setTopic(topic);
                     newPost.setTag(tag);
-
 
                     newPost.setCommentList(new ArrayList<>());
                     newPost.setUpvoteList(new ArrayList<>());
@@ -85,7 +84,12 @@ public class PostService {
                                 else{
                                     savedPost.setImageList(new ArrayList<>());
                                 }
-                                savedPost.setDailyPoint(dailyPoint);
+
+                                List<DailyPoint> dailyPointList = new ArrayList<>();
+                                if (dailyPoint != null) {
+                                    dailyPointList.add(dailyPoint);
+                                }
+                                savedPost.setDailyPointList(dailyPointList);
                                 return CompletableFuture.completedFuture(unitOfWork.getPostRepository().save(savedPost));
                             });
                 })
@@ -288,6 +292,9 @@ public class PostService {
                 if (request.getImageUrlList() != null && !request.getImageUrlList().isEmpty()) {
                     post.setImageList(finalCreateImageFuture.join() != null ? finalCreateImageFuture.join() : new ArrayList<>());
                 }
+                post.setLinkFile(request.getLinkFile() == null || request.getLinkFile().trim().isEmpty()
+                        ? null
+                        : request.getLinkFile());
                 post.setLastModifiedDate(new Date());
 
                 return CompletableFuture.completedFuture(unitOfWork.getPostRepository().save(post));
@@ -382,8 +389,10 @@ public class PostService {
                     var account = accountFuture.join();
                     var topic = topicFuture.join();
                     var tag = tagFuture.join();
+                    var linkFile = request.getLinkFile();
 
                     Post newPost = postMapper.toPost(request);
+                    newPost.setLinkFile(linkFile == null || linkFile.trim().isEmpty() ? null : linkFile);
                     newPost.setCreatedDate(new Date());
                     newPost.setLastModifiedDate(new Date());
                     newPost.setStatus(PostStatus.DRAFT.name());
@@ -395,6 +404,7 @@ public class PostService {
                     newPost.setUpvoteList(new ArrayList<>());
                     newPost.setReportList(new ArrayList<>());
                     newPost.setBookMarkList(new ArrayList<>());
+                    newPost.setDailyPointList(new ArrayList<>());
 
                     return CompletableFuture.completedFuture(unitOfWork.getPostRepository().save(newPost));
                 })
@@ -494,6 +504,9 @@ public class PostService {
 
             return CompletableFuture.allOf(deleteImageListFuture, createImageFuture).thenCompose(voidData -> {
                         postMapper.updateDraft(post, request);
+                        post.setLinkFile(request.getLinkFile() == null || request.getLinkFile().trim().isEmpty()
+                                ? null
+                                : request.getLinkFile());
                         post.setTopic(topic != null ? (Topic) topic : null);
                         post.setTag(tag != null ? (Tag) tag : null);
                         if(createImageFuture.join() != null){
@@ -534,7 +547,11 @@ public class PostService {
             return CompletableFuture.allOf(dailyPointFuture, walletFuture, pointFuture).thenCompose(voidReturnData -> {
                 var dailyPoint = dailyPointFuture.join();
 
-                post.setDailyPoint(dailyPoint);
+                List<DailyPoint> dailyPointList = new ArrayList<>();
+                if (dailyPoint != null) {
+                    dailyPointList.add(dailyPoint);
+                }
+                post.setDailyPointList(dailyPointList);
                 post.setStatus(PostStatus.PUBLIC.name());
                 post.setLastModifiedDate(new Date());
                 return CompletableFuture.completedFuture(unitOfWork.getPostRepository().save(post));
@@ -668,8 +685,8 @@ public class PostService {
                     var account = accountFuture.join();
                     var totalPoint = totalPointFuture.join();
                     var pointList = pointFuture.join();
-                    Point point;
 
+                    Point point;
                     if(pointList.isEmpty()){
                         throw new AppException(ErrorCode.POINT_NOT_FOUND);
                     }
@@ -680,6 +697,7 @@ public class PostService {
                     newDailyPoint.setPoint(point);
                     newDailyPoint.setPost(savedPost);
                     newDailyPoint.setAccount(account);
+                    newDailyPoint.setTypeBonus(null);
                     if(totalPoint + point.getPointPerPost() > point.getMaxPoint()){
                         newDailyPoint.setPointEarned(0);
                     }
@@ -791,19 +809,31 @@ public class PostService {
     }
     @Async("AsyncTaskExecutor")
     private CompletableFuture<Double> countUserTotalPointAtAGivenDate(UUID accountId, Date givenDate){
+        Calendar parsedDateCal = Calendar.getInstance();
+        parsedDateCal.setTime(givenDate);
+        parsedDateCal.set(Calendar.HOUR_OF_DAY, 0);
+        parsedDateCal.set(Calendar.MINUTE, 0);
+        parsedDateCal.set(Calendar.SECOND, 0);
+        parsedDateCal.set(Calendar.MILLISECOND, 0);
+        Date normalizedGivenDate = parsedDateCal.getTime();
+
         var accountFuture = findAccountById(accountId);
         return accountFuture.thenCompose(account ->
-                unitOfWork.getDailyPointRepository().findByAccountAndCreatedDate(account, givenDate)
+                unitOfWork.getDailyPointRepository().findByAccount(account) // Adjust repository method as needed
                         .thenCompose(dailyPoints -> {
-                            double totalCount = 0;
-                            if(dailyPoints == null || dailyPoints.isEmpty()){
-                                totalCount = 0;
-                            }
-                            else{
-                                for(DailyPoint dailyPoint : dailyPoints){
-                                    totalCount += dailyPoint.getPointEarned();
-                                }
-                            }
+                            double totalCount = dailyPoints.stream()
+                                    .filter(dailyPoint -> {
+                                        Calendar createdDateCal = Calendar.getInstance();
+                                        createdDateCal.setTime(dailyPoint.getCreatedDate());
+                                        createdDateCal.set(Calendar.HOUR_OF_DAY, 0);
+                                        createdDateCal.set(Calendar.MINUTE, 0);
+                                        createdDateCal.set(Calendar.SECOND, 0);
+                                        createdDateCal.set(Calendar.MILLISECOND, 0);
+
+                                        return createdDateCal.getTime().equals(normalizedGivenDate);
+                                    })
+                                    .mapToDouble(DailyPoint::getPointEarned)
+                                    .sum();
 
                             return CompletableFuture.completedFuture(totalCount);
                         })

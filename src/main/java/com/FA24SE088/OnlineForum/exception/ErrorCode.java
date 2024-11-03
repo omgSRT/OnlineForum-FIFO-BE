@@ -103,8 +103,15 @@ public enum ErrorCode {
     CANNOT_REPORT_SELF_POST(10086, "Can't Report Post That Made By You", HttpStatus.BAD_REQUEST),
     KEYWORD_LENGTH_SHORTER_THAN_ONE(10087, "Keyword Length Must Be Longer Than 2 To Search Effectively", HttpStatus.BAD_REQUEST),
     TOPIC_NOT_BELONG_TO_CATEGORY(10088, "This Topic Doesn't Belong To Given Category", HttpStatus.BAD_REQUEST),
-    END_DATE_BEFORE_START_DATE(10089, "End date must be before start date", HttpStatus.BAD_REQUEST),
-    START_DATE_AFTER_TODAY(10089, "Start date cannot after today", HttpStatus.BAD_REQUEST),
+    TYPE_BONUS_NOT_FOUND(10089, "Type Bonus Not Found", HttpStatus.NOT_FOUND),
+    INVALID_OR_EMPTY_LINK(10090, "URL Must Be Valid or Empty", HttpStatus.BAD_REQUEST),
+    END_DATE_BEFORE_START_DATE(10091, "End date must be before start date", HttpStatus.BAD_REQUEST),
+    START_DATE_AFTER_TODAY(10092, "Start date cannot after today", HttpStatus.BAD_REQUEST),
+    QUANTITY_LESS_THAN_ONE(10093, "Quantity Must Be Equal Or Greater Than 1", HttpStatus.BAD_REQUEST),
+    QUANTITY_GREATER_THAN_MAX_VALUE(10094, "Quantity Must Be Equal Or Lesser Than 9 Quintillion", HttpStatus.BAD_REQUEST),
+    POINT_BONUS_LESS_THAN_ONE(10095, "Point Bonus Must Be Equal Or Greater Than 1", HttpStatus.BAD_REQUEST),
+    CANNOT_COMMENT_ON_DRAFT(10096, "Cannot Comment On Draft", HttpStatus.BAD_REQUEST),
+    TYPE_BONUS_ALREADY_EXIST(10097, "Type Bonus Already Existed", HttpStatus.BAD_REQUEST),
     ;
 
     private int code;

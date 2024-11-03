@@ -14,6 +14,5 @@ import java.util.UUID;
 public class ReplyCreateRequest {
     @NotBlank(message = "Content Cannot Be Null")
     String content;
-    UUID postId;
     UUID parentCommentId;
 }
