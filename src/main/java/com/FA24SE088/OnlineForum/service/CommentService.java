@@ -168,7 +168,9 @@ public class CommentService {
                     }
 
                     deleteRepliesRecursively(comment);
-
+                    if(comment.getParentComment() != null){
+                        comment.getParentComment().getReplies().remove(comment);
+                    }
                     unitOfWork.getCommentRepository().delete(comment);
 
                     return CompletableFuture.completedFuture(comment);
