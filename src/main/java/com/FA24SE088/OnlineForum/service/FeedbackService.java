@@ -49,21 +49,21 @@ public class FeedbackService {
         feedback.setStatus(FeedbackStatus.PENDING.name());
         Feedback savedFeedback = unitOfWork.getFeedbackRepository().save(feedback);
 
-        Notification notification = Notification.builder()
-                .title("Feedback Noitfication")
-                .message("Your feedback send success!")
-                .isRead(false)
-                .type("Feedback")
-                .account(account)
-                .createdDate(feedback.getCreatedDate())
-                .build();
+//        Notification notification = Notification.builder()
+//                .title("Feedback Noitfication")
+//                .message("Your feedback send success!")
+//                .isRead(false)
+//                .type("Feedback")
+//                .account(account)
+//                .createdDate(feedback.getCreatedDate())
+//                .build();
 
-        unitOfWork.getNotificationRepository().save(notification);
+//        unitOfWork.getNotificationRepository().save(notification);
         //websocket
 //        dataHandler.sendToUser(account.getAccountId(),notification);
-        dataHandler.sendToUser2(account.getAccountId(),notification);
+//        dataHandler.sendToUser2(account.getAccountId(),notification);
         FeedbackResponse response = feedbackMapper.toResponse(savedFeedback);
-        response.setNotification(notification);
+//        response.setNotification(notification);
         return response;
     }
 
@@ -78,16 +78,16 @@ public class FeedbackService {
             feedback.setStatus(status.name());
             Feedback updatedFeedback = unitOfWork.getFeedbackRepository().save(feedback);
 
-            Notification notification = Notification.builder()
-                    .title("Feedback Noitfication")
-                    .message("Your feedback send success!")
-                    .isRead(false)
-                    .type("Feedback")
-                    .account(feedback.getAccount())
-                    .createdDate(feedback.getCreatedDate())
-                    .build();
-            unitOfWork.getNotificationRepository().save(notification);
-            dataHandler.sendToUser(feedbackOptional.get().getAccount().getAccountId(),updatedFeedback);
+//            Notification notification = Notification.builder()
+//                    .title("Feedback Noitfication")
+//                    .message("Your feedback send success!")
+//                    .isRead(false)
+//                    .type("Feedback")
+//                    .account(feedback.getAccount())
+//                    .createdDate(feedback.getCreatedDate())
+//                    .build();
+//            unitOfWork.getNotificationRepository().save(notification);
+//            dataHandler.sendToUser(feedbackOptional.get().getAccount().getAccountId(),updatedFeedback);
             return Optional.of(feedbackMapper.toResponse(updatedFeedback));
         }
         return Optional.empty();
