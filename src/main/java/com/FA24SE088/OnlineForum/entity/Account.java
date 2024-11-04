@@ -26,7 +26,6 @@ public class Account {
     @EqualsAndHashCode.Include
     String email;
     String password;
-    String phone;
     String bio;
     String handle;
     @Column(columnDefinition = "MEDIUMTEXT")

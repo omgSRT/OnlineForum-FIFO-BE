@@ -175,6 +175,9 @@ public class AccountService {
         if (request.getCoverImage() != null && !request.getCoverImage().isEmpty()) {
             account.setCoverImage(request.getCoverImage());
         }
+        if (request.getBio() != null && !request.getBio().isEmpty()) {
+            account.setBio(request.getBio());
+        }
         unitOfWork.getAccountRepository().save(account);
         return accountMapper.toResponse(account);
     }

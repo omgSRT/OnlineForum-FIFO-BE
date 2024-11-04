@@ -49,11 +49,11 @@ public class AuthenticationController {
     @Transactional
     public ApiResponse<AccountResponse> create(@Valid @RequestBody AccountRequest request) {
         AccountResponse response = accountService.create(request);
-        otpUtil.generateOtp(request.getEmail());
+        Otp otp = otpUtil.generateOtp(request.getEmail());
 //        String otpFromRedis = redisTemplate.opsForValue().get(request.getEmail());
         emailUtil.sendToAnEmail(
                 response.getEmail(),
-                "Mã OTP của bạn là: " + redisTemplate.opsForValue().get(request.getEmail()),
+                "Mã OTP của bạn là: " + otp.getOtpEmail(),
                 "Mã OTP xác thực tài khoản",
                 null);
         return ApiResponse.<AccountResponse>builder()

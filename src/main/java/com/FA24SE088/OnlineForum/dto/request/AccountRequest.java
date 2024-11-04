@@ -21,8 +21,6 @@ public class AccountRequest {
     @Email
     String email;
     String bio;
-    @Pattern(regexp = "^\\+?[0-9]{10,15}$", message = "Phone invalid, must be 10-15 number")
-    String phone;
     @Size(min = 8, max = 20, message = "Pass must be least 8-20 character")
     String password;
     @Size(min = 8, max = 20, message = "Pass must be least 8-20 character")
