@@ -20,7 +20,6 @@ public class SearchEverythingResponse {
     List<Account> accountList;
     @JsonIgnoreProperties(value = { "account" })
     List<Category> categoryList;
-    @JsonIgnoreProperties(value = { "category" })
     List<Topic> topicList;
     @JsonIgnoreProperties(value = { "account", "topic", "tag" })
     List<Post> postList;
