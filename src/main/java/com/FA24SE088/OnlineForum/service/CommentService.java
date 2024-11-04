@@ -20,7 +20,6 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
-import org.hibernate.Hibernate;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -28,9 +27,7 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
 @RequiredArgsConstructor
@@ -171,6 +168,7 @@ public class CommentService {
                     }
 
                     deleteRepliesRecursively(comment);
+
                     unitOfWork.getCommentRepository().delete(comment);
 
                     return CompletableFuture.completedFuture(comment);
@@ -186,7 +184,9 @@ public class CommentService {
                     var comment = commentFuture.join();
 
                     deleteRepliesRecursively(comment);
-
+                    if(comment.getParentComment() != null){
+                        comment.getParentComment().getReplies().remove(comment);
+                    }
                     unitOfWork.getCommentRepository().delete(comment);
 
                     return CompletableFuture.completedFuture(comment);
@@ -215,7 +215,6 @@ public class CommentService {
                         .orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND))
         );
     }
-    @Transactional
     @Async("AsyncTaskExecutor")
     private CompletableFuture<Comment> findCommentById(UUID commentId) {
         return CompletableFuture.supplyAsync(() ->
@@ -232,11 +231,14 @@ public class CommentService {
         return null;
     }
     private void deleteRepliesRecursively(Comment comment) {
-        if (comment.getReplies() != null) {
-            for (Comment reply : comment.getReplies()) {
+        List<Comment> replies = comment.getReplies();
+
+        if (replies != null && !replies.isEmpty()) {
+            for (Comment reply : replies) {
                 deleteRepliesRecursively(reply);
                 unitOfWork.getCommentRepository().delete(reply);
             }
+            replies.clear();
         }
     }
 }
