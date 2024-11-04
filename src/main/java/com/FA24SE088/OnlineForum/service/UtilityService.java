@@ -114,12 +114,12 @@ public class UtilityService {
 
     @Async("AsyncTaskExecutor")
     private CompletableFuture<List<Post>> findAllPostsByTitleContainingIgnoreCase(String title) {
-        return unitOfWork.getPostRepository().findByTitleContainingIgnoreCase(title);
+        return unitOfWork.getPostRepository().findByTitleContainingIgnoreCaseOrderByCreatedDateDesc(title);
     }
 
     @Async("AsyncTaskExecutor")
     private CompletableFuture<List<Post>> findAllPostsByContentContainingIgnoreCase(String content) {
-        return unitOfWork.getPostRepository().findByContentContainingIgnoreCase(content);
+        return unitOfWork.getPostRepository().findByContentContainingIgnoreCaseOrderByCreatedDateDesc(content);
     }
 
     private Account getCurrentUser() {

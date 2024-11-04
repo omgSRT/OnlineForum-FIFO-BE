@@ -2,8 +2,6 @@ package com.FA24SE088.OnlineForum.repository.Repository;
 
 import com.FA24SE088.OnlineForum.entity.Account;
 import com.FA24SE088.OnlineForum.entity.Post;
-import com.FA24SE088.OnlineForum.entity.Tag;
-import com.FA24SE088.OnlineForum.entity.Topic;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Repository;
@@ -21,10 +19,10 @@ public interface PostRepository extends JpaRepository<Post, UUID> {
     CompletableFuture<List<Post>> findByAccount(Account account);
 
     @Async("AsyncTaskExecutor")
-    CompletableFuture<List<Post>> findByTitleContainingIgnoreCase(String title);
+    CompletableFuture<List<Post>> findByTitleContainingIgnoreCaseOrderByCreatedDateDesc(String title);
 
     @Async("AsyncTaskExecutor")
-    CompletableFuture<List<Post>> findByContentContainingIgnoreCase(String content);
+    CompletableFuture<List<Post>> findByContentContainingIgnoreCaseOrderByCreatedDateDesc(String content);
 
     List<Post> findAllByOrderByCreatedDateDesc();
 }
