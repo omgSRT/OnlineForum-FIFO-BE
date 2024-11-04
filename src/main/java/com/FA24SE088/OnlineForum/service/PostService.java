@@ -539,6 +539,9 @@ public class PostService {
             if(!post.getStatus().equals(PostStatus.DRAFT.name())){
                 throw new AppException(ErrorCode.COMPLETED_POST_CANNOT_BE_UPDATE_TO_POST);
             }
+            if(post.getTag() == null || post.getTopic() == null){
+                throw new AppException(ErrorCode.TYPE_OR_TOPIC_NOT_FOUND);
+            }
 
             var dailyPointFuture = createDailyPointLog(account.getAccountId(), post);
             var walletFuture = addPointToWallet(account.getAccountId());

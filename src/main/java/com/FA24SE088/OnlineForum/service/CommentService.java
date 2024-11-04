@@ -170,6 +170,7 @@ public class CommentService {
                         throw new AppException(ErrorCode.ACCOUNT_COMMENT_NOT_MATCH);
                     }
 
+                    deleteRepliesRecursively(comment);
                     unitOfWork.getCommentRepository().delete(comment);
 
                     return CompletableFuture.completedFuture(comment);
@@ -183,6 +184,8 @@ public class CommentService {
 
         return CompletableFuture.allOf(commentFuture).thenCompose(v -> {
                     var comment = commentFuture.join();
+
+                    deleteRepliesRecursively(comment);
 
                     unitOfWork.getCommentRepository().delete(comment);
 
@@ -227,5 +230,13 @@ public class CommentService {
             return jwt.getClaim("username");
         }
         return null;
+    }
+    private void deleteRepliesRecursively(Comment comment) {
+        if (comment.getReplies() != null) {
+            for (Comment reply : comment.getReplies()) {
+                deleteRepliesRecursively(reply);
+                unitOfWork.getCommentRepository().delete(reply);
+            }
+        }
     }
 }
