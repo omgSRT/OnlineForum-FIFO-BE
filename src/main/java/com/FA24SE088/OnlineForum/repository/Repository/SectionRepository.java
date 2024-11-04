@@ -9,6 +9,5 @@ import java.util.UUID;
 
 @Repository
 public interface SectionRepository extends JpaRepository<Section, UUID> {
-//    void deleteAllByDocument(Reward reward);
     void deleteAllByReward(Reward reward);
 }

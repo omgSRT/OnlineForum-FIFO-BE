@@ -28,6 +28,7 @@ public class ContentSection {
     @JoinColumn(name = "sectionCodeId")
     Section section;
 
-    @OneToMany(mappedBy = "contentSection", cascade = CascadeType.ALL, orphanRemoval = true)
+    //    @OneToMany(mappedBy = "contentSection", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "contentSection", cascade = CascadeType.ALL)
     List<Media> medias;
 }
