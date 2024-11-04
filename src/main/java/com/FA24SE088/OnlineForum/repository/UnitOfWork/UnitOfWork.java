@@ -42,4 +42,5 @@ public class UnitOfWork {
     final OtpRepository otpRepository;
     final ContentSectionRepository contentSectionRepository;
     final MediaRepository mediaRepository;
+    final TypeBonusRepository typeBonusRepository;
 }

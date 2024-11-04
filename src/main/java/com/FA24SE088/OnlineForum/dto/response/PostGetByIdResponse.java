@@ -24,6 +24,7 @@ public class PostGetByIdResponse {
     Date lastModifiedDate;
     String status;
     Account account;
+    String linkFile;
     @JsonIgnoreProperties(value = { "category.account" })
     Topic topic;
     @JsonIgnoreProperties(value = {

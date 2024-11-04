@@ -2,10 +2,7 @@ package com.FA24SE088.OnlineForum.service;
 
 import com.FA24SE088.OnlineForum.dto.request.DailyPointRequest;
 import com.FA24SE088.OnlineForum.dto.response.DailyPointResponse;
-import com.FA24SE088.OnlineForum.entity.Account;
-import com.FA24SE088.OnlineForum.entity.DailyPoint;
-import com.FA24SE088.OnlineForum.entity.Point;
-import com.FA24SE088.OnlineForum.entity.Post;
+import com.FA24SE088.OnlineForum.entity.*;
 import com.FA24SE088.OnlineForum.exception.AppException;
 import com.FA24SE088.OnlineForum.exception.ErrorCode;
 import com.FA24SE088.OnlineForum.mapper.DailyPointMapper;
@@ -41,31 +38,42 @@ public class DailyPointService {
     public CompletableFuture<DailyPointResponse> createDailyPoint(DailyPointRequest request){
         var accountFuture = findAccountById(request.getAccountId());
         var postFuture = findPostById(request.getPostId());
+        var typeBonusFuture = request.getTypeBonusId() != null
+                ? findTypeBonusById(request.getTypeBonusId())
+                : CompletableFuture.completedFuture(null);
         var totalPointFuture = countUserTotalPointAtAGivenDate(request.getAccountId(), new Date());
         var pointFuture = getPoint();
 
-        return CompletableFuture.allOf(accountFuture, postFuture, totalPointFuture, pointFuture)
+        return CompletableFuture.allOf(accountFuture, postFuture, totalPointFuture, typeBonusFuture, pointFuture)
                 .thenCompose(all -> {
                     var account = accountFuture.join();
                     var post = postFuture.join();
                     var totalPoint = totalPointFuture.join();
                     var pointList = pointFuture.join();
-                    Point point;
+                    var typeBonus = typeBonusFuture.join();
 
-                    if(pointList.isEmpty()){
-                        throw new AppException(ErrorCode.POINT_NOT_FOUND);
+                    Point point;
+                    if(typeBonus == null){
+                        if(pointList.isEmpty()){
+                            throw new AppException(ErrorCode.POINT_NOT_FOUND);
+                        }
+                        point = pointList.get(0);
                     }
-                    point = pointList.get(0);
+                    else{
+                        point = null;
+                    }
+
 
                     DailyPoint newDailyPoint = new DailyPoint();
                     newDailyPoint.setCreatedDate(new Date());
                     newDailyPoint.setPoint(point);
                     newDailyPoint.setPost(post);
                     newDailyPoint.setAccount(account);
-                    if(totalPoint + point.getPointPerPost() > point.getMaxPoint()){
+                    newDailyPoint.setTypeBonus(typeBonus != null ? (TypeBonus) typeBonus : null);
+                    if(point != null && (totalPoint + point.getPointPerPost() > point.getMaxPoint())){
                         newDailyPoint.setPointEarned(0);
                     }
-                    else{
+                    else if(point != null && (totalPoint + point.getPointPerPost() <= point.getMaxPoint())){
                         newDailyPoint.setPointEarned(point.getPointPerPost());
                     }
 
@@ -93,13 +101,17 @@ public class DailyPointService {
 
     @Async("AsyncTaskExecutor")
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
-    public CompletableFuture<List<DailyPointResponse>> getAllDailyPoints(int page, int perPage, UUID accountId, String givenDate) {
+    public CompletableFuture<List<DailyPointResponse>> getAllDailyPoints(int page, int perPage, UUID accountId, UUID postId, String givenDate) {
         var accountFuture = accountId != null
                             ? findAccountById(accountId)
                             : CompletableFuture.completedFuture(null);
+        var postFuture = postId != null
+                ? findPostById(postId)
+                : CompletableFuture.completedFuture(null);
 
         return CompletableFuture.allOf(accountFuture).thenCompose(v -> {
             var account = accountFuture.join();
+            var post = postFuture.join();
 
             SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd");
             Date parseDate;
@@ -114,6 +126,7 @@ public class DailyPointService {
 
             var list = unitOfWork.getDailyPointRepository().findAllByOrderByCreatedDateDesc().stream()
                     .filter(dailyPoint -> account == null || dailyPoint.getAccount().equals(account))
+                    .filter(dailyPoint -> post == null || dailyPoint.getPost().equals(post))
                     .filter(dailyPoint -> {
                         Calendar createdDateCal = Calendar.getInstance();
                         createdDateCal.setTime(dailyPoint.getCreatedDate());
@@ -162,19 +175,31 @@ public class DailyPointService {
 
     @Async("AsyncTaskExecutor")
     private CompletableFuture<Double> countUserTotalPointAtAGivenDate(UUID accountId, Date givenDate){
+        Calendar parsedDateCal = Calendar.getInstance();
+        parsedDateCal.setTime(givenDate);
+        parsedDateCal.set(Calendar.HOUR_OF_DAY, 0);
+        parsedDateCal.set(Calendar.MINUTE, 0);
+        parsedDateCal.set(Calendar.SECOND, 0);
+        parsedDateCal.set(Calendar.MILLISECOND, 0);
+        Date normalizedGivenDate = parsedDateCal.getTime();
+
         var accountFuture = findAccountById(accountId);
         return accountFuture.thenCompose(account ->
-                unitOfWork.getDailyPointRepository().findByAccountAndCreatedDate(account, givenDate)
+                unitOfWork.getDailyPointRepository().findByAccount(account) // Adjust repository method as needed
                         .thenCompose(dailyPoints -> {
-                            double totalCount = 0;
-                            if(dailyPoints == null || dailyPoints.isEmpty()){
-                                totalCount = 0;
-                            }
-                            else{
-                                for(DailyPoint dailyPoint : dailyPoints){
-                                    totalCount += dailyPoint.getPointEarned();
-                                }
-                            }
+                            double totalCount = dailyPoints.stream()
+                                    .filter(dailyPoint -> {
+                                        Calendar createdDateCal = Calendar.getInstance();
+                                        createdDateCal.setTime(dailyPoint.getCreatedDate());
+                                        createdDateCal.set(Calendar.HOUR_OF_DAY, 0);
+                                        createdDateCal.set(Calendar.MINUTE, 0);
+                                        createdDateCal.set(Calendar.SECOND, 0);
+                                        createdDateCal.set(Calendar.MILLISECOND, 0);
+
+                                        return createdDateCal.getTime().equals(normalizedGivenDate);
+                                    })
+                                    .mapToDouble(DailyPoint::getPointEarned)
+                                    .sum();
 
                             return CompletableFuture.completedFuture(totalCount);
                         })
@@ -210,5 +235,12 @@ public class DailyPointService {
     @Async("AsyncTaskExecutor")
     private CompletableFuture<DailyPoint> findDailyPointByAccountAndPost(Account account, Post post){
         return unitOfWork.getDailyPointRepository().findByAccountAndPost(account, post);
+    }
+    @Async("AsyncTaskExecutor")
+    private CompletableFuture<TypeBonus> findTypeBonusById(UUID typeBonusId){
+        return CompletableFuture.supplyAsync(() ->
+            unitOfWork.getTypeBonusRepository().findById(typeBonusId)
+                    .orElseThrow(() -> new AppException(ErrorCode.TYPE_BONUS_NOT_FOUND))
+        );
     }
 }

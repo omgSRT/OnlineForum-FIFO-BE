@@ -10,6 +10,7 @@ import com.FA24SE088.OnlineForum.dto.response.ReplyCreateResponse;
 import com.FA24SE088.OnlineForum.entity.Account;
 import com.FA24SE088.OnlineForum.entity.Comment;
 import com.FA24SE088.OnlineForum.entity.Post;
+import com.FA24SE088.OnlineForum.enums.PostStatus;
 import com.FA24SE088.OnlineForum.exception.AppException;
 import com.FA24SE088.OnlineForum.exception.ErrorCode;
 import com.FA24SE088.OnlineForum.mapper.CommentMapper;
@@ -52,6 +53,10 @@ public class CommentService {
             var account = accountFuture.join();
             var post = postFuture.join();
 
+            if(post.getStatus().equals(PostStatus.DRAFT.name())){
+                throw new AppException(ErrorCode.CANNOT_COMMENT_ON_DRAFT);
+            }
+
             Comment newComment = commentMapper.toComment(request);
             newComment.setAccount(account);
             newComment.setPost(post);
@@ -68,13 +73,16 @@ public class CommentService {
     public CompletableFuture<ReplyCreateResponse> createReply(ReplyCreateRequest request){
         var username = getUsernameFromJwt();
         var accountFuture = findAccountByUsername(username);
-        var postFuture = findPostById(request.getPostId());
         var parentCommentFuture = findCommentById(request.getParentCommentId());
 
-        return CompletableFuture.allOf(accountFuture, postFuture, parentCommentFuture).thenCompose(v -> {
+        return CompletableFuture.allOf(accountFuture, parentCommentFuture).thenCompose(v -> {
                     var account = accountFuture.join();
-                    var post = postFuture.join();
                     var parentComment = parentCommentFuture.join();
+                    var post = parentComment.getPost();
+
+                    if(post.getStatus().equals(PostStatus.DRAFT.name())){
+                        throw new AppException(ErrorCode.CANNOT_COMMENT_ON_DRAFT);
+                    }
 
                     Comment newReply = commentMapper.toCommentFromReplyRequest(request);
                     newReply.setAccount(account);

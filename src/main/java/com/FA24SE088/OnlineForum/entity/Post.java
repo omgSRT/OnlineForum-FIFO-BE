@@ -34,6 +34,7 @@ public class Post {
     Date createdDate;
     Date lastModifiedDate;
     String status;
+    String linkFile;
 
     @JsonIgnore
     @JsonIgnoreProperties(value = { "post" }, allowSetters = true)
@@ -43,8 +44,8 @@ public class Post {
 
     @JsonIgnore
     @JsonIgnoreProperties(value = {"post"}, allowSetters = true)
-    @OneToOne(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
-    DailyPoint dailyPoint;
+    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
+    List<DailyPoint> dailyPointList;
 
     @ManyToOne
     @JoinColumn(name = "accountId")

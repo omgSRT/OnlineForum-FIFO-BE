@@ -18,4 +18,5 @@ public class DraftCreateRequest {
     UUID topicId;
     UUID tagId;
     Set<ImageRequest> imageUrlList;
+    String linkFile;
 }
