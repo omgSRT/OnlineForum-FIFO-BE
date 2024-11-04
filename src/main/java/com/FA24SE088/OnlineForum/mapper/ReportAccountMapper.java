@@ -4,6 +4,7 @@ import com.FA24SE088.OnlineForum.dto.request.AccountRequest;
 import com.FA24SE088.OnlineForum.dto.request.AccountUpdateRequest;
 import com.FA24SE088.OnlineForum.dto.request.ReportAccountRequest;
 import com.FA24SE088.OnlineForum.dto.response.AccountResponse;
+import com.FA24SE088.OnlineForum.dto.response.ReportAccount2Response;
 import com.FA24SE088.OnlineForum.dto.response.ReportAccountResponse;
 import com.FA24SE088.OnlineForum.entity.Account;
 import com.FA24SE088.OnlineForum.entity.ReportAccount;
@@ -17,4 +18,7 @@ public interface ReportAccountMapper {
 
     @Mapping(target = "title", source = "title")
     ReportAccountResponse toResponse(ReportAccount account);
+
+    @Mapping(target = "title", source = "title")
+    ReportAccount2Response toResponse2(ReportAccount account);
 }

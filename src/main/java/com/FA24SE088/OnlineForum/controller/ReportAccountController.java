@@ -2,6 +2,7 @@ package com.FA24SE088.OnlineForum.controller;
 
 import com.FA24SE088.OnlineForum.dto.request.ReportAccountRequest;
 import com.FA24SE088.OnlineForum.dto.response.ApiResponse;
+import com.FA24SE088.OnlineForum.dto.response.ReportAccount2Response;
 import com.FA24SE088.OnlineForum.dto.response.ReportAccountResponse;
 import com.FA24SE088.OnlineForum.enums.ReportAccountReason;
 import com.FA24SE088.OnlineForum.enums.ReportAccountStatus;
@@ -16,6 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 @RequiredArgsConstructor
 @RestController
@@ -25,12 +27,25 @@ import java.util.UUID;
 public class ReportAccountController {
     ReportAccountService reportAccountService;
 
+//    @PostMapping("/create")
+//    public ApiResponse<ReportAccountResponse> createReportAccount(@RequestParam UUID reported, ReportAccountReason reportAccountReasons) {
+//        return ApiResponse.<ReportAccountResponse>builder()
+//                .entity(reportAccountService.createReportAccount(reported,reportAccountReasons))
+//                .build();
+//    }
+
     @PostMapping("/create")
-    public ApiResponse<ReportAccountResponse> createReportAccount(@RequestParam UUID reported, ReportAccountReason reportAccountReasons) {
-        return ApiResponse.<ReportAccountResponse>builder()
-                .entity(reportAccountService.createReportAccount(reported,reportAccountReasons))
-                .build();
+    public CompletableFuture<ApiResponse<ReportAccount2Response>> createReportAccount(
+            @RequestParam UUID reported,
+            @RequestParam ReportAccountReason reportAccountReasons) {
+
+        return reportAccountService.createReportAccount1(reported, reportAccountReasons)
+                .thenApply(response -> ApiResponse.<ReportAccount2Response>builder()
+                        .entity(response)
+                        .build()
+                );
     }
+
 
     @Operation(summary = "Create report account", description = "Status: APPROVED,REJECTED")
     @PutMapping("/update/{id}")

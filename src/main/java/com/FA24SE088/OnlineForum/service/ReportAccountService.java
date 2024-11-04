@@ -1,32 +1,28 @@
 package com.FA24SE088.OnlineForum.service;
 
 
-import com.FA24SE088.OnlineForum.dto.request.FeedbackRequest;
-import com.FA24SE088.OnlineForum.dto.request.FeedbackRequest2;
-import com.FA24SE088.OnlineForum.dto.request.ReportAccountRequest;
-import com.FA24SE088.OnlineForum.dto.response.FeedbackResponse;
+import com.FA24SE088.OnlineForum.dto.response.ReportAccount2Response;
 import com.FA24SE088.OnlineForum.dto.response.ReportAccountResponse;
 import com.FA24SE088.OnlineForum.entity.Account;
-import com.FA24SE088.OnlineForum.entity.Feedback;
+import com.FA24SE088.OnlineForum.entity.Post;
 import com.FA24SE088.OnlineForum.entity.ReportAccount;
-import com.FA24SE088.OnlineForum.enums.FeedbackStatus;
 import com.FA24SE088.OnlineForum.enums.ReportAccountReason;
 import com.FA24SE088.OnlineForum.enums.ReportAccountStatus;
 import com.FA24SE088.OnlineForum.exception.AppException;
 import com.FA24SE088.OnlineForum.exception.ErrorCode;
-import com.FA24SE088.OnlineForum.mapper.FeedbackMapper;
 import com.FA24SE088.OnlineForum.mapper.ReportAccountMapper;
 import com.FA24SE088.OnlineForum.repository.UnitOfWork.UnitOfWork;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
-import java.util.stream.Collectors;
+import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
 
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
@@ -38,11 +34,50 @@ public class ReportAccountService {
 
     private Account getCurrentUser() {
         var context = SecurityContextHolder.getContext();
-        return unitOfWork.getAccountRepository().findByUsername(context.getAuthentication().getName())
-                .orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND));
+        return unitOfWork.getAccountRepository().findByUsername(context.getAuthentication().getName()).orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND));
     }
 
 
+    public CompletableFuture<ReportAccount2Response> createReportAccount1(UUID reportedId, ReportAccountReason reason) {
+        Account reporter = getCurrentUser();
+        var reported = CompletableFuture.supplyAsync(() ->
+                unitOfWork.getAccountRepository()
+                        .findById(reportedId)
+                        .orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND))
+        );
+
+        return CompletableFuture.allOf(reported)
+                .thenCompose(v -> {
+                    var reported1 = reported.join();
+
+                    if (reporter.getAccountId().equals(reported1.getAccountId())) {
+                        throw new AppException(ErrorCode.CANNOT_REPORT_YOURSELF);
+                    }
+
+                    boolean check = unitOfWork.getReportAccountRepository().existsByReporterAndReported(reporter, reported1);
+                    if (check) throw new AppException(ErrorCode.YOU_HAVE_REPORTED_THIS_ACCOUNT);
+
+                    // Tìm tất cả bài post của người bị report
+                    return unitOfWork.getPostRepository().findByAccount(reported1)
+                            .thenCompose(postList -> {
+                                ReportAccount reportAccount = ReportAccount.builder()
+                                        .title(reason.name())
+                                        .reason(reason.getMessage())
+                                        .reporter(reporter)
+                                        .reported(reported1)
+                                        .status("PENDING")
+                                        .reportTime(new Date())
+                                        .build();
+
+                                return CompletableFuture.completedFuture(unitOfWork.getReportAccountRepository().save(reportAccount))
+                                        .thenApply(savedReportAccount -> {
+                                            ReportAccount2Response response = reportAccountMapper.toResponse2(savedReportAccount);
+                                            response.setPostOfReportedList(postList);
+                                            return response;
+                                        });
+                            });
+                });
+    }
     public ReportAccountResponse createReportAccount(UUID reportedId, ReportAccountReason reason) {
         Account reporter = getCurrentUser();
         Account reported = unitOfWork.getAccountRepository()
@@ -70,6 +105,44 @@ public class ReportAccountService {
         return response;
     }
 
+//    @Async("AsyncTaskExecutor")
+//    public CompletableFuture<ReportAccount2Response> createReportAccount(UUID reportedId, ReportAccountReason reason) {
+//        var reporter = getCurrentUser();
+//        var reported = CompletableFuture.supplyAsync(() -> {
+//            return unitOfWork.getAccountRepository()
+//                    .findById(reportedId)
+//                    .orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND));
+//        });
+//
+//        return reporter.thenCombine(reported, (reporter1, reported1) -> {
+//            if (reporter1.getAccountId().equals(reported1.getAccountId())) {
+//                throw new AppException(ErrorCode.CANNOT_REPORT_YOURSELF);
+//            }
+//
+//            boolean check = unitOfWork.getReportAccountRepository().existsByReporterAndReported(reporter1, reported1);
+//            if (check) throw new AppException(ErrorCode.YOU_HAVE_REPORTED_THIS_ACCOUNT);
+//
+//            return unitOfWork.getPostRepository().findByAccount(reported1)
+//                    .thenApply(postList -> {
+//                        ReportAccount reportAccount = ReportAccount.builder()
+//                                .title(reason.name())
+//                                .reason(reason.getMessage())
+//                                .reporter(reporter1)
+//                                .reported(reported1)
+//                                .status("PENDING")
+//                                .reportTime(new Date())
+//                                .build();
+//
+//                        ReportAccount savedReportAccount = unitOfWork.getReportAccountRepository().save(reportAccount);
+//                        ReportAccount2Response response = reportAccountMapper.toResponse2(savedReportAccount);
+//                        response.setPostOfReportedList(postList);
+//
+//                        return response;
+//                    });
+//        }).thenCompose(Function.identity());
+//    }
+
+
     public Optional<ReportAccountResponse> updateReportAccount(UUID reportAccountId, ReportAccountStatus status) {
         Optional<ReportAccount> reportAccountOptional = unitOfWork.getReportAccountRepository().findById(reportAccountId);
 
@@ -89,7 +162,7 @@ public class ReportAccountService {
     }
 
     public List<ReportAccountResponse> filter(String reporter, String reported, ReportAccountStatus status, boolean ascending) {
-        List<ReportAccountResponse> reportAccountList = new ArrayList<>( unitOfWork.getReportAccountRepository().findAll().stream()
+        List<ReportAccountResponse> reportAccountList = new ArrayList<>(unitOfWork.getReportAccountRepository().findAll().stream()
                 .map(reportAccountMapper::toResponse)
                 .filter(reportAccountResponse -> (reporter == null || (reportAccountResponse.getReporter().getUsername() != null && reportAccountResponse.getReporter().getUsername().contains(reporter))))
                 .filter(reportAccountResponse -> (reported == null) || (reportAccountResponse.getReported().getUsername() != null && reportAccountResponse.getReported().getUsername().contains(reported)))

@@ -29,7 +29,8 @@ public class Section {
 
     @JsonIgnore
     @JsonIgnoreProperties(value = { "section" }, allowSetters = true)
-    @OneToMany(mappedBy = "section", cascade = CascadeType.ALL, orphanRemoval = true)
+//    @OneToMany(mappedBy = "section", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "section", cascade = CascadeType.ALL)
     List<ContentSection> contentSectionList;
 
 }
