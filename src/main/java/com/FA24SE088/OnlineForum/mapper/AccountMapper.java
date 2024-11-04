@@ -16,7 +16,6 @@ public interface AccountMapper {
     Account toAccount(AccountRequest request);
 
     @Mapping(target = "accountId",source = "accountId")
-    @Mapping(target = "phone", source = "phone")
     @Mapping(target = "bio", source = "bio")
     AccountResponse toResponse(Account account);
 

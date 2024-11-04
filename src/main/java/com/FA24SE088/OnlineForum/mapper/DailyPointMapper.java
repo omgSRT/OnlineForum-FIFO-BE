@@ -1,9 +1,12 @@
 package com.FA24SE088.OnlineForum.mapper;
 
 import com.FA24SE088.OnlineForum.dto.request.DailyPointRequest;
+import com.FA24SE088.OnlineForum.dto.response.DailyPoint2Response;
 import com.FA24SE088.OnlineForum.dto.response.DailyPointResponse;
 import com.FA24SE088.OnlineForum.entity.DailyPoint;
 import org.mapstruct.Mapper;
+
+import java.util.List;
 
 @Mapper(componentModel = "spring")
 public interface DailyPointMapper {
@@ -12,4 +15,7 @@ public interface DailyPointMapper {
     DailyPoint toDailyPoint(DailyPoint dailyPoint);
 
     DailyPointResponse toDailyPointResponse(DailyPoint dailyPoint);
+
+    DailyPoint2Response toDailyPointResponse2(DailyPoint dailyPoint);
+    List<DailyPoint2Response> toListResponse(List<DailyPoint> list);
 }

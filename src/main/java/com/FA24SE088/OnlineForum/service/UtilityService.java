@@ -1,11 +1,13 @@
 package com.FA24SE088.OnlineForum.service;
 
+import com.FA24SE088.OnlineForum.dto.response.DailyPoint2Response;
 import com.FA24SE088.OnlineForum.dto.response.FilterTransactionResponse;
 import com.FA24SE088.OnlineForum.dto.response.SearchEverythingResponse;
 import com.FA24SE088.OnlineForum.dto.response.TransactionResponse;
 import com.FA24SE088.OnlineForum.entity.*;
 import com.FA24SE088.OnlineForum.exception.AppException;
 import com.FA24SE088.OnlineForum.exception.ErrorCode;
+import com.FA24SE088.OnlineForum.mapper.DailyPointMapper;
 import com.FA24SE088.OnlineForum.mapper.TransactionMapper;
 import com.FA24SE088.OnlineForum.repository.UnitOfWork.UnitOfWork;
 import lombok.AccessLevel;
@@ -29,6 +31,7 @@ import java.util.stream.Stream;
 @Service
 public class UtilityService {
     TransactionMapper transactionMapper;
+    DailyPointMapper dailyPointMapper;
     UnitOfWork unitOfWork;
 
     @Async("AsyncTaskExecutor")
@@ -142,8 +145,8 @@ public class UtilityService {
         boolean includeAll = !viewTransaction && !dailyPoint && !bonusPoint;
 
         CompletableFuture<List<TransactionResponse>> transactionFuture = getTransactionFuture(viewTransaction, includeAll, currentUser, startDate, endDate);
-        CompletableFuture<List<DailyPoint>> dailyPointFuture = getDailyPointFuture(dailyPoint, includeAll, currentUser, startDate, endDate);
-        CompletableFuture<List<DailyPoint>> bonusPointFuture = getBonusPointFuture(bonusPoint, includeAll, currentUser, startDate, endDate);
+        CompletableFuture<List<DailyPoint2Response>> dailyPointFuture = getDailyPointFuture(dailyPoint, includeAll, currentUser, startDate, endDate);
+        CompletableFuture<List<DailyPoint2Response>> bonusPointFuture = getBonusPointFuture(bonusPoint, includeAll, currentUser, startDate, endDate);
 
         return CompletableFuture.allOf(transactionFuture, dailyPointFuture, bonusPointFuture)
                 .thenApply(listFinal -> {
@@ -162,7 +165,7 @@ public class UtilityService {
         if (endDate != null && startDate != null && endDate.before(startDate)) {
             throw new AppException(ErrorCode.END_DATE_BEFORE_START_DATE);
         }
-        if (startDate == null && endDate != null){
+        if (startDate == null && endDate != null) {
             throw new AppException(ErrorCode.START_DATE_CANNOT_NULL);
         }
     }
@@ -186,32 +189,60 @@ public class UtilityService {
         }
         return CompletableFuture.completedFuture(Collections.emptyList());
     }
+
     @Async("AsyncTaskExecutor")
-    private CompletableFuture<List<DailyPoint>> getDailyPointFuture(boolean dailyPoint, boolean includeAll, Account currentUser, Date startDate, Date endDate) {
+    private CompletableFuture<List<DailyPoint2Response>> getDailyPointFuture(boolean dailyPoint, boolean includeAll, Account currentUser, Date startDate, Date endDate) {
         if (dailyPoint || includeAll) {
             if (startDate != null && endDate != null) {
                 return unitOfWork.getDailyPointRepository()
-                        .findByAccountAndTypeBonusIsNullAndCreatedDateBetweenOrderByCreatedDateDesc(currentUser, startDate, endDate);
+                        .findByAccountAndTypeBonusIsNullAndCreatedDateBetweenOrderByCreatedDateDesc(currentUser, startDate, endDate).thenApply(dailyPointMapper::toListResponse);
             } else {
                 return unitOfWork.getDailyPointRepository()
-                        .findByAccountAndTypeBonusIsNullOrderByCreatedDateDesc(currentUser);
+                        .findByAccountAndTypeBonusIsNullOrderByCreatedDateDesc(currentUser).thenApply(dailyPointMapper::toListResponse);
             }
         }
         return CompletableFuture.completedFuture(Collections.emptyList());
     }
 
     @Async("AsyncTaskExecutor")
-    private CompletableFuture<List<DailyPoint>> getBonusPointFuture(boolean bonusPoint, boolean includeAll, Account currentUser, Date startDate, Date endDate) {
+    private CompletableFuture<List<DailyPoint2Response>> getBonusPointFuture(boolean bonusPoint, boolean includeAll, Account currentUser, Date startDate, Date endDate) {
         if (bonusPoint || includeAll) {
             if (startDate != null && endDate != null) {
                 return unitOfWork.getDailyPointRepository()
-                        .findByAccountAndTypeBonusIsNotNullAndCreatedDateBetweenOrderByCreatedDateDesc(currentUser, startDate, endDate);
+                        .findByAccountAndTypeBonusIsNotNullAndCreatedDateBetweenOrderByCreatedDateDesc(currentUser, startDate, endDate).thenApply(dailyPointMapper::toListResponse);
             } else {
                 return unitOfWork.getDailyPointRepository()
-                        .findByAccountAndTypeBonusIsNotNullOrderByCreatedDateDesc(currentUser);
+                        .findByAccountAndTypeBonusIsNotNullOrderByCreatedDateDesc(currentUser).thenApply(dailyPointMapper::toListResponse);
             }
         }
         return CompletableFuture.completedFuture(Collections.emptyList());
     }
+//    @Async("AsyncTaskExecutor")
+//    private CompletableFuture<List<DailyPoint>> getDailyPointFuture(boolean dailyPoint, boolean includeAll, Account currentUser, Date startDate, Date endDate) {
+//        if (dailyPoint || includeAll) {
+//            if (startDate != null && endDate != null) {
+//                return unitOfWork.getDailyPointRepository()
+//                        .findByAccountAndTypeBonusIsNullAndCreatedDateBetweenOrderByCreatedDateDesc(currentUser, startDate, endDate);
+//            } else {
+//                return unitOfWork.getDailyPointRepository()
+//                        .findByAccountAndTypeBonusIsNullOrderByCreatedDateDesc(currentUser);
+//            }
+//        }
+//        return CompletableFuture.completedFuture(Collections.emptyList());
+//    }
+//
+//    @Async("AsyncTaskExecutor")
+//    private CompletableFuture<List<DailyPoint>> getBonusPointFuture(boolean bonusPoint, boolean includeAll, Account currentUser, Date startDate, Date endDate) {
+//        if (bonusPoint || includeAll) {
+//            if (startDate != null && endDate != null) {
+//                return unitOfWork.getDailyPointRepository()
+//                        .findByAccountAndTypeBonusIsNotNullAndCreatedDateBetweenOrderByCreatedDateDesc(currentUser, startDate, endDate);
+//            } else {
+//                return unitOfWork.getDailyPointRepository()
+//                        .findByAccountAndTypeBonusIsNotNullOrderByCreatedDateDesc(currentUser);
+//            }
+//        }
+//        return CompletableFuture.completedFuture(Collections.emptyList());
+//    }
 
 }

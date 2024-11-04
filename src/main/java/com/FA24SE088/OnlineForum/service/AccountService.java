@@ -175,9 +175,6 @@ public class AccountService {
         if (request.getCoverImage() != null && !request.getCoverImage().isEmpty()) {
             account.setCoverImage(request.getCoverImage());
         }
-        if (request.getPhone() != null && !request.getPhone().isEmpty()) {
-            account.setPhone(request.getPhone());
-        }
         if (request.getBio() != null && !request.getBio().isEmpty()) {
             account.setBio(request.getBio());
         }

@@ -15,8 +15,10 @@ import java.util.List;
 public class FilterTransactionResponse {
     @JsonIgnoreProperties(value = {"wallet"})
     List<TransactionResponse> transactionList;
+//    @JsonIgnoreProperties(value = {"account","typeBonus"})
+//    List<DailyPoint> dailyPointList;
     @JsonIgnoreProperties(value = {"account","typeBonus"})
-    List<DailyPoint> dailyPointList;
+    List<DailyPoint2Response> dailyPointList;
     @JsonIgnoreProperties(value = {"account","point"})
-    List<DailyPoint> bonusPoint;
+    List<DailyPoint2Response> bonusPoint;
 }
