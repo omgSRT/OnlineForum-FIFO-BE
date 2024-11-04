@@ -162,6 +162,9 @@ public class UtilityService {
         if (endDate != null && startDate != null && endDate.before(startDate)) {
             throw new AppException(ErrorCode.END_DATE_BEFORE_START_DATE);
         }
+        if (startDate == null && endDate != null){
+            throw new AppException(ErrorCode.START_DATE_CANNOT_NULL);
+        }
     }
 
     @Async("AsyncTaskExecutor")
@@ -210,5 +213,5 @@ public class UtilityService {
         }
         return CompletableFuture.completedFuture(Collections.emptyList());
     }
-    
+
 }
