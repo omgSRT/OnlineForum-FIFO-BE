@@ -22,6 +22,8 @@ public class AccountResponse {
     String email;
     String handle;
     String avatar;
+    String phone;
+    String bio;
     String coverImage;
     Date createdDate;
     String status;

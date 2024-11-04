@@ -16,7 +16,8 @@ public interface AccountMapper {
     Account toAccount(AccountRequest request);
 
     @Mapping(target = "accountId",source = "accountId")
-    @Mapping(target = "favoriteCategoryList.favoriteCategoryId", ignore = true)
+    @Mapping(target = "phone", source = "phone")
+    @Mapping(target = "bio", source = "bio")
     AccountResponse toResponse(Account account);
 
     void updateAccount(@MappingTarget Account account, AccountUpdateRequest request);

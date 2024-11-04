@@ -28,13 +28,13 @@ import java.util.concurrent.TimeUnit;
 @Component
 public class OtpUtil {
     final UnitOfWork unitOfWork;
-    private final RedisTemplate<String, String> redisTemplate;
+//    private final RedisTemplate<String, String> redisTemplate;
     public Otp generateOtp(String email){
         Random random = new Random();
         int randomNumber = random.nextInt(9999);
         String otp = String.format("%04d", randomNumber);
 
-        redisTemplate.opsForValue().set(email, otp, 5, TimeUnit.MINUTES);
+//        redisTemplate.opsForValue().set(email, otp, 5, TimeUnit.MINUTES);
 
         Otp otp1 = Otp.builder()
                 .email(email)
@@ -64,48 +64,48 @@ public class OtpUtil {
 //    }
 
     public boolean verifyOTP(String email, String otp) {
-        String storedOtp = redisTemplate.opsForValue().get(email);
-
-        if (storedOtp == null) {
-            throw new AppException(ErrorCode.OTP_NOT_FOUND);
-        }
-
-        // Kiểm tra mã OTP có khớp không
-        if (!storedOtp.equals(otp)) {
-            throw new AppException(ErrorCode.WRONG_OTP);
-        }
-        //-------------------------------------------------------------------
-//        Account account = unitOfWork.getAccountRepository().findByEmail(email);
-//        if (account == null) {
-//            throw new AppException(ErrorCode.ACCOUNT_NOT_FOUND);
-//        }
+//        String storedOtp = redisTemplate.opsForValue().get(email);
 //
-//        if (account.getStatus().equals(AccountStatus.ACTIVE.name())){
-//            throw new AppException(ErrorCode.ACCOUNT_WAS_ACTIVE);
-//        }
-//
-//        List<Otp> otpEntities = unitOfWork.getOtpRepository().findByEmail(email);
-//        if (otpEntities.isEmpty()) {
+//        if (storedOtp == null) {
 //            throw new AppException(ErrorCode.OTP_NOT_FOUND);
 //        }
 //
-//        Otp otpEntity = otpEntities.get(0);
-//
-//        // Kiểm tra thời gian hết hạn (5 phút)
-//        LocalDateTime otpCreatedTime = otpEntity.getCreateDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
-//        if (Duration.between(otpCreatedTime, LocalDateTime.now()).getSeconds() > (5 * 60)) {
-//            throw new AppException(ErrorCode.OTP_EXPIRED);
-//        }
-//
-//        // Kiểm tra mã OTP có khớp hay không
-//        boolean isVerified = otpEntity.getOtpEmail().equals(otp);
-//        if (!isVerified) {
+//        // Kiểm tra mã OTP có khớp không
+//        if (!storedOtp.equals(otp)) {
 //            throw new AppException(ErrorCode.WRONG_OTP);
 //        }
-//
-//        // Xóa OTP sau khi xác thực thành công
-//        unitOfWork.getOtpRepository().delete(otpEntity);
-        redisTemplate.delete(email);
+        //-------------------------------------------------------------------
+        Account account = unitOfWork.getAccountRepository().findByEmail(email);
+        if (account == null) {
+            throw new AppException(ErrorCode.ACCOUNT_NOT_FOUND);
+        }
+
+        if (account.getStatus().equals(AccountStatus.ACTIVE.name())){
+            throw new AppException(ErrorCode.ACCOUNT_WAS_ACTIVE);
+        }
+
+        List<Otp> otpEntities = unitOfWork.getOtpRepository().findByEmail(email);
+        if (otpEntities.isEmpty()) {
+            throw new AppException(ErrorCode.OTP_NOT_FOUND);
+        }
+
+        Otp otpEntity = otpEntities.get(0);
+
+        // Kiểm tra thời gian hết hạn (5 phút)
+        LocalDateTime otpCreatedTime = otpEntity.getCreateDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
+        if (Duration.between(otpCreatedTime, LocalDateTime.now()).getSeconds() > (5 * 60)) {
+            throw new AppException(ErrorCode.OTP_EXPIRED);
+        }
+
+        // Kiểm tra mã OTP có khớp hay không
+        boolean isVerified = otpEntity.getOtpEmail().equals(otp);
+        if (!isVerified) {
+            throw new AppException(ErrorCode.WRONG_OTP);
+        }
+
+        // Xóa OTP sau khi xác thực thành công
+        unitOfWork.getOtpRepository().delete(otpEntity);
+//        redisTemplate.delete(email);
         return true;
     }
     public boolean verifyOTPForForgetPassword(String email, String otp) {
