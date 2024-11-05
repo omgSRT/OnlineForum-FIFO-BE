@@ -159,14 +159,20 @@ public class CategoryService {
     public CompletableFuture<CategoryResponse> assignCategoryToAccountById(UUID categoryId, CategoryUpdateAccountRequest request) {
         var accountFuture = findAccountById(request.getAccountId());
 
-        return accountFuture.thenApply(account -> {
-            var category = unitOfWork.getCategoryRepository().findById(categoryId)
-                    .orElseThrow(() -> new AppException(ErrorCode.CATEGORY_NOT_FOUND));
+        return accountFuture.thenCompose(account ->
+            unitOfWork.getCategoryRepository().findByAccount(account).thenCompose(categoryList -> {
+                var category = unitOfWork.getCategoryRepository().findById(categoryId)
+                        .orElseThrow(() -> new AppException(ErrorCode.CATEGORY_NOT_FOUND));
+                if(categoryList.contains(category)){
+                    throw new AppException(ErrorCode.CATEGORY_HAS_UNDERTAKE);
+                }
 
-            category.setAccount(account);
+                category.setAccount(account);
 
-            return categoryMapper.toCategoryResponse(unitOfWork.getCategoryRepository().save(category));
-        });
+                return CompletableFuture.completedFuture(unitOfWork.getCategoryRepository().save(category));
+            })
+                    .thenApply(categoryMapper::toCategoryResponse)
+        );
     }
 
 

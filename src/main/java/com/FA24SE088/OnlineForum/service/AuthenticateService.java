@@ -207,8 +207,7 @@ public class AuthenticateService {
 
             emailUtil.sendToAnEmailWithHTMLEnabled(account.getEmail(),
                     emailBody,
-                    "Please Reset Your Password",
-                    null);
+                    "Please Reset Your Password");
 
             return CompletableFuture.completedFuture(null);
         });

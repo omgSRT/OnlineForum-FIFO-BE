@@ -199,7 +199,6 @@ public class PostService {
             return manageCategoryListFuture.thenCompose(manageCategoryList -> {
                 var manageTopicList = getAllTopicsFromCategoryList(manageCategoryList);
 
-
                 var list = new ArrayList<>(postList.stream()
                         .filter(post -> {
                             if (IsFolloweeIncluded == null) {
