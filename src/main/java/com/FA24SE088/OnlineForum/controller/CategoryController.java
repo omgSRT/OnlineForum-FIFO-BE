@@ -64,6 +64,17 @@ public class CategoryController {
         ).join();
     }
 
+    @Operation(summary = "Get All Categories For Managing Staff")
+    @GetMapping(path = "/getall/for-staff")
+    public ApiResponse<List<CategoryNoAccountResponse>> getAllCategoriesForStaff(@RequestParam(defaultValue = "1") int page,
+                                                                         @RequestParam(defaultValue = "10") int perPage){
+        return categoryService.getAllCategoriesForStaff(page, perPage).thenApply(categoryNoAccountResponses ->
+                ApiResponse.<List<CategoryNoAccountResponse>>builder()
+                        .entity(categoryNoAccountResponses)
+                        .build()
+        ).join();
+    }
+
     @Operation(summary = "Get A Category", description = "Get A Category By ID")
     @GetMapping(path = "/get/{categoryId}")
     public ApiResponse<CategoryResponse> getCategoryById(@PathVariable UUID categoryId){

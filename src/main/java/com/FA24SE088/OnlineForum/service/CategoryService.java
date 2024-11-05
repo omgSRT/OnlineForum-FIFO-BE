@@ -19,6 +19,8 @@ import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -90,6 +92,27 @@ public class CategoryService {
 
     @Async("AsyncTaskExecutor")
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
+    public CompletableFuture<List<CategoryNoAccountResponse>> getAllCategoriesForStaff(int page, int perPage) {
+        var username = getUsernameFromJwt();
+        var accountFuture = findAccountByUsername(username);
+
+        return accountFuture.thenCompose(account -> {
+            var categoryListFuture = unitOfWork.getCategoryRepository().findByAccount(account);
+
+            return categoryListFuture.thenCompose(categoryList -> {
+                var list = categoryList.stream()
+                        .map(categoryMapper::toCategoryNoAccountResponse)
+                        .toList();
+
+                var paginatedList = paginationUtils.convertListToPage(page, perPage, list);
+
+                return CompletableFuture.completedFuture(paginatedList);
+            });
+        });
+    }
+
+    @Async("AsyncTaskExecutor")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
     public CompletableFuture<CategoryResponse> getCategoryById(UUID categoryId) {
         return CompletableFuture.supplyAsync(() -> {
             var category = unitOfWork.getCategoryRepository().findById(categoryId)
@@ -154,5 +177,18 @@ public class CategoryService {
                         .orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND))
         );
     }
-
+    private String getUsernameFromJwt() {
+        var authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && authentication.getPrincipal() instanceof Jwt jwt) {
+            return jwt.getClaim("username");
+        }
+        return null;
+    }
+    @Async("AsyncTaskExecutor")
+    private CompletableFuture<Account> findAccountByUsername(String username) {
+        return CompletableFuture.supplyAsync(() ->
+                unitOfWork.getAccountRepository().findByUsername(username)
+                        .orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND))
+        );
+    }
 }
