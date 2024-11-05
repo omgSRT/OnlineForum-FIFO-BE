@@ -314,26 +314,28 @@ public class PostService {
             var post = postFuture.join();
             var categoryPost = post.getTopic().getCategory();
 
-            if (post.getStatus().equals(PostStatus.DRAFT.name())) {
-                throw new AppException(ErrorCode.DRAFT_POST_CANNOT_CHANGE_STATUS);
-            }
-            if (post.getStatus().equals(PostStatus.HIDDEN.name())){
-                throw new AppException(ErrorCode.POST_ALREADY_HIDDEN);
-            }
+            return unitOfWork.getCategoryRepository().findByAccount(account).thenCompose(categoryList -> {
+                if (post.getStatus().equals(PostStatus.DRAFT.name())) {
+                    throw new AppException(ErrorCode.DRAFT_POST_CANNOT_CHANGE_STATUS);
+                }
+                if (post.getStatus().equals(PostStatus.HIDDEN.name())){
+                    throw new AppException(ErrorCode.POST_ALREADY_HIDDEN);
+                }
 
-            if (account.getRole().getName().equals("USER") &&
-                    !account.equals(post.getAccount())) {
-                throw new AppException(ErrorCode.ACCOUNT_NOT_THE_AUTHOR_OF_POST);
-            }
-            if (account.getRole().getName().equals("STAFF") &&
-                    !account.getCategoryList().contains(categoryPost)) {
-                throw new AppException(ErrorCode.STAFF_NOT_SUPERVISE_CATEGORY);
-            }
+                if (account.getRole().getName().equals("USER") &&
+                        !account.equals(post.getAccount())) {
+                    throw new AppException(ErrorCode.ACCOUNT_NOT_THE_AUTHOR_OF_POST);
+                }
+                if (account.getRole().getName().equals("STAFF") &&
+                        categoryList.contains(categoryPost)) {
+                    throw new AppException(ErrorCode.STAFF_NOT_SUPERVISE_CATEGORY);
+                }
 
-            post.setStatus(PostStatus.HIDDEN.name());
-            post.setLastModifiedDate(new Date());
+                post.setStatus(PostStatus.HIDDEN.name());
+                post.setLastModifiedDate(new Date());
 
-            return CompletableFuture.completedFuture(unitOfWork.getPostRepository().save(post));
+                return CompletableFuture.completedFuture(unitOfWork.getPostRepository().save(post));
+            });
         })
                 .thenApply(postMapper::toPostResponse);
     }
@@ -349,22 +351,24 @@ public class PostService {
                     var post = postFuture.join();
                     var categoryPost = post.getTopic().getCategory();
 
-                    if(post.getStatus().equals(PostStatus.DRAFT.name())){
-                        throw new AppException(ErrorCode.DRAFT_POST_CANNOT_CHANGE_STATUS);
-                    }
+                    return unitOfWork.getCategoryRepository().findByAccount(account).thenCompose(categoryList -> {
+                        if(post.getStatus().equals(PostStatus.DRAFT.name())){
+                            throw new AppException(ErrorCode.DRAFT_POST_CANNOT_CHANGE_STATUS);
+                        }
 
-                    if(account.getRole().getName().equals("USER") &&
+                        if(account.getRole().getName().equals("USER") &&
                                 !account.equals(post.getAccount())){
-                        throw new AppException(ErrorCode.ACCOUNT_NOT_THE_AUTHOR_OF_POST);
-                    }
-                    if(account.getRole().getName().equals("STAFF") &&
-                                !account.getCategoryList().contains(categoryPost)){
-                        throw new AppException(ErrorCode.STAFF_NOT_SUPERVISE_CATEGORY);
-                    }
+                            throw new AppException(ErrorCode.ACCOUNT_NOT_THE_AUTHOR_OF_POST);
+                        }
+                        if(account.getRole().getName().equals("STAFF") &&
+                                categoryList.contains(categoryPost)){
+                            throw new AppException(ErrorCode.STAFF_NOT_SUPERVISE_CATEGORY);
+                        }
 
-                    post.setStatus(status.name());
-                    post.setLastModifiedDate(new Date());
-                    return CompletableFuture.completedFuture(unitOfWork.getPostRepository().save(post));
+                        post.setStatus(status.name());
+                        post.setLastModifiedDate(new Date());
+                        return CompletableFuture.completedFuture(unitOfWork.getPostRepository().save(post));
+                    });
                 })
                 .thenApply(postMapper::toPostResponse);
     }
