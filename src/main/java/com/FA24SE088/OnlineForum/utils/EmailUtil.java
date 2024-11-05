@@ -13,10 +13,12 @@ import org.springframework.mail.MailException;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.regex.Pattern;
 
 @RequiredArgsConstructor
@@ -84,97 +86,77 @@ public class EmailUtil {
         }
     }
 
-    public void sendToAnEmail(
+    @Async("AsyncTaskExecutor")
+    public CompletableFuture<Void> sendToAnEmail(
             String toEmail,
             String body,
-            String subject,
-            List<MultipartFile> attachments) {
-
-        if ((subject == null || subject.trim().isEmpty()) &&
-                (body == null || body.trim().isEmpty()) &&
-                (attachments == null || attachments.isEmpty())) {
-            throw new AppException(ErrorCode.EMAIL_CONTENT_BLANK);
-        }
-
-        if (!isValidEmail(toEmail)) {
-            throw new AppException(ErrorCode.INVALID_EMAIL);
-        }
-
-        try {
-            MimeMessage message = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, true);
-
-            helper.setFrom(username);
-            helper.setTo(toEmail);
-            helper.setSubject(subject == null ? "" : subject);
-            helper.setText(body == null ? "" : body);
-
-            if (attachments != null) {
-                for (MultipartFile attachment : attachments) {
-                    if (!attachment.isEmpty()) {
-                        String attachmentName = attachment.getOriginalFilename();
-                        if (attachmentName == null || attachmentName.isBlank()) {
-                            attachmentName = "attachment_" + System.currentTimeMillis();
-                        }
-                        helper.addAttachment(attachmentName, attachment);
-                    }
-                }
+            String subject) {
+        return CompletableFuture.supplyAsync(() -> {
+            if ((subject == null || subject.trim().isEmpty()) &&
+                    (body == null || body.trim().isEmpty())) {
+                throw new AppException(ErrorCode.EMAIL_CONTENT_BLANK);
             }
 
-            mailSender.send(message);
-            System.out.println("Mail Sent Successfully to " + toEmail);
+            if (!isValidEmail(toEmail)) {
+                throw new AppException(ErrorCode.INVALID_EMAIL);
+            }
 
-        } catch (MailException | MessagingException e) {
-            log.error("Failed to send email to {}: {}", toEmail, e.getMessage());
-            throw new AppException(ErrorCode.SEND_MAIL_FAILED);
-        }
+            try {
+                MimeMessage message = mailSender.createMimeMessage();
+                MimeMessageHelper helper = new MimeMessageHelper(message, true);
+
+                helper.setFrom(username);
+                helper.setTo(toEmail);
+                helper.setSubject(subject == null ? "" : subject);
+                helper.setText(body == null ? "" : body);
+
+                mailSender.send(message);
+                System.out.println("Mail Sent Successfully to " + toEmail);
+
+            } catch (MailException | MessagingException e) {
+                log.error("Failed to send email to {}: {}", toEmail, e.getMessage());
+                throw new AppException(ErrorCode.SEND_MAIL_FAILED);
+            }
+
+            return null;
+        });
     }
-    public void sendToAnEmailWithHTMLEnabled(
+    @Async("AsyncTaskExecutor")
+    public CompletableFuture<Void> sendToAnEmailWithHTMLEnabled(
             String toEmail,
             String body,
-            String subject,
-            List<MultipartFile> attachments) {
-
-        if ((subject == null || subject.trim().isEmpty()) &&
-                (body == null || body.trim().isEmpty()) &&
-                (attachments == null || attachments.isEmpty())) {
-            throw new AppException(ErrorCode.EMAIL_CONTENT_BLANK);
-        }
-
-        if (!isValidEmail(toEmail)) {
-            throw new AppException(ErrorCode.INVALID_EMAIL);
-        }
-
-        try {
-            MimeMessage message = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, true);
-
-            helper.setFrom(username);
-            helper.setTo(toEmail);
-            helper.setSubject(subject == null ? "" : subject);
-            helper.setText(body == null ? "" : body);
-
-            if (attachments != null) {
-                for (MultipartFile attachment : attachments) {
-                    if (!attachment.isEmpty()) {
-                        String attachmentName = attachment.getOriginalFilename();
-                        if (attachmentName == null || attachmentName.isBlank()) {
-                            attachmentName = "attachment_" + System.currentTimeMillis();
-                        }
-                        helper.addAttachment(attachmentName, attachment);
-                    }
-                }
+            String subject) {
+        return CompletableFuture.supplyAsync(() -> {
+            if ((subject == null || subject.trim().isEmpty()) &&
+                    (body == null || body.trim().isEmpty())) {
+                throw new AppException(ErrorCode.EMAIL_CONTENT_BLANK);
             }
 
-            assert body != null;
-            helper.setText(body, true);
-            mailSender.send(message);
-            System.out.println("Mail Sent Successfully to " + toEmail);
+            if (!isValidEmail(toEmail)) {
+                throw new AppException(ErrorCode.INVALID_EMAIL);
+            }
 
-        } catch (MailException | MessagingException e) {
-            log.error("Failed to send email to {}: {}", toEmail, e.getMessage());
-            throw new AppException(ErrorCode.SEND_MAIL_FAILED);
-        }
+            try {
+                MimeMessage message = mailSender.createMimeMessage();
+                MimeMessageHelper helper = new MimeMessageHelper(message, true);
+
+                helper.setFrom(username);
+                helper.setTo(toEmail);
+                helper.setSubject(subject == null ? "" : subject);
+                helper.setText(body == null ? "" : body);
+
+                assert body != null;
+                helper.setText(body, true);
+                mailSender.send(message);
+                System.out.println("Mail Sent Successfully to " + toEmail);
+
+            } catch (MailException | MessagingException e) {
+                log.error("Failed to send email to {}: {}", toEmail, e.getMessage());
+                throw new AppException(ErrorCode.SEND_MAIL_FAILED);
+            }
+
+            return null;
+        });
     }
     public void sendSimpleEmail(String toEmail, String body, String subject) {
         SimpleMailMessage message = new SimpleMailMessage();
