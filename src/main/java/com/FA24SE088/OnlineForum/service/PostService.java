@@ -317,6 +317,9 @@ public class PostService {
             if (post.getStatus().equals(PostStatus.DRAFT.name())) {
                 throw new AppException(ErrorCode.DRAFT_POST_CANNOT_CHANGE_STATUS);
             }
+            if (post.getStatus().equals(PostStatus.HIDDEN.name())){
+                throw new AppException(ErrorCode.POST_ALREADY_HIDDEN);
+            }
 
             if (account.getRole().getName().equals("USER") &&
                     !account.equals(post.getAccount())) {

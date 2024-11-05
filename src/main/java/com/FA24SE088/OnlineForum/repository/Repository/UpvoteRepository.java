@@ -17,6 +17,9 @@ public interface UpvoteRepository extends JpaRepository<Upvote, UUID> {
     CompletableFuture<List<Upvote>> findByPost(Post post);
 
     @Async("AsyncTaskExecutor")
+    CompletableFuture<Integer> countByPost(Post post);
+
+    @Async("AsyncTaskExecutor")
     CompletableFuture<List<Upvote>> findByAccount(Account account);
 
     @Async("AsyncTaskExecutor")

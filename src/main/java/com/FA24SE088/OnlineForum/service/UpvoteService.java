@@ -4,10 +4,9 @@ import com.FA24SE088.OnlineForum.dto.request.UpvoteRequest;
 import com.FA24SE088.OnlineForum.dto.response.UpvoteCreateDeleteResponse;
 import com.FA24SE088.OnlineForum.dto.response.UpvoteGetAllResponse;
 import com.FA24SE088.OnlineForum.dto.response.UpvoteResponse;
-import com.FA24SE088.OnlineForum.entity.Account;
-import com.FA24SE088.OnlineForum.entity.Post;
-import com.FA24SE088.OnlineForum.entity.Upvote;
+import com.FA24SE088.OnlineForum.entity.*;
 import com.FA24SE088.OnlineForum.enums.SuccessReturnMessage;
+import com.FA24SE088.OnlineForum.enums.TypeBonusNameEnum;
 import com.FA24SE088.OnlineForum.exception.AppException;
 import com.FA24SE088.OnlineForum.exception.ErrorCode;
 import com.FA24SE088.OnlineForum.mapper.UpvoteMapper;
@@ -23,6 +22,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 
+import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -56,13 +56,33 @@ public class UpvoteService {
                     return CompletableFuture.completedFuture(upvoteResponse);
                 }
 
-                Upvote newUpvote = new Upvote();
-                newUpvote.setAccount(account);
-                newUpvote.setPost(post);
+                return unitOfWork.getUpvoteRepository().countByPost(post)
+                        .thenCompose(upvoteAmount ->
+                            unitOfWork.getTypeBonusRepository().findByNameAndQuantity(TypeBonusNameEnum.UPVOTE.name(), upvoteAmount)
+                                    .thenCompose(typeBonus -> {
+                                        if(typeBonus != null){
+                                            return createDailyPointLog(account, post, typeBonus)
+                                                    .thenCompose(existingDailyPoint -> {
+                                                        Upvote newUpvote = new Upvote();
+                                                        newUpvote.setAccount(account);
+                                                        newUpvote.setPost(post);
 
-                var upvoteResponse = upvoteMapper.toUpvoteCreateDeleteResponse(unitOfWork.getUpvoteRepository().save(newUpvote));
-                upvoteResponse.setMessage(SuccessReturnMessage.CREATE_SUCCESS.getMessage());
-                return CompletableFuture.completedFuture(upvoteResponse);
+                                                        var upvoteResponse = upvoteMapper.toUpvoteCreateDeleteResponse(unitOfWork.getUpvoteRepository().save(newUpvote));
+                                                        upvoteResponse.setMessage(SuccessReturnMessage.CREATE_SUCCESS.getMessage());
+                                                        return CompletableFuture.completedFuture(upvoteResponse);
+                                                    });
+                                        }
+                                        else{
+                                            Upvote newUpvote = new Upvote();
+                                            newUpvote.setAccount(account);
+                                            newUpvote.setPost(post);
+
+                                            var upvoteResponse = upvoteMapper.toUpvoteCreateDeleteResponse(unitOfWork.getUpvoteRepository().save(newUpvote));
+                                            upvoteResponse.setMessage(SuccessReturnMessage.CREATE_SUCCESS.getMessage());
+                                            return CompletableFuture.completedFuture(upvoteResponse);
+                                        }
+                                    })
+                );
             });
         });
     }
@@ -146,5 +166,48 @@ public class UpvoteService {
             return jwt.getClaim("username");
         }
         return null;
+    }
+    @Async("AsyncTaskExecutor")
+    private CompletableFuture<DailyPoint> createDailyPointLog(Account account, Post post, TypeBonus typeBonus) {
+        return unitOfWork.getDailyPointRepository()
+                .findByAccountAndPostAndTypeBonus(account, post, typeBonus)
+                .thenCompose(dailyPoint -> {
+                    if (dailyPoint != null) {
+                        CompletableFuture.completedFuture(null);
+                    }
+
+                    DailyPoint newDailyPoint = new DailyPoint();
+                    newDailyPoint.setCreatedDate(new Date());
+                    newDailyPoint.setPoint(null);
+                    newDailyPoint.setPost(post);
+                    newDailyPoint.setAccount(account);
+                    newDailyPoint.setTypeBonus(typeBonus);
+                    newDailyPoint.setPointEarned(typeBonus.getPointBonus());
+
+                    var walletFuture = addPointToWallet(account, typeBonus);
+                    return walletFuture.thenApply(wallet -> {
+                        if(wallet == null){
+                            System.out.println("This Account Doesn't Have Wallet. Continuing without adding points");
+                        }
+
+                        return unitOfWork.getDailyPointRepository().save(newDailyPoint);
+                    });
+                });
+    }
+    @Async("AsyncTaskExecutor")
+    private CompletableFuture<Wallet> addPointToWallet(Account account, TypeBonus typeBonus){
+        var walletFuture = unitOfWork.getWalletRepository().findByAccount(account);
+
+        return walletFuture.thenCompose(wallet -> {
+            if(wallet == null){
+                return CompletableFuture.completedFuture(null);
+            }
+
+            var balance = wallet.getBalance();
+            balance = balance + typeBonus.getPointBonus();
+            wallet.setBalance(balance);
+
+            return CompletableFuture.completedFuture(unitOfWork.getWalletRepository().save(wallet));
+        });
     }
 }
