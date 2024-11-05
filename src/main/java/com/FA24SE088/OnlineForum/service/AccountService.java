@@ -94,10 +94,10 @@ public class AccountService {
             account.setCategoryList(null);
         }
 
-        Wallet wallet = new Wallet();
-        wallet.setBalance(0);
-        wallet.setAccount(account);
-        account.setWallet(wallet);
+//        Wallet wallet = new Wallet();
+//        wallet.setBalance(0);
+//        wallet.setAccount(account);
+//        account.setWallet(wallet);
 
         account.setCreatedDate(LocalDateTime.now());
         account.setStatus(AccountStatus.PENDING_APPROVAL.name());
