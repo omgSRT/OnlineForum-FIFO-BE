@@ -61,7 +61,7 @@ public class AccountService {
         account.setHandle(request.getUsername());
         account.setPassword(passwordEncoder.encode(request.getPassword()));
 
-        if (request.getRole().name().equalsIgnoreCase("STAFF")) {
+        if (!request.getRole().name().isEmpty() && request.getRole().name().equalsIgnoreCase("STAFF")) {
             Role role = unitOfWork.getRoleRepository().findByName(request.getRole().name());
             if (role == null) throw new AppException(ErrorCode.ROLE_NOT_FOUND);
             account.setRole(role);
@@ -87,17 +87,18 @@ public class AccountService {
                 account.setCategoryList(categories);
 
             }
-        } else {
+        }
+        else {
             Role role = unitOfWork.getRoleRepository().findByName("USER");
             if (role == null) throw new AppException(ErrorCode.ROLE_NOT_FOUND);
             account.setRole(role);
             account.setCategoryList(null);
         }
 
-//        Wallet wallet = new Wallet();
-//        wallet.setBalance(0);
-//        wallet.setAccount(account);
-//        account.setWallet(wallet);
+        Wallet wallet = new Wallet();
+        wallet.setBalance(0);
+        wallet.setAccount(account);
+        account.setWallet(wallet);
 
         account.setCreatedDate(LocalDateTime.now());
         account.setStatus(AccountStatus.PENDING_APPROVAL.name());
