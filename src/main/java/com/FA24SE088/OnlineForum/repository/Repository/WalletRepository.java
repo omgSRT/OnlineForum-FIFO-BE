@@ -1,5 +1,6 @@
 package com.FA24SE088.OnlineForum.repository.Repository;
 
+import com.FA24SE088.OnlineForum.entity.Account;
 import com.FA24SE088.OnlineForum.entity.Wallet;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.scheduling.annotation.Async;
@@ -13,4 +14,6 @@ public interface WalletRepository extends JpaRepository<Wallet, UUID> {
     @Async("AsyncTaskExecutor")
     CompletableFuture<Wallet> findByAccountAccountId(UUID accountId);
 
+    @Async("AsyncTaskExecutor")
+    CompletableFuture<Wallet> findByAccount(Account account);
 }

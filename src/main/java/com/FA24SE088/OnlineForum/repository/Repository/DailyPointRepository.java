@@ -3,6 +3,7 @@ package com.FA24SE088.OnlineForum.repository.Repository;
 import com.FA24SE088.OnlineForum.entity.Account;
 import com.FA24SE088.OnlineForum.entity.DailyPoint;
 import com.FA24SE088.OnlineForum.entity.Post;
+import com.FA24SE088.OnlineForum.entity.TypeBonus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Repository;
@@ -19,6 +20,9 @@ public interface DailyPointRepository extends JpaRepository<DailyPoint, UUID> {
 
     @Async("AsyncTaskExecutor")
     CompletableFuture<DailyPoint> findByAccountAndPost(Account account, Post post);
+
+    @Async("AsyncTaskExecutor")
+    CompletableFuture<DailyPoint> findByAccountAndPostAndTypeBonus(Account account, Post post, TypeBonus typeBonus);
 
     @Async("AsyncTaskExecutor")
     CompletableFuture<List<DailyPoint>> findByAccount(Account account);
