@@ -53,8 +53,7 @@ public class AuthenticationController {
         emailUtil.sendToAnEmail(
                 response.getEmail(),
                 "Mã OTP của bạn là: " + otp.getOtpEmail(),
-                "Mã OTP xác thực tài khoản",
-                null);
+                "Mã OTP xác thực tài khoản");
         return ApiResponse.<AccountResponse>builder()
                 .entity(response)
                 .build();
@@ -65,8 +64,7 @@ public class AuthenticationController {
         Otp otpResponse = otpUtil.resendOtp(email);
         emailUtil.sendToAnEmail(email,
                 "Mã OTP của bạn là: " + otpResponse.getOtpEmail(),
-                "Mã OTP xác thực tài khoản",
-                null);
+                "Mã OTP xác thực tài khoản");
         return ApiResponse.<Otp>builder()
                 .entity(otpResponse)
                 .build();
@@ -146,8 +144,7 @@ public class AuthenticationController {
                 + "</html>";
         emailUtil.sendToAnEmailWithHTMLEnabled(email,
                 emailBody,
-                "Please Reset Your Password",
-                null);
+                "Please Reset Your Password");
         return ApiResponse.<Void>builder()
                 .message(SuccessReturnMessage.SEND_SUCCESS.getMessage())
                 .build();

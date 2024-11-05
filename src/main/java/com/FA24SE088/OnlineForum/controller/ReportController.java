@@ -52,12 +52,25 @@ public class ReportController {
 
     @Operation(summary = "Get All Post Reports")
     @GetMapping(path = "/getall")
-    public ApiResponse<List<ReportResponse>> getAllFeedbacks(@RequestParam(defaultValue = "1") int page,
+    public ApiResponse<List<ReportResponse>> getAllReports(@RequestParam(defaultValue = "1") int page,
                                                              @RequestParam(defaultValue = "10") int perPage,
                                                              @RequestParam(required = false) UUID postId,
                                                              @RequestParam(required = false) List<ReportPostStatus> reportPostStatusList,
                                                              @RequestParam(required = false) String username){
         return reportService.getAllReports(page, perPage, postId, reportPostStatusList, username).thenApply(reportResponses ->
+                ApiResponse.<List<ReportResponse>>builder()
+                        .entity(reportResponses)
+                        .build()
+        ).join();
+    }
+
+    @Operation(summary = "Get All Post Reports For Staff")
+    @GetMapping(path = "/getall/for-staff")
+    public ApiResponse<List<ReportResponse>> getAllReportsForStaff(@RequestParam(defaultValue = "1") int page,
+                                                           @RequestParam(defaultValue = "10") int perPage,
+                                                           @RequestParam(required = false) List<ReportPostStatus> reportPostStatusList,
+                                                           @RequestParam(required = false) String username){
+        return reportService.getAllReportsForStaff(page, perPage, reportPostStatusList, username).thenApply(reportResponses ->
                 ApiResponse.<List<ReportResponse>>builder()
                         .entity(reportResponses)
                         .build()

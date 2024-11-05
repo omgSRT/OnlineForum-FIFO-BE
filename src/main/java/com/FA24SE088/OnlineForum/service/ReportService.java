@@ -35,7 +35,7 @@ public class ReportService {
     ReportMapper reportMapper;
     PaginationUtils paginationUtils;
 
-    @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
+    @PreAuthorize("hasRole('USER')")
     @Async("AsyncTaskExecutor")
     public CompletableFuture<ReportResponse> createReport(ReportRequest request, ReportPostReason reportPostReason){
         var postFuture = findPostById(request.getPostId());
@@ -80,8 +80,9 @@ public class ReportService {
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
     @Async("AsyncTaskExecutor")
     public CompletableFuture<List<ReportResponse>> getAllReports(int page, int perPage,
-                                                                    UUID postId, List<ReportPostStatus> reportPostStatusList,
-                                                                    String name){
+                                                                 UUID postId,
+                                                                 List<ReportPostStatus> reportPostStatusList,
+                                                                 String name){
         var postFuture = postId != null
                 ? findPostById(postId)
                 : CompletableFuture.completedFuture(null);
@@ -100,6 +101,33 @@ public class ReportService {
 
                     return CompletableFuture.completedFuture(paginatedList);
                 });
+    }
+    @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
+    @Async("AsyncTaskExecutor")
+    public CompletableFuture<List<ReportResponse>> getAllReportsForStaff(int page, int perPage,
+                                                                 List<ReportPostStatus> reportPostStatusList,
+                                                                 String accountUsername){
+        var username = getUsernameFromJwt();
+        var accountFuture = findAccountByUsername(username);
+
+        return CompletableFuture.allOf(accountFuture).thenCompose(v -> {
+            var account = accountFuture.join();
+
+            return unitOfWork.getCategoryRepository().findByAccount(account).thenCompose(categoryList -> {
+                var list = unitOfWork.getReportRepository().findAllByOrderByReportTimeDesc().stream()
+                        .filter(report -> categoryList.contains(report.getPost().getTopic().getCategory()))
+                        .filter(report -> reportPostStatusList == null || reportPostStatusList.isEmpty() ||
+                                (safeValueOf(report.getStatus()) != null
+                                        && reportPostStatusList.contains(safeValueOf(report.getStatus()))))
+                        .filter(report -> accountUsername == null || accountUsername.isEmpty() || report.getAccount().getUsername().contains(accountUsername))
+                        .map(reportMapper::toReportResponse)
+                        .toList();
+
+                var paginatedList = paginationUtils.convertListToPage(page, perPage, list);
+
+                return CompletableFuture.completedFuture(paginatedList);
+            });
+        });
     }
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
     @Async("AsyncTaskExecutor")
