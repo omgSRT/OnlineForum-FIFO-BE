@@ -60,6 +60,18 @@ public class AuthenticationController {
                 .build();
     }
 
+    @PostMapping("/resend-otp")
+    public ApiResponse<Otp> resendOtp(@RequestParam String email) {
+        Otp otpResponse = otpUtil.resendOtp(email);
+        emailUtil.sendToAnEmail(email,
+                "Mã OTP của bạn là: " + otpResponse.getOtpEmail(),
+                "Mã OTP xác thực tài khoản",
+                null);
+        return ApiResponse.<Otp>builder()
+                .entity(otpResponse)
+                .build();
+    }
+
     @PostMapping("/verify-otp")
     public ApiResponse<AccountResponse> verifyOtp(@RequestBody OtpRequest request) {
         otpUtil.verifyOTP(request.getEmail(), request.getOtp());

@@ -135,7 +135,7 @@ public class OtpUtil {
         return true;
     }
 
-    public void resendOtp(String email) {
+    public Otp resendOtp(String email) {
         Account account = unitOfWork.getAccountRepository().findByEmail(email);
         if (account == null) {
             throw new AppException(ErrorCode.EMAIL_NOT_FOUND);
@@ -154,6 +154,7 @@ public class OtpUtil {
         if (Duration.between(otpCreatedTime, LocalDateTime.now()).getSeconds() <= (5 * 60)) {
             throw new AppException(ErrorCode.OTP_STILL_VALID);
         }
-        generateOtp(email);
+        Otp otp = generateOtp(email);
+        return otp;
     }
 }
