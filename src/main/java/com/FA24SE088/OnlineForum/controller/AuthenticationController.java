@@ -71,6 +71,7 @@ public class AuthenticationController {
 //    @PostMapping("/resend-otp")
 //    public ApiResponse<Otp> resendOtp(@RequestParam String email) {
 //        otpUtil.resendOtp(email);
+//
 //        emailUtil.sendToAnEmail(email,
 //                "Mã OTP của bạn là: " + otpResponse.getOtpEmail(),
 //                "Mã OTP xác thực tài khoản",
