@@ -113,7 +113,8 @@ public enum ErrorCode {
     POINT_BONUS_LESS_THAN_ONE(10095, "Point Bonus Must Be Equal Or Greater Than 1", HttpStatus.BAD_REQUEST),
     CANNOT_COMMENT_ON_DRAFT(10096, "Cannot Comment On Draft", HttpStatus.BAD_REQUEST),
     TYPE_BONUS_ALREADY_EXIST(10097, "Type Bonus Already Existed", HttpStatus.BAD_REQUEST),
-    TYPE_OR_TOPIC_NOT_FOUND(10098, "Type Or Topic Must Be Present To Update To Completed Post", HttpStatus.BAD_REQUEST);
+    TYPE_OR_TOPIC_NOT_FOUND(10098, "Type Or Topic Must Be Present To Update To Completed Post", HttpStatus.BAD_REQUEST),
+    IS_BANNED(10098, "Your account is banned for 7 days", HttpStatus.BAD_REQUEST);
     ;
 
     private int code;

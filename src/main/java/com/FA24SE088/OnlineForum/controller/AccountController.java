@@ -11,6 +11,7 @@ import com.FA24SE088.OnlineForum.service.AccountService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -91,6 +92,13 @@ public class AccountController {
     public ApiResponse<AccountResponse> updateCategory(@PathVariable UUID id, AccountUpdateCategoryRequest request){
         return ApiResponse.<AccountResponse>builder()
                 .entity(accountService.updateCategoryOfStaff(id, request))
+                .build();
+    }
+
+    @PutMapping("/ban-unban/{accountId}")
+    public ApiResponse<AccountResponse> banAndUnban(@PathVariable UUID accountId){
+        return ApiResponse.<AccountResponse>builder()
+                .entity(accountService.banAccount(accountId))
                 .build();
     }
 

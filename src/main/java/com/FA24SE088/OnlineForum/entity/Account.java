@@ -33,6 +33,7 @@ public class Account {
     @Column(columnDefinition = "MEDIUMTEXT")
     String coverImage;
     LocalDateTime createdDate;
+    LocalDateTime bannedUntil;
     String status;
 
 
