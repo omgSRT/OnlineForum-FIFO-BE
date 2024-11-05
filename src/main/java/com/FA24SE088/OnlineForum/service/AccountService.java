@@ -23,6 +23,7 @@ import lombok.extern.slf4j.Slf4j;
 
 
 import org.springframework.scheduling.annotation.Async;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.core.user.OAuth2User;
@@ -36,6 +37,7 @@ import java.util.concurrent.CompletableFuture;
 
 
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.transaction.annotation.Transactional;
 
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
@@ -119,6 +121,7 @@ public class AccountService {
         unitOfWork.getAccountRepository().save(account);
         return accountMapper.toResponse(account);
     }
+
 
     public AccountResponse updateCategoryOfStaff(UUID id, AccountUpdateCategoryRequest request) {
         Account account = findAccount(id);
@@ -243,6 +246,32 @@ public class AccountService {
             unitOfWork.getAccountRepository().save(account);
         }
         return accountMapper.toResponse(account);
+    }
+
+    @Transactional
+    public AccountResponse banAccount(UUID accountId) {
+        Account account = unitOfWork.getAccountRepository().findById(accountId).orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND));
+
+        if (account.getStatus().equals(AccountStatus.BANED.name())) {
+            account.setStatus(AccountStatus.ACTIVE.name());
+            account.setBannedUntil(null);
+        } else {
+            account.setStatus(AccountStatus.BANED.name());
+            account.setBannedUntil(LocalDateTime.now().plusDays(7));
+        }
+
+        unitOfWork.getAccountRepository().save(account);
+        return accountMapper.toResponse(account);
+    }
+
+    @Scheduled(fixedRate = 60000)
+    public void autoUnbanAccounts() {
+        unitOfWork.getAccountRepository().findAllByStatusAndBannedUntilBefore(AccountStatus.BANED.name(), LocalDateTime.now())
+                .forEach(account -> {
+                    account.setStatus(AccountStatus.ACTIVE.name());
+                    account.setBannedUntil(null);
+                    unitOfWork.getAccountRepository().save(account);
+                });
     }
 
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")

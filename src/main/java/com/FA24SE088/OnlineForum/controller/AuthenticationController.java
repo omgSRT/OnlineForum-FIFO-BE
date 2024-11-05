@@ -50,7 +50,6 @@ public class AuthenticationController {
     public ApiResponse<AccountResponse> create(@Valid @RequestBody AccountRequest request) {
         AccountResponse response = accountService.create(request);
         Otp otp = otpUtil.generateOtp(request.getEmail());
-//        String otpFromRedis = redisTemplate.opsForValue().get(request.getEmail());
         emailUtil.sendToAnEmail(
                 response.getEmail(),
                 "Mã OTP của bạn là: " + otp.getOtpEmail(),

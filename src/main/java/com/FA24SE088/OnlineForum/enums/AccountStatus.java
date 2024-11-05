@@ -5,4 +5,5 @@ public enum AccountStatus {
     INACTIVE,
     HIDDEN,
     PENDING_APPROVAL,
+    BANED,
 }
