@@ -327,7 +327,7 @@ public class PostService {
                     throw new AppException(ErrorCode.ACCOUNT_NOT_THE_AUTHOR_OF_POST);
                 }
                 if (account.getRole().getName().equals("STAFF") &&
-                        categoryList.contains(categoryPost)) {
+                        !categoryList.contains(categoryPost)) {
                     throw new AppException(ErrorCode.STAFF_NOT_SUPERVISE_CATEGORY);
                 }
 
@@ -361,7 +361,7 @@ public class PostService {
                             throw new AppException(ErrorCode.ACCOUNT_NOT_THE_AUTHOR_OF_POST);
                         }
                         if(account.getRole().getName().equals("STAFF") &&
-                                categoryList.contains(categoryPost)){
+                                !categoryList.contains(categoryPost)){
                             throw new AppException(ErrorCode.STAFF_NOT_SUPERVISE_CATEGORY);
                         }
 
