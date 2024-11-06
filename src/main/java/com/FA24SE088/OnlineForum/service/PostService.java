@@ -90,10 +90,24 @@ public class PostService {
                                     dailyPointList.add(dailyPoint);
                                 }
                                 savedPost.setDailyPointList(dailyPointList);
+
                                 return CompletableFuture.completedFuture(unitOfWork.getPostRepository().save(savedPost));
+                            })
+                            .thenCompose(post -> {
+                                CompletableFuture<Integer> upvoteCountFuture = unitOfWork.getUpvoteRepository()
+                                        .countByPost(post);
+                                CompletableFuture<Integer> commentCountFuture = unitOfWork.getCommentRepository()
+                                        .countByPost(post);
+
+                                return CompletableFuture.allOf(upvoteCountFuture, commentCountFuture)
+                                        .thenApply(voidResult -> {
+                                            PostResponse response = postMapper.toPostResponse(post);
+                                            response.setUpvoteCount(upvoteCountFuture.join());
+                                            response.setCommentCount(commentCountFuture.join());
+                                            return response;
+                                        });
                             });
-                })
-                .thenApply(postMapper::toPostResponse);
+                });
     }
     @Async("AsyncTaskExecutor")
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
@@ -137,7 +151,7 @@ public class PostService {
                 throw new AppException(ErrorCode.TOPIC_NOT_BELONG_TO_CATEGORY);
             }
 
-            var list = new ArrayList<>(postList.stream()
+            var responseFutures = new ArrayList<>(postList.stream()
                     .filter(post -> {
                         if (IsFolloweeIncluded == null) {
                             return true;
@@ -156,12 +170,28 @@ public class PostService {
                     .filter(post -> tag == null || (post.getTag() != null && post.getTag().equals(tag)))
                     .filter(post -> statuses == null || statuses.isEmpty() ||
                             (safeValueOf(post.getStatus()) != null && statuses.contains(safeValueOf(post.getStatus()))))
-                    .map(postMapper::toPostResponse)
+                    .map(post -> {
+                        CompletableFuture<Integer> upvoteCountFuture = unitOfWork.getUpvoteRepository()
+                                .countByPost(post);
+                        CompletableFuture<Integer> commentCountFuture = unitOfWork.getCommentRepository()
+                                .countByPost(post);
+
+                        return CompletableFuture.allOf(upvoteCountFuture, commentCountFuture)
+                                .thenApply(voidResult -> {
+                                    PostResponse response = postMapper.toPostResponse(post);
+                                    response.setUpvoteCount(upvoteCountFuture.join());
+                                    response.setCommentCount(commentCountFuture.join());
+                                    return response;
+                                });
+                    })
                     .toList());
 
-            var paginatedList = paginationUtils.convertListToPage(page, perPage, list);
-
-            return CompletableFuture.completedFuture(paginatedList);
+            return CompletableFuture.allOf(responseFutures.toArray(new CompletableFuture[0]))
+                    .thenApply(voidResult -> responseFutures.stream()
+                            .map(CompletableFuture::join)
+                            .toList()
+                    )
+                    .thenApply(list -> paginationUtils.convertListToPage(page, perPage, list));
         });
     }
     @Async("AsyncTaskExecutor")
@@ -199,7 +229,7 @@ public class PostService {
             return manageCategoryListFuture.thenCompose(manageCategoryList -> {
                 var manageTopicList = getAllTopicsFromCategoryList(manageCategoryList);
 
-                var list = new ArrayList<>(postList.stream()
+                var responseFutures = new ArrayList<>(postList.stream()
                         .filter(post -> {
                             if (IsFolloweeIncluded == null) {
                                 return true;
@@ -224,12 +254,28 @@ public class PostService {
                         .filter(post -> tag == null || (post.getTag() != null && post.getTag().equals(tag)))
                         .filter(post -> post.getStatus() != null
                                 && post.getStatus().equals(PostStatus.PUBLIC.name()))
-                        .map(postMapper::toPostResponse)
+                        .map(post -> {
+                            CompletableFuture<Integer> upvoteCountFuture = unitOfWork.getUpvoteRepository()
+                                    .countByPost(post);
+                            CompletableFuture<Integer> commentCountFuture = unitOfWork.getCommentRepository()
+                                    .countByPost(post);
+
+                            return CompletableFuture.allOf(upvoteCountFuture, commentCountFuture)
+                                    .thenApply(voidResult -> {
+                                        PostResponse response = postMapper.toPostResponse(post);
+                                        response.setUpvoteCount(upvoteCountFuture.join());
+                                        response.setCommentCount(commentCountFuture.join());
+                                        return response;
+                                    });
+                        })
                         .toList());
 
-                var paginatedList = paginationUtils.convertListToPage(page, perPage, list);
-
-                return CompletableFuture.completedFuture(paginatedList);
+                return CompletableFuture.allOf(responseFutures.toArray(new CompletableFuture[0]))
+                        .thenApply(voidResult -> responseFutures.stream()
+                                .map(CompletableFuture::join)
+                                .toList()
+                        )
+                        .thenApply(list -> paginationUtils.convertListToPage(page, perPage, list));
             });
         });
     }
@@ -244,16 +290,32 @@ public class PostService {
             var postList = postListFuture.join();
             var account = accountFuture.join();
 
-            var list = new ArrayList<>(postList.stream()
+            var responseFutures = new ArrayList<>(postList.stream()
                     .filter(post -> post.getAccount().equals(account))
                     .filter(post -> post.getStatus().equals(PostStatus.PUBLIC.name())
                             || post.getStatus().equals(PostStatus.PRIVATE.name()))
-                    .map(postMapper::toPostResponse)
+                    .map(post -> {
+                        CompletableFuture<Integer> upvoteCountFuture = unitOfWork.getUpvoteRepository()
+                                .countByPost(post);
+                        CompletableFuture<Integer> commentCountFuture = unitOfWork.getCommentRepository()
+                                .countByPost(post);
+
+                        return CompletableFuture.allOf(upvoteCountFuture, commentCountFuture)
+                                .thenApply(voidResult -> {
+                                    PostResponse response = postMapper.toPostResponse(post);
+                                    response.setUpvoteCount(upvoteCountFuture.join());
+                                    response.setCommentCount(commentCountFuture.join());
+                                    return response;
+                                });
+                    })
                     .toList());
 
-            var paginatedList = paginationUtils.convertListToPage(page, perPage, list);
-
-            return CompletableFuture.completedFuture(paginatedList);
+            return CompletableFuture.allOf(responseFutures.toArray(new CompletableFuture[0]))
+                    .thenApply(voidResult -> responseFutures.stream()
+                            .map(CompletableFuture::join)
+                            .toList()
+                    )
+                    .thenApply(list -> paginationUtils.convertListToPage(page, perPage, list));
         });
     }
     @Async("AsyncTaskExecutor")
@@ -261,7 +323,20 @@ public class PostService {
     public CompletableFuture<PostResponse> getPostById(UUID postId) {
         var postFuture = findPostById(postId);
 
-        return postFuture.thenApply(postMapper::toPostResponse);
+        return postFuture.thenCompose(post -> {
+            CompletableFuture<Integer> upvoteCountFuture = unitOfWork.getUpvoteRepository()
+                    .countByPost(post);
+            CompletableFuture<Integer> commentCountFuture = unitOfWork.getCommentRepository()
+                    .countByPost(post);
+
+            return CompletableFuture.allOf(upvoteCountFuture, commentCountFuture)
+                    .thenApply(voidResult -> {
+                        PostResponse response = postMapper.toPostResponse(post);
+                        response.setUpvoteCount(upvoteCountFuture.join());
+                        response.setCommentCount(commentCountFuture.join());
+                        return response;
+                    });
+        });
     }
     @Async("AsyncTaskExecutor")
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
@@ -297,8 +372,20 @@ public class PostService {
                 post.setLastModifiedDate(new Date());
 
                 return CompletableFuture.completedFuture(unitOfWork.getPostRepository().save(post));
-            })
-                    .thenApply(postMapper::toPostResponse);
+            }).thenCompose(savedPost -> {
+                CompletableFuture<Integer> upvoteCountFuture = unitOfWork.getUpvoteRepository()
+                        .countByPost(savedPost);
+                CompletableFuture<Integer> commentCountFuture = unitOfWork.getCommentRepository()
+                        .countByPost(savedPost);
+
+                return CompletableFuture.allOf(upvoteCountFuture, commentCountFuture)
+                        .thenApply(voidResult -> {
+                            PostResponse response = postMapper.toPostResponse(savedPost);
+                            response.setUpvoteCount(upvoteCountFuture.join());
+                            response.setCommentCount(commentCountFuture.join());
+                            return response;
+                        });
+            });
         });
     }
     @Async("AsyncTaskExecutor")
@@ -335,8 +422,20 @@ public class PostService {
 
                 return CompletableFuture.completedFuture(unitOfWork.getPostRepository().save(post));
             });
-        })
-                .thenApply(postMapper::toPostResponse);
+        }).thenCompose(post -> {
+            CompletableFuture<Integer> upvoteCountFuture = unitOfWork.getUpvoteRepository()
+                    .countByPost(post);
+            CompletableFuture<Integer> commentCountFuture = unitOfWork.getCommentRepository()
+                    .countByPost(post);
+
+            return CompletableFuture.allOf(upvoteCountFuture, commentCountFuture)
+                    .thenApply(voidResult -> {
+                        PostResponse response = postMapper.toPostResponse(post);
+                        response.setUpvoteCount(upvoteCountFuture.join());
+                        response.setCommentCount(commentCountFuture.join());
+                        return response;
+                    });
+        });
     }
     @Async("AsyncTaskExecutor")
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
@@ -368,8 +467,20 @@ public class PostService {
                         post.setLastModifiedDate(new Date());
                         return CompletableFuture.completedFuture(unitOfWork.getPostRepository().save(post));
                     });
-                })
-                .thenApply(postMapper::toPostResponse);
+                }).thenCompose(post -> {
+                    CompletableFuture<Integer> upvoteCountFuture = unitOfWork.getUpvoteRepository()
+                            .countByPost(post);
+                    CompletableFuture<Integer> commentCountFuture = unitOfWork.getCommentRepository()
+                            .countByPost(post);
+
+                    return CompletableFuture.allOf(upvoteCountFuture, commentCountFuture)
+                            .thenApply(voidResult -> {
+                                PostResponse response = postMapper.toPostResponse(post);
+                                response.setUpvoteCount(upvoteCountFuture.join());
+                                response.setCommentCount(commentCountFuture.join());
+                                return response;
+                            });
+                });
     }
     //endregion
 
@@ -426,8 +537,20 @@ public class PostService {
                                 }
                                 return CompletableFuture.completedFuture(unitOfWork.getPostRepository().save(savedPost));
                             });
-                })
-                .thenApply(postMapper::toPostResponse);
+                }).thenCompose(post -> {
+                    CompletableFuture<Integer> upvoteCountFuture = unitOfWork.getUpvoteRepository()
+                            .countByPost(post);
+                    CompletableFuture<Integer> commentCountFuture = unitOfWork.getCommentRepository()
+                            .countByPost(post);
+
+                    return CompletableFuture.allOf(upvoteCountFuture, commentCountFuture)
+                            .thenApply(voidResult -> {
+                                PostResponse response = postMapper.toPostResponse(post);
+                                response.setUpvoteCount(upvoteCountFuture.join());
+                                response.setCommentCount(commentCountFuture.join());
+                                return response;
+                            });
+                });
     }
     @Async("AsyncTaskExecutor")
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
@@ -442,15 +565,31 @@ public class PostService {
             var postList = postListFuture.join();
             var account = accountFuture.join();
 
-            var list = new ArrayList<>(postList.stream()
+            var responseFutures = new ArrayList<>(postList.stream()
                     .filter(post -> account == null || post.getAccount().equals(account))
                     .filter(post -> post.getStatus().equals(PostStatus.DRAFT.name()))
-                    .map(postMapper::toPostResponse)
+                    .map(post -> {
+                        CompletableFuture<Integer> upvoteCountFuture = unitOfWork.getUpvoteRepository()
+                                .countByPost(post);
+                        CompletableFuture<Integer> commentCountFuture = unitOfWork.getCommentRepository()
+                                .countByPost(post);
+
+                        return CompletableFuture.allOf(upvoteCountFuture, commentCountFuture)
+                                .thenApply(voidResult -> {
+                                    PostResponse response = postMapper.toPostResponse(post);
+                                    response.setUpvoteCount(upvoteCountFuture.join());
+                                    response.setCommentCount(commentCountFuture.join());
+                                    return response;
+                                });
+                    })
                     .toList());
 
-            var paginatedList = paginationUtils.convertListToPage(page, perPage, list);
-
-            return CompletableFuture.completedFuture(paginatedList);
+            return CompletableFuture.allOf(responseFutures.toArray(new CompletableFuture[0]))
+                    .thenApply(voidResult -> responseFutures.stream()
+                            .map(CompletableFuture::join)
+                            .toList()
+                    )
+                    .thenApply(list -> paginationUtils.convertListToPage(page, perPage, list));
         });
     }
     @Async("AsyncTaskExecutor")
@@ -464,15 +603,31 @@ public class PostService {
             var postList = postListFuture.join();
             var account = accountFuture.join();
 
-            var list = new ArrayList<>(postList.stream()
+            var responseFutures = new ArrayList<>(postList.stream()
                     .filter(post -> post.getAccount().equals(account))
                     .filter(post -> post.getStatus().equals(PostStatus.DRAFT.name()))
-                    .map(postMapper::toPostResponse)
+                    .map(post -> {
+                        CompletableFuture<Integer> upvoteCountFuture = unitOfWork.getUpvoteRepository()
+                                .countByPost(post);
+                        CompletableFuture<Integer> commentCountFuture = unitOfWork.getCommentRepository()
+                                .countByPost(post);
+
+                        return CompletableFuture.allOf(upvoteCountFuture, commentCountFuture)
+                                .thenApply(voidResult -> {
+                                    PostResponse response = postMapper.toPostResponse(post);
+                                    response.setUpvoteCount(upvoteCountFuture.join());
+                                    response.setCommentCount(commentCountFuture.join());
+                                    return response;
+                                });
+                    })
                     .toList());
 
-            var paginatedList = paginationUtils.convertListToPage(page, perPage, list);
-
-            return CompletableFuture.completedFuture(paginatedList);
+            return CompletableFuture.allOf(responseFutures.toArray(new CompletableFuture[0]))
+                    .thenApply(voidResult -> responseFutures.stream()
+                            .map(CompletableFuture::join)
+                            .toList()
+                    )
+                    .thenApply(list -> paginationUtils.convertListToPage(page, perPage, list));
         });
     }
     @Async("AsyncTaskExecutor")
@@ -524,8 +679,20 @@ public class PostService {
                         post.setLastModifiedDate(new Date());
 
                         return CompletableFuture.completedFuture(unitOfWork.getPostRepository().save(post));
-                    })
-                    .thenApply(postMapper::toPostResponse);
+                    }).thenCompose(savedPost -> {
+                        CompletableFuture<Integer> upvoteCountFuture = unitOfWork.getUpvoteRepository()
+                                .countByPost(savedPost);
+                        CompletableFuture<Integer> commentCountFuture = unitOfWork.getCommentRepository()
+                                .countByPost(savedPost);
+
+                        return CompletableFuture.allOf(upvoteCountFuture, commentCountFuture)
+                                .thenApply(voidResult -> {
+                                    PostResponse response = postMapper.toPostResponse(savedPost);
+                                    response.setUpvoteCount(upvoteCountFuture.join());
+                                    response.setCommentCount(commentCountFuture.join());
+                                    return response;
+                                });
+                    });
         });
     }
     @Async("AsyncTaskExecutor")
@@ -564,8 +731,20 @@ public class PostService {
                 post.setStatus(PostStatus.PUBLIC.name());
                 post.setLastModifiedDate(new Date());
                 return CompletableFuture.completedFuture(unitOfWork.getPostRepository().save(post));
-            })
-                    .thenApply(postMapper::toPostResponse);
+            }).thenCompose(savedPost -> {
+                CompletableFuture<Integer> upvoteCountFuture = unitOfWork.getUpvoteRepository()
+                        .countByPost(savedPost);
+                CompletableFuture<Integer> commentCountFuture = unitOfWork.getCommentRepository()
+                        .countByPost(savedPost);
+
+                return CompletableFuture.allOf(upvoteCountFuture, commentCountFuture)
+                        .thenApply(voidResult -> {
+                            PostResponse response = postMapper.toPostResponse(savedPost);
+                            response.setUpvoteCount(upvoteCountFuture.join());
+                            response.setCommentCount(commentCountFuture.join());
+                            return response;
+                        });
+            });
         });
     }
     @Async("AsyncTaskExecutor")
@@ -581,7 +760,7 @@ public class PostService {
                                     return post;
                                 }))
                         .toList()
-        ).thenApplyAsync(postFutures -> {
+        ).thenCompose(postFutures -> {
             CompletableFuture.allOf(postFutures.toArray(new CompletableFuture[0])).join();
 
             List<Post> draftList = postFutures.stream()
@@ -589,9 +768,28 @@ public class PostService {
                     .toList();
 
             unitOfWork.getPostRepository().deleteAll(draftList);
-            return draftList.stream()
-                    .map(postMapper::toPostResponse)
+            var responseFutures = draftList.stream()
+                    .map(post -> {
+                        CompletableFuture<Integer> upvoteCountFuture = unitOfWork.getUpvoteRepository()
+                                .countByPost(post);
+                        CompletableFuture<Integer> commentCountFuture = unitOfWork.getCommentRepository()
+                                .countByPost(post);
+
+                        return CompletableFuture.allOf(upvoteCountFuture, commentCountFuture)
+                                .thenApply(voidResult -> {
+                                    PostResponse response = postMapper.toPostResponse(post);
+                                    response.setUpvoteCount(upvoteCountFuture.join());
+                                    response.setCommentCount(commentCountFuture.join());
+                                    return response;
+                                });
+                    })
                     .toList();
+
+            return CompletableFuture.allOf(responseFutures.toArray(new CompletableFuture[0]))
+                    .thenApply(voidResult -> responseFutures.stream()
+                            .map(CompletableFuture::join)
+                            .toList()
+                    );
         });
     }
     //endregion

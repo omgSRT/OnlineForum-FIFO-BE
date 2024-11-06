@@ -47,6 +47,8 @@ public class CategoryService {
                         throw new AppException(ErrorCode.NAME_EXIST);
                     }
 
+                    request.setName(request.getName().toUpperCase());
+
                     Category newCategory = categoryMapper.toCategory(request);
                     newCategory.setAccount(acc);
 
@@ -75,6 +77,8 @@ public class CategoryService {
                             if (exists) {
                                 throw new AppException(ErrorCode.NAME_EXIST);
                             }
+
+                            request.setName(request.getName().toUpperCase());
 
                             Category newCategory = categoryMapper.toCategoryWithNoAccount(request);
 
