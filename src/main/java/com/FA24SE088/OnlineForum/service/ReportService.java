@@ -141,14 +141,19 @@ public class ReportService {
     @Async("AsyncTaskExecutor")
     public CompletableFuture<ReportResponse> updateReportStatus(UUID reportId, ReportPostUpdateStatus status) {
         var reportFuture = findReportById(reportId);
+        var username = getUsernameFromJwt();
+        var accountFuture = findAccountByUsername(username);
 
-        return reportFuture.thenCompose(report -> {
+        return CompletableFuture.allOf(reportFuture, accountFuture).thenCompose(v -> {
+                var report = reportFuture.join();
+                var account = accountFuture.join();
+
                 if(!report.getStatus().equals(ReportPostStatus.PENDING.name())){
                     throw new AppException(ErrorCode.REPORT_POST_NOT_PENDING);
                 }
 
                 if(status.name().equals(ReportPostStatus.APPROVED.name())){
-                    return deleteByChangingPostStatusById(report.getPost().getPostId()).thenCompose(post -> {
+                    return deleteByChangingPostStatusById(report.getPost().getPostId(), account).thenCompose(post -> {
                         report.setStatus(status.name());
 
                         return CompletableFuture.completedFuture(unitOfWork.getReportRepository().save(report));
@@ -164,13 +169,10 @@ public class ReportService {
 
 
     @Async("AsyncTaskExecutor")
-    public CompletableFuture<Post> deleteByChangingPostStatusById(UUID postId) {
+    public CompletableFuture<Post> deleteByChangingPostStatusById(UUID postId, Account account) {
         var postFuture = findPostById(postId);
-        var username = getUsernameFromJwt();
-        var accountFuture = findAccountByUsername(username);
 
-        return CompletableFuture.allOf(postFuture, accountFuture).thenCompose(v -> {
-                    var account = accountFuture.join();
+        return CompletableFuture.allOf(postFuture).thenCompose(v -> {
                     var post = postFuture.join();
                     var categoryPost = post.getTopic().getCategory();
 
@@ -202,10 +204,10 @@ public class ReportService {
         );
     }
     @Async("AsyncTaskExecutor")
-    private CompletableFuture<Report> findReportById(UUID feedbackId) {
+    private CompletableFuture<Report> findReportById(UUID reportId) {
         return CompletableFuture.supplyAsync(() ->
-                unitOfWork.getReportRepository().findById(feedbackId)
-                        .orElseThrow(() -> new AppException(ErrorCode.FEEDBACK_NOT_FOUND))
+                unitOfWork.getReportRepository().findById(reportId)
+                        .orElseThrow(() -> new AppException(ErrorCode.REPORT_POST_NOT_FOUND))
         );
     }
     @Async("AsyncTaskExecutor")

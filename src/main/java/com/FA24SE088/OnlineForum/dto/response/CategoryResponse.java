@@ -17,4 +17,6 @@ public class CategoryResponse {
     String description;
     String image;
     Account account;
+    int upvoteCount;
+    int commentCount;
 }

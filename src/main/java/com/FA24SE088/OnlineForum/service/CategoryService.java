@@ -49,9 +49,21 @@ public class CategoryService {
 
                     Category newCategory = categoryMapper.toCategory(request);
                     newCategory.setAccount(acc);
-                    return CompletableFuture.completedFuture(
-                            categoryMapper.toCategoryResponse(unitOfWork.getCategoryRepository().save(newCategory))
-                    );
+
+                    var savedCategory = unitOfWork.getCategoryRepository().save(newCategory);
+
+                    CompletableFuture<Integer> upvoteCountFuture = unitOfWork.getUpvoteRepository()
+                            .countByPostTopicCategory(savedCategory);
+                    CompletableFuture<Integer> commentCountFuture = unitOfWork.getCommentRepository()
+                            .countByPostTopicCategory(savedCategory);
+
+                    return CompletableFuture.allOf(upvoteCountFuture, commentCountFuture)
+                            .thenApply(voidResult -> {
+                                CategoryResponse response = categoryMapper.toCategoryResponse(savedCategory);
+                                response.setUpvoteCount(upvoteCountFuture.join());
+                                response.setCommentCount(commentCountFuture.join());
+                                return response;
+                            });
                 }));
     }
 
@@ -65,9 +77,21 @@ public class CategoryService {
                             }
 
                             Category newCategory = categoryMapper.toCategoryWithNoAccount(request);
-                            return CompletableFuture.completedFuture(
-                                    categoryMapper.toCategoryResponse(unitOfWork.getCategoryRepository().save(newCategory))
-                            );
+
+                            var savedCategory = unitOfWork.getCategoryRepository().save(newCategory);
+
+                            CompletableFuture<Integer> upvoteCountFuture = unitOfWork.getUpvoteRepository()
+                                    .countByPostTopicCategory(savedCategory);
+                            CompletableFuture<Integer> commentCountFuture = unitOfWork.getCommentRepository()
+                                    .countByPostTopicCategory(savedCategory);
+
+                            return CompletableFuture.allOf(upvoteCountFuture, commentCountFuture)
+                                    .thenApply(voidResult -> {
+                                        CategoryResponse response = categoryMapper.toCategoryResponse(savedCategory);
+                                        response.setUpvoteCount(upvoteCountFuture.join());
+                                        response.setCommentCount(commentCountFuture.join());
+                                        return response;
+                                    });
                         });
     }
 
@@ -79,14 +103,32 @@ public class CategoryService {
                 : CompletableFuture.completedFuture(null);
 
         return accountFuture.thenCompose(account -> {
-            var list = unitOfWork.getCategoryRepository().findAll().stream()
+            var categories = unitOfWork.getCategoryRepository().findAll();
+
+            List<CompletableFuture<CategoryNoAccountResponse>> responseFutures = categories.stream()
                     .filter(category -> account == null || (category.getAccount() != null && category.getAccount().equals(account)))
-                    .map(categoryMapper::toCategoryNoAccountResponse)
+                    .map(category -> {
+                        CompletableFuture<Integer> upvoteCountFuture = unitOfWork.getUpvoteRepository()
+                                .countByPostTopicCategory(category);
+                        CompletableFuture<Integer> commentCountFuture = unitOfWork.getCommentRepository()
+                                .countByPostTopicCategory(category);
+
+                        return CompletableFuture.allOf(upvoteCountFuture, commentCountFuture)
+                                .thenApply(voidResult -> {
+                                    CategoryNoAccountResponse response = categoryMapper.toCategoryNoAccountResponse(category);
+                                    response.setUpvoteCount(upvoteCountFuture.join());
+                                    response.setCommentCount(commentCountFuture.join());
+                                    return response;
+                                });
+                    })
                     .toList();
 
-            var paginatedList = paginationUtils.convertListToPage(page, perPage, list);
-
-            return CompletableFuture.completedFuture(paginatedList);
+            return CompletableFuture.allOf(responseFutures.toArray(new CompletableFuture[0]))
+                    .thenApply(voidResult -> responseFutures.stream()
+                            .map(CompletableFuture::join)
+                            .toList()
+                    )
+                    .thenApply(list -> paginationUtils.convertListToPage(page, perPage, list));
         });
     }
 
@@ -100,13 +142,29 @@ public class CategoryService {
             var categoryListFuture = unitOfWork.getCategoryRepository().findByAccount(account);
 
             return categoryListFuture.thenCompose(categoryList -> {
-                var list = categoryList.stream()
-                        .map(categoryMapper::toCategoryNoAccountResponse)
+                List<CompletableFuture<CategoryNoAccountResponse>> responseFutures = categoryList.stream()
+                        .map(category -> {
+                            CompletableFuture<Integer> upvoteCountFuture = unitOfWork.getUpvoteRepository()
+                                    .countByPostTopicCategory(category);
+                            CompletableFuture<Integer> commentCountFuture = unitOfWork.getCommentRepository()
+                                    .countByPostTopicCategory(category);
+
+                            return CompletableFuture.allOf(upvoteCountFuture, commentCountFuture)
+                                    .thenApply(voidResult -> {
+                                        CategoryNoAccountResponse response = categoryMapper.toCategoryNoAccountResponse(category);
+                                        response.setUpvoteCount(upvoteCountFuture.join());
+                                        response.setCommentCount(commentCountFuture.join());
+                                        return response;
+                                    });
+                        })
                         .toList();
 
-                var paginatedList = paginationUtils.convertListToPage(page, perPage, list);
-
-                return CompletableFuture.completedFuture(paginatedList);
+                return CompletableFuture.allOf(responseFutures.toArray(new CompletableFuture[0]))
+                        .thenApply(voidResult -> responseFutures.stream()
+                                .map(CompletableFuture::join)
+                                .toList()
+                        )
+                        .thenApply(list -> paginationUtils.convertListToPage(page, perPage, list));
             });
         });
     }
@@ -114,12 +172,24 @@ public class CategoryService {
     @Async("AsyncTaskExecutor")
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
     public CompletableFuture<CategoryResponse> getCategoryById(UUID categoryId) {
-        return CompletableFuture.supplyAsync(() -> {
-            var category = unitOfWork.getCategoryRepository().findById(categoryId)
-                    .orElseThrow(() -> new AppException(ErrorCode.CATEGORY_NOT_FOUND));
+        return CompletableFuture.supplyAsync(() ->
+                unitOfWork.getCategoryRepository().findById(categoryId)
+                        .orElseThrow(() -> new AppException(ErrorCode.CATEGORY_NOT_FOUND))
+        ).thenCompose(category -> {
+            CompletableFuture<Integer> upvoteCountFuture = unitOfWork.getUpvoteRepository()
+                    .countByPostTopicCategory(category);
+            CompletableFuture<Integer> commentCountFuture = unitOfWork.getCommentRepository()
+                    .countByPostTopicCategory(category);
 
-            return categoryMapper.toCategoryResponse(category);
+            return CompletableFuture.allOf(upvoteCountFuture, commentCountFuture)
+                    .thenApply(voidResult -> {
+                        CategoryResponse response = categoryMapper.toCategoryResponse(category);
+                        response.setUpvoteCount(upvoteCountFuture.join());
+                        response.setCommentCount(commentCountFuture.join());
+                        return response;
+                    });
         });
+
     }
 
     @Async("AsyncTaskExecutor")
@@ -131,27 +201,55 @@ public class CategoryService {
 
             unitOfWork.getCategoryRepository().delete(category);
 
-            return categoryMapper.toCategoryResponse(category);
+            return category;
+        }).thenCompose(category -> {
+            CompletableFuture<Integer> upvoteCountFuture = unitOfWork.getUpvoteRepository()
+                    .countByPostTopicCategory(category);
+            CompletableFuture<Integer> commentCountFuture = unitOfWork.getCommentRepository()
+                    .countByPostTopicCategory(category);
+
+            return CompletableFuture.allOf(upvoteCountFuture, commentCountFuture)
+                    .thenApply(voidResult -> {
+                        CategoryResponse response = categoryMapper.toCategoryResponse(category);
+                        response.setUpvoteCount(upvoteCountFuture.join());
+                        response.setCommentCount(commentCountFuture.join());
+                        return response;
+                    });
         });
     }
 
     @Async("AsyncTaskExecutor")
     @PreAuthorize("hasRole('ADMIN')")
     public CompletableFuture<CategoryResponse> updateCategoryById(UUID categoryId, CategoryUpdateRequest request) {
-        return unitOfWork.getCategoryRepository().existsByNameContaining(request.getName())
-                .thenCompose(exists -> {
-                    if (exists) {
-                        throw new AppException(ErrorCode.NAME_EXIST);
-                    }
+        return CompletableFuture.supplyAsync(() -> {
+            var category = unitOfWork.getCategoryRepository().findById(categoryId)
+                    .orElseThrow(() -> new AppException(ErrorCode.CATEGORY_NOT_FOUND));
 
-                    return CompletableFuture.supplyAsync(() -> {
-                        var category = unitOfWork.getCategoryRepository().findById(categoryId)
-                                .orElseThrow(() -> new AppException(ErrorCode.CATEGORY_NOT_FOUND));
+            if (category.getName().equalsIgnoreCase(request.getName())) {
+                return category;
+            }
 
-                        categoryMapper.updateCategory(category, request);
-                        return unitOfWork.getCategoryRepository().save(category);
-                    }).thenApply(categoryMapper::toCategoryResponse);
-                });
+            boolean nameExists = unitOfWork.getCategoryRepository().existsByNameContaining(request.getName()).join();
+            if (nameExists) {
+                throw new AppException(ErrorCode.NAME_EXIST);
+            }
+            return category;
+        }).thenCompose(category -> {
+            categoryMapper.updateCategory(category, request);
+
+            return CompletableFuture.completedFuture(unitOfWork.getCategoryRepository().save(category));
+        }).thenCompose(updatedCategory -> {
+            CompletableFuture<Integer> upvoteCountFuture = unitOfWork.getUpvoteRepository().countByPostTopicCategory(updatedCategory);
+            CompletableFuture<Integer> commentCountFuture = unitOfWork.getCommentRepository().countByPostTopicCategory(updatedCategory);
+
+            return CompletableFuture.allOf(upvoteCountFuture, commentCountFuture)
+                    .thenApply(voidResult -> {
+                        CategoryResponse response = categoryMapper.toCategoryResponse(updatedCategory);
+                        response.setUpvoteCount(upvoteCountFuture.join());
+                        response.setCommentCount(commentCountFuture.join());
+                        return response;
+                    });
+        });
     }
 
     @Async("AsyncTaskExecutor")
@@ -170,8 +268,20 @@ public class CategoryService {
                 category.setAccount(account);
 
                 return CompletableFuture.completedFuture(unitOfWork.getCategoryRepository().save(category));
+            }).thenCompose(category -> {
+                CompletableFuture<Integer> upvoteCountFuture = unitOfWork.getUpvoteRepository()
+                        .countByPostTopicCategory(category);
+                CompletableFuture<Integer> commentCountFuture = unitOfWork.getCommentRepository()
+                        .countByPostTopicCategory(category);
+
+                return CompletableFuture.allOf(upvoteCountFuture, commentCountFuture)
+                        .thenApply(voidResult -> {
+                            CategoryResponse response = categoryMapper.toCategoryResponse(category);
+                            response.setUpvoteCount(upvoteCountFuture.join());
+                            response.setCommentCount(commentCountFuture.join());
+                            return response;
+                        });
             })
-                    .thenApply(categoryMapper::toCategoryResponse)
         );
     }
 
