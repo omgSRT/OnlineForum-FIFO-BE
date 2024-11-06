@@ -26,4 +26,7 @@ public interface CommentRepository extends JpaRepository<Comment, UUID> {
 
     @Async("AsyncTaskExecutor")
     CompletableFuture<Integer> countByPostTopicCategory(Category category);
+
+    @Async("AsyncTaskExecutor")
+    CompletableFuture<Integer> countByPost(Post post);
 }
