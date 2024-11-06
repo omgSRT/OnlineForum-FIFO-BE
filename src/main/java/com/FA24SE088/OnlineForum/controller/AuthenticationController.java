@@ -74,6 +74,7 @@ public class AuthenticationController {
     public ApiResponse<AccountResponse> verifyOtp(@RequestBody OtpRequest request) {
         otpUtil.verifyOTP(request.getEmail(), request.getOtp());
         return ApiResponse.<AccountResponse>builder()
+                .message(SuccessReturnMessage.VERIFY_SUCCESS.getMessage())
                 .entity(accountService.verifyAccount(request.getEmail()))
                 .build();
     }

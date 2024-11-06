@@ -15,6 +15,7 @@ import java.util.UUID;
 public class CategoryRequest {
     @NotBlank(message = "Name Cannot Be Null")
     String name;
+    String description;
     @Pattern(regexp = "^(http|https)://.*$", message = "URL Must Be Valid")
     String image;
     UUID accountId;
