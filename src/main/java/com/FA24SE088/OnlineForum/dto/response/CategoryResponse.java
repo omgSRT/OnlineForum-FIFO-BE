@@ -14,6 +14,9 @@ import java.util.UUID;
 public class CategoryResponse {
     UUID categoryId;
     String name;
+    String description;
     String image;
     Account account;
+    int upvoteCount;
+    int commentCount;
 }

@@ -13,6 +13,7 @@ import lombok.experimental.FieldDefaults;
 public class CategoryNoAccountRequest {
     @NotBlank(message = "Name Cannot Be Null")
     String name;
+    String description;
     @Pattern(regexp = "^(http|https)://.*$", message = "URL Must Be Valid")
     String image;
 }

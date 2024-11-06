@@ -1,6 +1,7 @@
 package com.FA24SE088.OnlineForum.repository.Repository;
 
 import com.FA24SE088.OnlineForum.entity.Account;
+import com.FA24SE088.OnlineForum.entity.Category;
 import com.FA24SE088.OnlineForum.entity.Post;
 import com.FA24SE088.OnlineForum.entity.Upvote;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -24,4 +25,7 @@ public interface UpvoteRepository extends JpaRepository<Upvote, UUID> {
 
     @Async("AsyncTaskExecutor")
     CompletableFuture<Upvote> findByPostAndAccount(Post post, Account account);
+
+    @Async("AsyncTaskExecutor")
+    CompletableFuture<Integer> countByPostTopicCategory(Category category);
 }
