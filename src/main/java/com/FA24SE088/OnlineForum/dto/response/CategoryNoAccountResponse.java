@@ -3,6 +3,7 @@ package com.FA24SE088.OnlineForum.dto.response;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
+import java.util.List;
 import java.util.UUID;
 
 @Data
@@ -13,5 +14,8 @@ import java.util.UUID;
 public class CategoryNoAccountResponse {
     UUID categoryId;
     String name;
+    String description;
     String image;
+    int upvoteCount;
+    int commentCount;
 }

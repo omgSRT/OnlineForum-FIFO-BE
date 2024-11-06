@@ -1,6 +1,7 @@
 package com.FA24SE088.OnlineForum.service;
 
 import com.FA24SE088.OnlineForum.dto.request.ReportRequest;
+import com.FA24SE088.OnlineForum.dto.response.PostResponse;
 import com.FA24SE088.OnlineForum.dto.response.ReportResponse;
 import com.FA24SE088.OnlineForum.entity.Account;
 import com.FA24SE088.OnlineForum.entity.Post;
@@ -140,10 +141,23 @@ public class ReportService {
     @Async("AsyncTaskExecutor")
     public CompletableFuture<ReportResponse> updateReportStatus(UUID reportId, ReportPostUpdateStatus status) {
         var reportFuture = findReportById(reportId);
+        var username = getUsernameFromJwt();
+        var accountFuture = findAccountByUsername(username);
 
-        return reportFuture.thenCompose(report -> {
+        return CompletableFuture.allOf(reportFuture, accountFuture).thenCompose(v -> {
+                var report = reportFuture.join();
+                var account = accountFuture.join();
+
                 if(!report.getStatus().equals(ReportPostStatus.PENDING.name())){
                     throw new AppException(ErrorCode.REPORT_POST_NOT_PENDING);
+                }
+
+                if(status.name().equals(ReportPostStatus.APPROVED.name())){
+                    return deleteByChangingPostStatusById(report.getPost().getPostId(), account).thenCompose(post -> {
+                        report.setStatus(status.name());
+
+                        return CompletableFuture.completedFuture(unitOfWork.getReportRepository().save(report));
+                    });
                 }
 
                 report.setStatus(status.name());
@@ -155,6 +169,34 @@ public class ReportService {
 
 
     @Async("AsyncTaskExecutor")
+    public CompletableFuture<Post> deleteByChangingPostStatusById(UUID postId, Account account) {
+        var postFuture = findPostById(postId);
+
+        return CompletableFuture.allOf(postFuture).thenCompose(v -> {
+                    var post = postFuture.join();
+                    var categoryPost = post.getTopic().getCategory();
+
+                    return unitOfWork.getCategoryRepository().findByAccount(account).thenCompose(categoryList -> {
+                        if (post.getStatus().equals(PostStatus.DRAFT.name())) {
+                            throw new AppException(ErrorCode.DRAFT_POST_CANNOT_CHANGE_STATUS);
+                        }
+                        if (post.getStatus().equals(PostStatus.HIDDEN.name())){
+                            throw new AppException(ErrorCode.POST_ALREADY_HIDDEN);
+                        }
+
+                        if (account.getRole().getName().equals("STAFF") &&
+                                !categoryList.contains(categoryPost)) {
+                            throw new AppException(ErrorCode.STAFF_NOT_SUPERVISE_CATEGORY);
+                        }
+
+                        post.setStatus(PostStatus.HIDDEN.name());
+                        post.setLastModifiedDate(new Date());
+
+                        return CompletableFuture.completedFuture(unitOfWork.getPostRepository().save(post));
+                    });
+                });
+    }
+    @Async("AsyncTaskExecutor")
     private CompletableFuture<Post> findPostById(UUID postId) {
         return CompletableFuture.supplyAsync(() ->
                 unitOfWork.getPostRepository().findById(postId)
@@ -162,10 +204,10 @@ public class ReportService {
         );
     }
     @Async("AsyncTaskExecutor")
-    private CompletableFuture<Report> findReportById(UUID feedbackId) {
+    private CompletableFuture<Report> findReportById(UUID reportId) {
         return CompletableFuture.supplyAsync(() ->
-                unitOfWork.getReportRepository().findById(feedbackId)
-                        .orElseThrow(() -> new AppException(ErrorCode.FEEDBACK_NOT_FOUND))
+                unitOfWork.getReportRepository().findById(reportId)
+                        .orElseThrow(() -> new AppException(ErrorCode.REPORT_POST_NOT_FOUND))
         );
     }
     @Async("AsyncTaskExecutor")

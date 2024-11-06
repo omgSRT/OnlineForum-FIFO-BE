@@ -24,6 +24,7 @@ public class Category {
     UUID categoryId;
     @EqualsAndHashCode.Include
     String name;
+    String description;
     String image;
 
     @JsonIgnore
