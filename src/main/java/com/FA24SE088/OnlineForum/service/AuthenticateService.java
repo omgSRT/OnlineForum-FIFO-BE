@@ -80,10 +80,10 @@ public class AuthenticateService {
         if (!authenticated){
             throw new AppException(ErrorCode.UNAUTHENTICATED);
         }
-        if(account.getStatus().equals(AccountStatus.BANED.name())){
-            long daysRemaining = ChronoUnit.DAYS.between(LocalDateTime.now(), account.getBannedUntil()) + 1;
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Your account is also banned in " + daysRemaining + " days.");
-        }
+//        if(account.getStatus().equals(AccountStatus.BANED.name())){
+//            long daysRemaining = ChronoUnit.DAYS.between(LocalDateTime.now(), account.getBannedUntil()) + 1;
+//            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Your account is also banned in " + daysRemaining + " days.");
+//        }
         if(account.getStatus().equals(AccountStatus.PENDING_APPROVAL.name())){
             throw new AppException(ErrorCode.ACCOUNT_HAS_NOT_BEEN_AUTHENTICATED);
         }

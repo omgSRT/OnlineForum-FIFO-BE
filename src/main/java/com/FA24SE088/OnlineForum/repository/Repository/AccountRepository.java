@@ -27,7 +27,7 @@ public interface AccountRepository extends JpaRepository<Account, UUID> {
 
     @Async("AsyncTaskExecutor")
     CompletableFuture<List<Account>> findByEmailContainingIgnoreCase(String email);
-    List<Account> findAllByStatusAndBannedUntilBefore(String status, LocalDateTime dateTime);
+//    List<Account> findAllByStatusAndBannedUntilBefore(String status, LocalDateTime dateTime);
 
 //    List<Account> findAllByStatusAndBannedUntilBefore(AccountStatus status, LocalDateTime dateTime);
 }

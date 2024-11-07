@@ -182,6 +182,9 @@ public class AccountService {
         if (request.getBio() != null && !request.getBio().isEmpty()) {
             account.setBio(request.getBio());
         }
+        if (request.getHandle() != null && !request.getHandle().isEmpty()) {
+            account.setHandle(request.getHandle());
+        }
         unitOfWork.getAccountRepository().save(account);
         return accountMapper.toResponse(account);
     }
@@ -249,31 +252,31 @@ public class AccountService {
         return accountMapper.toResponse(account);
     }
 
-    @Transactional
-    public AccountResponse banAccount(UUID accountId) {
-        Account account = unitOfWork.getAccountRepository().findById(accountId).orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND));
-
-        if (account.getStatus().equals(AccountStatus.BANED.name())) {
-            account.setStatus(AccountStatus.ACTIVE.name());
-            account.setBannedUntil(null);
-        } else {
-            account.setStatus(AccountStatus.BANED.name());
-            account.setBannedUntil(LocalDateTime.now().plusDays(7));
-        }
-
-        unitOfWork.getAccountRepository().save(account);
-        return accountMapper.toResponse(account);
-    }
-
-    @Scheduled(fixedRate = 60000)
-    public void autoUnbanAccounts() {
-        unitOfWork.getAccountRepository().findAllByStatusAndBannedUntilBefore(AccountStatus.BANED.name(), LocalDateTime.now())
-                .forEach(account -> {
-                    account.setStatus(AccountStatus.ACTIVE.name());
-                    account.setBannedUntil(null);
-                    unitOfWork.getAccountRepository().save(account);
-                });
-    }
+//    @Transactional
+//    public AccountResponse banAccount(UUID accountId) {
+//        Account account = unitOfWork.getAccountRepository().findById(accountId).orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND));
+//
+//        if (account.getStatus().equals(AccountStatus.BANED.name())) {
+//            account.setStatus(AccountStatus.ACTIVE.name());
+//            account.setBannedUntil(null);
+//        } else {
+//            account.setStatus(AccountStatus.BANED.name());
+//            account.setBannedUntil(LocalDateTime.now().plusDays(7));
+//        }
+//
+//        unitOfWork.getAccountRepository().save(account);
+//        return accountMapper.toResponse(account);
+//    }
+//
+//    @Scheduled(fixedRate = 60000)
+//    public void autoUnbanAccounts() {
+//        unitOfWork.getAccountRepository().findAllByStatusAndBannedUntilBefore(AccountStatus.BANED.name(), LocalDateTime.now())
+//                .forEach(account -> {
+//                    account.setStatus(AccountStatus.ACTIVE.name());
+//                    account.setBannedUntil(null);
+//                    unitOfWork.getAccountRepository().save(account);
+//                });
+//    }
 
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
     public Account findByUsername(String username) {

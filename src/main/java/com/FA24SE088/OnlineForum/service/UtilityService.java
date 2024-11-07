@@ -20,6 +20,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
@@ -130,14 +132,61 @@ public class UtilityService {
         return unitOfWork.getAccountRepository().findByUsername(context.getAuthentication().getName()).orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND));
     }
 
+//    @Async("AsyncTaskExecutor")
+//    @Transactional
+//    @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
+//    public CompletableFuture<FilterTransactionResponse> filter(boolean viewTransaction,
+//                                                               boolean dailyPoint,
+//                                                               boolean bonusPoint,
+//                                                               Date startDate, Date endDate) {
+//        Account currentUser = getCurrentUser();
+//
+//        validateDates(startDate, endDate);
+//
+//        if (startDate != null && endDate == null) {
+//            endDate = startDate;
+//        }
+//
+//        boolean includeAll = !viewTransaction && !dailyPoint && !bonusPoint;
+//
+//        CompletableFuture<List<TransactionResponse>> transactionFuture = getTransactionFuture(viewTransaction, includeAll, currentUser, startDate, endDate);
+//        CompletableFuture<List<DailyPoint2Response>> dailyPointFuture = getDailyPointFuture(dailyPoint, includeAll, currentUser, startDate, endDate);
+//        CompletableFuture<List<DailyPoint2Response>> bonusPointFuture = getBonusPointFuture(bonusPoint, includeAll, currentUser, startDate, endDate);
+//
+//        return CompletableFuture.allOf(transactionFuture, dailyPointFuture, bonusPointFuture)
+//                .thenApply(listFinal -> {
+//                    FilterTransactionResponse response = new FilterTransactionResponse();
+//                    response.setTransactionList(transactionFuture.join());
+//                    response.setDailyPointList(dailyPointFuture.join());
+//                    response.setBonusPoint(bonusPointFuture.join());
+//                    return response;
+//                });
+//    }
+
     @Async("AsyncTaskExecutor")
     @Transactional
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
     public CompletableFuture<FilterTransactionResponse> filter(boolean viewTransaction,
                                                                boolean dailyPoint,
                                                                boolean bonusPoint,
-                                                               Date startDate, Date endDate) {
+                                                               String startDateStr, String endDateStr) {
         Account currentUser = getCurrentUser();
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd");
+
+        Date startDate = null;
+        Date endDate = null;
+
+        try {
+            if (startDateStr != null) {
+                startDate = simpleDateFormat.parse(startDateStr);
+            }
+            if (endDateStr != null) {
+                endDate = simpleDateFormat.parse(endDateStr);
+            }
+        } catch (ParseException e) {
+            e.printStackTrace();
+            // Bạn có thể thêm xử lý ngoại lệ tùy theo yêu cầu
+        }
 
         validateDates(startDate, endDate);
 
@@ -160,6 +209,8 @@ public class UtilityService {
                     return response;
                 });
     }
+
+
 
     private void validateDates(Date startDate, Date endDate) {
         if (startDate != null && startDate.after(new Date())) {
@@ -193,7 +244,7 @@ public class UtilityService {
         return CompletableFuture.completedFuture(Collections.emptyList());
     }
 
-    @Async("AsyncTaskExecutor")
+        @Async("AsyncTaskExecutor")
     private CompletableFuture<List<DailyPoint2Response>> getDailyPointFuture(boolean dailyPoint, boolean includeAll, Account currentUser, Date startDate, Date endDate) {
         if (dailyPoint || includeAll) {
             if (startDate != null && endDate != null) {
@@ -220,6 +271,110 @@ public class UtilityService {
         }
         return CompletableFuture.completedFuture(Collections.emptyList());
     }
+
+//    @Async("AsyncTaskExecutor")
+//    private CompletableFuture<List<TransactionResponse>> getTransactionFuture(boolean viewTransaction, boolean includeAll, Account currentUser, String startDateStr, String endDateStr) {
+//        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd");
+//        Date startDate = null;
+//        Date endDate = null;
+//
+//        try {
+//            if (startDateStr != null) {
+//                startDate = simpleDateFormat.parse(startDateStr);
+//            }
+//            if (endDateStr != null) {
+//                endDate = simpleDateFormat.parse(endDateStr);
+//            }
+//        } catch (ParseException e) {
+//            // Log hoặc xử lý lỗi ở đây nếu cần thiết
+//            e.printStackTrace();
+//        }
+//
+//        if (viewTransaction || includeAll) {
+//            if (startDate != null && endDate != null) {
+//                return unitOfWork.getTransactionRepository()
+//                        .findByWallet_AccountAndCreatedDateBetweenOrderByCreatedDateDesc(currentUser, startDate, endDate)
+//                        .thenApply(transactions -> transactions.stream()
+//                                .map(transactionMapper::toTransactionResponse)
+//                                .collect(Collectors.toList()));
+//            } else {
+//                return unitOfWork.getTransactionRepository()
+//                        .findByWallet_AccountOrderByCreatedDateDesc(currentUser)
+//                        .thenApply(transactions -> transactions.stream()
+//                                .map(transactionMapper::toTransactionResponse)
+//                                .collect(Collectors.toList()));
+//            }
+//        }
+//        return CompletableFuture.completedFuture(Collections.emptyList());
+//    }
+//
+//    @Async("AsyncTaskExecutor")
+//    private CompletableFuture<List<DailyPoint2Response>> getBonusPointFuture(boolean bonusPoint, boolean includeAll, Account currentUser, String startDateStr, String endDateStr) {
+//        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd");
+//        Date startDate = null;
+//        Date endDate = null;
+//
+//        try {
+//            if (startDateStr != null) {
+//                startDate = simpleDateFormat.parse(startDateStr);
+//            }
+//            if (endDateStr != null) {
+//                endDate = simpleDateFormat.parse(endDateStr);
+//            }
+//        } catch (ParseException e) {
+//            // Log hoặc xử lý lỗi ở đây nếu cần thiết
+//            e.printStackTrace();
+//        }
+//
+//        if (bonusPoint || includeAll) {
+//            if (startDate != null && endDate != null) {
+//                return unitOfWork.getDailyPointRepository()
+//                        .findByAccountAndTypeBonusIsNotNullAndCreatedDateBetweenOrderByCreatedDateDesc(currentUser, startDate, endDate)
+//                        .thenApply(dailyPointMapper::toListResponse);
+//            } else {
+//                return unitOfWork.getDailyPointRepository()
+//                        .findByAccountAndTypeBonusIsNotNullOrderByCreatedDateDesc(currentUser)
+//                        .thenApply(dailyPointMapper::toListResponse);
+//            }
+//        }
+//        return CompletableFuture.completedFuture(Collections.emptyList());
+//    }
+//
+//
+//    @Async("AsyncTaskExecutor")
+//    private CompletableFuture<List<DailyPoint2Response>> getDailyPointFuture(boolean dailyPoint, boolean includeAll, Account currentUser, String startDateStr, String endDateStr) {
+//        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd");
+//
+//        Date startDate = null;
+//        Date endDate = null;
+//
+//        try {
+//            if (startDateStr != null) {
+//                startDate = simpleDateFormat.parse(startDateStr);
+//            }
+//            if (endDateStr != null) {
+//                endDate = simpleDateFormat.parse(endDateStr);
+//            }
+//        } catch (ParseException e) {
+//            e.printStackTrace();
+//        }
+//
+//        if (dailyPoint || includeAll) {
+//            if (startDate != null && endDate != null) {
+//                return unitOfWork.getDailyPointRepository()
+//                        .findByAccountAndTypeBonusIsNullAndCreatedDateBetweenOrderByCreatedDateDesc(currentUser, startDate, endDate)
+//                        .thenApply(dailyPointMapper::toListResponse);
+//            } else {
+//                return unitOfWork.getDailyPointRepository()
+//                        .findByAccountAndTypeBonusIsNullOrderByCreatedDateDesc(currentUser)
+//                        .thenApply(dailyPointMapper::toListResponse);
+//            }
+//        }
+//        return CompletableFuture.completedFuture(Collections.emptyList());
+//    }
+
+//====================================
+
 //    @Async("AsyncTaskExecutor")
 //    private CompletableFuture<List<DailyPoint>> getDailyPointFuture(boolean dailyPoint, boolean includeAll, Account currentUser, Date startDate, Date endDate) {
 //        if (dailyPoint || includeAll) {
