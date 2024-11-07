@@ -37,10 +37,11 @@ public class UnitOfWork {
     final EventRepository eventRepository;
     final BlockedAccountRepository blockedAccountRepository;
     final ReportRepository reportRepository;
-    final ReportAccountRepository reportAccountRepository;
     final BookMarkRepository bookMarkRepository;
     final OtpRepository otpRepository;
     final ContentSectionRepository contentSectionRepository;
     final MediaRepository mediaRepository;
     final TypeBonusRepository typeBonusRepository;
+    final PricingRepository pricingRepository;
+    final OrderRepository orderRepository;
 }

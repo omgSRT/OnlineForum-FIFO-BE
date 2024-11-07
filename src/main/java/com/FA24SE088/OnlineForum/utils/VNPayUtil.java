@@ -6,8 +6,7 @@ import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class VNPayUtil {
@@ -33,6 +32,27 @@ public class VNPayUtil {
         }
     }
 
+    public static String createHashData(Map<String, String> vnpParamsMap) {
+        // Sắp xếp các tham số theo thứ tự từ điển (alphabetical order) của khóa
+        List<String> sortedKeys = new ArrayList<>(vnpParamsMap.keySet());
+        Collections.sort(sortedKeys);
+
+        StringBuilder hashData = new StringBuilder();
+        for (String key : sortedKeys) {
+            String value = vnpParamsMap.get(key);
+            // Bỏ qua tham số có giá trị rỗng và tham số `vnp_SecureHash`
+            if (value != null && !value.isEmpty() && !"vnp_SecureHash".equals(key)) {
+                hashData.append(key).append("=").append(value).append("&");
+            }
+        }
+
+        // Xóa ký tự "&" cuối cùng nếu tồn tại
+        if (hashData.length() > 0) {
+            hashData.setLength(hashData.length() - 1);
+        }
+
+        return hashData.toString();
+    }
     public static String getIpAddress(HttpServletRequest request) {
         String ipAdress;
         try {
@@ -45,7 +65,6 @@ public class VNPayUtil {
         }
         return ipAdress;
     }
-
     public static String getRandomNumber(int len) {
         Random rnd = new Random();
         String chars = "0123456789";

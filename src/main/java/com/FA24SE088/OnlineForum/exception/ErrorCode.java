@@ -117,6 +117,9 @@ public enum ErrorCode {
     IS_BANNED(10098, "Your account is banned for 7 days", HttpStatus.BAD_REQUEST),
     POST_ALREADY_HIDDEN(10099, "This Post Is Already In Hidden Status", HttpStatus.BAD_REQUEST),
     REPORT_POST_NOT_FOUND(10100, "Report Post Not Found", HttpStatus.NOT_FOUND),
+    ORDER_POINT_NOT_FOUND(10101, "Order point Not Found", HttpStatus.NOT_FOUND),
+    PRICING_NOT_FOUND(10102, "Pricing Not Found", HttpStatus.NOT_FOUND),
+    PRICING_INVALID(10102, "Pricing invalid", HttpStatus.BAD_REQUEST),
     ;
 
     private int code;
