@@ -34,8 +34,6 @@ public class OtpUtil {
         int randomNumber = random.nextInt(9999);
         String otp = String.format("%04d", randomNumber);
 
-//        redisTemplate.opsForValue().set(email, otp, 5, TimeUnit.MINUTES);
-
         Otp otp1 = Otp.builder()
                 .email(email)
                 .otpEmail(otp)

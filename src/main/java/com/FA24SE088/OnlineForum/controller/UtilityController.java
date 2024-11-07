@@ -47,21 +47,39 @@ public class UtilityController {
 //                .entity(utilityService.filter(viewTransaction, dailyPoint, bonusPoint, startDate, endDate))
 //                .build();
 //    }
-@Operation(summary = "Filter Transaction, DailyPoint, and BonusPoint based on criteria")
-@GetMapping("/filter-transaction")
-public CompletableFuture<ApiResponse<FilterTransactionResponse>> filterEverythingInTransaction(
-        @RequestParam(required = false, defaultValue = "false") boolean viewTransaction,
-        @RequestParam(required = false, defaultValue = "false") boolean dailyPoint,
-        @RequestParam(required = false, defaultValue = "false") boolean bonusPoint,
-        @RequestParam(required = false) Date startDate,
-        @RequestParam(required = false) Date endDate) {
+    //===============================
+//@Operation(summary = "Filter Transaction, DailyPoint, and BonusPoint based on criteria")
+//@GetMapping("/filter-transaction")
+//public CompletableFuture<ApiResponse<FilterTransactionResponse>> filterEverythingInTransaction(
+//        @RequestParam(required = false, defaultValue = "false") boolean viewTransaction,
+//        @RequestParam(required = false, defaultValue = "false") boolean dailyPoint,
+//        @RequestParam(required = false, defaultValue = "false") boolean bonusPoint,
+////        @RequestParam(required = false) Date startDate,
+////        @RequestParam(required = false) Date endDate
+//        @RequestParam(required = false) String startDate,
+//        @RequestParam(required = false) String endDate
+//) {
+//
+//    return utilityService.filter(viewTransaction, dailyPoint, bonusPoint, startDate, endDate)
+//            .thenApply(filterTransactionResponse -> ApiResponse.<FilterTransactionResponse>builder()
+//                    .entity(filterTransactionResponse)
+//                    .build());
+//}
 
-    return utilityService.filter(viewTransaction, dailyPoint, bonusPoint, startDate, endDate)
-            .thenApply(filterTransactionResponse -> ApiResponse.<FilterTransactionResponse>builder()
-                    .entity(filterTransactionResponse)
-                    .build());
-}
+    @Operation(summary = "Filter Transaction, DailyPoint, and BonusPoint based on criteria")
+    @GetMapping("/filter-transaction")
+    public CompletableFuture<ApiResponse<FilterTransactionResponse>> filterEverythingInTransaction(
+            @RequestParam(required = false, defaultValue = "false") boolean viewTransaction,
+            @RequestParam(required = false, defaultValue = "false") boolean dailyPoint,
+            @RequestParam(required = false, defaultValue = "false") boolean bonusPoint,
+            @RequestParam(required = false) String startDate,
+            @RequestParam(required = false) String endDate) {
 
+        return utilityService.filter(viewTransaction, dailyPoint, bonusPoint, startDate, endDate)
+                .thenApply(filterTransactionResponse -> ApiResponse.<FilterTransactionResponse>builder()
+                        .entity(filterTransactionResponse)
+                        .build());
+    }
 
 
 }

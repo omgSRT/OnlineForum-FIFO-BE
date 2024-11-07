@@ -95,12 +95,12 @@ public class AccountController {
                 .build();
     }
 
-    @PutMapping("/ban-unban/{accountId}")
-    public ApiResponse<AccountResponse> banAndUnban(@PathVariable UUID accountId){
-        return ApiResponse.<AccountResponse>builder()
-                .entity(accountService.banAccount(accountId))
-                .build();
-    }
+//    @PutMapping("/ban-unban/{accountId}")
+//    public ApiResponse<AccountResponse> banAndUnban(@PathVariable UUID accountId){
+//        return ApiResponse.<AccountResponse>builder()
+//                .entity(accountService.banAccount(accountId))
+//                .build();
+//    }
 
     @Operation(summary = "Delete Account", description = "Delete Account By ID")
     @DeleteMapping(path = "/delete/{accountId}")
