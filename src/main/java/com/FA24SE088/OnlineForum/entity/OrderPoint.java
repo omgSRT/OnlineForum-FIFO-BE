@@ -14,21 +14,19 @@ import java.util.UUID;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ReportAccount {
+public class OrderPoint {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    UUID reportAccountId;
-    String title;
-    String reason;
-    Date reportTime;
+    UUID orderId;
+    double amount;
     String status;
+    Date orderDate;
 
     @ManyToOne
-    @JoinColumn(name = "reporter_id")
-    private Account reporter;
+    @JoinColumn(name = "pricingId")
+    Pricing pricing;
 
     @ManyToOne
-    @JoinColumn(name = "reported_id")
-    private Account reported;
-
+    @JoinColumn(name = "walletId")
+    Wallet wallet;
 }

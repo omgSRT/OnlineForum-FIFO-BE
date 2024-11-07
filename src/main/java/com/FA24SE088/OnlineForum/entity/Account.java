@@ -112,10 +112,10 @@ public class Account {
     List<Report> reportList;
 
 
-    @JsonIgnore
-    @JsonIgnoreProperties(value = {"account"}, allowSetters = true)
-    @OneToMany(mappedBy = "reported", cascade = CascadeType.ALL, orphanRemoval = true)
-    List<ReportAccount> reportsReceived;
+//    @JsonIgnore
+//    @JsonIgnoreProperties(value = {"account"}, allowSetters = true)
+//    @OneToMany(mappedBy = "reported", cascade = CascadeType.ALL, orphanRemoval = true)
+//    List<ReportAccount> reportsReceived;
 
     @JsonIgnore
     @JsonIgnoreProperties(value = {"account"}, allowSetters = true)

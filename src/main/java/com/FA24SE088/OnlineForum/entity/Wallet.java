@@ -29,4 +29,8 @@ public class Wallet {
     @JsonIgnoreProperties(value = { "wallet" }, allowSetters = true)
     @OneToMany(mappedBy = "wallet", cascade = CascadeType.ALL, orphanRemoval = true)
     List<Transaction> transactionList;
+
+    @JsonIgnoreProperties(value = { "wallet" }, allowSetters = true)
+    @OneToMany(mappedBy = "wallet", cascade = CascadeType.ALL, orphanRemoval = true)
+    List<OrderPoint> orderPointList;
 }

@@ -30,6 +30,6 @@ public class AccountResponse {
     Role role;
     @JsonIgnoreProperties(value = {"account"}, allowSetters = true)
     List<Category> categoryList;
-    @JsonIgnoreProperties(value = {"account","transactionList"}, allowSetters = true)
+    @JsonIgnoreProperties(value = {"account","transactionList","orderPointList"}, allowSetters = true)
     Wallet wallet;
 }
