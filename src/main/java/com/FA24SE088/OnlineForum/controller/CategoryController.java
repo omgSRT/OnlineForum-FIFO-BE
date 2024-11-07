@@ -4,10 +4,7 @@ import com.FA24SE088.OnlineForum.dto.request.CategoryNoAccountRequest;
 import com.FA24SE088.OnlineForum.dto.request.CategoryRequest;
 import com.FA24SE088.OnlineForum.dto.request.CategoryUpdateAccountRequest;
 import com.FA24SE088.OnlineForum.dto.request.CategoryUpdateRequest;
-import com.FA24SE088.OnlineForum.dto.response.AccountResponse;
-import com.FA24SE088.OnlineForum.dto.response.ApiResponse;
-import com.FA24SE088.OnlineForum.dto.response.CategoryNoAccountResponse;
-import com.FA24SE088.OnlineForum.dto.response.CategoryResponse;
+import com.FA24SE088.OnlineForum.dto.response.*;
 import com.FA24SE088.OnlineForum.enums.SuccessReturnMessage;
 import com.FA24SE088.OnlineForum.service.CategoryService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -54,23 +51,23 @@ public class CategoryController {
 
     @Operation(summary = "Get All Categories")
     @GetMapping(path = "/getall")
-    public ApiResponse<List<CategoryNoAccountResponse>> getAllCategories(@RequestParam(defaultValue = "1") int page,
-                                                                         @RequestParam(defaultValue = "10") int perPage,
-                                                                         @RequestParam(required = false) UUID accountId){
-        return categoryService.getAllCategories(page, perPage, accountId).thenApply(categoryNoAccountResponses ->
-                ApiResponse.<List<CategoryNoAccountResponse>>builder()
-                        .entity(categoryNoAccountResponses)
+    public ApiResponse<List<CategoryGetAllResponse>> getAllCategories(@RequestParam(defaultValue = "1") int page,
+                                                                      @RequestParam(defaultValue = "10") int perPage,
+                                                                      @RequestParam(required = false) UUID accountId){
+        return categoryService.getAllCategories(page, perPage, accountId).thenApply(categoryGetAllResponses ->
+                ApiResponse.<List<CategoryGetAllResponse>>builder()
+                        .entity(categoryGetAllResponses)
                         .build()
         ).join();
     }
 
     @Operation(summary = "Get All Categories For Managing Staff")
     @GetMapping(path = "/getall/for-staff")
-    public ApiResponse<List<CategoryNoAccountResponse>> getAllCategoriesForStaff(@RequestParam(defaultValue = "1") int page,
+    public ApiResponse<List<CategoryGetAllResponse>> getAllCategoriesForStaff(@RequestParam(defaultValue = "1") int page,
                                                                          @RequestParam(defaultValue = "10") int perPage){
-        return categoryService.getAllCategoriesForStaff(page, perPage).thenApply(categoryNoAccountResponses ->
-                ApiResponse.<List<CategoryNoAccountResponse>>builder()
-                        .entity(categoryNoAccountResponses)
+        return categoryService.getAllCategoriesForStaff(page, perPage).thenApply(categoryGetAllResponses ->
+                ApiResponse.<List<CategoryGetAllResponse>>builder()
+                        .entity(categoryGetAllResponses)
                         .build()
         ).join();
     }

@@ -133,7 +133,10 @@ public class UtilityService {
     @Async("AsyncTaskExecutor")
     @Transactional
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
-    public CompletableFuture<FilterTransactionResponse> filter(boolean viewTransaction, boolean dailyPoint, boolean bonusPoint, Date startDate, Date endDate) {
+    public CompletableFuture<FilterTransactionResponse> filter(boolean viewTransaction,
+                                                               boolean dailyPoint,
+                                                               boolean bonusPoint,
+                                                               Date startDate, Date endDate) {
         Account currentUser = getCurrentUser();
 
         validateDates(startDate, endDate);

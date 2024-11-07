@@ -4,10 +4,12 @@ import com.FA24SE088.OnlineForum.dto.request.CategoryNoAccountRequest;
 import com.FA24SE088.OnlineForum.dto.request.CategoryRequest;
 import com.FA24SE088.OnlineForum.dto.request.CategoryUpdateAccountRequest;
 import com.FA24SE088.OnlineForum.dto.request.CategoryUpdateRequest;
+import com.FA24SE088.OnlineForum.dto.response.CategoryGetAllResponse;
 import com.FA24SE088.OnlineForum.dto.response.CategoryNoAccountResponse;
 import com.FA24SE088.OnlineForum.dto.response.CategoryResponse;
 import com.FA24SE088.OnlineForum.entity.Account;
 import com.FA24SE088.OnlineForum.entity.Category;
+import com.FA24SE088.OnlineForum.entity.Topic;
 import com.FA24SE088.OnlineForum.exception.AppException;
 import com.FA24SE088.OnlineForum.exception.ErrorCode;
 import com.FA24SE088.OnlineForum.mapper.CategoryMapper;
@@ -101,7 +103,7 @@ public class CategoryService {
 
     @Async("AsyncTaskExecutor")
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
-    public CompletableFuture<List<CategoryNoAccountResponse>> getAllCategories(int page, int perPage, UUID accountId) {
+    public CompletableFuture<List<CategoryGetAllResponse>> getAllCategories(int page, int perPage, UUID accountId) {
         var accountFuture = accountId != null
                 ? findAccountById(accountId)
                 : CompletableFuture.completedFuture(null);
@@ -109,19 +111,22 @@ public class CategoryService {
         return accountFuture.thenCompose(account -> {
             var categories = unitOfWork.getCategoryRepository().findAll();
 
-            List<CompletableFuture<CategoryNoAccountResponse>> responseFutures = categories.stream()
+            List<CompletableFuture<CategoryGetAllResponse>> responseFutures = categories.stream()
                     .filter(category -> account == null || (category.getAccount() != null && category.getAccount().equals(account)))
                     .map(category -> {
                         CompletableFuture<Integer> upvoteCountFuture = unitOfWork.getUpvoteRepository()
                                 .countByPostTopicCategory(category);
                         CompletableFuture<Integer> commentCountFuture = unitOfWork.getCommentRepository()
                                 .countByPostTopicCategory(category);
+                        CompletableFuture<List<Topic>> topicListByCategoryFuture = unitOfWork.getTopicRepository()
+                                .findByCategoryCategoryId(category.getCategoryId());
 
-                        return CompletableFuture.allOf(upvoteCountFuture, commentCountFuture)
+                        return CompletableFuture.allOf(upvoteCountFuture, commentCountFuture, topicListByCategoryFuture)
                                 .thenApply(voidResult -> {
-                                    CategoryNoAccountResponse response = categoryMapper.toCategoryNoAccountResponse(category);
+                                    CategoryGetAllResponse response = categoryMapper.toCategoryGetAllResponse(category);
                                     response.setUpvoteCount(upvoteCountFuture.join());
                                     response.setCommentCount(commentCountFuture.join());
+                                    response.setTopicListByCategory(topicListByCategoryFuture.join());
                                     return response;
                                 });
                     })
@@ -138,7 +143,7 @@ public class CategoryService {
 
     @Async("AsyncTaskExecutor")
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
-    public CompletableFuture<List<CategoryNoAccountResponse>> getAllCategoriesForStaff(int page, int perPage) {
+    public CompletableFuture<List<CategoryGetAllResponse>> getAllCategoriesForStaff(int page, int perPage) {
         var username = getUsernameFromJwt();
         var accountFuture = findAccountByUsername(username);
 
@@ -146,18 +151,21 @@ public class CategoryService {
             var categoryListFuture = unitOfWork.getCategoryRepository().findByAccount(account);
 
             return categoryListFuture.thenCompose(categoryList -> {
-                List<CompletableFuture<CategoryNoAccountResponse>> responseFutures = categoryList.stream()
+                List<CompletableFuture<CategoryGetAllResponse>> responseFutures = categoryList.stream()
                         .map(category -> {
                             CompletableFuture<Integer> upvoteCountFuture = unitOfWork.getUpvoteRepository()
                                     .countByPostTopicCategory(category);
                             CompletableFuture<Integer> commentCountFuture = unitOfWork.getCommentRepository()
                                     .countByPostTopicCategory(category);
+                            CompletableFuture<List<Topic>> topicListByCategoryFuture = unitOfWork.getTopicRepository()
+                                    .findByCategoryCategoryId(category.getCategoryId());
 
-                            return CompletableFuture.allOf(upvoteCountFuture, commentCountFuture)
+                            return CompletableFuture.allOf(upvoteCountFuture, commentCountFuture, topicListByCategoryFuture)
                                     .thenApply(voidResult -> {
-                                        CategoryNoAccountResponse response = categoryMapper.toCategoryNoAccountResponse(category);
+                                        CategoryGetAllResponse response = categoryMapper.toCategoryGetAllResponse(category);
                                         response.setUpvoteCount(upvoteCountFuture.join());
                                         response.setCommentCount(commentCountFuture.join());
+                                        response.setTopicListByCategory(topicListByCategoryFuture.join());
                                         return response;
                                     });
                         })
