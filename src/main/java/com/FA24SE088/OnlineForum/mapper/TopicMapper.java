@@ -3,6 +3,7 @@ package com.FA24SE088.OnlineForum.mapper;
 import com.FA24SE088.OnlineForum.dto.request.CategoryUpdateRequest;
 import com.FA24SE088.OnlineForum.dto.request.TopicRequest;
 import com.FA24SE088.OnlineForum.dto.request.TopicUpdateRequest;
+import com.FA24SE088.OnlineForum.dto.response.PopularTopicResponse;
 import com.FA24SE088.OnlineForum.dto.response.TopicNoCategoryResponse;
 import com.FA24SE088.OnlineForum.dto.response.TopicResponse;
 import com.FA24SE088.OnlineForum.entity.Category;
@@ -18,6 +19,8 @@ public interface TopicMapper {
     TopicResponse toTopicResponse(Topic topic);
 
     TopicNoCategoryResponse toTopicNoCategoryResponse(Topic topic);
+
+    PopularTopicResponse toPopularTopicResponse(Topic topic);
 
     @Mapping(target = "category", ignore = true)
     void updateTopic(@MappingTarget Topic topic, TopicUpdateRequest request);

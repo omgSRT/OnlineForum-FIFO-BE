@@ -3,10 +3,7 @@ package com.FA24SE088.OnlineForum.service;
 import com.FA24SE088.OnlineForum.dto.request.CategoryUpdateRequest;
 import com.FA24SE088.OnlineForum.dto.request.TopicRequest;
 import com.FA24SE088.OnlineForum.dto.request.TopicUpdateRequest;
-import com.FA24SE088.OnlineForum.dto.response.CategoryNoAccountResponse;
-import com.FA24SE088.OnlineForum.dto.response.CategoryResponse;
-import com.FA24SE088.OnlineForum.dto.response.TopicNoCategoryResponse;
-import com.FA24SE088.OnlineForum.dto.response.TopicResponse;
+import com.FA24SE088.OnlineForum.dto.response.*;
 import com.FA24SE088.OnlineForum.entity.Account;
 import com.FA24SE088.OnlineForum.entity.Category;
 import com.FA24SE088.OnlineForum.entity.Topic;
@@ -81,14 +78,23 @@ public class TopicService {
     @Async("AsyncTaskExecutor")
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
     @Transactional(readOnly = true)
-    public CompletableFuture<List<TopicResponse>> getAllPopularTopics(int page, int perPage) {
-        return CompletableFuture.supplyAsync(() -> {
-            var list = unitOfWork.getTopicRepository().findAllOrderByPostListSizeDescending().stream()
-                    .map(topicMapper::toTopicResponse)
-                    .toList();
+    public CompletableFuture<List<PopularTopicResponse>> getAllPopularTopics(int page, int perPage) {
+        var responseFutures = unitOfWork.getTopicRepository().findAllOrderByPostListSizeDescending().stream()
+                .map(topic -> {
+                    CompletableFuture<Integer> postCountFuture = unitOfWork.getPostRepository().countByTopic(topic);
+                    return postCountFuture.thenApply(postCount -> {
+                        PopularTopicResponse response = topicMapper.toPopularTopicResponse(topic);
+                        response.setPostAmount(postCount);
+                        return response;
+                    });
+                })
+                .toList();
 
-            return paginationUtils.convertListToPage(page, perPage, list);
-        });
+        return CompletableFuture.allOf(responseFutures.toArray(new CompletableFuture[0]))
+                .thenApply(voidResult -> responseFutures.stream()
+                        .map(CompletableFuture::join)
+                        .toList())
+                .thenApply(list -> paginationUtils.convertListToPage(page, perPage, list));
     }
 
     @Async("AsyncTaskExecutor")
