@@ -3,6 +3,7 @@ package com.FA24SE088.OnlineForum.mapper;
 import com.FA24SE088.OnlineForum.dto.request.CategoryNoAccountRequest;
 import com.FA24SE088.OnlineForum.dto.request.CategoryRequest;
 import com.FA24SE088.OnlineForum.dto.request.CategoryUpdateRequest;
+import com.FA24SE088.OnlineForum.dto.response.CategoryGetAllResponse;
 import com.FA24SE088.OnlineForum.dto.response.CategoryNoAccountResponse;
 import com.FA24SE088.OnlineForum.dto.response.CategoryResponse;
 import com.FA24SE088.OnlineForum.entity.Category;
@@ -19,6 +20,8 @@ public interface CategoryMapper {
     CategoryResponse toCategoryResponse(Category category);
 
     CategoryNoAccountResponse toCategoryNoAccountResponse(Category category);
+
+    CategoryGetAllResponse toCategoryGetAllResponse(Category category);
 
     @Mapping(target = "account", ignore = true)
     @Mapping(target = "topicList", ignore = true)
