@@ -49,11 +49,11 @@ public class TopicController {
 
     @Operation(summary = "Get All Popular Topics")
     @GetMapping(path = "/popular")
-    public ApiResponse<List<TopicResponse>> getAllPopularTopics(@RequestParam(defaultValue = "1") int page,
+    public ApiResponse<List<PopularTopicResponse>> getAllPopularTopics(@RequestParam(defaultValue = "1") int page,
                                                          @RequestParam(defaultValue = "10") int perPage){
-        return topicService.getAllPopularTopics(page, perPage).thenApply(topicResponses ->
-                ApiResponse.<List<TopicResponse>>builder()
-                        .entity(topicResponses)
+        return topicService.getAllPopularTopics(page, perPage).thenApply(popularTopicResponses ->
+                ApiResponse.<List<PopularTopicResponse>>builder()
+                        .entity(popularTopicResponses)
                         .build()
         ).join();
     }
