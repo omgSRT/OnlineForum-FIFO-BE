@@ -64,6 +64,7 @@ public class PostService {
                     newPost.setUpvoteList(new ArrayList<>());
                     newPost.setReportList(new ArrayList<>());
                     newPost.setBookMarkList(new ArrayList<>());
+                    newPost.setPostViewList(new ArrayList<>());
 
                     return CompletableFuture.completedFuture(unitOfWork.getPostRepository().save(newPost));
                 })
@@ -546,6 +547,7 @@ public class PostService {
                     newPost.setReportList(new ArrayList<>());
                     newPost.setBookMarkList(new ArrayList<>());
                     newPost.setDailyPointList(new ArrayList<>());
+                    newPost.setPostViewList(new ArrayList<>());
 
                     return CompletableFuture.completedFuture(unitOfWork.getPostRepository().save(newPost));
                 })

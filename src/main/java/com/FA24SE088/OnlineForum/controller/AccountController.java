@@ -5,6 +5,7 @@ import com.FA24SE088.OnlineForum.dto.request.AccountUpdateCategoryRequest;
 import com.FA24SE088.OnlineForum.dto.request.AccountUpdateInfoRequest;
 import com.FA24SE088.OnlineForum.dto.response.AccountResponse;
 import com.FA24SE088.OnlineForum.dto.response.ApiResponse;
+import com.FA24SE088.OnlineForum.dto.response.RecommendAccountResponse;
 import com.FA24SE088.OnlineForum.enums.AccountStatus;
 import com.FA24SE088.OnlineForum.enums.RoleAccount;
 import com.FA24SE088.OnlineForum.service.AccountService;
@@ -49,6 +50,17 @@ public class AccountController {
                 ApiResponse.<List<Account>>builder()
                         .message(SuccessReturnMessage.SEARCH_SUCCESS.getMessage())
                         .entity(accounts)
+                        .build()
+        ).join();
+    }
+
+    @Operation(summary = "Get Recommended Accounts", description = "Get Accounts Based On Last Activities From 48 Hours Ago")
+    @GetMapping(path = "/get/recommended")
+    public ApiResponse<List<RecommendAccountResponse>> getRecommendedAccounts(@RequestParam(defaultValue = "1") int page,
+                                                                              @RequestParam(defaultValue = "10") int perPage){
+        return accountService.getRecommendedAccounts(page, perPage).thenApply(recommendAccountResponses ->
+                ApiResponse.<List<RecommendAccountResponse>>builder()
+                        .entity(recommendAccountResponses)
                         .build()
         ).join();
     }
