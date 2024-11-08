@@ -44,4 +44,5 @@ public class UnitOfWork {
     final TypeBonusRepository typeBonusRepository;
     final PricingRepository pricingRepository;
     final OrderRepository orderRepository;
+    final PostViewRepository postViewRepository;
 }
