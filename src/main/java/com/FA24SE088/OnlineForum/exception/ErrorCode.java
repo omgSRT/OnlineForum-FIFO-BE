@@ -120,6 +120,7 @@ public enum ErrorCode {
     ORDER_POINT_NOT_FOUND(10101, "Order point Not Found", HttpStatus.NOT_FOUND),
     PRICING_NOT_FOUND(10102, "Pricing Not Found", HttpStatus.NOT_FOUND),
     PRICING_INVALID(10102, "Pricing invalid", HttpStatus.BAD_REQUEST),
+    POST_VIEW_NOT_FOUND(10103, "Post View Not Found", HttpStatus.NOT_FOUND),
     ;
 
     private int code;
