@@ -3,7 +3,6 @@ package com.FA24SE088.OnlineForum.vnpay;
 
 import com.FA24SE088.OnlineForum.configuration.VNPAYConfig;
 import com.FA24SE088.OnlineForum.dto.response.OrderPointResponse;
-import com.FA24SE088.OnlineForum.dto.response.ResponseObject;
 import com.FA24SE088.OnlineForum.entity.Account;
 import com.FA24SE088.OnlineForum.entity.OrderPoint;
 import com.FA24SE088.OnlineForum.entity.Pricing;
@@ -17,7 +16,6 @@ import com.FA24SE088.OnlineForum.utils.VNPayUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
@@ -81,7 +79,7 @@ public class PaymentService {
         orderPoint.setAmount(amount / 100.0);
         orderPoint.setOrderDate(new Date());
         orderPoint.setStatus("PENDING");
-        unitOfWork.getOrderRepository().save(orderPoint);
+        unitOfWork.getOrderPointRepository().save(orderPoint);
 
         Map<String, String> vnpParamsMap = vnPayConfig.getVNPayConfig();
         vnpParamsMap.put("vnp_Amount", String.valueOf(amount));
@@ -108,12 +106,12 @@ public class PaymentService {
         String status = request.getParameter("vnp_ResponseCode");
         String orderId = request.getParameter("vnp_TxnRef");
 
-        OrderPoint orderPoint = unitOfWork.getOrderRepository().findById(UUID.fromString(orderId))
+        OrderPoint orderPoint = unitOfWork.getOrderPointRepository().findById(UUID.fromString(orderId))
                 .orElseThrow(() -> new AppException(ErrorCode.ORDER_POINT_NOT_FOUND));
 
         if ("00".equals(status)) {
             orderPoint.setStatus(OrderPointStatus.SUCCESS.name());
-            OrderPoint orderPoint1 = unitOfWork.getOrderRepository().save(orderPoint);
+            OrderPoint orderPoint1 = unitOfWork.getOrderPointRepository().save(orderPoint);
 
             Wallet wallet = orderPoint.getWallet();
             wallet.setBalance(wallet.getBalance() + orderPoint.getPricing().getPoint());
@@ -121,7 +119,7 @@ public class PaymentService {
             return orderPointMapper.toOderPointResponse(orderPoint1);
         } else {
             orderPoint.setStatus(OrderPointStatus.FAILED.name());
-            OrderPoint orderPoint2 = unitOfWork.getOrderRepository().save(orderPoint);
+            OrderPoint orderPoint2 = unitOfWork.getOrderPointRepository().save(orderPoint);
             return orderPointMapper.toOderPointResponse(orderPoint2);
         }
     }

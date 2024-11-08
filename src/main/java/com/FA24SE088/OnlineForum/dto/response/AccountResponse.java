@@ -32,4 +32,6 @@ public class AccountResponse {
     List<Category> categoryList;
     @JsonIgnoreProperties(value = {"account","transactionList","orderPointList"}, allowSetters = true)
     Wallet wallet;
+    long countFollower;
+    long countFollowee;
 }

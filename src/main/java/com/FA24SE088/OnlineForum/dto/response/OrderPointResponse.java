@@ -22,7 +22,7 @@ public class OrderPointResponse {
     Date orderDate;
     @JsonIgnoreProperties(value = {"orderPointList"})
     Pricing pricing;
-    @JsonIgnoreProperties(value = {"account","transactionList","orderPointList"})
-    Wallet wallet;
+//    @JsonIgnoreProperties(value = {"account","transactionList","orderPointList"})
+//    Wallet wallet;
 
 }

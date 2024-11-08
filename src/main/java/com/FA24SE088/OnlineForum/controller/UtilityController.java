@@ -44,12 +44,13 @@ public class UtilityController {
             @RequestParam(required = false, defaultValue = "false") boolean viewTransaction,
             @RequestParam(required = false, defaultValue = "false") boolean dailyPoint,
             @RequestParam(required = false, defaultValue = "false") boolean bonusPoint,
+            @RequestParam(required = false, defaultValue = "false") boolean orderPoint,
             @Parameter(description = "Filter by date in yyyy-MM-dd format", example = "2023-10-01")
             @RequestParam(required = false) String startDate,
             @Parameter(description = "Filter by date in yyyy-MM-dd format", example = "2023-10-01")
             @RequestParam(required = false) String endDate) {
 
-        return utilityService.filter(viewTransaction, dailyPoint, bonusPoint, startDate, endDate)
+        return utilityService.filter(viewTransaction, dailyPoint, bonusPoint,orderPoint, startDate, endDate)
                 .thenApply(filterTransactionResponse -> ApiResponse.<FilterTransactionResponse>builder()
                         .entity(filterTransactionResponse)
                         .build());

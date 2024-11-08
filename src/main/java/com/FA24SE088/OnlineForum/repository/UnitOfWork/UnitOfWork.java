@@ -43,6 +43,6 @@ public class UnitOfWork {
     final MediaRepository mediaRepository;
     final TypeBonusRepository typeBonusRepository;
     final PricingRepository pricingRepository;
-    final OrderRepository orderRepository;
+    final OrderPointRepository orderPointRepository;
     final PostViewRepository postViewRepository;
 }

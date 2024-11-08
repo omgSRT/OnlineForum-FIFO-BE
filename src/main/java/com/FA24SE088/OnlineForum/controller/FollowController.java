@@ -28,10 +28,12 @@ public class FollowController {
 
     @Operation(summary = "Create follow", description = "Create a new follow for the current user")
     @PostMapping("/create")
-    public ApiResponse<FollowResponse> createFollow(@RequestBody UUID id) {
-        return ApiResponse.<FollowResponse>builder()
-                .entity(followService.create(id))
-                .build();
+    public ApiResponse<Void> createFollow(@RequestBody UUID id) {
+        followService.followOrUnfollow(id);
+        return ApiResponse.<Void>builder().build();
+//        return ApiResponse.<FollowResponse>builder()
+//                .entity(followService.create(id))
+//                .build();
     }
 
     @Operation(summary = "Block user", description = "Block a user for the current user")
