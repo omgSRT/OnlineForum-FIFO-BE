@@ -14,7 +14,6 @@ import org.springframework.web.socket.WebSocketMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -53,29 +52,10 @@ public class DataHandler extends TextWebSocketHandler {
         }
     }
 
-    public void sendToUser(UUID accountId, Object messageObject) {
-        try {
-            String messageJson = objectMapper.writeValueAsString(messageObject); // Convert object to JSON string
-            WebSocketSession session = sessions.get(accountId);
-            if (session != null) {
-                try {
-                    session.sendMessage(new TextMessage(messageJson));
-                } catch (Exception e) {
-                    LOG.error("Failed to send message to user: " + accountId, e);
-                }
-            } else {
-                LOG.warn("No session found for user: " + accountId);
-            }
-        } catch (JsonProcessingException e) {
-            LOG.error("Failed to convert message object to JSON", e);
-        }
-    }
-
 //    public void sendToUser(UUID accountId, Object messageObject) {
 //        try {
-//            Account account = unitOfWork.getAccountRepository().findById(accountId).orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND));
 //            String messageJson = objectMapper.writeValueAsString(messageObject); // Convert object to JSON string
-//            WebSocketSession session = sessions.get(account.getEmail());
+//            WebSocketSession session = sessions.get(accountId);
 //            if (session != null) {
 //                try {
 //                    session.sendMessage(new TextMessage(messageJson));
@@ -89,6 +69,25 @@ public class DataHandler extends TextWebSocketHandler {
 //            LOG.error("Failed to convert message object to JSON", e);
 //        }
 //    }
+
+    public void sendToUser(UUID accountId, Object messageObject) {
+        try {
+            Account account = unitOfWork.getAccountRepository().findById(accountId).orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND));
+            String messageJson = objectMapper.writeValueAsString(messageObject); // Convert object to JSON string
+            WebSocketSession session = sessions.get(account.getEmail());
+            if (session != null) {
+                try {
+                    session.sendMessage(new TextMessage(messageJson));
+                } catch (Exception e) {
+                    LOG.error("Failed to send message to user: " + accountId, e);
+                }
+            } else {
+                LOG.warn("No session found for user: " + accountId);
+            }
+        } catch (JsonProcessingException e) {
+            LOG.error("Failed to convert message object to JSON", e);
+        }
+    }
 
 //    public void sendToUser2(UUID accountId, Object object) {
 //        String eventKey = "sendNotification";

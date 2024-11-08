@@ -17,7 +17,7 @@ import java.util.concurrent.CompletableFuture;
 
 @RequiredArgsConstructor
 @RestController
-@RequestMapping("/category")
+@RequestMapping("/utility")
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Slf4j
 public class UtilityController {

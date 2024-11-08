@@ -15,7 +15,6 @@ public class WebSocketConfig implements WebSocketConfigurer {
                 .setHandshakeHandler(new UserHandshakeHandler())
                 .setAllowedOrigins("*");
     }
-
     @Bean
     DataHandler getUserHandShakeHandler() {
         return new DataHandler();

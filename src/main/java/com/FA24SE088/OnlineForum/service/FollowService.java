@@ -144,6 +144,33 @@ public class FollowService {
                 .toList();
     }
 
+    public void followOrUnfollow(UUID followeeId) {
+        Account account = getCurrentUser();
+
+        Account followee = unitOfWork.getAccountRepository().findById(followeeId)
+                .orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND));
+
+        if (account.getAccountId().equals(followee.getAccountId())) {
+            throw new AppException(ErrorCode.CANNOT_FOLLOW_SELF);
+        }
+
+        Follow existingFollow = unitOfWork.getFollowRepository().findByFollowerAndFollowee(account, followee)
+                .orElse(null);
+
+        if (existingFollow != null) {
+            // Nếu đã có bản ghi follow, xóa bản ghi đó (unfollow)
+            unitOfWork.getFollowRepository().delete(existingFollow);
+        } else {
+            Follow follow = Follow.builder()
+                    .follower(account)
+                    .followee(followee)
+                    .status(FollowStatus.FOLLOWING.name())
+                    .build();
+            unitOfWork.getFollowRepository().save(follow);
+        }
+    }
+
+
 
     public List<AccountResponse> listBlock() {
         Account currentUser = getCurrentUser();

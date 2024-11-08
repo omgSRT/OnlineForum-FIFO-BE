@@ -64,6 +64,7 @@ public class PostService {
                     newPost.setUpvoteList(new ArrayList<>());
                     newPost.setReportList(new ArrayList<>());
                     newPost.setBookMarkList(new ArrayList<>());
+                    newPost.setPostViewList(new ArrayList<>());
 
                     return CompletableFuture.completedFuture(unitOfWork.getPostRepository().save(newPost));
                 })
@@ -98,12 +99,15 @@ public class PostService {
                                         .countByPost(post);
                                 CompletableFuture<Integer> commentCountFuture = unitOfWork.getCommentRepository()
                                         .countByPost(post);
+                                CompletableFuture<Integer> viewCountFuture = unitOfWork.getPostViewRepository()
+                                        .countByPost(post);
 
-                                return CompletableFuture.allOf(upvoteCountFuture, commentCountFuture)
+                                return CompletableFuture.allOf(upvoteCountFuture, commentCountFuture, viewCountFuture)
                                         .thenApply(voidResult -> {
                                             PostResponse response = postMapper.toPostResponse(post);
                                             response.setUpvoteCount(upvoteCountFuture.join());
                                             response.setCommentCount(commentCountFuture.join());
+                                            response.setViewCount(viewCountFuture.join());
                                             return response;
                                         });
                             });
@@ -175,12 +179,15 @@ public class PostService {
                                 .countByPost(post);
                         CompletableFuture<Integer> commentCountFuture = unitOfWork.getCommentRepository()
                                 .countByPost(post);
+                        CompletableFuture<Integer> viewCountFuture = unitOfWork.getPostViewRepository()
+                                .countByPost(post);
 
-                        return CompletableFuture.allOf(upvoteCountFuture, commentCountFuture)
+                        return CompletableFuture.allOf(upvoteCountFuture, commentCountFuture, viewCountFuture)
                                 .thenApply(voidResult -> {
                                     PostResponse response = postMapper.toPostResponse(post);
                                     response.setUpvoteCount(upvoteCountFuture.join());
                                     response.setCommentCount(commentCountFuture.join());
+                                    response.setViewCount(viewCountFuture.join());
                                     return response;
                                 });
                     })
@@ -259,12 +266,15 @@ public class PostService {
                                     .countByPost(post);
                             CompletableFuture<Integer> commentCountFuture = unitOfWork.getCommentRepository()
                                     .countByPost(post);
+                            CompletableFuture<Integer> viewCountFuture = unitOfWork.getPostViewRepository()
+                                    .countByPost(post);
 
-                            return CompletableFuture.allOf(upvoteCountFuture, commentCountFuture)
+                            return CompletableFuture.allOf(upvoteCountFuture, commentCountFuture, viewCountFuture)
                                     .thenApply(voidResult -> {
                                         PostResponse response = postMapper.toPostResponse(post);
                                         response.setUpvoteCount(upvoteCountFuture.join());
                                         response.setCommentCount(commentCountFuture.join());
+                                        response.setViewCount(viewCountFuture.join());
                                         return response;
                                     });
                         })
@@ -299,12 +309,15 @@ public class PostService {
                                 .countByPost(post);
                         CompletableFuture<Integer> commentCountFuture = unitOfWork.getCommentRepository()
                                 .countByPost(post);
+                        CompletableFuture<Integer> viewCountFuture = unitOfWork.getPostViewRepository()
+                                .countByPost(post);
 
-                        return CompletableFuture.allOf(upvoteCountFuture, commentCountFuture)
+                        return CompletableFuture.allOf(upvoteCountFuture, commentCountFuture, viewCountFuture)
                                 .thenApply(voidResult -> {
                                     PostResponse response = postMapper.toPostResponse(post);
                                     response.setUpvoteCount(upvoteCountFuture.join());
                                     response.setCommentCount(commentCountFuture.join());
+                                    response.setViewCount(viewCountFuture.join());
                                     return response;
                                 });
                     })
@@ -328,12 +341,15 @@ public class PostService {
                     .countByPost(post);
             CompletableFuture<Integer> commentCountFuture = unitOfWork.getCommentRepository()
                     .countByPost(post);
+            CompletableFuture<Integer> viewCountFuture = unitOfWork.getPostViewRepository()
+                    .countByPost(post);
 
-            return CompletableFuture.allOf(upvoteCountFuture, commentCountFuture)
+            return CompletableFuture.allOf(upvoteCountFuture, commentCountFuture, viewCountFuture)
                     .thenApply(voidResult -> {
                         PostResponse response = postMapper.toPostResponse(post);
                         response.setUpvoteCount(upvoteCountFuture.join());
                         response.setCommentCount(commentCountFuture.join());
+                        response.setViewCount(viewCountFuture.join());
                         return response;
                     });
         });
@@ -377,12 +393,15 @@ public class PostService {
                         .countByPost(savedPost);
                 CompletableFuture<Integer> commentCountFuture = unitOfWork.getCommentRepository()
                         .countByPost(savedPost);
+                CompletableFuture<Integer> viewCountFuture = unitOfWork.getPostViewRepository()
+                        .countByPost(post);
 
-                return CompletableFuture.allOf(upvoteCountFuture, commentCountFuture)
+                return CompletableFuture.allOf(upvoteCountFuture, commentCountFuture, viewCountFuture)
                         .thenApply(voidResult -> {
                             PostResponse response = postMapper.toPostResponse(savedPost);
                             response.setUpvoteCount(upvoteCountFuture.join());
                             response.setCommentCount(commentCountFuture.join());
+                            response.setViewCount(viewCountFuture.join());
                             return response;
                         });
             });
@@ -427,12 +446,15 @@ public class PostService {
                     .countByPost(post);
             CompletableFuture<Integer> commentCountFuture = unitOfWork.getCommentRepository()
                     .countByPost(post);
+            CompletableFuture<Integer> viewCountFuture = unitOfWork.getPostViewRepository()
+                    .countByPost(post);
 
-            return CompletableFuture.allOf(upvoteCountFuture, commentCountFuture)
+            return CompletableFuture.allOf(upvoteCountFuture, commentCountFuture, viewCountFuture)
                     .thenApply(voidResult -> {
                         PostResponse response = postMapper.toPostResponse(post);
                         response.setUpvoteCount(upvoteCountFuture.join());
                         response.setCommentCount(commentCountFuture.join());
+                        response.setViewCount(viewCountFuture.join());
                         return response;
                     });
         });
@@ -472,12 +494,15 @@ public class PostService {
                             .countByPost(post);
                     CompletableFuture<Integer> commentCountFuture = unitOfWork.getCommentRepository()
                             .countByPost(post);
+                    CompletableFuture<Integer> viewCountFuture = unitOfWork.getPostViewRepository()
+                            .countByPost(post);
 
-                    return CompletableFuture.allOf(upvoteCountFuture, commentCountFuture)
+                    return CompletableFuture.allOf(upvoteCountFuture, commentCountFuture, viewCountFuture)
                             .thenApply(voidResult -> {
                                 PostResponse response = postMapper.toPostResponse(post);
                                 response.setUpvoteCount(upvoteCountFuture.join());
                                 response.setCommentCount(commentCountFuture.join());
+                                response.setViewCount(viewCountFuture.join());
                                 return response;
                             });
                 });
@@ -522,6 +547,7 @@ public class PostService {
                     newPost.setReportList(new ArrayList<>());
                     newPost.setBookMarkList(new ArrayList<>());
                     newPost.setDailyPointList(new ArrayList<>());
+                    newPost.setPostViewList(new ArrayList<>());
 
                     return CompletableFuture.completedFuture(unitOfWork.getPostRepository().save(newPost));
                 })
@@ -542,12 +568,15 @@ public class PostService {
                             .countByPost(post);
                     CompletableFuture<Integer> commentCountFuture = unitOfWork.getCommentRepository()
                             .countByPost(post);
+                    CompletableFuture<Integer> viewCountFuture = unitOfWork.getPostViewRepository()
+                            .countByPost(post);
 
-                    return CompletableFuture.allOf(upvoteCountFuture, commentCountFuture)
+                    return CompletableFuture.allOf(upvoteCountFuture, commentCountFuture, viewCountFuture)
                             .thenApply(voidResult -> {
                                 PostResponse response = postMapper.toPostResponse(post);
                                 response.setUpvoteCount(upvoteCountFuture.join());
                                 response.setCommentCount(commentCountFuture.join());
+                                response.setViewCount(viewCountFuture.join());
                                 return response;
                             });
                 });
@@ -573,12 +602,15 @@ public class PostService {
                                 .countByPost(post);
                         CompletableFuture<Integer> commentCountFuture = unitOfWork.getCommentRepository()
                                 .countByPost(post);
+                        CompletableFuture<Integer> viewCountFuture = unitOfWork.getPostViewRepository()
+                                .countByPost(post);
 
-                        return CompletableFuture.allOf(upvoteCountFuture, commentCountFuture)
+                        return CompletableFuture.allOf(upvoteCountFuture, commentCountFuture, viewCountFuture)
                                 .thenApply(voidResult -> {
                                     PostResponse response = postMapper.toPostResponse(post);
                                     response.setUpvoteCount(upvoteCountFuture.join());
                                     response.setCommentCount(commentCountFuture.join());
+                                    response.setViewCount(viewCountFuture.join());
                                     return response;
                                 });
                     })
@@ -611,12 +643,15 @@ public class PostService {
                                 .countByPost(post);
                         CompletableFuture<Integer> commentCountFuture = unitOfWork.getCommentRepository()
                                 .countByPost(post);
+                        CompletableFuture<Integer> viewCountFuture = unitOfWork.getPostViewRepository()
+                                .countByPost(post);
 
-                        return CompletableFuture.allOf(upvoteCountFuture, commentCountFuture)
+                        return CompletableFuture.allOf(upvoteCountFuture, commentCountFuture, viewCountFuture)
                                 .thenApply(voidResult -> {
                                     PostResponse response = postMapper.toPostResponse(post);
                                     response.setUpvoteCount(upvoteCountFuture.join());
                                     response.setCommentCount(commentCountFuture.join());
+                                    response.setViewCount(viewCountFuture.join());
                                     return response;
                                 });
                     })
@@ -684,12 +719,15 @@ public class PostService {
                                 .countByPost(savedPost);
                         CompletableFuture<Integer> commentCountFuture = unitOfWork.getCommentRepository()
                                 .countByPost(savedPost);
+                        CompletableFuture<Integer> viewCountFuture = unitOfWork.getPostViewRepository()
+                                .countByPost(post);
 
-                        return CompletableFuture.allOf(upvoteCountFuture, commentCountFuture)
+                        return CompletableFuture.allOf(upvoteCountFuture, commentCountFuture, viewCountFuture)
                                 .thenApply(voidResult -> {
                                     PostResponse response = postMapper.toPostResponse(savedPost);
                                     response.setUpvoteCount(upvoteCountFuture.join());
                                     response.setCommentCount(commentCountFuture.join());
+                                    response.setViewCount(viewCountFuture.join());
                                     return response;
                                 });
                     });
@@ -736,12 +774,15 @@ public class PostService {
                         .countByPost(savedPost);
                 CompletableFuture<Integer> commentCountFuture = unitOfWork.getCommentRepository()
                         .countByPost(savedPost);
+                CompletableFuture<Integer> viewCountFuture = unitOfWork.getPostViewRepository()
+                        .countByPost(post);
 
-                return CompletableFuture.allOf(upvoteCountFuture, commentCountFuture)
+                return CompletableFuture.allOf(upvoteCountFuture, commentCountFuture, viewCountFuture)
                         .thenApply(voidResult -> {
                             PostResponse response = postMapper.toPostResponse(savedPost);
                             response.setUpvoteCount(upvoteCountFuture.join());
                             response.setCommentCount(commentCountFuture.join());
+                            response.setViewCount(viewCountFuture.join());
                             return response;
                         });
             });
@@ -774,12 +815,15 @@ public class PostService {
                                 .countByPost(post);
                         CompletableFuture<Integer> commentCountFuture = unitOfWork.getCommentRepository()
                                 .countByPost(post);
+                        CompletableFuture<Integer> viewCountFuture = unitOfWork.getPostViewRepository()
+                                .countByPost(post);
 
-                        return CompletableFuture.allOf(upvoteCountFuture, commentCountFuture)
+                        return CompletableFuture.allOf(upvoteCountFuture, commentCountFuture, viewCountFuture)
                                 .thenApply(voidResult -> {
                                     PostResponse response = postMapper.toPostResponse(post);
                                     response.setUpvoteCount(upvoteCountFuture.join());
                                     response.setCommentCount(commentCountFuture.join());
+                                    response.setViewCount(viewCountFuture.join());
                                     return response;
                                 });
                     })

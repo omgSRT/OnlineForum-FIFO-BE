@@ -22,4 +22,5 @@ public class CategoryGetAllResponse {
     List<Topic> topicListByCategory;
     int upvoteCount;
     int commentCount;
+    int viewCount;
 }

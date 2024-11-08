@@ -27,6 +27,7 @@ public class PostResponse {
     String linkFile;
     int upvoteCount;
     int commentCount;
+    int viewCount;
     @JsonIgnoreProperties(value = { "password", "email", "bio", "gender", "address", "createdDate", "status", "role" })
     Account account;
     @JsonIgnoreProperties(value = { "category.account" })
