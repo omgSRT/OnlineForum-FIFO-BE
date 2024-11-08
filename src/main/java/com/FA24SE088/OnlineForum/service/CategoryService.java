@@ -60,12 +60,15 @@ public class CategoryService {
                             .countByPostTopicCategory(savedCategory);
                     CompletableFuture<Integer> commentCountFuture = unitOfWork.getCommentRepository()
                             .countByPostTopicCategory(savedCategory);
+                    CompletableFuture<Integer> viewCountFuture = unitOfWork.getPostViewRepository()
+                            .countByPostTopicCategory(savedCategory);
 
-                    return CompletableFuture.allOf(upvoteCountFuture, commentCountFuture)
+                    return CompletableFuture.allOf(upvoteCountFuture, commentCountFuture, viewCountFuture)
                             .thenApply(voidResult -> {
                                 CategoryResponse response = categoryMapper.toCategoryResponse(savedCategory);
                                 response.setUpvoteCount(upvoteCountFuture.join());
                                 response.setCommentCount(commentCountFuture.join());
+                                response.setViewCount(viewCountFuture.join());
                                 return response;
                             });
                 }));
@@ -90,12 +93,15 @@ public class CategoryService {
                                     .countByPostTopicCategory(savedCategory);
                             CompletableFuture<Integer> commentCountFuture = unitOfWork.getCommentRepository()
                                     .countByPostTopicCategory(savedCategory);
+                            CompletableFuture<Integer> viewCountFuture = unitOfWork.getPostViewRepository()
+                                    .countByPostTopicCategory(savedCategory);
 
-                            return CompletableFuture.allOf(upvoteCountFuture, commentCountFuture)
+                            return CompletableFuture.allOf(upvoteCountFuture, commentCountFuture, viewCountFuture)
                                     .thenApply(voidResult -> {
                                         CategoryResponse response = categoryMapper.toCategoryResponse(savedCategory);
                                         response.setUpvoteCount(upvoteCountFuture.join());
                                         response.setCommentCount(commentCountFuture.join());
+                                        response.setViewCount(viewCountFuture.join());
                                         return response;
                                     });
                         });
@@ -120,13 +126,16 @@ public class CategoryService {
                                 .countByPostTopicCategory(category);
                         CompletableFuture<List<Topic>> topicListByCategoryFuture = unitOfWork.getTopicRepository()
                                 .findByCategoryCategoryId(category.getCategoryId());
+                        CompletableFuture<Integer> viewCountFuture = unitOfWork.getPostViewRepository()
+                                .countByPostTopicCategory(category);
 
-                        return CompletableFuture.allOf(upvoteCountFuture, commentCountFuture, topicListByCategoryFuture)
+                        return CompletableFuture.allOf(upvoteCountFuture, commentCountFuture, topicListByCategoryFuture,viewCountFuture)
                                 .thenApply(voidResult -> {
                                     CategoryGetAllResponse response = categoryMapper.toCategoryGetAllResponse(category);
                                     response.setUpvoteCount(upvoteCountFuture.join());
                                     response.setCommentCount(commentCountFuture.join());
                                     response.setTopicListByCategory(topicListByCategoryFuture.join());
+                                    response.setViewCount(viewCountFuture.join());
                                     return response;
                                 });
                     })
@@ -159,13 +168,16 @@ public class CategoryService {
                                     .countByPostTopicCategory(category);
                             CompletableFuture<List<Topic>> topicListByCategoryFuture = unitOfWork.getTopicRepository()
                                     .findByCategoryCategoryId(category.getCategoryId());
+                            CompletableFuture<Integer> viewCountFuture = unitOfWork.getPostViewRepository()
+                                    .countByPostTopicCategory(category);
 
-                            return CompletableFuture.allOf(upvoteCountFuture, commentCountFuture, topicListByCategoryFuture)
+                            return CompletableFuture.allOf(upvoteCountFuture, commentCountFuture, topicListByCategoryFuture,viewCountFuture)
                                     .thenApply(voidResult -> {
                                         CategoryGetAllResponse response = categoryMapper.toCategoryGetAllResponse(category);
                                         response.setUpvoteCount(upvoteCountFuture.join());
                                         response.setCommentCount(commentCountFuture.join());
                                         response.setTopicListByCategory(topicListByCategoryFuture.join());
+                                        response.setViewCount(viewCountFuture.join());
                                         return response;
                                     });
                         })
@@ -192,12 +204,15 @@ public class CategoryService {
                     .countByPostTopicCategory(category);
             CompletableFuture<Integer> commentCountFuture = unitOfWork.getCommentRepository()
                     .countByPostTopicCategory(category);
+            CompletableFuture<Integer> viewCountFuture = unitOfWork.getPostViewRepository()
+                    .countByPostTopicCategory(category);
 
-            return CompletableFuture.allOf(upvoteCountFuture, commentCountFuture)
+            return CompletableFuture.allOf(upvoteCountFuture, commentCountFuture, viewCountFuture)
                     .thenApply(voidResult -> {
                         CategoryResponse response = categoryMapper.toCategoryResponse(category);
                         response.setUpvoteCount(upvoteCountFuture.join());
                         response.setCommentCount(commentCountFuture.join());
+                        response.setViewCount(viewCountFuture.join());
                         return response;
                     });
         });
@@ -219,12 +234,15 @@ public class CategoryService {
                     .countByPostTopicCategory(category);
             CompletableFuture<Integer> commentCountFuture = unitOfWork.getCommentRepository()
                     .countByPostTopicCategory(category);
+            CompletableFuture<Integer> viewCountFuture = unitOfWork.getPostViewRepository()
+                    .countByPostTopicCategory(category);
 
-            return CompletableFuture.allOf(upvoteCountFuture, commentCountFuture)
+            return CompletableFuture.allOf(upvoteCountFuture, commentCountFuture, viewCountFuture)
                     .thenApply(voidResult -> {
                         CategoryResponse response = categoryMapper.toCategoryResponse(category);
                         response.setUpvoteCount(upvoteCountFuture.join());
                         response.setCommentCount(commentCountFuture.join());
+                        response.setViewCount(viewCountFuture.join());
                         return response;
                     });
         });
@@ -253,12 +271,14 @@ public class CategoryService {
         }).thenCompose(updatedCategory -> {
             CompletableFuture<Integer> upvoteCountFuture = unitOfWork.getUpvoteRepository().countByPostTopicCategory(updatedCategory);
             CompletableFuture<Integer> commentCountFuture = unitOfWork.getCommentRepository().countByPostTopicCategory(updatedCategory);
+            CompletableFuture<Integer> viewCountFuture = unitOfWork.getPostViewRepository().countByPostTopicCategory(updatedCategory);
 
-            return CompletableFuture.allOf(upvoteCountFuture, commentCountFuture)
+            return CompletableFuture.allOf(upvoteCountFuture, commentCountFuture, viewCountFuture)
                     .thenApply(voidResult -> {
                         CategoryResponse response = categoryMapper.toCategoryResponse(updatedCategory);
                         response.setUpvoteCount(upvoteCountFuture.join());
                         response.setCommentCount(commentCountFuture.join());
+                        response.setViewCount(viewCountFuture.join());
                         return response;
                     });
         });
@@ -285,12 +305,15 @@ public class CategoryService {
                         .countByPostTopicCategory(category);
                 CompletableFuture<Integer> commentCountFuture = unitOfWork.getCommentRepository()
                         .countByPostTopicCategory(category);
+                CompletableFuture<Integer> viewCountFuture = unitOfWork.getPostViewRepository()
+                        .countByPostTopicCategory(category);
 
-                return CompletableFuture.allOf(upvoteCountFuture, commentCountFuture)
+                return CompletableFuture.allOf(upvoteCountFuture, commentCountFuture, viewCountFuture)
                         .thenApply(voidResult -> {
                             CategoryResponse response = categoryMapper.toCategoryResponse(category);
                             response.setUpvoteCount(upvoteCountFuture.join());
                             response.setCommentCount(commentCountFuture.join());
+                            response.setViewCount(viewCountFuture.join());
                             return response;
                         });
             })

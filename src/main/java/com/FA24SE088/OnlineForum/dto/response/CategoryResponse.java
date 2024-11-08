@@ -19,4 +19,5 @@ public class CategoryResponse {
     Account account;
     int upvoteCount;
     int commentCount;
+    int viewCount;
 }
