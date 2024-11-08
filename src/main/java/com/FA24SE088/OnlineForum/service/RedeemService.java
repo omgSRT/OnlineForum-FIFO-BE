@@ -4,7 +4,6 @@ import com.FA24SE088.OnlineForum.dto.request.RedeemRequest;
 import com.FA24SE088.OnlineForum.dto.response.RedeemDocumentResponse;
 import com.FA24SE088.OnlineForum.dto.response.RedeemResponse;
 import com.FA24SE088.OnlineForum.entity.*;
-import com.FA24SE088.OnlineForum.enums.TransactionType;
 import com.FA24SE088.OnlineForum.exception.AppException;
 import com.FA24SE088.OnlineForum.exception.ErrorCode;
 import com.FA24SE088.OnlineForum.mapper.RedeemMapper;
@@ -71,7 +70,7 @@ public class RedeemService {
 
 
 
-    public RedeemDocumentResponse getDocumentRewarded() {
+    public RedeemDocumentResponse getMyRewarded() {
         Account account = getCurrentUser();
 
         List<Redeem> ofAccount = unitOfWork.getRedeemRepository()

@@ -118,9 +118,10 @@ public enum ErrorCode {
     POST_ALREADY_HIDDEN(10099, "This Post Is Already In Hidden Status", HttpStatus.BAD_REQUEST),
     REPORT_POST_NOT_FOUND(10100, "Report Post Not Found", HttpStatus.NOT_FOUND),
     ORDER_POINT_NOT_FOUND(10101, "Order point Not Found", HttpStatus.NOT_FOUND),
-    PRICING_NOT_FOUND(10102, "Pricing Not Found", HttpStatus.NOT_FOUND),
-    PRICING_INVALID(10102, "Pricing invalid", HttpStatus.BAD_REQUEST),
-    POST_VIEW_NOT_FOUND(10103, "Post View Not Found", HttpStatus.NOT_FOUND),
+    PRICING_NOT_FOUND(10103, "Pricing Not Found", HttpStatus.NOT_FOUND),
+    PRICING_INVALID(10104, "Pricing invalid", HttpStatus.BAD_REQUEST),
+    POST_VIEW_NOT_FOUND(10105, "Post View Not Found", HttpStatus.NOT_FOUND),
+    WRONG_DATE_FORMAT(10106, "Invalid date format. Please use yyyy-MM-dd.", HttpStatus.BAD_REQUEST),
     ;
 
     private int code;
