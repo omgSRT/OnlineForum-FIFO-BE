@@ -50,7 +50,7 @@ public class TopicController {
     @Operation(summary = "Get All Popular Topics")
     @GetMapping(path = "/popular")
     public ApiResponse<List<PopularTopicResponse>> getAllPopularTopics(@RequestParam(defaultValue = "1") int page,
-                                                         @RequestParam(defaultValue = "10") int perPage){
+                                                         @RequestParam(defaultValue = "5") int perPage){
         return topicService.getAllPopularTopics(page, perPage).thenApply(popularTopicResponses ->
                 ApiResponse.<List<PopularTopicResponse>>builder()
                         .entity(popularTopicResponses)
