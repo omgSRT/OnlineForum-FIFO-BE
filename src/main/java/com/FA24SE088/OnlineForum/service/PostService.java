@@ -16,7 +16,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -335,17 +334,23 @@ public class PostService {
     @Async("AsyncTaskExecutor")
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
     public CompletableFuture<PostResponse> getPostById(UUID postId) {
+        var username = getUsernameFromJwt();
+        var accountFuture = findAccountByUsername(username);
         var postFuture = findPostById(postId);
 
-        return postFuture.thenCompose(post -> {
+        return CompletableFuture.allOf(accountFuture, postFuture).thenCompose(v -> {
+            var account = accountFuture.join();
+            var post = postFuture.join();
+
             CompletableFuture<Integer> upvoteCountFuture = unitOfWork.getUpvoteRepository()
                     .countByPost(post);
             CompletableFuture<Integer> commentCountFuture = unitOfWork.getCommentRepository()
                     .countByPost(post);
             CompletableFuture<Integer> viewCountFuture = unitOfWork.getPostViewRepository()
                     .countByPost(post);
+            CompletableFuture<PostView> newPostViewFuture = createPostView(account, post);
 
-            return CompletableFuture.allOf(upvoteCountFuture, commentCountFuture, viewCountFuture)
+            return CompletableFuture.allOf(upvoteCountFuture, commentCountFuture, viewCountFuture, newPostViewFuture)
                     .thenApply(voidResult -> {
                         PostResponse response = postMapper.toPostResponse(post);
                         response.setUpvoteCount(upvoteCountFuture.join());
@@ -1152,6 +1157,35 @@ public class PostService {
         }
 
         return topicList;
+    }
+    @Async("AsyncTaskExecutor")
+    public CompletableFuture<PostView> createPostView(Account account, Post post){
+        CompletableFuture<Boolean> viewExistsFuture = unitOfWork.getPostViewRepository()
+                .existsByPostAndAccount(post, account);
+
+        return viewExistsFuture.thenCompose(viewExists -> {
+            if (viewExists || isUserNotAllowedToView(account, post)) {
+                return CompletableFuture.completedFuture(null);
+            }
+
+            PostView newPostView = new PostView();
+            newPostView.setPost(post);
+            newPostView.setAccount(account);
+            newPostView.setViewedDate(new Date());
+
+            return CompletableFuture.supplyAsync(() -> unitOfWork.getPostViewRepository().save(newPostView));
+        });
+    }
+    private boolean isUserNotAllowedToView(Account account, Post post) {
+        var role = account.getRole().getName();
+        if (role.equalsIgnoreCase("ADMIN") || role.equalsIgnoreCase("STAFF")) {
+            return true;
+        }
+        if (post.getAccount().equals(account)) {
+            return true;
+        }
+
+        return false;
     }
     //endregion
 }
