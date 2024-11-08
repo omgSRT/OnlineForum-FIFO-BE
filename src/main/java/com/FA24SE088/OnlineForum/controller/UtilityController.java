@@ -5,6 +5,7 @@ import com.FA24SE088.OnlineForum.dto.response.FilterTransactionResponse;
 import com.FA24SE088.OnlineForum.dto.response.SearchEverythingResponse;
 import com.FA24SE088.OnlineForum.service.UtilityService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -37,42 +38,15 @@ public class UtilityController {
         ).join();
     }
 
-//    @GetMapping("/filter-transaction")
-//    public ApiResponse<FilterTransactionResponse> filterEverythingInTransaction(@RequestParam(required = false) boolean viewTransaction,
-//                                                                                @RequestParam(required = false) boolean dailyPoint,
-//                                                                                @RequestParam(required = false) boolean bonusPoint,
-//                                                                                @RequestParam(required = false) Date startDate,
-//                                                                                @RequestParam(required = false) Date endDate) {
-//        return ApiResponse.<FilterTransactionResponse>builder()
-//                .entity(utilityService.filter(viewTransaction, dailyPoint, bonusPoint, startDate, endDate))
-//                .build();
-//    }
-    //===============================
-//@Operation(summary = "Filter Transaction, DailyPoint, and BonusPoint based on criteria")
-//@GetMapping("/filter-transaction")
-//public CompletableFuture<ApiResponse<FilterTransactionResponse>> filterEverythingInTransaction(
-//        @RequestParam(required = false, defaultValue = "false") boolean viewTransaction,
-//        @RequestParam(required = false, defaultValue = "false") boolean dailyPoint,
-//        @RequestParam(required = false, defaultValue = "false") boolean bonusPoint,
-////        @RequestParam(required = false) Date startDate,
-////        @RequestParam(required = false) Date endDate
-//        @RequestParam(required = false) String startDate,
-//        @RequestParam(required = false) String endDate
-//) {
-//
-//    return utilityService.filter(viewTransaction, dailyPoint, bonusPoint, startDate, endDate)
-//            .thenApply(filterTransactionResponse -> ApiResponse.<FilterTransactionResponse>builder()
-//                    .entity(filterTransactionResponse)
-//                    .build());
-//}
-
     @Operation(summary = "Filter Transaction, DailyPoint, and BonusPoint based on criteria")
     @GetMapping("/filter-transaction")
     public CompletableFuture<ApiResponse<FilterTransactionResponse>> filterEverythingInTransaction(
             @RequestParam(required = false, defaultValue = "false") boolean viewTransaction,
             @RequestParam(required = false, defaultValue = "false") boolean dailyPoint,
             @RequestParam(required = false, defaultValue = "false") boolean bonusPoint,
+            @Parameter(description = "Filter by date in yyyy-MM-dd format", example = "2023-10-01")
             @RequestParam(required = false) String startDate,
+            @Parameter(description = "Filter by date in yyyy-MM-dd format", example = "2023-10-01")
             @RequestParam(required = false) String endDate) {
 
         return utilityService.filter(viewTransaction, dailyPoint, bonusPoint, startDate, endDate)

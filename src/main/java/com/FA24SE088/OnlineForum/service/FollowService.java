@@ -1,6 +1,7 @@
 package com.FA24SE088.OnlineForum.service;
 
 import com.FA24SE088.OnlineForum.dto.request.UnfollowRequest;
+import com.FA24SE088.OnlineForum.dto.response.AccountFollowResponse;
 import com.FA24SE088.OnlineForum.dto.response.AccountResponse;
 import com.FA24SE088.OnlineForum.dto.response.FollowResponse;
 import com.FA24SE088.OnlineForum.entity.Account;
@@ -17,14 +18,10 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
@@ -157,4 +154,22 @@ public class FollowService {
                 .map(accountMapper::toResponse)
                 .toList();
     }
+
+    public List<AccountFollowResponse> getTop10MostFollowedAccounts() {
+        List<Object[]> results = unitOfWork.getFollowRepository().findTop10MostFollowedAccounts();
+        List<AccountFollowResponse> top10Accounts = new ArrayList<>();
+
+        for (Object[] result : results) {
+            Account account = (Account) result[0];
+            long followerCount = (long) result[1];
+
+            AccountFollowResponse accountResponse = accountMapper.toCountFollower(account);
+            accountResponse.setCountFollowers(followerCount);
+
+            top10Accounts.add(accountResponse);
+        }
+
+        return top10Accounts;
+    }
+
 }

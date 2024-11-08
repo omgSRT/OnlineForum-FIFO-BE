@@ -2,6 +2,7 @@ package com.FA24SE088.OnlineForum.controller;
 
 import com.FA24SE088.OnlineForum.dto.request.BlockRequest;
 import com.FA24SE088.OnlineForum.dto.request.UnfollowRequest;
+import com.FA24SE088.OnlineForum.dto.response.AccountFollowResponse;
 import com.FA24SE088.OnlineForum.dto.response.AccountResponse;
 import com.FA24SE088.OnlineForum.dto.response.ApiResponse;
 import com.FA24SE088.OnlineForum.dto.response.FollowResponse;
@@ -74,6 +75,13 @@ public class FollowController {
     public ApiResponse<List<FollowResponse>> getAllFollowers() {
         return ApiResponse.<List<FollowResponse>>builder()
                 .entity(followService.getFollowers())
+                .build();
+    }
+
+    @GetMapping("/top-followed-accounts")
+    public ApiResponse<List<AccountFollowResponse>> getTop10MostFollowedAccounts() {
+        return ApiResponse.<List<AccountFollowResponse>>builder()
+                .entity(followService.getTop10MostFollowedAccounts())
                 .build();
     }
 
