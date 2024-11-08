@@ -35,16 +35,23 @@ public interface AccountRepository extends JpaRepository<Account, UUID> {
 
 //    List<Account> findAllByStatusAndBannedUntilBefore(AccountStatus status, LocalDateTime dateTime);
 
-    @Query("SELECT new com.FA24SE088.OnlineForum.dto.response.RecommendAccountResponse(" +
-            "p.account, " +
-            "SUM(size(p.upvoteList) + size(p.commentList) + size(p.postViewList) + size(p.account.followerList) + " +
-            "(SELECT COUNT(post) FROM Post post WHERE post.account = p.account))) " +
-            "FROM Post p " +
-            "WHERE p.createdDate >= :last48Hours " +
-            "GROUP BY p.account " +
-            "ORDER BY SUM(size(p.upvoteList) + size(p.commentList) + size(p.postViewList) + size(p.account.followerList) + " +
-            "(SELECT COUNT(post) FROM Post post WHERE post.account = p.account)) DESC")
-    CompletableFuture<List<RecommendAccountResponse>> findByTrendingScore(@Param("last48Hours") Date last48Hours);
+    @Query("""
+        SELECT new com.FA24SE088.OnlineForum.dto.response.RecommendAccountResponse(
+               a,
+               SUM(
+                   CASE
+                       WHEN p.status IN ('PUBLIC', 'PRIVATE') AND p.createdDate >= :last48hours
+                       THEN SIZE(p.upvoteList) + SIZE(p.commentList) + SIZE(p.postViewList)
+                       ELSE 0
+                   END
+               ) + SIZE(a.followerList)
+        )
+        FROM Account a
+        LEFT JOIN a.postList p
+        WHERE a.status = 'ACTIVE'
+        GROUP BY a
+    """)
+    CompletableFuture<List<RecommendAccountResponse>> findRecommendedAccounts(@Param("last48hours") Date last48hours);
 
 
 }

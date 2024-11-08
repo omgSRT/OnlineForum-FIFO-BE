@@ -301,11 +301,12 @@ public class AccountService {
         Calendar calendar = Calendar.getInstance();
         calendar.add(Calendar.HOUR, -48);
         Date last48hours = calendar.getTime();
-        var recommendedAccountsFuture = unitOfWork.getAccountRepository().findByTrendingScore(last48hours);
+        var recommendedAccountsFuture = unitOfWork.getAccountRepository().findRecommendedAccounts(last48hours);
 
         return recommendedAccountsFuture.thenCompose(recommendedAccounts -> {
             var list = recommendedAccounts.stream()
                     .filter(response -> response.getAccount().getStatus().equalsIgnoreCase(AccountStatus.ACTIVE.name()))
+                    .sorted((response1, response2) -> Long.compare(response2.getTrendScore(), response1.getTrendScore()))
                     .toList();
 
             return CompletableFuture.completedFuture(paginationUtils.convertListToPage(page, perPage, list));

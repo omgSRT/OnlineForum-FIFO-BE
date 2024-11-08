@@ -54,7 +54,7 @@ public class AccountController {
         ).join();
     }
 
-    @Operation(summary = "Get Recommended Accounts")
+    @Operation(summary = "Get Recommended Accounts", description = "Get Accounts Based On Last Activities From 48 Hours Ago")
     @GetMapping(path = "/get/recommended")
     public ApiResponse<List<RecommendAccountResponse>> getRecommendedAccounts(@RequestParam(defaultValue = "1") int page,
                                                                               @RequestParam(defaultValue = "10") int perPage){
