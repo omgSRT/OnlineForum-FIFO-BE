@@ -323,7 +323,7 @@ public class AccountService {
             throw new AppException(ErrorCode.ACCOUNT_NOT_FOUND);
         return unitOfWork.getAccountRepository().findByEmail(email);
     }
-
+    
     public CompletableFuture<List<RecommendAccountResponse>> getRecommendedAccounts(int page, int perPage){
         Calendar calendar = Calendar.getInstance();
         calendar.add(Calendar.HOUR, -48);
