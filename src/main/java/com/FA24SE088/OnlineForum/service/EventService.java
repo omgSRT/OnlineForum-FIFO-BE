@@ -1,29 +1,21 @@
 package com.FA24SE088.OnlineForum.service;
 
 import com.FA24SE088.OnlineForum.dto.request.EventRequest;
-import com.FA24SE088.OnlineForum.dto.request.RedeemRequest;
 import com.FA24SE088.OnlineForum.dto.response.EventResponse;
-import com.FA24SE088.OnlineForum.dto.response.RedeemResponse;
 import com.FA24SE088.OnlineForum.entity.*;
 import com.FA24SE088.OnlineForum.enums.EventStatus;
-import com.FA24SE088.OnlineForum.enums.FeedbackStatus;
-import com.FA24SE088.OnlineForum.enums.TransactionType;
 import com.FA24SE088.OnlineForum.exception.AppException;
 import com.FA24SE088.OnlineForum.exception.ErrorCode;
 import com.FA24SE088.OnlineForum.mapper.EventMapper;
-import com.FA24SE088.OnlineForum.mapper.RedeemMapper;
 import com.FA24SE088.OnlineForum.repository.UnitOfWork.UnitOfWork;
 import com.FA24SE088.OnlineForum.utils.PaginationUtils;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
@@ -62,7 +54,7 @@ public class EventService {
                             case "ONGOING": return 1;
                             case "UPCOMING": return 2;
                             case "CONCLUDED": return 3;
-                            default: return 4; // Các trạng thái không xác định ở cuối
+                            default: return 4;
                         }
                     }))
                     .toList();

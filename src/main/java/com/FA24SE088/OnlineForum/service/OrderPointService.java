@@ -29,24 +29,24 @@ public class OrderPointService {
 
     public OrderPointResponse createOrderPoint(OrderPointRequest orderPointRequest) {
         OrderPoint orderPoint = orderPointMapper.toOrderPoint(orderPointRequest);
-        OrderPoint savedOrderPoint = unitOfWork.getOrderRepository().save(orderPoint);
+        OrderPoint savedOrderPoint = unitOfWork.getOrderPointRepository().save(orderPoint);
         return orderPointMapper.toOderPointResponse(savedOrderPoint);
     }
 
     public Optional<OrderPointResponse> getOrderPointById(UUID orderPointId) {
-        return unitOfWork.getOrderRepository()
+        return unitOfWork.getOrderPointRepository()
                 .findById(orderPointId)
                 .map(orderPointMapper::toOderPointResponse);
     }
 
     public List<OrderPointResponse> getAllOrderPoints() {
-        List<OrderPoint> orderPoints = unitOfWork.getOrderRepository().findAll();
+        List<OrderPoint> orderPoints = unitOfWork.getOrderPointRepository().findAll();
         return orderPoints.stream().map(orderPointMapper::toOderPointResponse).toList();
     }
 
     public void deleteOrderPoint(UUID orderPointId) {
-        if (unitOfWork.getOrderRepository().existsById(orderPointId)) {
-            unitOfWork.getOrderRepository().deleteById(orderPointId);
+        if (unitOfWork.getOrderPointRepository().existsById(orderPointId)) {
+            unitOfWork.getOrderPointRepository().deleteById(orderPointId);
         } else {
             throw new AppException(ErrorCode.ORDER_POINT_NOT_FOUND);
         }

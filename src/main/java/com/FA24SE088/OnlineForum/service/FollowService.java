@@ -18,6 +18,8 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
@@ -156,7 +158,8 @@ public class FollowService {
     }
 
     public List<AccountFollowResponse> getTop10MostFollowedAccounts() {
-        List<Object[]> results = unitOfWork.getFollowRepository().findTop10MostFollowedAccounts();
+        Pageable pageable = PageRequest.of(0, 10);
+        List<Object[]> results = unitOfWork.getFollowRepository().findTop10MostFollowedAccounts(pageable);
         List<AccountFollowResponse> top10Accounts = new ArrayList<>();
 
         for (Object[] result : results) {

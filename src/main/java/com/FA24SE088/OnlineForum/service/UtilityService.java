@@ -1,13 +1,11 @@
 package com.FA24SE088.OnlineForum.service;
 
-import com.FA24SE088.OnlineForum.dto.response.DailyPoint2Response;
-import com.FA24SE088.OnlineForum.dto.response.FilterTransactionResponse;
-import com.FA24SE088.OnlineForum.dto.response.SearchEverythingResponse;
-import com.FA24SE088.OnlineForum.dto.response.TransactionResponse;
+import com.FA24SE088.OnlineForum.dto.response.*;
 import com.FA24SE088.OnlineForum.entity.*;
 import com.FA24SE088.OnlineForum.exception.AppException;
 import com.FA24SE088.OnlineForum.exception.ErrorCode;
 import com.FA24SE088.OnlineForum.mapper.DailyPointMapper;
+import com.FA24SE088.OnlineForum.mapper.OrderPointMapper;
 import com.FA24SE088.OnlineForum.mapper.TransactionMapper;
 import com.FA24SE088.OnlineForum.repository.UnitOfWork.UnitOfWork;
 import lombok.AccessLevel;
@@ -34,6 +32,7 @@ import java.util.stream.Stream;
 public class UtilityService {
     TransactionMapper transactionMapper;
     DailyPointMapper dailyPointMapper;
+    OrderPointMapper orderPointMapper;
     UnitOfWork unitOfWork;
 
     @Async("AsyncTaskExecutor")
@@ -138,6 +137,7 @@ public class UtilityService {
     public CompletableFuture<FilterTransactionResponse> filter(boolean viewTransaction,
                                                                boolean dailyPoint,
                                                                boolean bonusPoint,
+                                                               boolean orderPoint,
                                                                String startDateStr, String endDateStr) {
         Account currentUser = getCurrentUser();
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd");
@@ -169,6 +169,7 @@ public class UtilityService {
         CompletableFuture<List<TransactionResponse>> transactionFuture = getTransactionFuture(viewTransaction, includeAll, currentUser, startDate, endDate);
         CompletableFuture<List<DailyPoint2Response>> dailyPointFuture = getDailyPointFuture(dailyPoint, includeAll, currentUser, startDate, endDate);
         CompletableFuture<List<DailyPoint2Response>> bonusPointFuture = getBonusPointFuture(bonusPoint, includeAll, currentUser, startDate, endDate);
+        CompletableFuture<List<OrderPointResponse>> orderPointFuture = getOrderPointFuture(orderPoint, includeAll, currentUser, startDate, endDate);
 
         return CompletableFuture.allOf(transactionFuture, dailyPointFuture, bonusPointFuture)
                 .thenApply(listFinal -> {
@@ -176,6 +177,7 @@ public class UtilityService {
                     response.setTransactionList(transactionFuture.join());
                     response.setDailyPointList(dailyPointFuture.join());
                     response.setBonusPoint(bonusPointFuture.join());
+                    response.setOrderPointList(orderPointFuture.join());
                     return response;
                 });
     }
@@ -259,6 +261,22 @@ public class UtilityService {
                 return unitOfWork.getDailyPointRepository()
                         .findByAccountAndTypeBonusIsNotNullOrderByCreatedDateDesc(currentUser)
                         .thenApply(dailyPointMapper::toListResponse);
+            }
+        }
+        return CompletableFuture.completedFuture(Collections.emptyList());
+    }
+
+    @Async("AsyncTaskExecutor")
+    private CompletableFuture<List<OrderPointResponse>> getOrderPointFuture(boolean orderPoint, boolean includeAll, Account currentUser, Date startDate, Date endDate) {
+        if (orderPoint || includeAll) {
+            if (startDate != null && endDate != null) {
+                return unitOfWork.getOrderPointRepository()
+                        .findByWallet_AccountAndOrderDateBetweenOrderByOrderDateDesc(currentUser, startDate, endDate)
+                        .thenApply(orderPointMapper::toOderPointResponseList);
+            } else {
+                return unitOfWork.getOrderPointRepository()
+                        .findByWallet_AccountOrderByOrderDateDesc(currentUser)
+                        .thenApply(orderPointMapper::toOderPointResponseList);
             }
         }
         return CompletableFuture.completedFuture(Collections.emptyList());

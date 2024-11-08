@@ -24,8 +24,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
@@ -94,77 +92,6 @@ public class RewardService {
 
         return mapToRewardResponse(updatedReward);
     }
-
-
-
-
-
-
-
-
-
-
-//    @Transactional
-//    public DocumentResponse update(UUID documentID, DocumentRequest request) {
-//        if (!request.getStatus().equals(DocumentStatus.ACTIVE.name()) &&
-//                !request.getStatus().equals(DocumentStatus.INACTIVE.name())) {
-//            throw new AppException(ErrorCode.WRONG_STATUS);
-//        }
-//
-//        Reward reward = unitOfWork.getDocumentRepository()
-//                .findById(documentID)
-//                .orElseThrow(() -> new AppException(ErrorCode.DOCUMENT_NOT_FOUND));
-//
-//        documentMapper.updateDocumentFromRequest(reward, request);
-//
-//        unitOfWork.getDocumentRepository().save(reward);
-//
-//        unitOfWork.getSectionRepository().deleteAllByDocument(reward);
-//        reward.getSectionList().clear();
-//
-//        List<SectionResponse> sectionResponses = new ArrayList<>();
-//        int index = 0;
-//        for (SectionRequest sectionRequest : request.getSectionList()) {
-//            Section section = sectionMapper.toSection(sectionRequest);
-//            section.setReward(reward);
-//            section.setSectionOrder(index++);
-//
-//            section = unitOfWork.getSectionRepository().save(section);
-//
-//            List<ImageSectionResponse> imageResponses = new ArrayList<>();
-//            for (ImageSectionRequest imageRequest : sectionRequest.getImageSectionList()) {
-//                ContentSection contentSection = new ContentSection();
-//                contentSection.setUrl(imageRequest.getUrl());
-//                contentSection.setSection(section);
-//
-//                contentSection = unitOfWork.getImageSectionRepository().save(contentSection);
-//                imageResponses.add(new ImageSectionResponse(contentSection.getUrl()));
-//            }
-//
-//            List<VideoSectionResponse> videoResponses = new ArrayList<>();
-//            for (VideoSectionRequest videoRequest : sectionRequest.getVideoSectionList()) {
-//                VideoSection videoSection = new VideoSection();
-//                videoSection.setUrl(videoRequest.getUrl());
-//                videoSection.setSection(section);
-//
-//                videoSection = unitOfWork.getVideoSectionRepository().save(videoSection);
-//                videoResponses.add(new VideoSectionResponse(videoSection.getUrl()));
-//            }
-//
-//            SectionResponse sectionResponse = new SectionResponse();
-//            sectionResponse.setLinkGit(section.getLinkGit());
-//            sectionResponse.setImageSectionList(imageResponses);
-//            sectionResponse.setVideoSectionList(videoResponses);
-//
-//            sectionResponses.add(sectionResponse);
-//        }
-//
-//        DocumentResponse response = documentMapper.toResponse(reward);
-//        response.setSectionList(sectionResponses);
-//
-//        return response;
-//    }
-
 
     @Transactional
     public void deleteReward(UUID rewardId) {
