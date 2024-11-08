@@ -3,6 +3,7 @@ package com.FA24SE088.OnlineForum.service;
 
 import com.FA24SE088.OnlineForum.dto.request.*;
 import com.FA24SE088.OnlineForum.dto.response.FeedbackResponse;
+import com.FA24SE088.OnlineForum.dto.response.NotificationResponse;
 import com.FA24SE088.OnlineForum.entity.*;
 import com.FA24SE088.OnlineForum.enums.ChatEvent;
 import com.FA24SE088.OnlineForum.enums.FeedbackStatus;
@@ -49,21 +50,25 @@ public class FeedbackService {
         feedback.setStatus(FeedbackStatus.PENDING.name());
         Feedback savedFeedback = unitOfWork.getFeedbackRepository().save(feedback);
 
-//        Notification notification = Notification.builder()
-//                .title("Feedback Noitfication")
-//                .message("Your feedback send success!")
-//                .isRead(false)
-//                .type("Feedback")
-//                .account(account)
-//                .createdDate(feedback.getCreatedDate())
-//                .build();
 
-//        unitOfWork.getNotificationRepository().save(notification);
-        //websocket
-//        dataHandler.sendToUser(account.getAccountId(),notification);
-//        dataHandler.sendToUser2(account.getAccountId(),notification);
+        Notification notification = Notification.builder()
+                .title("Feedback Noitfication")
+                .message("Your feedback send success!")
+                .isRead(false)
+                .type("Feedback")
+                .account(account)
+                .createdDate(feedback.getCreatedDate())
+                .build();
+        NotificationResponse responseNoti = NotificationResponse.builder()
+                .title(notification.getTitle())
+                .message(notification.getMessage())
+                .isRead(false)
+                .type("feedback")
+                .build();
+        unitOfWork.getNotificationRepository().save(notification);
+        dataHandler.sendToUser(account.getAccountId(),responseNoti);
         FeedbackResponse response = feedbackMapper.toResponse(savedFeedback);
-//        response.setNotification(notification);
+        response.setNotification(notification);
         return response;
     }
 

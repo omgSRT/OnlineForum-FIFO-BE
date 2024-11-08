@@ -182,7 +182,8 @@ public class AccountService {
             account.setBio(request.getBio());
         }
         if (request.getHandle() != null && !request.getHandle().isEmpty()) {
-            account.setHandle(request.getHandle());
+            String handle = String.format("@%s", request.getHandle());
+            account.setHandle(handle);
         }
         unitOfWork.getAccountRepository().save(account);
         return accountMapper.toResponse(account);
@@ -195,14 +196,32 @@ public class AccountService {
 
     public List<AccountResponse> getAll(int page, int perPage) {
         var list = unitOfWork.getAccountRepository().findAll().stream()
-                .map(accountMapper::toResponse)
+                .map(account -> {
+                    long followerCount = unitOfWork.getFollowRepository().countByFollowee(account);
+                    long followeeCount = unitOfWork.getFollowRepository().countByFollower(account);
+
+                    AccountResponse response = accountMapper.toResponse(account);
+                    response.setCountFollowee(followeeCount);
+                    response.setCountFollower(followerCount);
+
+                    return response;
+                })
                 .toList();
         return paginationUtils.convertListToPage(page, perPage, list);
     }
 
     public List<AccountResponse> filter(int page, int perPage, String username, String email, AccountStatus status, RoleAccount role) {
         List<AccountResponse> result = unitOfWork.getAccountRepository().findAll().stream()
-                .map(accountMapper::toResponse)
+                .map(account -> {
+                    long followerCount = unitOfWork.getFollowRepository().countByFollowee(account);
+                    long followeeCount = unitOfWork.getFollowRepository().countByFollower(account);
+
+                    AccountResponse response = accountMapper.toResponse(account);
+                    response.setCountFollowee(followeeCount);
+                    response.setCountFollower(followerCount);
+
+                    return response;
+                })
                 .filter(x -> (username == null || (x.getUsername() != null && x.getUsername().contains(username))))
                 .filter(x -> (email == null || (x.getEmail() != null && x.getEmail().contains(email))))
                 .filter(x -> (status == null || (x.getStatus() != null && x.getStatus().contains(status.name()))))
@@ -226,7 +245,15 @@ public class AccountService {
 
     public AccountResponse findById(UUID id){
         Account account = unitOfWork.getAccountRepository().findById(id).orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND));
-        return accountMapper.toResponse(account);
+
+        long followerCount = unitOfWork.getFollowRepository().countByFollowee(account);
+        long followeeCount = unitOfWork.getFollowRepository().countByFollower(account);
+
+        AccountResponse response = accountMapper.toResponse(account);
+        response.setCountFollowee(followeeCount);
+        response.setCountFollower(followerCount);
+
+        return response;
     }
 
     public CompletableFuture<Account> delete(UUID uuid) {

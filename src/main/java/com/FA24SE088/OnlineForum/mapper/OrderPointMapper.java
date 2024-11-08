@@ -11,8 +11,11 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 
+import java.util.List;
+
 @Mapper(componentModel = "spring")
 public interface OrderPointMapper {
     OrderPoint toOrderPoint(OrderPointRequest request);
     OrderPointResponse toOderPointResponse(OrderPoint orderPoint);
+    List<OrderPointResponse> toOderPointResponseList(List<OrderPoint> list);
 }
