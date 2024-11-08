@@ -16,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -37,6 +38,7 @@ public class PostService {
     //region CRUD Completed Post
     @Async("AsyncTaskExecutor")
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
+    @Scheduled(fixedRate = 1200000)
     public CompletableFuture<PostResponse> createPost(PostCreateRequest request) {
         var username = getUsernameFromJwt();
         var accountFuture = findAccountByUsername(username);

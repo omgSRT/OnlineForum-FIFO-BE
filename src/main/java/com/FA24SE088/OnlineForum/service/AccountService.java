@@ -297,6 +297,7 @@ public class AccountService {
         return unitOfWork.getAccountRepository().findByEmail(email);
     }
 
+    @Scheduled(fixedRate = 600000)
     public CompletableFuture<List<RecommendAccountResponse>> getRecommendedAccounts(int page, int perPage){
         Calendar calendar = Calendar.getInstance();
         calendar.add(Calendar.HOUR, -48);
