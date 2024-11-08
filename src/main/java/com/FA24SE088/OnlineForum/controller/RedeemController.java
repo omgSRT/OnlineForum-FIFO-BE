@@ -28,6 +28,7 @@ public class RedeemController {
                 .entity(redeemService.create_2(request))
                 .build();
     }
+
     @Operation(summary = "Xem phần thưởng đã đổi của tk đang đăng nhập", description = "Xem phần thưởng đã đổi của tk đang đăng nhập")
     @GetMapping("/my-reward")
     public ApiResponse<RedeemDocumentResponse> getMyDocument(){
