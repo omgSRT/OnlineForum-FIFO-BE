@@ -1,11 +1,15 @@
 package com.FA24SE088.OnlineForum.repository.Repository;
 
+import com.FA24SE088.OnlineForum.dto.response.RecommendAccountResponse;
 import com.FA24SE088.OnlineForum.entity.Account;
+import io.lettuce.core.dynamic.annotation.Param;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -30,4 +34,17 @@ public interface AccountRepository extends JpaRepository<Account, UUID> {
 //    List<Account> findAllByStatusAndBannedUntilBefore(String status, LocalDateTime dateTime);
 
 //    List<Account> findAllByStatusAndBannedUntilBefore(AccountStatus status, LocalDateTime dateTime);
+
+    @Query("SELECT new com.FA24SE088.OnlineForum.dto.response.RecommendAccountResponse(" +
+            "p.account, " +
+            "SUM(size(p.upvoteList) + size(p.commentList) + size(p.postViewList) + size(p.account.followerList) + " +
+            "(SELECT COUNT(post) FROM Post post WHERE post.account = p.account))) " +
+            "FROM Post p " +
+            "WHERE p.createdDate >= :last48Hours " +
+            "GROUP BY p.account " +
+            "ORDER BY SUM(size(p.upvoteList) + size(p.commentList) + size(p.postViewList) + size(p.account.followerList) + " +
+            "(SELECT COUNT(post) FROM Post post WHERE post.account = p.account)) DESC")
+    CompletableFuture<List<RecommendAccountResponse>> findByTrendingScore(@Param("last48Hours") Date last48Hours);
+
+
 }

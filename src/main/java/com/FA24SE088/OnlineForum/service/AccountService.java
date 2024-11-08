@@ -6,6 +6,7 @@ import com.FA24SE088.OnlineForum.dto.request.AccountUpdateInfoRequest;
 import com.FA24SE088.OnlineForum.dto.request.AccountUpdateRequest;
 import com.FA24SE088.OnlineForum.dto.request.AccountRequest;
 import com.FA24SE088.OnlineForum.dto.response.AccountResponse;
+import com.FA24SE088.OnlineForum.dto.response.RecommendAccountResponse;
 import com.FA24SE088.OnlineForum.entity.*;
 import com.FA24SE088.OnlineForum.enums.AccountStatus;
 
@@ -30,9 +31,7 @@ import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
 
@@ -296,5 +295,20 @@ public class AccountService {
         if (unitOfWork.getAccountRepository().findByEmail(email) == null)
             throw new AppException(ErrorCode.ACCOUNT_NOT_FOUND);
         return unitOfWork.getAccountRepository().findByEmail(email);
+    }
+
+    public CompletableFuture<List<RecommendAccountResponse>> getRecommendedAccounts(int page, int perPage){
+        Calendar calendar = Calendar.getInstance();
+        calendar.add(Calendar.HOUR, -48);
+        Date last48hours = calendar.getTime();
+        var recommendedAccountsFuture = unitOfWork.getAccountRepository().findByTrendingScore(last48hours);
+
+        return recommendedAccountsFuture.thenCompose(recommendedAccounts -> {
+            var list = recommendedAccounts.stream()
+                    .filter(response -> response.getAccount().getStatus().equalsIgnoreCase(AccountStatus.ACTIVE.name()))
+                    .toList();
+
+            return CompletableFuture.completedFuture(paginationUtils.convertListToPage(page, perPage, list));
+        });
     }
 }
