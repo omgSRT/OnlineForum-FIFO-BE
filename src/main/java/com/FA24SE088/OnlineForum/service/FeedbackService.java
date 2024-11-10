@@ -31,6 +31,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class FeedbackService {
+    @Autowired
     UnitOfWork unitOfWork;
     FeedbackMapper feedbackMapper;
     DataHandler dataHandler;
@@ -68,7 +69,7 @@ public class FeedbackService {
         unitOfWork.getNotificationRepository().save(notification);
         dataHandler.sendToUser(account.getAccountId(),responseNoti);
         FeedbackResponse response = feedbackMapper.toResponse(savedFeedback);
-        response.setNotification(notification);
+//        response.setNotification(notification);
         return response;
     }
 
