@@ -33,7 +33,7 @@ public class RewardController {
     @GetMapping("/getAll")
     public ApiResponse<List<RewardResponse>> getAll(){
         return ApiResponse.<List<RewardResponse>>builder()
-                .entity(rewardService.getAll())
+                .entity(rewardService.getUnredeemedRewardsForCurrentUser())
                 .build();
     }
 

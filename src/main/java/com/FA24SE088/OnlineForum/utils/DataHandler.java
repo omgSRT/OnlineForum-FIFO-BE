@@ -8,6 +8,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketMessage;
@@ -29,6 +30,7 @@ public class DataHandler extends TextWebSocketHandler {
 
     private final ObjectMapper objectMapper = new ObjectMapper(); // Jackson ObjectMapper
 
+    @Autowired
     UnitOfWork unitOfWork;
 
     @Override
@@ -78,6 +80,7 @@ public class DataHandler extends TextWebSocketHandler {
             if (session != null) {
                 try {
                     session.sendMessage(new TextMessage(messageJson));
+                    LOG.info("Đây là message Json: " + messageJson);
                 } catch (Exception e) {
                     LOG.error("Failed to send message to user: " + accountId, e);
                 }

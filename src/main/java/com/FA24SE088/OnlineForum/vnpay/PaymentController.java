@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.view.RedirectView;
 
 import java.util.List;
 import java.util.UUID;
@@ -36,15 +37,15 @@ public class PaymentController {
 
 
     @PostMapping("/buyPoints")
-    public ResponseEntity<PaymentDTO.VNPayResponse> buyPoints(HttpServletRequest request, UUID pricingId) {
-        PaymentDTO.VNPayResponse response = paymentService.buyPoints(request, pricingId);
+    public ResponseEntity<PaymentDTO.VNPayResponse> buyPoints(HttpServletRequest request, UUID pricingId, String url) {
+        PaymentDTO.VNPayResponse response = paymentService.buyPoints(request, pricingId, url);
         return ResponseEntity.ok(response);
     }
 
     @GetMapping("/vn-pay-callback")
-    public ApiResponse<OrderPointResponse> payCallbackHandler(HttpServletRequest request) {
-        return ApiResponse.<OrderPointResponse>builder()
-                .entity(paymentService.handleVnPayCallback(request))
-                .build();
+    public RedirectView payCallbackHandler(HttpServletRequest request) {
+        return paymentService.handleVnPayCallback(request);
+
     }
+
 }

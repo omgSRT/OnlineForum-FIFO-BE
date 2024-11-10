@@ -18,6 +18,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.servlet.view.RedirectView;
 
 import java.util.*;
 
@@ -64,7 +65,7 @@ public class PaymentService {
                 .orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND));
     }
 
-    public PaymentDTO.VNPayResponse buyPoints(HttpServletRequest request, UUID pricingId) {
+    public PaymentDTO.VNPayResponse buyPoints(HttpServletRequest request, UUID pricingId, String redirectUrl) {
         Pricing pricing = unitOfWork.getPricingRepository().findById(pricingId)
                 .orElseThrow(() -> new AppException(ErrorCode.PRICING_INVALID));
 
@@ -78,6 +79,7 @@ public class PaymentService {
         orderPoint.setPricing(pricing);
         orderPoint.setAmount(amount / 100.0);
         orderPoint.setOrderDate(new Date());
+//        orderPoint.setUrlRedirect(redirectUrl);
         orderPoint.setStatus("PENDING");
         unitOfWork.getOrderPointRepository().save(orderPoint);
 
@@ -101,13 +103,43 @@ public class PaymentService {
     }
 
 
-    public OrderPointResponse handleVnPayCallback(HttpServletRequest request) {
+//    public OrderPointResponse handleVnPayCallback(HttpServletRequest request) {
+//
+//        String status = request.getParameter("vnp_ResponseCode");
+//        String orderId = request.getParameter("vnp_TxnRef");
+//
+//        OrderPoint orderPoint = unitOfWork.getOrderPointRepository().findById(UUID.fromString(orderId))
+//                .orElseThrow(() -> new AppException(ErrorCode.ORDER_POINT_NOT_FOUND));
+//
+//        if ("00".equals(status)) {
+//            orderPoint.setStatus(OrderPointStatus.SUCCESS.name());
+//            OrderPoint orderPoint1 = unitOfWork.getOrderPointRepository().save(orderPoint);
+//
+//            Wallet wallet = orderPoint.getWallet();
+//            wallet.setBalance(wallet.getBalance() + orderPoint.getPricing().getPoint());
+//            unitOfWork.getWalletRepository().save(wallet);
+//            return orderPointMapper.toOderPointResponse(orderPoint1);
+//        } else {
+//            orderPoint.setStatus(OrderPointStatus.FAILED.name());
+//            OrderPoint orderPoint2 = unitOfWork.getOrderPointRepository().save(orderPoint);
+//            return orderPointMapper.toOderPointResponse(orderPoint2);
+//        }
+//    }
+
+
+
+    public RedirectView handleVnPayCallback(HttpServletRequest request) {
 
         String status = request.getParameter("vnp_ResponseCode");
         String orderId = request.getParameter("vnp_TxnRef");
+//        String url = request.getParameter("vnp_RedirectUrl");
+
+        String returnUrl = request.getParameter("returnUrl");
 
         OrderPoint orderPoint = unitOfWork.getOrderPointRepository().findById(UUID.fromString(orderId))
                 .orElseThrow(() -> new AppException(ErrorCode.ORDER_POINT_NOT_FOUND));
+
+        String redirectUrl;
 
         if ("00".equals(status)) {
             orderPoint.setStatus(OrderPointStatus.SUCCESS.name());
@@ -116,11 +148,22 @@ public class PaymentService {
             Wallet wallet = orderPoint.getWallet();
             wallet.setBalance(wallet.getBalance() + orderPoint.getPricing().getPoint());
             unitOfWork.getWalletRepository().save(wallet);
-            return orderPointMapper.toOderPointResponse(orderPoint1);
+
+            // URL khi thanh toán thành công
+//            redirectUrl = orderPoint.getUrlRedirect();
+            redirectUrl = returnUrl;
         } else {
             orderPoint.setStatus(OrderPointStatus.FAILED.name());
             OrderPoint orderPoint2 = unitOfWork.getOrderPointRepository().save(orderPoint);
-            return orderPointMapper.toOderPointResponse(orderPoint2);
+
+            // URL khi thanh toán thất bại
+            redirectUrl = orderPoint.getUrlRedirect();
         }
+
+        // Thực hiện redirect
+        RedirectView redirectView = new RedirectView();
+        redirectView.setUrl(redirectUrl);
+        return redirectView;
     }
+
 }

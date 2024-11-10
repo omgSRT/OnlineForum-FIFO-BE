@@ -41,7 +41,7 @@ public class VNPAYConfig {
         vnpParamsMap.put("vnp_OrderInfo", "Thanh toan don hang:" +  VNPayUtil.getRandomNumber(8));
         vnpParamsMap.put("vnp_OrderType", this.orderType);
         vnpParamsMap.put("vnp_Locale", "vn");
-        vnpParamsMap.put("vnp_ReturnUrl", this.vnp_ReturnUrl);
+        vnpParamsMap.put("vnp_ReturnUrl", this.vnp_ReturnUrl +"?returnUrl=https://www.facebook.com/reel/500252086342781");
         Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("Etc/GMT+7"));
         SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMddHHmmss");
         String vnpCreateDate = formatter.format(calendar.getTime());

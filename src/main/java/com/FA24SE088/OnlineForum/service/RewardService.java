@@ -20,6 +20,7 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -205,8 +206,22 @@ public class RewardService {
                 .map(this::mapToRewardResponse)
                 .toList();
     }
+    private Account getCurrentUser() {
+        var context = SecurityContextHolder.getContext();
+        return unitOfWork.getAccountRepository().findByUsername(context.getAuthentication().getName()).orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND));
+    }
+    public List<RewardResponse> getUnredeemedRewardsForCurrentUser() {
+        Account currentUser = getCurrentUser();
 
-
+        List<UUID> redeemedRewardIds = unitOfWork.getRedeemRepository()
+                .findAllByAccount(currentUser).stream()
+                .map(redeem -> redeem.getReward().getRewardId())
+                .toList();
+        return unitOfWork.getRewardRepository().findAll().stream()
+                .filter(reward -> !redeemedRewardIds.contains(reward.getRewardId()))
+                .map(this::mapToRewardResponse)
+                .toList();
+    }
 
 }
 
