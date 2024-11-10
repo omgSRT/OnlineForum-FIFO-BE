@@ -14,4 +14,6 @@ public class PointRequest {
     double maxPoint;
     @Min(value = 1, message = "Point per post must be greater than or equal to 1")
     double pointPerPost;
+//    @Min(value = 1, message = "Point pay for download must be greater than or equal to 1")
+//    double pointPayForDownload;
 }

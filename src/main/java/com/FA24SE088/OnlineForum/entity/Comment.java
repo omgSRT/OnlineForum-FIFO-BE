@@ -20,6 +20,7 @@ public class Comment {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     UUID commentId;
+    @Column(columnDefinition = "MEDIUMTEXT")
     String content;
 
     @ManyToOne

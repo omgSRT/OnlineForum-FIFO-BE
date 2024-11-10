@@ -17,6 +17,7 @@ public class TransactionResponse {
     UUID transactionId;
     double amount;
     Date createdDate;
+    String transactionType;
     @JsonIgnoreProperties(value = {"transactionList", "sectionList", "redeemList"})
     Reward reward;
 }

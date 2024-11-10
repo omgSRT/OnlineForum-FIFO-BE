@@ -21,6 +21,8 @@ public class Point {
     UUID pointId;
     double maxPoint;
     double pointPerPost;
+    double pointCostPerDownload;
+    double pointEarnedPerDownload;
 
     @JsonIgnoreProperties(value = { "point" }, allowSetters = true)
     @OneToMany(mappedBy = "point", cascade = CascadeType.ALL, orphanRemoval = true)

@@ -26,7 +26,7 @@ public class SecurityConfiguration {
 //            "/account/create", "/authenticate/sign-up", "/authenticate/resend-otp", "/authenticate/verify-email",
 //            "/authenticate/forget-password"};
 private final String[] PUBLIC_ENDPOINTS_POST = {"/authenticate/**", "/email/send",
-        "/daily-point/create", "/notification/create", "/notification/change/status", "/account/create"};
+        "/daily-point/create", "/notification/create", "/notification/change/status", "/account/create", "/transaction/create"};
     private final String[] PUBLIC_ENDPOINTS_GET = {"/swagger-ui/**", "/v3/api-docs/**", "/swagger-resources/**"
     };
     private final String[] PUBLIC_ENDPOINTS_PUT = {
