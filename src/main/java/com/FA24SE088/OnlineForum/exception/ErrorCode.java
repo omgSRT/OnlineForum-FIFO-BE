@@ -122,6 +122,8 @@ public enum ErrorCode {
     PRICING_INVALID(10104, "Pricing invalid", HttpStatus.BAD_REQUEST),
     POST_VIEW_NOT_FOUND(10105, "Post View Not Found", HttpStatus.NOT_FOUND),
     WRONG_DATE_FORMAT(10106, "Invalid date format. Please use yyyy-MM-dd.", HttpStatus.BAD_REQUEST),
+    POINT_PAY_FOR_DOWNLOAD_LESS_THAN_ONE(10107, "Point pay for download must be greater than or equal to 1", HttpStatus.BAD_REQUEST),
+    BALANCE_NOT_SUFFICIENT_TO_DOWNLOAD(10108, "Balance Is Not Sufficient To Download", HttpStatus.PAYMENT_REQUIRED),
     ;
 
     private int code;

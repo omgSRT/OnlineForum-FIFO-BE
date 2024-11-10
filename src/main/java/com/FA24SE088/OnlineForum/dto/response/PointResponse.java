@@ -14,4 +14,6 @@ public class PointResponse {
     UUID pointId;
     double maxPoint;
     double pointPerPost;
+    double pointCostPerDownload;
+    double pointEarnedPerDownload;
 }

@@ -42,9 +42,8 @@ public class PostService {
         var accountFuture = findAccountByUsername(username);
         var topicFuture = findTopicById(request.getTopicId());
         var tagFuture = findTagById(request.getTagId());
-        var pointFuture = getPoint();
 
-        return CompletableFuture.allOf(accountFuture, topicFuture, tagFuture, pointFuture)
+        return CompletableFuture.allOf(accountFuture, topicFuture, tagFuture)
                 .thenCompose(v -> {
                     var account = accountFuture.join();
                     var topic = topicFuture.join();
