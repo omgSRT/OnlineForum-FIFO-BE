@@ -1,5 +1,6 @@
 package com.FA24SE088.OnlineForum.dto.request;
 
+import com.FA24SE088.OnlineForum.enums.TransactionType;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -15,4 +16,5 @@ public class TransactionRequest {
     double amount;
     UUID accountId;
     UUID rewardId;
+    TransactionType transactionType;
 }

@@ -85,6 +85,18 @@ public class PostController {
         ).join();
     }
 
+    @Operation(summary = "Get All Posts", description = "Get All Posts From Another User By Current User")
+    @GetMapping(path = "/getall/other-user/{accountId}")
+    public ApiResponse<List<PostResponse>> getAllPostsFromAnotherUser(@RequestParam(defaultValue = "1") int page,
+                                                                      @RequestParam(defaultValue = "10") int perPage,
+                                                                      @PathVariable UUID accountId){
+        return postService.getAllPostsFromOtherUser(page, perPage, accountId).thenApply(postResponses ->
+                ApiResponse.<List<PostResponse>>builder()
+                        .entity(postResponses)
+                        .build()
+        ).join();
+    }
+
     @Operation(summary = "Get Post", description = "Get Post By ID")
     @GetMapping(path = "/get/{postId}")
     public ApiResponse<PostResponse> getPostById(@PathVariable UUID postId){
