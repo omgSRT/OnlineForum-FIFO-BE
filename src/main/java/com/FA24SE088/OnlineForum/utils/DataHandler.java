@@ -74,8 +74,10 @@ public class DataHandler extends TextWebSocketHandler {
 
     public void sendToUser(UUID accountId, Object messageObject) {
         try {
+
             Account account = unitOfWork.getAccountRepository().findById(accountId).orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND));
             String messageJson = objectMapper.writeValueAsString(messageObject); // Convert object to JSON string
+            LOG.info("================" + messageJson);
             WebSocketSession session = sessions.get(account.getEmail());
             if (session != null) {
                 try {
