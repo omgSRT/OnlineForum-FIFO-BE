@@ -34,7 +34,7 @@ public class PaymentService {
     public PaymentDTO.VNPayResponse createVnPayPayment(HttpServletRequest request) {
         long amount = 1000000L;
         String bankCode = request.getParameter("bankCode");
-        Map<String, String> vnpParamsMap = vnPayConfig.getVNPayConfig();
+        Map<String, String> vnpParamsMap = vnPayConfig.getVNPayConfig("");
         vnpParamsMap.put("vnp_Amount", String.valueOf(amount));
         if (bankCode != null && !bankCode.isEmpty()) {
             vnpParamsMap.put("vnp_BankCode", bankCode);
@@ -79,11 +79,10 @@ public class PaymentService {
         orderPoint.setPricing(pricing);
         orderPoint.setAmount(amount / 100.0);
         orderPoint.setOrderDate(new Date());
-//        orderPoint.setUrlRedirect(redirectUrl);
         orderPoint.setStatus("PENDING");
         unitOfWork.getOrderPointRepository().save(orderPoint);
 
-        Map<String, String> vnpParamsMap = vnPayConfig.getVNPayConfig();
+        Map<String, String> vnpParamsMap = vnPayConfig.getVNPayConfig(redirectUrl);
         vnpParamsMap.put("vnp_Amount", String.valueOf(amount));
         vnpParamsMap.put("vnp_IpAddr", VNPayUtil.getIpAddress(request));
         vnpParamsMap.put("vnp_TxnRef", orderPoint.getOrderId().toString());
@@ -132,8 +131,6 @@ public class PaymentService {
 
         String status = request.getParameter("vnp_ResponseCode");
         String orderId = request.getParameter("vnp_TxnRef");
-//        String url = request.getParameter("vnp_RedirectUrl");
-
         String returnUrl = request.getParameter("returnUrl");
 
         OrderPoint orderPoint = unitOfWork.getOrderPointRepository().findById(UUID.fromString(orderId))
@@ -143,24 +140,19 @@ public class PaymentService {
 
         if ("00".equals(status)) {
             orderPoint.setStatus(OrderPointStatus.SUCCESS.name());
-            OrderPoint orderPoint1 = unitOfWork.getOrderPointRepository().save(orderPoint);
+            unitOfWork.getOrderPointRepository().save(orderPoint);
 
             Wallet wallet = orderPoint.getWallet();
             wallet.setBalance(wallet.getBalance() + orderPoint.getPricing().getPoint());
             unitOfWork.getWalletRepository().save(wallet);
 
-            // URL khi thanh toán thành công
-//            redirectUrl = orderPoint.getUrlRedirect();
             redirectUrl = returnUrl;
         } else {
             orderPoint.setStatus(OrderPointStatus.FAILED.name());
-            OrderPoint orderPoint2 = unitOfWork.getOrderPointRepository().save(orderPoint);
+            unitOfWork.getOrderPointRepository().save(orderPoint);
 
-            // URL khi thanh toán thất bại
-            redirectUrl = orderPoint.getUrlRedirect();
+            redirectUrl = returnUrl;
         }
-
-        // Thực hiện redirect
         RedirectView redirectView = new RedirectView();
         redirectView.setUrl(redirectUrl);
         return redirectView;

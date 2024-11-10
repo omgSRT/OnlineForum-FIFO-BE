@@ -21,7 +21,6 @@ public class OrderPoint {
     double amount;
     String status;
     Date orderDate;
-    String urlRedirect;
 
     @ManyToOne
     @JoinColumn(name = "pricingId")
