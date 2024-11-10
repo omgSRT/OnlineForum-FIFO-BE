@@ -1,5 +1,6 @@
 package com.FA24SE088.OnlineForum.dto.request;
 
+import jakarta.persistence.Column;
 import jakarta.validation.constraints.Size;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -17,6 +18,7 @@ public class EventRequest {
     Date startDate;
     Date endDate;
     String location;
+    @Column(columnDefinition = "MEDIUMTEXT")
     String image;
     String content;
     String link;

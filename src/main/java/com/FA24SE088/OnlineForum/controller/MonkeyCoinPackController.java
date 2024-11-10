@@ -6,7 +6,7 @@ import com.FA24SE088.OnlineForum.dto.response.ApiResponse;
 import com.FA24SE088.OnlineForum.dto.response.PricingResponse;
 import com.FA24SE088.OnlineForum.exception.AppException;
 import com.FA24SE088.OnlineForum.exception.ErrorCode;
-import com.FA24SE088.OnlineForum.service.PricingService;
+import com.FA24SE088.OnlineForum.service.MonkeyCoinPackService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -20,28 +20,28 @@ import java.util.UUID;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Slf4j
 @RestController
-@RequestMapping("/pricing")
-public class PricingController {
+@RequestMapping("/monkey-coin-pack")
+public class MonkeyCoinPackController {
 
-    private final PricingService pricingService;
+    private final MonkeyCoinPackService monkeyCoinPackService;
 
 
     @PostMapping("/create")
     public ApiResponse<PricingResponse> createPricing(@RequestBody PricingRequest pricingRequest) {
         return ApiResponse.<PricingResponse>builder()
-                .entity(pricingService.createPricing(pricingRequest))
+                .entity(monkeyCoinPackService.createPricing(pricingRequest))
                 .build();
     }
     @PutMapping ("/update/{pricingId}")
     public ApiResponse<PricingResponse> update(@PathVariable UUID pricingId, @RequestBody PricingRequest pricingRequest) {
         return ApiResponse.<PricingResponse>builder()
-                .entity(pricingService.updatePricing(pricingId,pricingRequest))
+                .entity(monkeyCoinPackService.updatePricing(pricingId,pricingRequest))
                 .build();
     }
     @GetMapping("/get-by-id/{id}")
     public ApiResponse<PricingResponse> getPricing(@PathVariable UUID id) {
         return ApiResponse.<PricingResponse>builder()
-                .entity(pricingService.getPricingById(id)
+                .entity(monkeyCoinPackService.getPricingById(id)
                         .orElseThrow(() -> new AppException(ErrorCode.PRICING_NOT_FOUND)))
                 .build();
     }
@@ -49,13 +49,13 @@ public class PricingController {
     @GetMapping("/get-all")
     public ApiResponse<List<PricingResponse>> getAllPricings() {
         return ApiResponse.<List<PricingResponse>>builder()
-                .entity(pricingService.getAllPricings())
+                .entity(monkeyCoinPackService.getAllPricings())
                 .build();
     }
 
     @DeleteMapping("/delete/{id}")
     public ApiResponse<Void> deletePricing(@PathVariable UUID id) {
-        pricingService.deletePricing(id);
+        monkeyCoinPackService.deletePricing(id);
         return ApiResponse.<Void>builder().build();
     }
 }

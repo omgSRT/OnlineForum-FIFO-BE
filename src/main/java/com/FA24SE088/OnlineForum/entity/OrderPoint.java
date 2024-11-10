@@ -23,8 +23,8 @@ public class OrderPoint {
     Date orderDate;
 
     @ManyToOne
-    @JoinColumn(name = "pricingId")
-    Pricing pricing;
+    @JoinColumn(name = "monkeyCoinPackId")
+    MonkeyCoinPack monkeyCoinPack;
 
     @ManyToOne
     @JoinColumn(name = "walletId")
