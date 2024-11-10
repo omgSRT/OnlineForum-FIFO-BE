@@ -1,9 +1,7 @@
 package com.FA24SE088.OnlineForum.dto.response;
 
-import com.FA24SE088.OnlineForum.entity.Pricing;
-import com.FA24SE088.OnlineForum.entity.Wallet;
+import com.FA24SE088.OnlineForum.entity.MonkeyCoinPack;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -21,7 +19,7 @@ public class OrderPointResponse {
     String status;
     Date orderDate;
     @JsonIgnoreProperties(value = {"orderPointList"})
-    Pricing pricing;
+    MonkeyCoinPack monkeyCoinPack;
 //    @JsonIgnoreProperties(value = {"account","transactionList","orderPointList"})
 //    Wallet wallet;
 

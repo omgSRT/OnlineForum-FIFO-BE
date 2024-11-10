@@ -2,10 +2,9 @@ package com.FA24SE088.OnlineForum.vnpay;
 
 
 import com.FA24SE088.OnlineForum.configuration.VNPAYConfig;
-import com.FA24SE088.OnlineForum.dto.response.OrderPointResponse;
 import com.FA24SE088.OnlineForum.entity.Account;
+import com.FA24SE088.OnlineForum.entity.MonkeyCoinPack;
 import com.FA24SE088.OnlineForum.entity.OrderPoint;
-import com.FA24SE088.OnlineForum.entity.Pricing;
 import com.FA24SE088.OnlineForum.entity.Wallet;
 import com.FA24SE088.OnlineForum.enums.OrderPointStatus;
 import com.FA24SE088.OnlineForum.exception.AppException;
@@ -66,17 +65,17 @@ public class PaymentService {
     }
 
     public PaymentDTO.VNPayResponse buyPoints(HttpServletRequest request, UUID pricingId, String redirectUrl) {
-        Pricing pricing = unitOfWork.getPricingRepository().findById(pricingId)
+        MonkeyCoinPack monkeyCoinPack = unitOfWork.getMonkeyCoinPackRepository().findById(pricingId)
                 .orElseThrow(() -> new AppException(ErrorCode.PRICING_INVALID));
 
-        long amount = pricing.getPrice() * 100L;
+        long amount = monkeyCoinPack.getPrice() * 100L;
 
         Account account = getCurrentUser();
         Wallet wallet = unitOfWork.getWalletRepository().findById(account.getWallet().getWalletId())
                 .orElseThrow(() -> new AppException(ErrorCode.WALLET_NOT_EXIST));
         OrderPoint orderPoint = new OrderPoint();
         orderPoint.setWallet(wallet);
-        orderPoint.setPricing(pricing);
+        orderPoint.setMonkeyCoinPack(monkeyCoinPack);
         orderPoint.setAmount(amount / 100.0);
         orderPoint.setOrderDate(new Date());
         orderPoint.setStatus("PENDING");
@@ -143,7 +142,7 @@ public class PaymentService {
             unitOfWork.getOrderPointRepository().save(orderPoint);
 
             Wallet wallet = orderPoint.getWallet();
-            wallet.setBalance(wallet.getBalance() + orderPoint.getPricing().getPoint());
+            wallet.setBalance(wallet.getBalance() + orderPoint.getMonkeyCoinPack().getPoint());
             unitOfWork.getWalletRepository().save(wallet);
 
             redirectUrl = returnUrl;

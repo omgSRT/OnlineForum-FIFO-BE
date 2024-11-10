@@ -1,9 +1,6 @@
 package com.FA24SE088.OnlineForum.vnpay;
 
-import com.FA24SE088.OnlineForum.dto.response.ApiResponse;
-import com.FA24SE088.OnlineForum.dto.response.OrderPointResponse;
 import com.FA24SE088.OnlineForum.dto.response.ResponseObject;
-import com.FA24SE088.OnlineForum.entity.Pricing;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -11,7 +8,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.view.RedirectView;
 
-import java.util.List;
 import java.util.UUID;
 
 @RestController

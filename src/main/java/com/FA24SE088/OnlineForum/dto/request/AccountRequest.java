@@ -1,6 +1,7 @@
 package com.FA24SE088.OnlineForum.dto.request;
 
 import com.FA24SE088.OnlineForum.enums.RoleAccount;
+import jakarta.persistence.Column;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
@@ -26,8 +27,10 @@ public class AccountRequest {
     @Size(min = 8, max = 20, message = "Pass must be least 8-20 character")
     String confirmPassword;
     @Pattern(regexp = "^(http|https)://.*$|^$", message = "Avatar must be a valid URL")
+    @Column(columnDefinition = "MEDIUMTEXT")
     String avatar;
     @Pattern(regexp = "^(http|https)://.*$|^$", message = "Cover image must be a valid URL")
+    @Column(columnDefinition = "MEDIUMTEXT")
     String coverImage;
     RoleAccount role;
     @Nullable

@@ -42,7 +42,7 @@ public class UnitOfWork {
     final ContentSectionRepository contentSectionRepository;
     final MediaRepository mediaRepository;
     final TypeBonusRepository typeBonusRepository;
-    final PricingRepository pricingRepository;
+    final MonkeyCoinPackRepository monkeyCoinPackRepository;
     final OrderPointRepository orderPointRepository;
     final PostViewRepository postViewRepository;
 }

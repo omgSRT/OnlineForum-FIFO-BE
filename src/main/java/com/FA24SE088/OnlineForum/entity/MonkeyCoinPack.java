@@ -14,13 +14,13 @@ import java.util.UUID;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class Pricing {
+public class MonkeyCoinPack {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    UUID pricingId;
+    UUID monkeyCoinPackId;
     long price;
     double point;
 
-    @OneToMany(mappedBy = "pricing",cascade = CascadeType.ALL,orphanRemoval = true)
+    @OneToMany(mappedBy = "monkeyCoinPack",cascade = CascadeType.ALL,orphanRemoval = true)
     List<OrderPoint> orderPointList;
 }

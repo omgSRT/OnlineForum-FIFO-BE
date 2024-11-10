@@ -1,6 +1,6 @@
 package com.FA24SE088.OnlineForum.enums;
 
 public enum TransactionType {
-    CREDIT,
-    DEBIT,
+    REDEEM_REWARD,
+    DOWNLOAD_SOURCECODE,
 }
