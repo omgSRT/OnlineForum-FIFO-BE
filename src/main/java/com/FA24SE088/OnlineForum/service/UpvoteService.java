@@ -57,10 +57,11 @@ public class UpvoteService {
                 }
 
                 return unitOfWork.getUpvoteRepository().countByPost(post)
-                        .thenCompose(upvoteAmount ->
-                            unitOfWork.getTypeBonusRepository().findByNameAndQuantity(TypeBonusNameEnum.UPVOTE.name(), upvoteAmount)
+                        .thenCompose(upvoteAmount -> {
+                            long amount = upvoteAmount + 1;
+                            return unitOfWork.getTypeBonusRepository().findByNameAndQuantity(TypeBonusNameEnum.UPVOTE.name(), amount)
                                     .thenCompose(typeBonus -> {
-                                        if(typeBonus != null){
+                                        if (typeBonus != null) {
                                             return createDailyPointLog(account, post, typeBonus)
                                                     .thenCompose(existingDailyPoint -> {
                                                         Upvote newUpvote = new Upvote();
@@ -71,8 +72,7 @@ public class UpvoteService {
                                                         upvoteResponse.setMessage(SuccessReturnMessage.CREATE_SUCCESS.getMessage());
                                                         return CompletableFuture.completedFuture(upvoteResponse);
                                                     });
-                                        }
-                                        else{
+                                        } else {
                                             Upvote newUpvote = new Upvote();
                                             newUpvote.setAccount(account);
                                             newUpvote.setPost(post);
@@ -81,8 +81,8 @@ public class UpvoteService {
                                             upvoteResponse.setMessage(SuccessReturnMessage.CREATE_SUCCESS.getMessage());
                                             return CompletableFuture.completedFuture(upvoteResponse);
                                         }
-                                    })
-                );
+                                    });
+                        });
             });
         });
     }
@@ -170,7 +170,7 @@ public class UpvoteService {
     @Async("AsyncTaskExecutor")
     private CompletableFuture<DailyPoint> createDailyPointLog(Account account, Post post, TypeBonus typeBonus) {
         return unitOfWork.getDailyPointRepository()
-                .findByAccountAndPostAndTypeBonus(account, post, typeBonus)
+                .findByPostAndTypeBonus(post, typeBonus)
                 .thenCompose(dailyPoint -> {
                     if (dailyPoint != null) {
                         CompletableFuture.completedFuture(null);
