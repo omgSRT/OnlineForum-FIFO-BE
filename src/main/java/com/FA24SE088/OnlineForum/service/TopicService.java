@@ -22,6 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -79,22 +80,35 @@ public class TopicService {
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
     @Transactional(readOnly = true)
     public CompletableFuture<List<PopularTopicResponse>> getAllPopularTopics(int page, int perPage) {
-        var responseFutures = unitOfWork.getTopicRepository().findAllOrderByPostListSizeDescending().stream()
-                .map(topic -> {
-                    CompletableFuture<Integer> postCountFuture = unitOfWork.getPostRepository().countByTopic(topic);
-                    return postCountFuture.thenApply(postCount -> {
-                        PopularTopicResponse response = topicMapper.toPopularTopicResponse(topic);
-                        response.setPostAmount(postCount);
-                        return response;
-                    });
-                })
-                .toList();
+        return CompletableFuture.supplyAsync(() -> {
+            List<CompletableFuture<PopularTopicResponse>> responseFutures = unitOfWork.getTopicRepository().findAll().stream()
+                    .map(topic -> {
+                        CompletableFuture<Integer> postCountFuture = unitOfWork.getPostRepository().countByTopic(topic);
+                        CompletableFuture<Integer> upvoteCountFuture = unitOfWork.getUpvoteRepository().countByPostTopic(topic);
+                        CompletableFuture<Integer> commentCountFuture = unitOfWork.getCommentRepository().countByPostTopic(topic);
+                        CompletableFuture<Integer> viewCountFuture = unitOfWork.getPostViewRepository().countByPostTopic(topic);
 
-        return CompletableFuture.allOf(responseFutures.toArray(new CompletableFuture[0]))
-                .thenApply(voidResult -> responseFutures.stream()
-                        .map(CompletableFuture::join)
-                        .toList())
-                .thenApply(list -> paginationUtils.convertListToPage(page, perPage, list));
+                        return CompletableFuture.allOf(postCountFuture, upvoteCountFuture, commentCountFuture, viewCountFuture)
+                                .thenApply(voidResult -> {
+                                    PopularTopicResponse response = topicMapper.toPopularTopicResponse(topic);
+                                    response.setPostAmount(postCountFuture.join());
+                                    response.setUpvoteAmount(upvoteCountFuture.join());
+                                    response.setCommentAmount(commentCountFuture.join());
+                                    response.setViewAmount(viewCountFuture.join());
+                                    return response;
+                                });
+                    })
+                    .toList();
+
+                    return CompletableFuture.allOf(responseFutures.toArray(new CompletableFuture[0]))
+                            .thenApply(voidResult -> responseFutures.stream()
+                                    .map(CompletableFuture::join)
+                                    .sorted(Comparator.comparingInt((PopularTopicResponse r) ->
+                                                    r.getPostAmount() + r.getUpvoteAmount() + r.getCommentAmount() + r.getViewAmount())
+                                            .reversed())
+                                    .toList());
+        })
+                .thenApply(list -> paginationUtils.convertListToPage(page, perPage, list.join()));
     }
 
     @Async("AsyncTaskExecutor")

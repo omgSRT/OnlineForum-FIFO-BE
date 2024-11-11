@@ -1,9 +1,6 @@
 package com.FA24SE088.OnlineForum.repository.Repository;
 
-import com.FA24SE088.OnlineForum.entity.Account;
-import com.FA24SE088.OnlineForum.entity.Category;
-import com.FA24SE088.OnlineForum.entity.Comment;
-import com.FA24SE088.OnlineForum.entity.Post;
+import com.FA24SE088.OnlineForum.entity.*;
 import io.lettuce.core.dynamic.annotation.Param;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -26,6 +23,9 @@ public interface CommentRepository extends JpaRepository<Comment, UUID> {
 
     @Async("AsyncTaskExecutor")
     CompletableFuture<Integer> countByPostTopicCategory(Category category);
+
+    @Async("AsyncTaskExecutor")
+    CompletableFuture<Integer> countByPostTopic(Topic topic);
 
     @Async("AsyncTaskExecutor")
     CompletableFuture<Integer> countByPost(Post post);
