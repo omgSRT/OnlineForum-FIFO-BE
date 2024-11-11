@@ -3,11 +3,13 @@ package com.FA24SE088.OnlineForum.service;
 import com.FA24SE088.OnlineForum.dto.request.UnfollowRequest;
 import com.FA24SE088.OnlineForum.dto.response.AccountFollowResponse;
 import com.FA24SE088.OnlineForum.dto.response.AccountResponse;
+import com.FA24SE088.OnlineForum.dto.response.Follow2Response;
 import com.FA24SE088.OnlineForum.dto.response.FollowResponse;
 import com.FA24SE088.OnlineForum.entity.Account;
 import com.FA24SE088.OnlineForum.entity.BlockedAccount;
 import com.FA24SE088.OnlineForum.entity.Follow;
 import com.FA24SE088.OnlineForum.enums.FollowStatus;
+import com.FA24SE088.OnlineForum.enums.SuccessReturnMessage;
 import com.FA24SE088.OnlineForum.exception.AppException;
 import com.FA24SE088.OnlineForum.exception.ErrorCode;
 import com.FA24SE088.OnlineForum.mapper.AccountMapper;
@@ -47,8 +49,6 @@ public class FollowService {
         if (account.getAccountId().equals(account1.getAccountId())) {
             throw new AppException(ErrorCode.CANNOT_FOLLOW_SELF);
         }
-
-        // Kiểm tra nếu currentUser đã theo dõi account1 hay chưa
         boolean alreadyFollow = account.getFollowerList().stream()
                 .anyMatch(follow -> follow.getFollowee().getAccountId().equals(account1.getAccountId()));
 
@@ -144,7 +144,7 @@ public class FollowService {
                 .toList();
     }
 
-    public void followOrUnfollow(UUID followeeId) {
+    public Follow2Response followOrUnfollow(UUID followeeId) {
         Account account = getCurrentUser();
 
         Account followee = unitOfWork.getAccountRepository().findById(followeeId)
@@ -154,12 +154,15 @@ public class FollowService {
             throw new AppException(ErrorCode.CANNOT_FOLLOW_SELF);
         }
 
-        Follow existingFollow = unitOfWork.getFollowRepository().findByFollowerAndFollowee(account, followee)
-                .orElse(null);
+        boolean exist = unitOfWork.getFollowRepository().existsByFollowerAndAndFollowee(account, followee);
 
-        if (existingFollow != null) {
-            // Nếu đã có bản ghi follow, xóa bản ghi đó (unfollow)
+        Follow2Response response = new Follow2Response();
+        if (exist) {
+            Follow existingFollow = unitOfWork.getFollowRepository().findByFollowerAndFollowee(account, followee).orElseThrow(() -> new AppException(ErrorCode.FOLLOW_NOT_FOUND));
             unitOfWork.getFollowRepository().delete(existingFollow);
+            response.setMessage(SuccessReturnMessage.DELETE_SUCCESS.getMessage());
+            response.setFollowee(followee);
+            response.setFollower(account);
         } else {
             Follow follow = Follow.builder()
                     .follower(account)
@@ -167,7 +170,11 @@ public class FollowService {
                     .status(FollowStatus.FOLLOWING.name())
                     .build();
             unitOfWork.getFollowRepository().save(follow);
+            response.setMessage(SuccessReturnMessage.CREATE_SUCCESS.getMessage());
+            response.setFollowee(followee);
+            response.setFollower(account);
         }
+        return response;
     }
 
 

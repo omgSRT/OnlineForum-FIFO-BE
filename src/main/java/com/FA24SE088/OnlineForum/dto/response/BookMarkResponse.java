@@ -14,8 +14,9 @@ import java.util.UUID;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class BookMarkResponse {
     UUID bookmarkID;
+    String message;
     @JsonIgnoreProperties(value = {"redeemList","notificationList","followeeList","followerList","dailyPointList","postList","upvoteList","commentList","categoryList","eventList"}, allowSetters = true)
     Account account;
-    @JsonIgnoreProperties(value = { "account", "topic", "tag" })
+    @JsonIgnoreProperties(value = { "account", "topic", "tag","dailyPointList","reportList","bookMarkList","postViewList" })
     Post post;
 }
