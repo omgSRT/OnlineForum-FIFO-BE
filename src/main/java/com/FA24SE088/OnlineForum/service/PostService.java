@@ -42,9 +42,8 @@ public class PostService {
         var accountFuture = findAccountByUsername(username);
         var topicFuture = findTopicById(request.getTopicId());
         var tagFuture = findTagById(request.getTagId());
-        var pointFuture = getPoint();
 
-        return CompletableFuture.allOf(accountFuture, topicFuture, tagFuture, pointFuture)
+        return CompletableFuture.allOf(accountFuture, topicFuture, tagFuture)
                 .thenCompose(v -> {
                     var account = accountFuture.join();
                     var topic = topicFuture.join();
@@ -304,6 +303,61 @@ public class PostService {
                     .filter(post -> post.getAccount().equals(account))
                     .filter(post -> post.getStatus().equals(PostStatus.PUBLIC.name())
                             || post.getStatus().equals(PostStatus.PRIVATE.name()))
+                    .map(post -> {
+                        CompletableFuture<Integer> upvoteCountFuture = unitOfWork.getUpvoteRepository()
+                                .countByPost(post);
+                        CompletableFuture<Integer> commentCountFuture = unitOfWork.getCommentRepository()
+                                .countByPost(post);
+                        CompletableFuture<Integer> viewCountFuture = unitOfWork.getPostViewRepository()
+                                .countByPost(post);
+
+                        return CompletableFuture.allOf(upvoteCountFuture, commentCountFuture, viewCountFuture)
+                                .thenApply(voidResult -> {
+                                    PostResponse response = postMapper.toPostResponse(post);
+                                    response.setUpvoteCount(upvoteCountFuture.join());
+                                    response.setCommentCount(commentCountFuture.join());
+                                    response.setViewCount(viewCountFuture.join());
+                                    return response;
+                                });
+                    })
+                    .toList());
+
+            return CompletableFuture.allOf(responseFutures.toArray(new CompletableFuture[0]))
+                    .thenApply(voidResult -> responseFutures.stream()
+                            .map(CompletableFuture::join)
+                            .toList()
+                    )
+                    .thenApply(list -> paginationUtils.convertListToPage(page, perPage, list));
+        });
+    }
+    @Async("AsyncTaskExecutor")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
+    public CompletableFuture<List<PostResponse>> getAllPostsFromOtherUser(int page, int perPage, UUID otherAccountId) {
+        var postListFuture = findAllPostsOrderByCreatedDateDesc();
+        var username = getUsernameFromJwt();
+        var currentAccountFuture = findAccountByUsername(username);
+        var otherAccountFuture = findAccountById(otherAccountId);
+        var blockedListFuture = getBlockedAccountListByUsername(username);
+
+        return CompletableFuture.allOf(postListFuture, currentAccountFuture, otherAccountFuture, blockedListFuture).thenCompose(v -> {
+            var postList = postListFuture.join();
+            var currentAccount = currentAccountFuture.join();
+            var otherAccount = otherAccountFuture.join();
+            var blockedAccountList = blockedListFuture.join();
+
+            boolean isBlockedByCurrent = blockedAccountList.contains(otherAccount);
+            boolean isBlockedByOther = unitOfWork.getBlockedAccountRepository()
+                    .findByBlockerAndBlocked(otherAccount, currentAccount).isPresent();
+            boolean isFollowing = isFollowing(currentAccount, otherAccount);
+            boolean isAuthor = currentAccount.equals(otherAccount);
+            boolean isStaffOrAdmin = hasRole(currentAccount, "ADMIN") || hasRole(currentAccount, "STAFF");
+
+            var responseFutures = new ArrayList<>(postList.stream()
+                    .filter(post -> post.getAccount().equals(otherAccount))
+                    .filter(post -> isAuthor || isStaffOrAdmin
+                            || post.getStatus().equals(PostStatus.PUBLIC.name())
+                            || (post.getStatus().equals(PostStatus.PRIVATE.name()) && isFollowing))
+                    .filter(post -> !isBlockedByCurrent && !isBlockedByOther)
                     .map(post -> {
                         CompletableFuture<Integer> upvoteCountFuture = unitOfWork.getUpvoteRepository()
                                 .countByPost(post);
@@ -1186,6 +1240,14 @@ public class PostService {
         }
 
         return false;
+    }
+    private boolean isFollowing(Account currentAccount, Account postOwner) {
+        return unitOfWork.getFollowRepository()
+                .findByFollowerAndFollowee(currentAccount, postOwner)
+                .isPresent();
+    }
+    private boolean hasRole(Account account, String role) {
+        return account.getRole().getName().equals(role);
     }
     //endregion
 }

@@ -3,6 +3,7 @@ package com.FA24SE088.OnlineForum.service;
 import com.FA24SE088.OnlineForum.dto.request.TransactionRequest;
 import com.FA24SE088.OnlineForum.dto.response.TransactionResponse;
 import com.FA24SE088.OnlineForum.entity.*;
+import com.FA24SE088.OnlineForum.enums.PostStatus;
 import com.FA24SE088.OnlineForum.enums.TransactionType;
 import com.FA24SE088.OnlineForum.exception.AppException;
 import com.FA24SE088.OnlineForum.exception.ErrorCode;
@@ -35,29 +36,23 @@ public class TransactionService {
     @Async("AsyncTaskExecutor")
     public CompletableFuture<TransactionResponse> createTransaction(TransactionRequest request) {
         var accountFuture = findAccountById(request.getAccountId());
-        var rewardFuture = findRewardById(request.getRewardId());
 
-        return CompletableFuture.allOf(accountFuture, rewardFuture).thenCompose(v -> {
+        return CompletableFuture.allOf(accountFuture).thenCompose(v -> {
                     var account = accountFuture.join();
-                    var wallet = account.getWallet();
-                    var reward = rewardFuture.join();
 
-                    var checkFuture = checkTransactionExistByWalletAndReward(wallet, reward);
+                    if(request.getTransactionType().equals(TransactionType.REDEEM_REWARD)){
+                        return findRewardById(request.getRewardId()).thenCompose(reward -> {
+                            var checkFuture = checkTransactionExistByWalletAndReward(account.getWallet(), reward);
+                            return checkFuture.thenCompose(check -> {
+                                if(check){
+                                    throw new AppException(ErrorCode.REWARD_HAS_BEEN_TAKEN);
+                                }
+                                return CompletableFuture.completedFuture(createAndSaveTransaction(request, account, reward));
+                            });
+                        });
+                    }
 
-                    return checkFuture.thenCompose(check -> {
-                        if(check){
-                            throw new AppException(ErrorCode.REWARD_HAS_BEEN_TAKEN);
-                        }
-
-                        Transaction newTransaction = transactionMapper.toTransaction(request);
-                        newTransaction.setCreatedDate(new Date());
-                        newTransaction.setWallet(account.getWallet());
-                        newTransaction.setReward(reward);
-
-                        unitOfWork.getWalletRepository().save(wallet);
-
-                        return CompletableFuture.completedFuture(unitOfWork.getTransactionRepository().save(newTransaction));
-                    });
+                    return CompletableFuture.completedFuture(createAndSaveTransaction(request, account, null));
                 })
                 .thenApply(transactionMapper::toTransactionResponse);
     }
@@ -73,11 +68,11 @@ public class TransactionService {
                 .map(transactionMapper::toTransactionResponse).toList();
     }
 
-
     @Async("AsyncTaskExecutor")
     public CompletableFuture<List<TransactionResponse>> getAllTransaction(int page, int perPage,
                                                                           UUID accountId,
                                                                           UUID rewardId,
+                                                                          TransactionType transactionType,
                                                                           String givenDate) {
         var accountFuture = accountId != null
                 ? findAccountById(accountId)
@@ -106,7 +101,9 @@ public class TransactionService {
             return transactionListFuture.thenCompose(list -> {
                 var filterList = list.stream()
                         .filter(transaction -> account == null || transaction.getWallet().getAccount().equals(account))
-                        .filter(transaction -> reward == null || transaction.getReward().equals(reward))
+                        .filter(transaction -> reward == null || (reward != null && transaction.getReward().equals(reward)))
+                        .filter(transaction -> transactionType == null ||
+                                transaction.getTransactionType().equals(transactionType.name()))
                         .filter(transaction -> {
                             Calendar createdDateCal = Calendar.getInstance();
                             createdDateCal.setTime(transaction.getCreatedDate());
@@ -253,5 +250,23 @@ public class TransactionService {
             return jwt.getClaim("username");
         }
         return null;
+    }
+    private Transaction createAndSaveTransaction(TransactionRequest request, Account account, Reward reward) {
+        Transaction newTransaction = transactionMapper.toTransaction(request);
+        newTransaction.setCreatedDate(new Date());
+        newTransaction.setWallet(account.getWallet());
+        newTransaction.setReward(reward);
+        newTransaction.setTransactionType(request.getTransactionType().name());
+
+        unitOfWork.getWalletRepository().save(account.getWallet());
+
+        return unitOfWork.getTransactionRepository().save(newTransaction);
+    }
+    private TransactionType safeValueOf(String type) {
+        try {
+            return TransactionType.valueOf(type);
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
     }
 }

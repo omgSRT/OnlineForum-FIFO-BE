@@ -152,13 +152,13 @@ public class ReportService {
                     throw new AppException(ErrorCode.REPORT_POST_NOT_PENDING);
                 }
 
-                if(status.name().equals(ReportPostStatus.APPROVED.name())){
-                    return deleteByChangingPostStatusById(report.getPost().getPostId(), account).thenCompose(post -> {
-                        report.setStatus(status.name());
-
-                        return CompletableFuture.completedFuture(unitOfWork.getReportRepository().save(report));
-                    });
-                }
+//                if(status.name().equals(ReportPostStatus.APPROVED.name())){
+//                    return deleteByChangingPostStatusById(report.getPost().getPostId(), account).thenCompose(post -> {
+//                        report.setStatus(status.name());
+//
+//                        return CompletableFuture.completedFuture(unitOfWork.getReportRepository().save(report));
+//                    });
+//                }
 
                 report.setStatus(status.name());
 
