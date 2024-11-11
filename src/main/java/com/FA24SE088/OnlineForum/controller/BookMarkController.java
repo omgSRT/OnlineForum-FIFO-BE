@@ -1,5 +1,6 @@
 package com.FA24SE088.OnlineForum.controller;
 
+import com.FA24SE088.OnlineForum.dto.request.BookmarkRequest;
 import com.FA24SE088.OnlineForum.dto.response.ApiResponse;
 import com.FA24SE088.OnlineForum.dto.response.BookMarkResponse;
 import com.FA24SE088.OnlineForum.dto.response.PostResponse;
@@ -25,18 +26,11 @@ public class BookMarkController {
     BookMarkService bookMarkService;
 
     @Operation(summary = "Create bookmark", description = "Create a new bookmark for the current user")
-    @PostMapping("/create")
-    public ApiResponse<BookMarkResponse> createBookmark(@RequestBody UUID postId) {
+    @PostMapping("/add-or-remove")
+    public ApiResponse<BookMarkResponse> createBookmark(@RequestBody BookmarkRequest request) {
         return ApiResponse.<BookMarkResponse>builder()
-                .entity(bookMarkService.create(postId))
+                .entity(bookMarkService.addOrRemove(request.getPostId()))
                 .build();
-    }
-
-    @Operation(summary = "Remove bookmark", description = "Remove a bookmark for the current user")
-    @DeleteMapping("/remove")
-    public ApiResponse<Void> removeBookmark(@RequestBody UUID postId) {
-        bookMarkService.unbookmark(postId);
-        return ApiResponse.<Void>builder().build();
     }
 
     @Operation(summary = "List bookmarks", description = "Get all bookmarks for the current user")

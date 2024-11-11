@@ -2,10 +2,7 @@ package com.FA24SE088.OnlineForum.controller;
 
 import com.FA24SE088.OnlineForum.dto.request.BlockRequest;
 import com.FA24SE088.OnlineForum.dto.request.UnfollowRequest;
-import com.FA24SE088.OnlineForum.dto.response.AccountFollowResponse;
-import com.FA24SE088.OnlineForum.dto.response.AccountResponse;
-import com.FA24SE088.OnlineForum.dto.response.ApiResponse;
-import com.FA24SE088.OnlineForum.dto.response.FollowResponse;
+import com.FA24SE088.OnlineForum.dto.response.*;
 
 import com.FA24SE088.OnlineForum.service.FollowService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -28,12 +25,11 @@ public class FollowController {
 
     @Operation(summary = "Create follow", description = "Create a new follow for the current user")
     @PostMapping("/create")
-    public ApiResponse<Void> createFollow(@RequestBody UUID id) {
-        followService.followOrUnfollow(id);
-        return ApiResponse.<Void>builder().build();
-//        return ApiResponse.<FollowResponse>builder()
-//                .entity(followService.create(id))
-//                .build();
+    public ApiResponse<Follow2Response> createFollow(@RequestBody UUID accountId) {
+        followService.followOrUnfollow(accountId);
+        return ApiResponse.<Follow2Response>builder()
+                .entity(followService.followOrUnfollow(accountId))
+                .build();
     }
 
     @Operation(summary = "Block user", description = "Block a user for the current user")
