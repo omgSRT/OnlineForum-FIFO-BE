@@ -15,8 +15,11 @@ import java.util.UUID;
 public class PopularTopicResponse {
     UUID topicId;
     String name;
+    String imageUrl;
+    int postAmount;
+    int upvoteAmount;
+    int commentAmount;
+    int viewAmount;
     @JsonIgnoreProperties(value = { "account" })
     Category category;
-    int postAmount;
-    String imageUrl;
 }
