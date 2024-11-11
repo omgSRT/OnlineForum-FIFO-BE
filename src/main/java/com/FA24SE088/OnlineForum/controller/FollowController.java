@@ -1,7 +1,5 @@
 package com.FA24SE088.OnlineForum.controller;
 
-import com.FA24SE088.OnlineForum.dto.request.BlockRequest;
-import com.FA24SE088.OnlineForum.dto.request.UnfollowRequest;
 import com.FA24SE088.OnlineForum.dto.response.*;
 
 import com.FA24SE088.OnlineForum.service.FollowService;
@@ -29,34 +27,6 @@ public class FollowController {
         followService.followOrUnfollow(accountId);
         return ApiResponse.<Follow2Response>builder()
                 .entity(followService.followOrUnfollow(accountId))
-                .build();
-    }
-
-    @Operation(summary = "Block user", description = "Block a user for the current user")
-    @PostMapping("/block")
-    public ApiResponse<Void> blockUser(@RequestBody BlockRequest request) {
-        followService.blockUser(request.getAccountID());
-        return ApiResponse.<Void>builder().build();
-    }
-
-    @Operation(summary = "Unblock user", description = "Block a user for the current user")
-    @DeleteMapping("/unblock")
-    public ApiResponse<Void> unblockUser(@RequestBody BlockRequest request) {
-        followService.unblock(request.getAccountID());
-        return ApiResponse.<Void>builder().build();
-    }
-
-    @DeleteMapping("/unfollow")
-    public ApiResponse<Void> unfollow(@RequestBody UnfollowRequest request) {
-        followService.unfollow(request);
-        return ApiResponse.<Void>builder().build();
-    }
-
-    @Operation(summary = "Get block list", description = "")
-    @GetMapping("/get-list-user-block")
-    public ApiResponse<List<AccountResponse>> getFollow() {
-        return ApiResponse.<List<AccountResponse>>builder()
-                .entity(followService.listBlock())
                 .build();
     }
 

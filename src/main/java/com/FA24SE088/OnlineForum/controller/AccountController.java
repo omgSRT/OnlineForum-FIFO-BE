@@ -85,13 +85,7 @@ public class AccountController {
                 .build();
     }
 
-//    @GetMapping("/getAll")
-//    public ApiResponse<List<AccountResponse>> filter(@RequestParam(defaultValue = "1") int page,
-//                                                     @RequestParam(defaultValue = "10") int perPage) {
-//        return ApiResponse.<List<AccountResponse>>builder()
-//                .entity(accountService.getAll(page, perPage))
-//                .build();
-//    }
+
 
     @GetMapping("/get-by-id/{id}")
     public ApiResponse<AccountResponse> findById(@PathVariable UUID id) {
