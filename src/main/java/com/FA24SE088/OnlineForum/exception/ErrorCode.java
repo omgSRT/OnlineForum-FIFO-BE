@@ -124,6 +124,7 @@ public enum ErrorCode {
     WRONG_DATE_FORMAT(10106, "Invalid date format. Please use yyyy-MM-dd.", HttpStatus.BAD_REQUEST),
     POINT_PAY_FOR_DOWNLOAD_LESS_THAN_ONE(10107, "Point pay for download must be greater than or equal to 1", HttpStatus.BAD_REQUEST),
     BALANCE_NOT_SUFFICIENT_TO_DOWNLOAD(10108, "Balance Is Not Sufficient To Download", HttpStatus.PAYMENT_REQUIRED),
+    INVALID_REFRESH_TOKEN(10109, "Invalid refresh token", HttpStatus.BAD_REQUEST),
     ;
 
     private int code;
