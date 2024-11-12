@@ -3,6 +3,7 @@ package com.FA24SE088.OnlineForum.controller;
 import com.FA24SE088.OnlineForum.dto.request.TopicRequest;
 import com.FA24SE088.OnlineForum.dto.request.TopicUpdateRequest;
 import com.FA24SE088.OnlineForum.dto.response.*;
+import com.FA24SE088.OnlineForum.enums.SortOption;
 import com.FA24SE088.OnlineForum.enums.SuccessReturnMessage;
 import com.FA24SE088.OnlineForum.service.TopicService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -50,8 +51,9 @@ public class TopicController {
     @Operation(summary = "Get All Popular Topics")
     @GetMapping(path = "/popular")
     public ApiResponse<List<PopularTopicResponse>> getAllPopularTopics(@RequestParam(defaultValue = "1") int page,
-                                                         @RequestParam(defaultValue = "5") int perPage){
-        return topicService.getAllPopularTopics(page, perPage).thenApply(popularTopicResponses ->
+                                                                       @RequestParam(defaultValue = "5") int perPage,
+                                                                       @RequestParam(required = false, defaultValue = "DESCENDING") SortOption sortOption){
+        return topicService.getAllPopularTopics(page, perPage, sortOption).thenApply(popularTopicResponses ->
                 ApiResponse.<List<PopularTopicResponse>>builder()
                         .entity(popularTopicResponses)
                         .build()

@@ -41,13 +41,13 @@ private final String[] PUBLIC_ENDPOINTS_POST = {"/authenticate/**", "/email/send
 
         http.authorizeHttpRequests(request ->
                         request
-//                                .requestMatchers(HttpMethod.GET, PUBLIC_ENDPOINTS_GET).permitAll()
-//                                .requestMatchers(HttpMethod.POST, PUBLIC_ENDPOINTS_POST).permitAll()
-//                                .requestMatchers(HttpMethod.PUT, PUBLIC_ENDPOINTS_PUT).permitAll()
-//                                .requestMatchers("/websocket/**").permitAll()
-                                .requestMatchers("/**").permitAll()
+                                .requestMatchers(HttpMethod.GET, PUBLIC_ENDPOINTS_GET).permitAll()
+                                .requestMatchers(HttpMethod.POST, PUBLIC_ENDPOINTS_POST).permitAll()
+                                .requestMatchers(HttpMethod.PUT, PUBLIC_ENDPOINTS_PUT).permitAll()
+                                .requestMatchers("/websocket/**").permitAll()
+                                //.requestMatchers("/**").permitAll()
                                 .anyRequest().authenticated())
-//                .formLogin(Customizer.withDefaults())
+                .formLogin(AbstractHttpConfigurer::disable)
         ;
 
         http.oauth2ResourceServer(oauth2 ->
