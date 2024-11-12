@@ -50,13 +50,6 @@ public class PaymentService {
                 .message("success")
                 .paymentUrl(paymentUrl).build();
     }
-//    public String getServerUrl() {
-//        HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
-//        if (request == null) {
-//            throw new RuntimeException() ;
-//        }
-//        return request.getScheme() + "://" + request.getServerName() + ":" + request.getServerPort();
-//    }
 
     private Account getCurrentUser() {
         var context = SecurityContextHolder.getContext();
