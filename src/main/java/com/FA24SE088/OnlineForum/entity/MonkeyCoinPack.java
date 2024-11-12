@@ -18,6 +18,8 @@ public class MonkeyCoinPack {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     UUID monkeyCoinPackId;
+    @Column(columnDefinition = "MEDIUMTEXT")
+    String imgUrl;
     long price;
     double point;
 

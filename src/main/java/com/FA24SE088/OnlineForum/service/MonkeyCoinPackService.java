@@ -29,12 +29,14 @@ public class MonkeyCoinPackService {
 
     public PricingResponse createPricing(PricingRequest pricingRequest) {
         MonkeyCoinPack monkeyCoinPack = monkeyCoinPackMapper.toPricing(pricingRequest);
+        monkeyCoinPack.setImgUrl(pricingRequest.getImgUrl());
         MonkeyCoinPack savedMonkeyCoinPack = unitOfWork.getMonkeyCoinPackRepository().save(monkeyCoinPack);
         return monkeyCoinPackMapper.toResponse(savedMonkeyCoinPack);
     }
 
     public PricingResponse updatePricing(UUID pricingId, PricingRequest pricingRequest) {
         MonkeyCoinPack monkeyCoinPack = unitOfWork.getMonkeyCoinPackRepository().findById(pricingId).orElseThrow(() -> new AppException(ErrorCode.PRICING_NOT_FOUND));
+        monkeyCoinPack.setImgUrl(pricingRequest.getImgUrl());
         monkeyCoinPack.setPrice(pricingRequest.getPrice());
         monkeyCoinPack.setPoint(monkeyCoinPack.getPoint());
         MonkeyCoinPack savedMonkeyCoinPack = unitOfWork.getMonkeyCoinPackRepository().save(monkeyCoinPack);

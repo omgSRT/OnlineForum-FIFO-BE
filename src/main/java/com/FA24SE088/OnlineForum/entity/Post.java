@@ -26,7 +26,7 @@ public class Post {
     @EqualsAndHashCode.Include
     String title;
     @EqualsAndHashCode.Include
-    @Column(columnDefinition = "MEDIUMTEXT")
+    @Column(columnDefinition = "LONGTEXT")
     String content;
     @EqualsAndHashCode.Include
     Date createdDate;
