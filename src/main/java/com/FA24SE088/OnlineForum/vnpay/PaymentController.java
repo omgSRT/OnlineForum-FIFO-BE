@@ -1,5 +1,6 @@
 package com.FA24SE088.OnlineForum.vnpay;
 
+import com.FA24SE088.OnlineForum.dto.request.MCRequest;
 import com.FA24SE088.OnlineForum.dto.response.ResponseObject;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -33,8 +34,8 @@ public class PaymentController {
 
 
     @PostMapping("/buyPoints")
-    public ResponseEntity<PaymentDTO.VNPayResponse> buyPoints(HttpServletRequest request, UUID pricingId, String url) {
-        PaymentDTO.VNPayResponse response = paymentService.buyPoints(request, pricingId, url);
+    public ResponseEntity<PaymentDTO.VNPayResponse> buyPoints(HttpServletRequest request, MCRequest mcRequest) {
+        PaymentDTO.VNPayResponse response = paymentService.buyPoints(request, mcRequest.getMonkeyCoinPackId(), mcRequest.getRedirectUrl());
         return ResponseEntity.ok(response);
     }
 

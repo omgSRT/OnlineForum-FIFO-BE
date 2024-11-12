@@ -34,25 +34,25 @@ import java.util.UUID;
 public class AccountController {
     AccountService accountService;
 
-//    @Operation(summary = "Find Account", description = "Find By Username")
-//    @GetMapping(path = "/find/by-username")
-//    public ApiResponse<Account> findByUsername(@NotNull String username) {
-//        return ApiResponse.<Account>builder()
-//                .message(SuccessReturnMessage.SEARCH_SUCCESS.getMessage())
-//                .entity(accountService.findByUsername(username))
-//                .build();
-//    }
+    @Operation(summary = "Find Account", description = "Find By Username")
+    @GetMapping(path = "/find/by-username")
+    public ApiResponse<Account> findByUsername(@NotNull String username) {
+        return ApiResponse.<Account>builder()
+                .message(SuccessReturnMessage.SEARCH_SUCCESS.getMessage())
+                .entity(accountService.findByUsername(username))
+                .build();
+    }
 
-//    @Operation(summary = "Find Account", description = "Find By Username Contain Any Letter")
-//    @GetMapping(path = "/list/find/by-username")
-//    public ApiResponse<List<Account>> findByUsernameContainingAsync(@NotNull String username) {
-//        return accountService.findByUsernameContainingAsync(username).thenApply(accounts ->
-//                ApiResponse.<List<Account>>builder()
-//                        .message(SuccessReturnMessage.SEARCH_SUCCESS.getMessage())
-//                        .entity(accounts)
-//                        .build()
-//        ).join();
-//    }
+    @Operation(summary = "Find Account", description = "Find By Username Contain Any Letter")
+    @GetMapping(path = "/list/find/by-username")
+    public ApiResponse<List<Account>> findByUsernameContainingAsync(@NotNull String username) {
+        return accountService.findByUsernameContainingAsync(username).thenApply(accounts ->
+                ApiResponse.<List<Account>>builder()
+                        .message(SuccessReturnMessage.SEARCH_SUCCESS.getMessage())
+                        .entity(accounts)
+                        .build()
+        ).join();
+    }
 
     @Operation(summary = "Get Recommended Accounts", description = "Get Accounts Based On Last Activities From 48 Hours Ago")
     @GetMapping(path = "/get/recommended")
@@ -85,13 +85,7 @@ public class AccountController {
                 .build();
     }
 
-//    @GetMapping("/getAll")
-//    public ApiResponse<List<AccountResponse>> filter(@RequestParam(defaultValue = "1") int page,
-//                                                     @RequestParam(defaultValue = "10") int perPage) {
-//        return ApiResponse.<List<AccountResponse>>builder()
-//                .entity(accountService.getAll(page, perPage))
-//                .build();
-//    }
+
 
     @GetMapping("/get-by-id/{id}")
     public ApiResponse<AccountResponse> findById(@PathVariable UUID id) {

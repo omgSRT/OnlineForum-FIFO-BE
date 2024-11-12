@@ -135,8 +135,6 @@ public class FollowService {
 //xem danh sách người follow mình
     public List<FollowResponse> getFollowers() {
         Account currentUser = getCurrentUser();
-
-        // Lấy danh sách các đối tượng follow mà followee là người dùng hiện tại
         List<Follow> followers = unitOfWork.getFollowRepository().findByFollowee(currentUser);
 
         return followers.stream()
