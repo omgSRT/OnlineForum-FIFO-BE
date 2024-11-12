@@ -44,8 +44,7 @@ private final String[] PUBLIC_ENDPOINTS_POST = {"/authenticate/**", "/email/send
                                 .requestMatchers(HttpMethod.GET, PUBLIC_ENDPOINTS_GET).permitAll()
                                 .requestMatchers(HttpMethod.POST, PUBLIC_ENDPOINTS_POST).permitAll()
                                 .requestMatchers(HttpMethod.PUT, PUBLIC_ENDPOINTS_PUT).permitAll()
-                                .requestMatchers("/websocket/**").permitAll()
-                                //.requestMatchers("/**").permitAll()
+                                .requestMatchers("/websocket/**","/payment/**").permitAll()
                                 .anyRequest().authenticated())
                 .formLogin(AbstractHttpConfigurer::disable)
         ;
