@@ -12,6 +12,9 @@ import com.FA24SE088.OnlineForum.mapper.PostFileMapper;
 import com.FA24SE088.OnlineForum.mapper.PostMapper;
 import com.FA24SE088.OnlineForum.repository.UnitOfWork.UnitOfWork;
 import com.FA24SE088.OnlineForum.utils.PaginationUtils;
+import com.google.cloud.storage.Blob;
+import com.google.cloud.storage.Bucket;
+import com.google.firebase.cloud.StorageClient;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -22,8 +25,15 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
@@ -584,7 +594,7 @@ public class PostService {
     }
     @Async("AsyncTaskExecutor")
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
-    public CompletableFuture<Void> downloadSourceCode(UUID postId){
+    public CompletableFuture<byte[]> downloadFiles(UUID postId){
         var username = getUsernameFromJwt();
         var accountFuture = findAccountByUsername(username);
         var postFuture = findPostById(postId);
@@ -616,15 +626,39 @@ public class PostService {
 
             var dailyPointFuture = createDailyPointLogForSourceOwner(accountOwner, post, point);
             var transactionFuture = CompletableFuture.completedFuture(null);
+            var postFileListFuture = unitOfWork.getPostFileRepository().findByPost(post);
 
-            return CompletableFuture.allOf(dailyPointFuture).thenCompose(voidData -> {
+            return CompletableFuture.allOf(dailyPointFuture, postFileListFuture).thenCompose(voidData -> {
                 var dailyPoint = dailyPointFuture.join();
+                var postFileList = postFileListFuture.join();
 
-                unitOfWork.getDailyPointRepository().save(dailyPoint);
+                if(dailyPoint != null){
+                    unitOfWork.getDailyPointRepository().save(dailyPoint);
+                }
                 unitOfWork.getWalletRepository().save(walletDownloader);
                 unitOfWork.getWalletRepository().save(walletOwner);
 
-                return CompletableFuture.completedFuture(null);
+                var fileNames = extractFileNames(postFileList);
+
+                ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+                try (ZipOutputStream zipOutputStream = new ZipOutputStream(byteArrayOutputStream)) {
+                    for (String fileName : fileNames) {
+                        // Download the file content from Firebase Storage
+                        byte[] fileContent = downloadFile(fileName);
+
+                        // Create a new ZipEntry for each file and add it to the ZIP output stream
+                        ZipEntry zipEntry = new ZipEntry(fileName);
+                        zipOutputStream.putNextEntry(zipEntry);
+
+                        // Write the file content to the ZIP stream
+                        zipOutputStream.write(fileContent);
+                        zipOutputStream.closeEntry();
+                    }
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+
+                return CompletableFuture.completedFuture(byteArrayOutputStream.toByteArray());
             });
         });
     }
@@ -1401,6 +1435,9 @@ public class PostService {
         return false;
     }
     private boolean isFollowing(Account currentAccount, Account postOwner) {
+        if(postOwner == null){
+            return false;
+        }
         return unitOfWork.getFollowRepository()
                 .findByFollowerAndFollowee(currentAccount, postOwner)
                 .isPresent();
@@ -1412,8 +1449,11 @@ public class PostService {
     private CompletableFuture<DailyPoint> createDailyPointLogForSourceOwner(Account account, Post post, Point point) {
         return unitOfWork.getDailyPointRepository().findByAccountAndPost(account, post)
                 .thenCompose(existingDailyPoint -> {
+                    if(account.getRole().getName().equalsIgnoreCase("ADMIN")){
+                        return CompletableFuture.completedFuture(null);
+                    }
                     if (existingDailyPoint != null) {
-                        throw new AppException(ErrorCode.DAILY_POINT_ALREADY_EXIST);
+                        return CompletableFuture.completedFuture(null);
                     }
 
                     DailyPoint newDailyPoint = new DailyPoint();
@@ -1426,6 +1466,35 @@ public class PostService {
 
                     return CompletableFuture.supplyAsync(() -> unitOfWork.getDailyPointRepository().save(newDailyPoint));
                 });
+    }
+    private List<String> extractFileNames(List<PostFile> postFileList) {
+        List<String> fileNames = new ArrayList<>();
+
+        for (PostFile postFile : postFileList) {
+            String url = postFile.getUrl();
+
+            // Extract the part of the URL after "files%2F" and before "?"
+            String filePath = url.split("image-description-detail.appspot.com/o/")[1].split("\\?")[0];
+
+            // URL decode to handle any URL-encoded characters
+            String decodedFilePath = URLDecoder.decode(filePath, StandardCharsets.UTF_8);
+
+            // Add the decoded file name to the list
+            fileNames.add(decodedFilePath);
+        }
+
+        return fileNames;
+    }
+    private byte[] downloadFile(String name) throws IOException {
+        Bucket bucket = StorageClient.getInstance().bucket();
+
+        Blob blob = bucket.get(name);
+
+        if (blob == null) {
+            throw new AppException(ErrorCode.FILE_NOT_FOUND);
+        }
+
+        return blob.getContent();
     }
     //endregion
 }

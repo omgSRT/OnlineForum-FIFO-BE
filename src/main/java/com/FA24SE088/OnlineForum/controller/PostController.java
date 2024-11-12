@@ -18,6 +18,9 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -203,5 +206,19 @@ public class PostController {
                         .entity(postResponses)
                         .build()
         ).join();
+    }
+
+    @Operation(summary = "Download Files From A Post")
+    @GetMapping(path = "/download/{postId}")
+    public ResponseEntity<byte[]> downloadFilesFromAPost(@PathVariable UUID postId){
+        return postService.downloadFiles(postId).thenApply(bytes -> {
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentDispositionFormData("attachment", "Download_" +UUID.randomUUID()+ ".zip");
+            headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+
+            return ResponseEntity.ok()
+                    .headers(headers)
+                    .body(bytes);
+        }).join();
     }
 }
