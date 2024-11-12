@@ -7,6 +7,7 @@ import com.FA24SE088.OnlineForum.dto.response.*;
 import com.FA24SE088.OnlineForum.entity.Account;
 import com.FA24SE088.OnlineForum.entity.Category;
 import com.FA24SE088.OnlineForum.entity.Topic;
+import com.FA24SE088.OnlineForum.enums.SortOption;
 import com.FA24SE088.OnlineForum.exception.AppException;
 import com.FA24SE088.OnlineForum.exception.ErrorCode;
 import com.FA24SE088.OnlineForum.mapper.TopicMapper;
@@ -79,7 +80,7 @@ public class TopicService {
     @Async("AsyncTaskExecutor")
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
     @Transactional(readOnly = true)
-    public CompletableFuture<List<PopularTopicResponse>> getAllPopularTopics(int page, int perPage) {
+    public CompletableFuture<List<PopularTopicResponse>> getAllPopularTopics(int page, int perPage, SortOption sortOption) {
         return CompletableFuture.supplyAsync(() -> {
             List<CompletableFuture<PopularTopicResponse>> responseFutures = unitOfWork.getTopicRepository().findAll().stream()
                     .map(topic -> {
@@ -101,12 +102,23 @@ public class TopicService {
                     .toList();
 
                     return CompletableFuture.allOf(responseFutures.toArray(new CompletableFuture[0]))
-                            .thenApply(voidResult -> responseFutures.stream()
-                                    .map(CompletableFuture::join)
-                                    .sorted(Comparator.comparingInt((PopularTopicResponse r) ->
-                                                    r.getPostAmount() + r.getUpvoteAmount() + r.getCommentAmount() + r.getViewAmount())
-                                            .reversed())
-                                    .toList());
+                            .thenApply(voidResult ->{
+                                if(sortOption.equals(SortOption.DESCENDING)){
+                                    return responseFutures.stream()
+                                            .map(CompletableFuture::join)
+                                            .sorted(Comparator.comparingInt((PopularTopicResponse r) ->
+                                                            r.getPostAmount() + r.getUpvoteAmount() + r.getCommentAmount() + r.getViewAmount())
+                                                    .reversed())
+                                            .toList();
+                                }
+                                else{
+                                    return responseFutures.stream()
+                                            .map(CompletableFuture::join)
+                                            .sorted(Comparator.comparingInt((PopularTopicResponse r) ->
+                                                            r.getPostAmount() + r.getUpvoteAmount() + r.getCommentAmount() + r.getViewAmount()))
+                                            .toList();
+                                }
+                            });
         })
                 .thenApply(list -> paginationUtils.convertListToPage(page, perPage, list.join()));
     }
