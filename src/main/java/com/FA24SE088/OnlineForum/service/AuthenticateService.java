@@ -156,7 +156,7 @@ public class AuthenticateService {
                 .orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND));
 
         if (!verifyRefreshToken(refreshToken, account)) {
-            throw new RuntimeException("Invalid refresh token");
+            throw new AppException(ErrorCode.INVALID_REFRESH_TOKEN);
         }
 
         var newAccessToken = generateToken(account, 1);
