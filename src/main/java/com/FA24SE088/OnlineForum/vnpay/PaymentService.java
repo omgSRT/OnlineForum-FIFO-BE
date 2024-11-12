@@ -50,13 +50,6 @@ public class PaymentService {
                 .message("success")
                 .paymentUrl(paymentUrl).build();
     }
-//    public String getServerUrl() {
-//        HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
-//        if (request == null) {
-//            throw new RuntimeException() ;
-//        }
-//        return request.getScheme() + "://" + request.getServerName() + ":" + request.getServerPort();
-//    }
 
     private Account getCurrentUser() {
         var context = SecurityContextHolder.getContext();
@@ -64,8 +57,8 @@ public class PaymentService {
                 .orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND));
     }
 
-    public PaymentDTO.VNPayResponse buyPoints(HttpServletRequest request, UUID pricingId, String redirectUrl) {
-        MonkeyCoinPack monkeyCoinPack = unitOfWork.getMonkeyCoinPackRepository().findById(pricingId)
+    public PaymentDTO.VNPayResponse buyPoints(HttpServletRequest request, UUID monkeyCoinPackId, String redirectUrl) {
+        MonkeyCoinPack monkeyCoinPack = unitOfWork.getMonkeyCoinPackRepository().findById(monkeyCoinPackId)
                 .orElseThrow(() -> new AppException(ErrorCode.PRICING_INVALID));
 
         long amount = monkeyCoinPack.getPrice() * 100L;
