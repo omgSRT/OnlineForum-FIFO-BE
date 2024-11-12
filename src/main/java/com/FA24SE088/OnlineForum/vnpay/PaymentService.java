@@ -64,8 +64,8 @@ public class PaymentService {
                 .orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND));
     }
 
-    public PaymentDTO.VNPayResponse buyPoints(HttpServletRequest request, UUID pricingId, String redirectUrl) {
-        MonkeyCoinPack monkeyCoinPack = unitOfWork.getMonkeyCoinPackRepository().findById(pricingId)
+    public PaymentDTO.VNPayResponse buyPoints(HttpServletRequest request, UUID monkeyCoinPackId, String redirectUrl) {
+        MonkeyCoinPack monkeyCoinPack = unitOfWork.getMonkeyCoinPackRepository().findById(monkeyCoinPackId)
                 .orElseThrow(() -> new AppException(ErrorCode.PRICING_INVALID));
 
         long amount = monkeyCoinPack.getPrice() * 100L;
