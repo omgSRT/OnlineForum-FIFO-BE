@@ -5,8 +5,6 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
-import org.hibernate.annotations.Fetch;
-import org.hibernate.annotations.FetchProfile;
 
 import java.util.Date;
 import java.util.List;
@@ -34,7 +32,6 @@ public class Post {
     Date createdDate;
     Date lastModifiedDate;
     String status;
-    String linkFile;
 
     @JsonIgnore
     @JsonIgnoreProperties(value = { "post" }, allowSetters = true)
@@ -83,4 +80,10 @@ public class Post {
     @JsonIgnoreProperties(value = {"post"}, allowSetters = true)
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
     List<PostView> postViewList;
+
+    @JsonIgnore
+    @JsonIgnoreProperties(value = { "post" }, allowSetters = true)
+    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    @Column(columnDefinition = "MEDIUMTEXT")
+    List<PostFile> postFileList;
 }

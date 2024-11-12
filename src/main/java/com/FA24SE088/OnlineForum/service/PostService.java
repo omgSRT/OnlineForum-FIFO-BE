@@ -8,6 +8,7 @@ import com.FA24SE088.OnlineForum.enums.UpdatePostStatus;
 import com.FA24SE088.OnlineForum.exception.AppException;
 import com.FA24SE088.OnlineForum.exception.ErrorCode;
 import com.FA24SE088.OnlineForum.mapper.ImageMapper;
+import com.FA24SE088.OnlineForum.mapper.PostFileMapper;
 import com.FA24SE088.OnlineForum.mapper.PostMapper;
 import com.FA24SE088.OnlineForum.repository.UnitOfWork.UnitOfWork;
 import com.FA24SE088.OnlineForum.utils.PaginationUtils;
@@ -32,6 +33,7 @@ public class PostService {
     UnitOfWork unitOfWork;
     PostMapper postMapper;
     ImageMapper imageMapper;
+    PostFileMapper postFileMapper;
     PaginationUtils paginationUtils;
 
     //region CRUD Completed Post
@@ -48,10 +50,8 @@ public class PostService {
                     var account = accountFuture.join();
                     var topic = topicFuture.join();
                     var tag = tagFuture.join();
-                    var linkFile = request.getLinkFile();
 
                     Post newPost = postMapper.toPost(request);
-                    newPost.setLinkFile(linkFile == null || linkFile.trim().isEmpty() ? null : linkFile);
                     newPost.setCreatedDate(new Date());
                     newPost.setLastModifiedDate(new Date());
                     newPost.setStatus(PostStatus.PUBLIC.name());
@@ -70,19 +70,26 @@ public class PostService {
                 .thenCompose(savedPost -> {
                     var account = accountFuture.join();
 
-                    CompletableFuture<List<Image>> imageFuture = createImages(request, savedPost);
+                    CompletableFuture<List<Image>> imagesFuture = createImages(request, savedPost);
+                    CompletableFuture<List<PostFile>> postFilesFuture = createPostFiles(request, savedPost);
                     CompletableFuture<DailyPoint> dailyPointFuture = createDailyPointLog(account.getAccountId(), savedPost);
                     CompletableFuture<Wallet> walletFuture = addPointToWallet(account.getAccountId());
 
-                    return CompletableFuture.allOf(imageFuture, dailyPointFuture, walletFuture)
+                    return CompletableFuture.allOf(imagesFuture, postFilesFuture, dailyPointFuture, walletFuture)
                             .thenCompose(v -> {
                                 var dailyPoint = dailyPointFuture.join();
 
-                                if(imageFuture.join() != null){
-                                    savedPost.setImageList(imageFuture.join());
+                                if(imagesFuture.join() != null){
+                                    savedPost.setImageList(imagesFuture.join());
                                 }
                                 else{
                                     savedPost.setImageList(new ArrayList<>());
+                                }
+                                if(postFilesFuture.join() != null){
+                                    savedPost.setPostFileList(postFilesFuture.join());
+                                }
+                                else{
+                                    savedPost.setPostFileList(new ArrayList<>());
                                 }
 
                                 List<DailyPoint> dailyPointList = new ArrayList<>();
@@ -431,20 +438,28 @@ public class PostService {
 
             CompletableFuture<List<Image>> deleteImageListFuture = CompletableFuture.completedFuture(null);
             CompletableFuture<List<Image>> createImageFuture = CompletableFuture.completedFuture(null);
+            CompletableFuture<List<PostFile>> deletePostFileFuture = CompletableFuture.completedFuture(null);
+            CompletableFuture<List<PostFile>> createPostFileFuture = CompletableFuture.completedFuture(null);
             if (request.getImageUrlList() != null && !request.getImageUrlList().isEmpty()) {
                 deleteImageListFuture = deleteImagesByPost(post);
                 createImageFuture = createImages(request, post);
             }
+            if(request.getPostFileUrlRequest() != null && !request.getPostFileUrlRequest().isEmpty()){
+                deletePostFileFuture = deletePostFilesByPost(post);
+                createPostFileFuture = createPostFiles(request, post);
+            }
 
             CompletableFuture<List<Image>> finalCreateImageFuture = createImageFuture;
-            return CompletableFuture.allOf(deleteImageListFuture, createImageFuture, finalCreateImageFuture).thenCompose(voidData -> {
+            CompletableFuture<List<PostFile>> finalCreatePostFileFuture = createPostFileFuture;
+            return CompletableFuture.allOf(deleteImageListFuture, createImageFuture, finalCreateImageFuture,
+                    deletePostFileFuture, createPostFileFuture, finalCreatePostFileFuture).thenCompose(voidData -> {
                 postMapper.updatePost(post, request);
                 if (request.getImageUrlList() != null && !request.getImageUrlList().isEmpty()) {
                     post.setImageList(finalCreateImageFuture.join() != null ? finalCreateImageFuture.join() : new ArrayList<>());
                 }
-                post.setLinkFile(request.getLinkFile() == null || request.getLinkFile().trim().isEmpty()
-                        ? null
-                        : request.getLinkFile());
+                if(request.getPostFileUrlRequest() != null && !request.getPostFileUrlRequest().isEmpty()){
+                    post.setPostFileList(finalCreatePostFileFuture.join() != null ? finalCreatePostFileFuture.join() : new ArrayList<>());
+                }
                 post.setLastModifiedDate(new Date());
 
                 return CompletableFuture.completedFuture(unitOfWork.getPostRepository().save(post));
@@ -567,6 +582,52 @@ public class PostService {
                             });
                 });
     }
+    @Async("AsyncTaskExecutor")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
+    public CompletableFuture<Void> downloadSourceCode(UUID postId){
+        var username = getUsernameFromJwt();
+        var accountFuture = findAccountByUsername(username);
+        var postFuture = findPostById(postId);
+        var pointFuture = getPoint();
+
+        return CompletableFuture.allOf(accountFuture, postFuture, pointFuture).thenCompose(v -> {
+            var accountDownloader = accountFuture.join();
+            var post = postFuture.join();
+            var pointList = pointFuture.join();
+            var accountOwner = post.getAccount();
+
+            //get wallets of both downloader and owner of the src code
+            var walletDownloader = accountDownloader.getWallet();
+            var walletOwner = accountOwner.getWallet();
+
+            Point point;
+            if(pointList.isEmpty()){
+                throw new AppException(ErrorCode.POINT_NOT_FOUND);
+            }
+            point = pointList.get(0);
+
+            //check current user have enough balance
+            if(walletDownloader.getBalance() < point.getPointCostPerDownload()){
+                throw new AppException(ErrorCode.BALANCE_NOT_SUFFICIENT_TO_DOWNLOAD);
+            }
+
+            walletDownloader.setBalance(walletDownloader.getBalance() - point.getPointCostPerDownload());
+            walletOwner.setBalance(walletOwner.getBalance() + point.getPointEarnedPerDownload());
+
+            var dailyPointFuture = createDailyPointLogForSourceOwner(accountOwner, post, point);
+            var transactionFuture = CompletableFuture.completedFuture(null);
+
+            return CompletableFuture.allOf(dailyPointFuture).thenCompose(voidData -> {
+                var dailyPoint = dailyPointFuture.join();
+
+                unitOfWork.getDailyPointRepository().save(dailyPoint);
+                unitOfWork.getWalletRepository().save(walletDownloader);
+                unitOfWork.getWalletRepository().save(walletOwner);
+
+                return CompletableFuture.completedFuture(null);
+            });
+        });
+    }
     //endregion
 
     //region CRUD Draft
@@ -591,10 +652,8 @@ public class PostService {
                     var account = accountFuture.join();
                     var topic = topicFuture.join();
                     var tag = tagFuture.join();
-                    var linkFile = request.getLinkFile();
 
                     Post newPost = postMapper.toPost(request);
-                    newPost.setLinkFile(linkFile == null || linkFile.trim().isEmpty() ? null : linkFile);
                     newPost.setCreatedDate(new Date());
                     newPost.setLastModifiedDate(new Date());
                     newPost.setStatus(PostStatus.DRAFT.name());
@@ -612,15 +671,23 @@ public class PostService {
                     return CompletableFuture.completedFuture(unitOfWork.getPostRepository().save(newPost));
                 })
                 .thenCompose(savedPost -> {
-                    CompletableFuture<List<Image>> imageFuture = createImages(request, savedPost);
+                    CompletableFuture<List<Image>> imageListFuture = createImages(request, savedPost);
+                    CompletableFuture<List<PostFile>> postListFuture = createPostFiles(request, savedPost);
 
-                    return imageFuture.thenCompose(imageList -> {
-                                if(imageFuture.join() != null){
-                                    savedPost.setImageList(imageFuture.join());
+                    return CompletableFuture.allOf(imageListFuture, postListFuture, postListFuture).thenCompose(imageList -> {
+                                if(imageListFuture.join() != null){
+                                    savedPost.setImageList(imageListFuture.join());
                                 }
                                 else{
                                     savedPost.setImageList(new ArrayList<>());
                                 }
+                                if(postListFuture.join() != null){
+                                    savedPost.setPostFileList(postListFuture.join());
+                                }
+                                else{
+                                    savedPost.setPostFileList(new ArrayList<>());
+                                }
+
                                 return CompletableFuture.completedFuture(unitOfWork.getPostRepository().save(savedPost));
                             });
                 }).thenCompose(post -> {
@@ -757,12 +824,11 @@ public class PostService {
 
             var deleteImageListFuture = deleteImagesByPost(post);
             var createImageFuture = createImages(request, post);
+            var deletePostFileFuture = deletePostFilesByPost(post);
+            var createPostFileFuture = createPostFiles(request, post);
 
-            return CompletableFuture.allOf(deleteImageListFuture, createImageFuture).thenCompose(voidData -> {
+            return CompletableFuture.allOf(deleteImageListFuture, createImageFuture, deletePostFileFuture, createPostFileFuture).thenCompose(voidData -> {
                         postMapper.updateDraft(post, request);
-                        post.setLinkFile(request.getLinkFile() == null || request.getLinkFile().trim().isEmpty()
-                                ? null
-                                : request.getLinkFile());
                         post.setTopic(topic != null ? (Topic) topic : null);
                         post.setTag(tag != null ? (Tag) tag : null);
                         if(createImageFuture.join() != null){
@@ -771,6 +837,13 @@ public class PostService {
                         else{
                             post.setImageList(new ArrayList<>());
                         }
+                        if(createPostFileFuture.join() != null){
+                            post.setPostFileList(createPostFileFuture.join());
+                        }
+                        else{
+                            post.setPostFileList(new ArrayList<>());
+                        }
+
                         post.setLastModifiedDate(new Date());
 
                         return CompletableFuture.completedFuture(unitOfWork.getPostRepository().save(post));
@@ -968,6 +1041,74 @@ public class PostService {
         return CompletableFuture.completedFuture(imageList);
     }
     @Async("AsyncTaskExecutor")
+    private CompletableFuture<List<PostFile>> createPostFiles(PostCreateRequest request, Post savedPost){
+        if (request.getImageUrlList() == null || request.getImageUrlList().isEmpty()) {
+            return CompletableFuture.completedFuture(null);
+        }
+
+        List<PostFile> postFileList = new ArrayList<>();
+
+        for(PostFileRequest postFileRequest : request.getPostFileUrlRequest()){
+            PostFile newPostFile = postFileMapper.toPostFile(postFileRequest);
+            newPostFile.setPost(savedPost);
+            postFileList.add(newPostFile);
+            unitOfWork.getPostFileRepository().save(newPostFile);
+        }
+
+        return CompletableFuture.completedFuture(postFileList);
+    }
+    @Async("AsyncTaskExecutor")
+    private CompletableFuture<List<PostFile>> createPostFiles(PostUpdateRequest request, Post savedPost){
+        if (request.getImageUrlList() == null || request.getImageUrlList().isEmpty()) {
+            return CompletableFuture.completedFuture(null);
+        }
+
+        List<PostFile> postFileList = new ArrayList<>();
+
+        for(PostFileRequest postFileRequest : request.getPostFileUrlRequest()){
+            PostFile newPostFile = postFileMapper.toPostFile(postFileRequest);
+            newPostFile.setPost(savedPost);
+            postFileList.add(newPostFile);
+            unitOfWork.getPostFileRepository().save(newPostFile);
+        }
+
+        return CompletableFuture.completedFuture(postFileList);
+    }
+    @Async("AsyncTaskExecutor")
+    private CompletableFuture<List<PostFile>> createPostFiles(DraftCreateRequest request, Post savedPost){
+        if (request.getImageUrlList() == null || request.getImageUrlList().isEmpty()) {
+            return CompletableFuture.completedFuture(null);
+        }
+
+        List<PostFile> postFileList = new ArrayList<>();
+
+        for(PostFileRequest postFileRequest : request.getPostFileUrlRequest()){
+            PostFile newPostFile = postFileMapper.toPostFile(postFileRequest);
+            newPostFile.setPost(savedPost);
+            postFileList.add(newPostFile);
+            unitOfWork.getPostFileRepository().save(newPostFile);
+        }
+
+        return CompletableFuture.completedFuture(postFileList);
+    }
+    @Async("AsyncTaskExecutor")
+    private CompletableFuture<List<PostFile>> createPostFiles(DraftUpdateRequest request, Post savedPost){
+        if (request.getImageUrlList() == null || request.getImageUrlList().isEmpty()) {
+            return CompletableFuture.completedFuture(null);
+        }
+
+        List<PostFile> postFileList = new ArrayList<>();
+
+        for(PostFileRequest postFileRequest : request.getPostFileUrlRequest()){
+            PostFile newPostFile = postFileMapper.toPostFile(postFileRequest);
+            newPostFile.setPost(savedPost);
+            postFileList.add(newPostFile);
+            unitOfWork.getPostFileRepository().save(newPostFile);
+        }
+
+        return CompletableFuture.completedFuture(postFileList);
+    }
+    @Async("AsyncTaskExecutor")
     private CompletableFuture<List<Image>> deleteImagesByPost(Post savedPost){
         var imageListFuture = unitOfWork.getImageRepository().findByPost(savedPost);
         List<Image> deletedImageList = new ArrayList<>();
@@ -983,6 +1124,24 @@ public class PostService {
             }
 
             return CompletableFuture.completedFuture(deletedImageList);
+        });
+    }
+    @Async("AsyncTaskExecutor")
+    private CompletableFuture<List<PostFile>> deletePostFilesByPost(Post savedPost){
+        var postFileListFuture = unitOfWork.getPostFileRepository().findByPost(savedPost);
+        List<PostFile> deletedPostFileList = new ArrayList<>();
+
+        return postFileListFuture.thenCompose(postFileList -> {
+            if(postFileList.isEmpty()){
+                return CompletableFuture.completedFuture(null);
+            }
+
+            for(PostFile postFile : postFileList){
+                deletedPostFileList.add(postFile);
+                unitOfWork.getPostFileRepository().delete(postFile);
+            }
+
+            return CompletableFuture.completedFuture(deletedPostFileList);
         });
     }
     @Async("AsyncTaskExecutor")
@@ -1248,6 +1407,25 @@ public class PostService {
     }
     private boolean hasRole(Account account, String role) {
         return account.getRole().getName().equals(role);
+    }
+    @Async("AsyncTaskExecutor")
+    private CompletableFuture<DailyPoint> createDailyPointLogForSourceOwner(Account account, Post post, Point point) {
+        return unitOfWork.getDailyPointRepository().findByAccountAndPost(account, post)
+                .thenCompose(existingDailyPoint -> {
+                    if (existingDailyPoint != null) {
+                        throw new AppException(ErrorCode.DAILY_POINT_ALREADY_EXIST);
+                    }
+
+                    DailyPoint newDailyPoint = new DailyPoint();
+                    newDailyPoint.setCreatedDate(new Date());
+                    newDailyPoint.setPoint(point);
+                    newDailyPoint.setPost(post);
+                    newDailyPoint.setAccount(account);
+                    newDailyPoint.setTypeBonus(null);
+                    newDailyPoint.setPointEarned(point.getPointEarnedPerDownload());
+
+                    return CompletableFuture.supplyAsync(() -> unitOfWork.getDailyPointRepository().save(newDailyPoint));
+                });
     }
     //endregion
 }

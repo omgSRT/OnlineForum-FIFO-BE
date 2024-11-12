@@ -125,6 +125,7 @@ public enum ErrorCode {
     POINT_PAY_FOR_DOWNLOAD_LESS_THAN_ONE(10107, "Point pay for download must be greater than or equal to 1", HttpStatus.BAD_REQUEST),
     BALANCE_NOT_SUFFICIENT_TO_DOWNLOAD(10108, "Balance Is Not Sufficient To Download", HttpStatus.PAYMENT_REQUIRED),
     INVALID_REFRESH_TOKEN(10109, "Invalid refresh token", HttpStatus.BAD_REQUEST),
+    TRANSACTION_AMOUNT_LESS_THAN_ZERO(10110, "Amount transaction must be greater than or equal to 0", HttpStatus.BAD_REQUEST),
     ;
 
     private int code;
