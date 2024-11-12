@@ -63,7 +63,6 @@ public class DailyPointService {
                         point = null;
                     }
 
-
                     DailyPoint newDailyPoint = new DailyPoint();
                     newDailyPoint.setCreatedDate(new Date());
                     newDailyPoint.setPoint(point);

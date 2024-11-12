@@ -5,18 +5,13 @@ import jakarta.validation.constraints.Pattern;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
-import java.util.Set;
-
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class PostUpdateRequest {
-    @NotBlank(message = "Title Cannot Be Null")
-    String title;
-    @NotBlank(message = "Content Cannot Be Null")
-    String content;
-    Set<ImageRequest> imageUrlList;
-    Set<PostFileRequest> postFileUrlRequest;
+public class PostFileRequest {
+    @NotBlank(message = "URL Cannot Be Null")
+    @Pattern(regexp = "^(http|https)://.*$", message = "URL Must Be Valid")
+    String url;
 }

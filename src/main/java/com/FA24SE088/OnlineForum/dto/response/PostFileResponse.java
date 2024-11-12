@@ -1,4 +1,4 @@
-package com.FA24SE088.OnlineForum.dto.request;
+package com.FA24SE088.OnlineForum.dto.response;
 
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -10,8 +10,7 @@ import java.util.UUID;
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class DailyPointRequest {
-    UUID accountId;
-    UUID postId;
-    UUID typeBonusId;
+public class PostFileResponse {
+    UUID postFileId;
+    String url;
 }

@@ -14,6 +14,8 @@ public enum SuccessReturnMessage {
     POST_SUCCESS("Post Successfully"),
     LOGIN_SUCCESS("Login Successfully"),
     VERIFY_SUCCESS("Verify Successfully"),
+    UPLOAD_SUCCESS("Upload Successfully"),
+    DOWNLOAD_SUCCESS("Download Successfully"),
     ;
 
     private String message;

@@ -253,6 +253,8 @@ public class TransactionService {
     }
     private Transaction createAndSaveTransaction(TransactionRequest request, Account account, Reward reward) {
         Transaction newTransaction = transactionMapper.toTransaction(request);
+        var amount = -request.getAmount();
+        newTransaction.setAmount(amount);
         newTransaction.setCreatedDate(new Date());
         newTransaction.setWallet(account.getWallet());
         newTransaction.setReward(reward);
