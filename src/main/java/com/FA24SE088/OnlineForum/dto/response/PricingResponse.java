@@ -12,6 +12,7 @@ import java.util.UUID;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class PricingResponse {
     UUID monkeyCoinPackId;
+    String imgUrl;
     long price;
     double point;
 }
