@@ -12,6 +12,7 @@ import com.FA24SE088.OnlineForum.exception.ErrorCode;
 import com.FA24SE088.OnlineForum.mapper.UpvoteMapper;
 import com.FA24SE088.OnlineForum.repository.UnitOfWork.UnitOfWork;
 import com.FA24SE088.OnlineForum.utils.PaginationUtils;
+import jakarta.persistence.EntityManager;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -35,6 +36,7 @@ public class UpvoteService {
     UnitOfWork unitOfWork;
     UpvoteMapper upvoteMapper;
     PaginationUtils paginationUtils;
+    EntityManager entityManager;
 
     @Async("AsyncTaskExecutor")
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
@@ -49,9 +51,9 @@ public class UpvoteService {
             var existUpvoteFuture = unitOfWork.getUpvoteRepository().findByPostAndAccount(post, account);
 
             return existUpvoteFuture.thenCompose(existUpvote -> {
-                if(existUpvote != null){
-                    unitOfWork.getUpvoteRepository().delete(existUpvote);
-                    var upvoteResponse = upvoteMapper.toUpvoteCreateDeleteResponse(existUpvote);
+                if(existUpvote.isPresent()){
+                    unitOfWork.getUpvoteRepository().delete(existUpvote.get());
+                    var upvoteResponse = upvoteMapper.toUpvoteCreateDeleteResponse(existUpvote.get());
                     upvoteResponse.setMessage(SuccessReturnMessage.DELETE_SUCCESS.getMessage());
                     return CompletableFuture.completedFuture(upvoteResponse);
                 }

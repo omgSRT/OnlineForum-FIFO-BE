@@ -1079,7 +1079,7 @@ public class PostService {
     }
     @Async("AsyncTaskExecutor")
     private CompletableFuture<List<PostFile>> createPostFiles(PostCreateRequest request, Post savedPost){
-        if (request.getImageUrlList() == null || request.getImageUrlList().isEmpty()) {
+        if (request.getPostFileUrlRequest() == null || request.getPostFileUrlRequest().isEmpty()) {
             return CompletableFuture.completedFuture(null);
         }
 
@@ -1096,7 +1096,7 @@ public class PostService {
     }
     @Async("AsyncTaskExecutor")
     private CompletableFuture<List<PostFile>> createPostFiles(PostUpdateRequest request, Post savedPost){
-        if (request.getImageUrlList() == null || request.getImageUrlList().isEmpty()) {
+        if (request.getPostFileUrlRequest() == null || request.getPostFileUrlRequest().isEmpty()) {
             return CompletableFuture.completedFuture(null);
         }
 
@@ -1113,7 +1113,7 @@ public class PostService {
     }
     @Async("AsyncTaskExecutor")
     private CompletableFuture<List<PostFile>> createPostFiles(DraftCreateRequest request, Post savedPost){
-        if (request.getImageUrlList() == null || request.getImageUrlList().isEmpty()) {
+        if (request.getPostFileUrlRequest() == null || request.getPostFileUrlRequest().isEmpty()) {
             return CompletableFuture.completedFuture(null);
         }
 
@@ -1130,7 +1130,7 @@ public class PostService {
     }
     @Async("AsyncTaskExecutor")
     private CompletableFuture<List<PostFile>> createPostFiles(DraftUpdateRequest request, Post savedPost){
-        if (request.getImageUrlList() == null || request.getImageUrlList().isEmpty()) {
+        if (request.getPostFileUrlRequest() == null || request.getPostFileUrlRequest().isEmpty()) {
             return CompletableFuture.completedFuture(null);
         }
 
@@ -1491,7 +1491,7 @@ public class PostService {
             String url = postFile.getUrl();
 
             // Extract the part of the URL after "files%2F" and before "?"
-            String filePath = url.split("image-description-detail.appspot.com/o/")[1].split("\\?")[0];
+            String filePath = url.split("files%2F")[1].split("\\?")[0];
 
             // URL decode to handle any URL-encoded characters
             String decodedFilePath = URLDecoder.decode(filePath, StandardCharsets.UTF_8);
