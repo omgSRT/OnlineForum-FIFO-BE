@@ -114,52 +114,6 @@ public class PointService {
         });
     }
 
-    @Async("AsyncTaskExecutor")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
-    public CompletableFuture<Void> managePointAfterDownload(UUID postId){
-        var username = getUsernameFromJwt();
-        var accountFuture = findAccountByUsername(username);
-        var postFuture = findPostById(postId);
-        var pointFuture = getPoint();
-
-        return CompletableFuture.allOf(accountFuture, postFuture, pointFuture).thenCompose(v -> {
-            var accountDownloader = accountFuture.join();
-            var post = postFuture.join();
-            var pointList = pointFuture.join();
-            var accountOwner = post.getAccount();
-
-            //get wallets of both downloader and owner of the src code
-            var walletDownloader = accountDownloader.getWallet();
-            var walletOwner = accountOwner.getWallet();
-
-            Point point;
-            if(pointList.isEmpty()){
-                throw new AppException(ErrorCode.POINT_NOT_FOUND);
-            }
-            point = pointList.get(0);
-
-            //check current user have enough balance
-            if(walletDownloader.getBalance() < point.getPointCostPerDownload()){
-                throw new AppException(ErrorCode.BALANCE_NOT_SUFFICIENT_TO_DOWNLOAD);
-            }
-
-            walletDownloader.setBalance(walletDownloader.getBalance() - point.getPointCostPerDownload());
-            walletOwner.setBalance(walletOwner.getBalance() + point.getPointEarnedPerDownload());
-
-            var dailyPointFuture = createDailyPointLogForSourceOwner(accountOwner, post, point);
-
-            return CompletableFuture.allOf(dailyPointFuture).thenCompose(voidData -> {
-                var dailyPoint = dailyPointFuture.join();
-
-                unitOfWork.getDailyPointRepository().save(dailyPoint);
-                unitOfWork.getWalletRepository().save(walletDownloader);
-                unitOfWork.getWalletRepository().save(walletOwner);
-
-                return CompletableFuture.completedFuture(null);
-            });
-        });
-    }
-
     private String getUsernameFromJwt() {
         var authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null && authentication.getPrincipal() instanceof Jwt jwt) {
@@ -193,24 +147,5 @@ public class PointService {
         return CompletableFuture.supplyAsync(() ->
                 unitOfWork.getPointRepository().findAll().stream()
                         .toList());
-    }
-    @Async("AsyncTaskExecutor")
-    private CompletableFuture<DailyPoint> createDailyPointLogForSourceOwner(Account account, Post post, Point point) {
-        return unitOfWork.getDailyPointRepository().findByAccountAndPost(account, post)
-                .thenCompose(existingDailyPoint -> {
-                    if (existingDailyPoint != null) {
-                        throw new AppException(ErrorCode.DAILY_POINT_ALREADY_EXIST);
-                    }
-
-                    DailyPoint newDailyPoint = new DailyPoint();
-                    newDailyPoint.setCreatedDate(new Date());
-                    newDailyPoint.setPoint(point);
-                    newDailyPoint.setPost(post);
-                    newDailyPoint.setAccount(account);
-                    newDailyPoint.setTypeBonus(null);
-                    newDailyPoint.setPointEarned(point.getPointEarnedPerDownload());
-
-                    return CompletableFuture.supplyAsync(() -> unitOfWork.getDailyPointRepository().save(newDailyPoint));
-                });
     }
 }

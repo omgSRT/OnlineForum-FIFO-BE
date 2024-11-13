@@ -45,4 +45,5 @@ public class UnitOfWork {
     final MonkeyCoinPackRepository monkeyCoinPackRepository;
     final OrderPointRepository orderPointRepository;
     final PostViewRepository postViewRepository;
+    final PostFileRepository postFileRepository;
 }

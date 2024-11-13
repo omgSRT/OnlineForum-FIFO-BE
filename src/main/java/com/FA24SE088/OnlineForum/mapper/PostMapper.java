@@ -15,7 +15,7 @@ import org.mapstruct.MappingTarget;
 
 import java.util.List;
 
-@Mapper(componentModel = "spring", uses = ImageMapper.class)
+@Mapper(componentModel = "spring", uses = {ImageMapper.class, PostFileMapper.class})
 public interface PostMapper {
     Post toPost(PostCreateRequest request);
 

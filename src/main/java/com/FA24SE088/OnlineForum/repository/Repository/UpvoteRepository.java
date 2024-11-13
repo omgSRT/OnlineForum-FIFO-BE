@@ -6,6 +6,7 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
@@ -21,7 +22,7 @@ public interface UpvoteRepository extends JpaRepository<Upvote, UUID> {
     CompletableFuture<List<Upvote>> findByAccount(Account account);
 
     @Async("AsyncTaskExecutor")
-    CompletableFuture<Upvote> findByPostAndAccount(Post post, Account account);
+    CompletableFuture<Optional<Upvote>> findByPostAndAccount(Post post, Account account);
 
     @Async("AsyncTaskExecutor")
     CompletableFuture<Integer> countByPostTopic(Topic topic);
