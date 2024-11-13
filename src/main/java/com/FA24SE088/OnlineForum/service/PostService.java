@@ -4,6 +4,7 @@ import com.FA24SE088.OnlineForum.dto.request.*;
 import com.FA24SE088.OnlineForum.dto.response.PostResponse;
 import com.FA24SE088.OnlineForum.entity.*;
 import com.FA24SE088.OnlineForum.enums.PostStatus;
+import com.FA24SE088.OnlineForum.enums.TransactionType;
 import com.FA24SE088.OnlineForum.enums.UpdatePostStatus;
 import com.FA24SE088.OnlineForum.exception.AppException;
 import com.FA24SE088.OnlineForum.exception.ErrorCode;
@@ -625,16 +626,18 @@ public class PostService {
             walletOwner.setBalance(walletOwner.getBalance() + point.getPointEarnedPerDownload());
 
             var dailyPointFuture = createDailyPointLogForSourceOwner(accountOwner, post, point);
-            var transactionFuture = CompletableFuture.completedFuture(null);
+            var transactionFuture = createTransactionForDownloader(walletDownloader, point);
             var postFileListFuture = unitOfWork.getPostFileRepository().findByPost(post);
 
-            return CompletableFuture.allOf(dailyPointFuture, postFileListFuture).thenCompose(voidData -> {
+            return CompletableFuture.allOf(dailyPointFuture, postFileListFuture, transactionFuture).thenCompose(voidData -> {
                 var dailyPoint = dailyPointFuture.join();
+                var transaction = transactionFuture.join();
                 var postFileList = postFileListFuture.join();
 
                 if(dailyPoint != null){
                     unitOfWork.getDailyPointRepository().save(dailyPoint);
                 }
+                unitOfWork.getTransactionRepository().save(transaction);
                 unitOfWork.getWalletRepository().save(walletDownloader);
                 unitOfWork.getWalletRepository().save(walletOwner);
 
@@ -1466,6 +1469,20 @@ public class PostService {
 
                     return CompletableFuture.supplyAsync(() -> unitOfWork.getDailyPointRepository().save(newDailyPoint));
                 });
+    }
+    @Async("AsyncTaskExecutor")
+    private CompletableFuture<Transaction> createTransactionForDownloader(Wallet wallet, Point point){
+        return CompletableFuture.supplyAsync(() -> {
+            Transaction newTransaction = Transaction.builder()
+                    .amount(-point.getPointCostPerDownload())
+                    .createdDate(new Date())
+                    .wallet(wallet)
+                    .reward(null)
+                    .transactionType(TransactionType.DOWNLOAD_SOURCECODE.name())
+                    .build();
+
+            return unitOfWork.getTransactionRepository().save(newTransaction);
+        });
     }
     private List<String> extractFileNames(List<PostFile> postFileList) {
         List<String> fileNames = new ArrayList<>();
