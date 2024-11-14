@@ -161,6 +161,12 @@ public class TopicService {
                         var topic = unitOfWork.getTopicRepository().findById(topicId)
                                 .orElseThrow(() -> new AppException(ErrorCode.TOPIC_NOT_FOUND));
 
+                        request.setName(request.getName() == null || request.getName().isEmpty()
+                                ? topic.getName()
+                                : request.getName());
+                        request.setImageUrl(request.getImageUrl() == null || request.getImageUrl().isEmpty()
+                                ? topic.getImageUrl()
+                                : request.getImageUrl());
                         topicMapper.updateTopic(topic, request);
                         return unitOfWork.getTopicRepository().save(topic);
                     }).thenApply(topicMapper::toTopicResponse);
