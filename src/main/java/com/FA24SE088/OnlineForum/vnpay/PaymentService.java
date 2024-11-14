@@ -94,31 +94,6 @@ public class PaymentService {
     }
 
 
-//    public OrderPointResponse handleVnPayCallback(HttpServletRequest request) {
-//
-//        String status = request.getParameter("vnp_ResponseCode");
-//        String orderId = request.getParameter("vnp_TxnRef");
-//
-//        OrderPoint orderPoint = unitOfWork.getOrderPointRepository().findById(UUID.fromString(orderId))
-//                .orElseThrow(() -> new AppException(ErrorCode.ORDER_POINT_NOT_FOUND));
-//
-//        if ("00".equals(status)) {
-//            orderPoint.setStatus(OrderPointStatus.SUCCESS.name());
-//            OrderPoint orderPoint1 = unitOfWork.getOrderPointRepository().save(orderPoint);
-//
-//            Wallet wallet = orderPoint.getWallet();
-//            wallet.setBalance(wallet.getBalance() + orderPoint.getPricing().getPoint());
-//            unitOfWork.getWalletRepository().save(wallet);
-//            return orderPointMapper.toOderPointResponse(orderPoint1);
-//        } else {
-//            orderPoint.setStatus(OrderPointStatus.FAILED.name());
-//            OrderPoint orderPoint2 = unitOfWork.getOrderPointRepository().save(orderPoint);
-//            return orderPointMapper.toOderPointResponse(orderPoint2);
-//        }
-//    }
-
-
-
     public RedirectView handleVnPayCallback(HttpServletRequest request) {
 
         String status = request.getParameter("vnp_ResponseCode");
@@ -149,5 +124,6 @@ public class PaymentService {
         redirectView.setUrl(redirectUrl);
         return redirectView;
     }
+
 
 }

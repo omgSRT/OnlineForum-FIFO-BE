@@ -34,7 +34,7 @@ public class PaymentController {
 
 
     @PostMapping("/buyPoints")
-    public ResponseEntity<PaymentDTO.VNPayResponse> buyPoints(HttpServletRequest request, MCRequest mcRequest) {
+    public ResponseEntity<PaymentDTO.VNPayResponse> buyPoints(HttpServletRequest request, @RequestBody MCRequest mcRequest) {
         PaymentDTO.VNPayResponse response = paymentService.buyPoints(request, mcRequest.getMonkeyCoinPackId(), mcRequest.getRedirectUrl());
         return ResponseEntity.ok(response);
     }
