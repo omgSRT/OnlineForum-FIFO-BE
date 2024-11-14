@@ -602,6 +602,8 @@ public class PostService {
         var pointFuture = getPoint();
 
         return CompletableFuture.allOf(accountFuture, postFuture, pointFuture).thenCompose(v -> {
+            ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+
             var accountDownloader = accountFuture.join();
             var post = postFuture.join();
             var pointList = pointFuture.join();
@@ -617,52 +619,80 @@ public class PostService {
             }
             point = pointList.get(0);
 
-            //check current user have enough balance
-            if(walletDownloader.getBalance() < point.getPointCostPerDownload()){
-                throw new AppException(ErrorCode.BALANCE_NOT_SUFFICIENT_TO_DOWNLOAD);
-            }
-
-            walletDownloader.setBalance(walletDownloader.getBalance() - point.getPointCostPerDownload());
-            walletOwner.setBalance(walletOwner.getBalance() + point.getPointEarnedPerDownload());
-
-            var dailyPointFuture = createDailyPointLogForSourceOwner(accountOwner, post, point);
-            var transactionFuture = createTransactionForDownloader(walletDownloader, point);
-            var postFileListFuture = unitOfWork.getPostFileRepository().findByPost(post);
-
-            return CompletableFuture.allOf(dailyPointFuture, postFileListFuture, transactionFuture).thenCompose(voidData -> {
-                var dailyPoint = dailyPointFuture.join();
-                var transaction = transactionFuture.join();
-                var postFileList = postFileListFuture.join();
-
-                if(dailyPoint != null){
-                    unitOfWork.getDailyPointRepository().save(dailyPoint);
+            if(!walletDownloader.equals(walletOwner)){
+                //check current user have enough balance
+                if(walletDownloader.getBalance() < point.getPointCostPerDownload()){
+                    throw new AppException(ErrorCode.BALANCE_NOT_SUFFICIENT_TO_DOWNLOAD);
                 }
-                unitOfWork.getTransactionRepository().save(transaction);
-                unitOfWork.getWalletRepository().save(walletDownloader);
-                unitOfWork.getWalletRepository().save(walletOwner);
+                walletDownloader.setBalance(walletDownloader.getBalance() - point.getPointCostPerDownload());
+                walletOwner.setBalance(walletOwner.getBalance() + point.getPointEarnedPerDownload());
 
-                var fileNames = extractFileNames(postFileList);
+                var dailyPointFuture = createDailyPointLogForSourceOwner(accountOwner, post, point);
+                var transactionFuture = createTransactionForDownloader(walletDownloader, point);
+                var postFileListFuture = unitOfWork.getPostFileRepository().findByPost(post);
 
-                ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-                try (ZipOutputStream zipOutputStream = new ZipOutputStream(byteArrayOutputStream)) {
-                    for (String fileName : fileNames) {
-                        // Download the file content from Firebase Storage
-                        byte[] fileContent = downloadFile(fileName);
+                return CompletableFuture.allOf(dailyPointFuture, postFileListFuture, transactionFuture).thenCompose(voidData -> {
+                    var dailyPoint = dailyPointFuture.join();
+                    var transaction = transactionFuture.join();
+                    var postFileList = postFileListFuture.join();
 
-                        // Create a new ZipEntry for each file and add it to the ZIP output stream
-                        ZipEntry zipEntry = new ZipEntry(fileName);
-                        zipOutputStream.putNextEntry(zipEntry);
-
-                        // Write the file content to the ZIP stream
-                        zipOutputStream.write(fileContent);
-                        zipOutputStream.closeEntry();
+                    if(dailyPoint != null){
+                        unitOfWork.getDailyPointRepository().save(dailyPoint);
                     }
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
+                    unitOfWork.getTransactionRepository().save(transaction);
+                    unitOfWork.getWalletRepository().save(walletDownloader);
+                    unitOfWork.getWalletRepository().save(walletOwner);
 
-                return CompletableFuture.completedFuture(byteArrayOutputStream.toByteArray());
-            });
+                    var fileNames = extractFileNames(postFileList);
+
+                    try (ZipOutputStream zipOutputStream = new ZipOutputStream(byteArrayOutputStream)) {
+                        for (String fileName : fileNames) {
+                            // Download the file content from Firebase Storage
+                            byte[] fileContent = downloadFile(fileName);
+
+                            // Create a new ZipEntry for each file and add it to the ZIP output stream
+                            ZipEntry zipEntry = new ZipEntry(fileName);
+                            zipOutputStream.putNextEntry(zipEntry);
+
+                            // Write the file content to the ZIP stream
+                            zipOutputStream.write(fileContent);
+                            zipOutputStream.closeEntry();
+                        }
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+
+                    return CompletableFuture.completedFuture(byteArrayOutputStream.toByteArray());
+                });
+            }
+            else{
+                var postFileListFuture = unitOfWork.getPostFileRepository().findByPost(post);
+
+                return CompletableFuture.allOf(postFileListFuture).thenCompose(voidData -> {
+                    var postFileList = postFileListFuture.join();
+
+                    var fileNames = extractFileNames(postFileList);
+
+                    try (ZipOutputStream zipOutputStream = new ZipOutputStream(byteArrayOutputStream)) {
+                        for (String fileName : fileNames) {
+                            // Download the file content from Firebase Storage
+                            byte[] fileContent = downloadFile(fileName);
+
+                            // Create a new ZipEntry for each file and add it to the ZIP output stream
+                            ZipEntry zipEntry = new ZipEntry(fileName);
+                            zipOutputStream.putNextEntry(zipEntry);
+
+                            // Write the file content to the ZIP stream
+                            zipOutputStream.write(fileContent);
+                            zipOutputStream.closeEntry();
+                        }
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+
+                    return CompletableFuture.completedFuture(byteArrayOutputStream.toByteArray());
+                });
+            }
         });
     }
     //endregion
@@ -1491,7 +1521,7 @@ public class PostService {
             String url = postFile.getUrl();
 
             // Extract the part of the URL after "files%2F" and before "?"
-            String filePath = url.split("files%2F")[1].split("\\?")[0];
+            String filePath = url.split("image-description-detail.appspot.com/o/")[1].split("\\?")[0];
 
             // URL decode to handle any URL-encoded characters
             String decodedFilePath = URLDecoder.decode(filePath, StandardCharsets.UTF_8);
