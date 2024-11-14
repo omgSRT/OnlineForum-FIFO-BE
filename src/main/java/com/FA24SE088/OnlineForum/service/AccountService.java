@@ -81,10 +81,7 @@ public class AccountService {
                     }
 
                 });
-
-
                 account.setCategoryList(categories);
-
             }
         }
         else {
