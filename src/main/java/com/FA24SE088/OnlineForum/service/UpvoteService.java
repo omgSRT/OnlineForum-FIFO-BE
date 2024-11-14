@@ -176,7 +176,7 @@ public class UpvoteService {
                 .findByPostAndTypeBonus(post, typeBonus)
                 .thenCompose(dailyPoint -> {
                     if (dailyPoint != null) {
-                        CompletableFuture.completedFuture(null);
+                        return CompletableFuture.completedFuture(null);
                     }
 
                     DailyPoint newDailyPoint = new DailyPoint();
