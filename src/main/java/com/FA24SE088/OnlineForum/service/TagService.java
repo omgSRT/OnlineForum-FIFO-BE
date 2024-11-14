@@ -150,6 +150,15 @@ public class TagService {
                         var tag = unitOfWork.getTagRepository().findById(tagId)
                                 .orElseThrow(() -> new AppException(ErrorCode.TAG_NOT_FOUND));
 
+                        request.setName(request.getName() == null || request.getName().isEmpty()
+                                ? tag.getName()
+                                : request.getName());
+                        request.setTextColorHex(request.getTextColorHex() == null || request.getTextColorHex().isEmpty()
+                                ? tag.getTextColorHex()
+                                : request.getTextColorHex());
+                        request.setBackgroundColorHex(request.getBackgroundColorHex() == null || request.getBackgroundColorHex().isEmpty()
+                                ? tag.getBackgroundColorHex()
+                                : request.getBackgroundColorHex());
                         tagMapper.updateTag(tag, request);
                         return unitOfWork.getTagRepository().save(tag);
                     }).thenApply(tagMapper::toTagResponse);
