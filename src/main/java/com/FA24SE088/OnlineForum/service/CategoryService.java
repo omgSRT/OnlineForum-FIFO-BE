@@ -265,6 +265,15 @@ public class CategoryService {
             }
             return category;
         }).thenCompose(category -> {
+            request.setName(request.getName() == null || request.getName().isEmpty()
+                    ? category.getName()
+                    : request.getName());
+            request.setDescription(request.getDescription() == null || request.getDescription().isEmpty()
+                    ? category.getDescription()
+                    : request.getDescription());
+            request.setImage(request.getImage() == null || request.getImage().isEmpty()
+                    ? category.getDescription()
+                    : request.getImage());
             categoryMapper.updateCategory(category, request);
 
             return CompletableFuture.completedFuture(unitOfWork.getCategoryRepository().save(category));
