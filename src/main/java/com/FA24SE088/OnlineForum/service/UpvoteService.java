@@ -57,34 +57,35 @@ public class UpvoteService {
                     upvoteResponse.setMessage(SuccessReturnMessage.DELETE_SUCCESS.getMessage());
                     return CompletableFuture.completedFuture(upvoteResponse);
                 }
+                else{
+                    return unitOfWork.getUpvoteRepository().countByPost(post)
+                            .thenCompose(upvoteAmount -> {
+                                long amount = upvoteAmount + 1;
+                                return unitOfWork.getTypeBonusRepository().findByNameAndQuantity(TypeBonusNameEnum.UPVOTE.name(), amount)
+                                        .thenCompose(typeBonus -> {
+                                            if (typeBonus != null) {
+                                                return createDailyPointLog(account, post, typeBonus)
+                                                        .thenCompose(existingDailyPoint -> {
+                                                            Upvote newUpvote = new Upvote();
+                                                            newUpvote.setAccount(account);
+                                                            newUpvote.setPost(post);
 
-                return unitOfWork.getUpvoteRepository().countByPost(post)
-                        .thenCompose(upvoteAmount -> {
-                            long amount = upvoteAmount + 1;
-                            return unitOfWork.getTypeBonusRepository().findByNameAndQuantity(TypeBonusNameEnum.UPVOTE.name(), amount)
-                                    .thenCompose(typeBonus -> {
-                                        if (typeBonus != null) {
-                                            return createDailyPointLog(account, post, typeBonus)
-                                                    .thenCompose(existingDailyPoint -> {
-                                                        Upvote newUpvote = new Upvote();
-                                                        newUpvote.setAccount(account);
-                                                        newUpvote.setPost(post);
+                                                            var upvoteResponse = upvoteMapper.toUpvoteCreateDeleteResponse(unitOfWork.getUpvoteRepository().save(newUpvote));
+                                                            upvoteResponse.setMessage(SuccessReturnMessage.CREATE_SUCCESS.getMessage());
+                                                            return CompletableFuture.completedFuture(upvoteResponse);
+                                                        });
+                                            } else {
+                                                Upvote newUpvote = new Upvote();
+                                                newUpvote.setAccount(account);
+                                                newUpvote.setPost(post);
 
-                                                        var upvoteResponse = upvoteMapper.toUpvoteCreateDeleteResponse(unitOfWork.getUpvoteRepository().save(newUpvote));
-                                                        upvoteResponse.setMessage(SuccessReturnMessage.CREATE_SUCCESS.getMessage());
-                                                        return CompletableFuture.completedFuture(upvoteResponse);
-                                                    });
-                                        } else {
-                                            Upvote newUpvote = new Upvote();
-                                            newUpvote.setAccount(account);
-                                            newUpvote.setPost(post);
-
-                                            var upvoteResponse = upvoteMapper.toUpvoteCreateDeleteResponse(unitOfWork.getUpvoteRepository().save(newUpvote));
-                                            upvoteResponse.setMessage(SuccessReturnMessage.CREATE_SUCCESS.getMessage());
-                                            return CompletableFuture.completedFuture(upvoteResponse);
-                                        }
-                                    });
-                        });
+                                                var upvoteResponse = upvoteMapper.toUpvoteCreateDeleteResponse(unitOfWork.getUpvoteRepository().save(newUpvote));
+                                                upvoteResponse.setMessage(SuccessReturnMessage.CREATE_SUCCESS.getMessage());
+                                                return CompletableFuture.completedFuture(upvoteResponse);
+                                            }
+                                        });
+                            });
+                }
             });
         });
     }
