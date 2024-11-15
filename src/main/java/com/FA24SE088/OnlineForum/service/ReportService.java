@@ -3,9 +3,7 @@ package com.FA24SE088.OnlineForum.service;
 import com.FA24SE088.OnlineForum.dto.request.ReportRequest;
 import com.FA24SE088.OnlineForum.dto.response.PostResponse;
 import com.FA24SE088.OnlineForum.dto.response.ReportResponse;
-import com.FA24SE088.OnlineForum.entity.Account;
-import com.FA24SE088.OnlineForum.entity.Post;
-import com.FA24SE088.OnlineForum.entity.Report;
+import com.FA24SE088.OnlineForum.entity.*;
 import com.FA24SE088.OnlineForum.enums.*;
 import com.FA24SE088.OnlineForum.exception.AppException;
 import com.FA24SE088.OnlineForum.exception.ErrorCode;
@@ -46,6 +44,12 @@ public class ReportService {
         return CompletableFuture.allOf(postFuture, accountFuture).thenCompose(v -> {
             var post = postFuture.join();
             var account = accountFuture.join();
+            var postOwner = post.getAccount();
+            var postOwnerRole = postOwner.getRole().getName();
+
+            if(postOwnerRole.equalsIgnoreCase("ADMIN")){
+                throw new AppException(ErrorCode.CANNOT_REPORT_ADMIN_POST);
+            }
 
             if(reportPostReason == null){
                 throw new AppException(ErrorCode.REPORT_POST_REASON_NOT_FOUND);
@@ -143,27 +147,58 @@ public class ReportService {
         var reportFuture = findReportById(reportId);
         var username = getUsernameFromJwt();
         var accountFuture = findAccountByUsername(username);
+        var pointFuture = getPoint();
 
         return CompletableFuture.allOf(reportFuture, accountFuture).thenCompose(v -> {
                 var report = reportFuture.join();
                 var account = accountFuture.join();
+                var pointList = pointFuture.join();
+                if(pointList.isEmpty()){
+                    throw new AppException(ErrorCode.POINT_NOT_FOUND);
+                }
+                Point point = pointList.get(0);
+                var postOwner = report.getPost().getAccount();
+                var walletPostOwnerFuture = unitOfWork.getWalletRepository().findByAccount(postOwner);
 
                 if(!report.getStatus().equals(ReportPostStatus.PENDING.name())){
                     throw new AppException(ErrorCode.REPORT_POST_NOT_PENDING);
                 }
 
-//                if(status.name().equals(ReportPostStatus.APPROVED.name())){
-//                    return deleteByChangingPostStatusById(report.getPost().getPostId(), account).thenCompose(post -> {
-//                        report.setStatus(status.name());
-//
-//                        return CompletableFuture.completedFuture(unitOfWork.getReportRepository().save(report));
-//                    });
-//                }
+                    if (status.name().equals(ReportPostStatus.APPROVED.name())) {
+                        return walletPostOwnerFuture.thenCompose(walletPostOwner -> {
+                            if (walletPostOwner != null) {
+                                createTransaction(walletPostOwner, point);
+                                var pointDeduction = walletPostOwner.getBalance() - point.getPointPerPost();
+                                walletPostOwner.setBalance(pointDeduction);
+                                unitOfWork.getWalletRepository().save(walletPostOwner);
+
+                                report.setStatus(status.name());
+                                return CompletableFuture.completedFuture(unitOfWork.getReportRepository().save(report));
+                            } else {
+                                return CompletableFuture.completedFuture(null);
+                            }
+                        });
+                    }
 
                 report.setStatus(status.name());
 
                 return CompletableFuture.completedFuture(unitOfWork.getReportRepository().save(report));
         })
+                .thenCompose(report -> {
+                    var reportPostListFuture = unitOfWork.getReportRepository()
+                            .findByPostAndTitleAndDescription(report.getPost(), report.getTitle(), report.getDescription());
+
+                    return reportPostListFuture.thenCompose(reportList -> {
+                        if(reportList != null && !reportList.isEmpty()){
+                            reportList.forEach(otherReport -> {
+                                otherReport.setStatus(report.getStatus());
+                                unitOfWork.getReportRepository().save(otherReport);
+                            });
+                        }
+
+                        return CompletableFuture.completedFuture(report);
+                    });
+                })
                 .thenApply(reportMapper::toReportResponse);
     }
 
@@ -234,5 +269,29 @@ public class ReportService {
                 unitOfWork.getAccountRepository().findByUsername(username)
                         .orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND))
         );
+    }
+    @Async("AsyncTaskExecutor")
+    private CompletableFuture<Void> createTransaction(Wallet wallet, Point point){
+        return CompletableFuture.supplyAsync(() -> {
+            var pointDeduction = point.getPointPerPost() * -1;
+
+            Transaction newTransaction = Transaction.builder()
+                    .amount(pointDeduction)
+                    .createdDate(new Date())
+                    .wallet(wallet)
+                    .reward(null)
+                    .transactionType(TransactionType.POST_VIOLATION.name())
+                    .build();
+
+            unitOfWork.getTransactionRepository().save(newTransaction);
+
+            return null;
+        });
+    }
+    @Async("AsyncTaskExecutor")
+    private CompletableFuture<List<Point>> getPoint() {
+        return CompletableFuture.supplyAsync(() ->
+                unitOfWork.getPointRepository().findAll().stream()
+                        .toList());
     }
 }
