@@ -11,7 +11,6 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.web.SecurityFilterChain;
@@ -47,14 +46,8 @@ public class SecurityConfiguration {
                                 .requestMatchers(HttpMethod.PUT, PUBLIC_ENDPOINTS_PUT).permitAll()
                                 .requestMatchers("/websocket/**", "/payment/**", "/**").permitAll()
                                 .anyRequest().authenticated())
-//                .formLogin(AbstractHttpConfigurer::disable)
-                .oauth2Login(oauth2login -> oauth2login
-                        .successHandler((request, response, authentication) ->
-                                response.sendRedirect("/account/profile")  // Sau khi đăng nhập thành công, chuyển hướng tới trang profile
-                        )
-                )
+                .formLogin(AbstractHttpConfigurer::disable)
 
-                .formLogin(Customizer.withDefaults())
         ;
 
         http.oauth2ResourceServer(oauth2 ->
