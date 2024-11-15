@@ -129,6 +129,7 @@ public enum ErrorCode {
     FILE_NOT_FOUND(10111, "File Not Found",HttpStatus.NOT_FOUND),
     POST_FILE_NOT_FOUND(10112, "Post File Not Found", HttpStatus.NOT_FOUND),
     CANNOT_REPORT_ADMIN_POST(10113, "Cannot Report Admin Post", HttpStatus.BAD_REQUEST),
+    NO_FILES_TO_DOWNLOAD(10114, "Found No Files To Download", HttpStatus.NOT_FOUND),
     ;
 
     private int code;
