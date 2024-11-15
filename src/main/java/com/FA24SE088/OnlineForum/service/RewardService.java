@@ -156,7 +156,6 @@ public class RewardService {
     }
 
 
-
     private RewardResponse mapToRewardResponse(Reward reward) {
         RewardResponse rewardResponse = new RewardResponse();
         rewardResponse.setRewardId(reward.getRewardId());
@@ -201,15 +200,32 @@ public class RewardService {
         rewardResponse.setSectionList(sectionResponses);
         return rewardResponse;
     }
+
     public List<RewardResponse> getAll() {
         return unitOfWork.getRewardRepository().findAll().stream()
                 .map(this::mapToRewardResponse)
                 .toList();
     }
+
+    public RewardResponse getById(UUID id) {
+        return unitOfWork.getRewardRepository().findById(id).map(this::mapToRewardResponse).orElseThrow(() -> new AppException(ErrorCode.REWARD_NOT_FOUND));
+    }
+
     private Account getCurrentUser() {
         var context = SecurityContextHolder.getContext();
         return unitOfWork.getAccountRepository().findByUsername(context.getAuthentication().getName()).orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND));
     }
+
+    public List<RewardResponse> getAllRewardOfCurrentUser() {
+        Account currentUser = getCurrentUser();
+
+        return unitOfWork.getRedeemRepository().findAllByAccount(currentUser)
+                .stream()
+                .map(Redeem::getReward).map(rewardMapper::toResponse)
+                .toList();
+
+    }
+
     public List<RewardResponse> getUnredeemedRewardsForCurrentUser() {
         Account currentUser = getCurrentUser();
 

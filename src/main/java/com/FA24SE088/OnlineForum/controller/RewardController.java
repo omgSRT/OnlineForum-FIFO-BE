@@ -36,6 +36,19 @@ public class RewardController {
                 .entity(rewardService.getUnredeemedRewardsForCurrentUser())
                 .build();
     }
+    @GetMapping("/get/{rewardId}")
+    public ApiResponse<RewardResponse> getById(@PathVariable UUID rewardId){
+        return ApiResponse.<RewardResponse>builder()
+                .entity(rewardService.getById(rewardId))
+                .build();
+    }
+
+    @GetMapping("/get-all/for-current-user")
+    public ApiResponse<List<RewardResponse>> getAllByCurrentUser(){
+        return ApiResponse.<List<RewardResponse>>builder()
+                .entity(rewardService.getAllRewardOfCurrentUser())
+                .build();
+    }
 
     @Operation(summary = "Update Document", description = "Status: \n" +
             "ACTIVE,\n" +

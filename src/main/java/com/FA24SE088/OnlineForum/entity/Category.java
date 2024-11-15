@@ -26,6 +26,7 @@ public class Category {
     String name;
     @Column(columnDefinition = "LONGTEXT")
     String description;
+    @Column(columnDefinition = "MEDIUMTEXT")
     String image;
 
     @JsonIgnore

@@ -79,10 +79,7 @@ public class AccountService {
                     }
 
                 });
-
-
                 account.setCategoryList(categories);
-
             }
         }
         else {
@@ -107,18 +104,18 @@ public class AccountService {
         return response;
     }
 
-    public AccountResponse loginGG(OAuth2User oAuth2User){
-        Account account = new Account();
-        account.setEmail(oAuth2User.getAttribute("email"));
-        account.setUsername(oAuth2User.getAttribute("name"));
-        account.setAvatar(oAuth2User.getAttribute("picture"));
-        account.setStatus(AccountStatus.ACTIVE.name());
-        String handle = String.format("@%s", oAuth2User.getAttribute("name"));
-        account.setHandle(handle);
-
-        unitOfWork.getAccountRepository().save(account);
-        return accountMapper.toResponse(account);
-    }
+//    public AccountResponse loginGG(OAuth2User oAuth2User){
+//        Account account = new Account();
+//        account.setEmail(oAuth2User.getAttribute("email"));
+//        account.setUsername(oAuth2User.getAttribute("name"));
+//        account.setAvatar(oAuth2User.getAttribute("picture"));
+//        account.setStatus(AccountStatus.ACTIVE.name());
+//        String handle = String.format("@%s","haodudai@gmail.com");
+//        account.setHandle(handle);
+//
+//        unitOfWork.getAccountRepository().save(account);
+//        return accountMapper.toResponse(account);
+//    }
 
 
     public AccountResponse updateCategoryOfStaff(UUID id, AccountUpdateCategoryRequest request) {
