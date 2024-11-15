@@ -128,6 +128,7 @@ public enum ErrorCode {
     TRANSACTION_AMOUNT_LESS_THAN_ZERO(10110, "Amount transaction must be greater than or equal to 0", HttpStatus.BAD_REQUEST),
     FILE_NOT_FOUND(10111, "File Not Found",HttpStatus.NOT_FOUND),
     POST_FILE_NOT_FOUND(10112, "Post File Not Found", HttpStatus.NOT_FOUND),
+    CANNOT_REPORT_ADMIN_POST(10113, "Cannot Report Admin Post", HttpStatus.BAD_REQUEST),
     ;
 
     private int code;

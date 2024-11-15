@@ -46,6 +46,10 @@ public class PostService {
     ImageMapper imageMapper;
     PostFileMapper postFileMapper;
     PaginationUtils paginationUtils;
+    Set<String> imageExtensionList = Set.of("ai", "jpg", "jpeg", "png", "gif", "indd", "raw", "avif", "eps", "bmp",
+            "psd", "svg", "webp", "xcf");
+    Set<String> compressedFileExtensionList = Set.of("7z", "tar", "gzip", "binhex", "cpio", "z", "rar", "zip", "arj", "deb",
+            "bz2", "cabinet", "bzip2", "iso");
 
     //region CRUD Completed Post
     @Async("AsyncTaskExecutor")
@@ -86,7 +90,8 @@ public class PostService {
                     CompletableFuture<DailyPoint> dailyPointFuture = createDailyPointLog(account.getAccountId(), savedPost);
                     CompletableFuture<Wallet> walletFuture = addPointToWallet(account.getAccountId());
 
-                    return CompletableFuture.allOf(imagesFuture, postFilesFuture, dailyPointFuture, walletFuture)
+                    return CompletableFuture.allOf(imagesFuture, postFilesFuture,
+                                    dailyPointFuture, walletFuture)
                             .thenCompose(v -> {
                                 var dailyPoint = dailyPointFuture.join();
 
@@ -96,7 +101,8 @@ public class PostService {
                                 else{
                                     savedPost.setImageList(new ArrayList<>());
                                 }
-                                if(postFilesFuture.join() != null){
+                                if(postFilesFuture.join() != null)
+                                {
                                     savedPost.setPostFileList(postFilesFuture.join());
                                 }
                                 else{

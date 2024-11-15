@@ -24,7 +24,6 @@ import lombok.extern.slf4j.Slf4j;
 
 
 import org.springframework.scheduling.annotation.Async;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.core.user.OAuth2User;
@@ -36,7 +35,6 @@ import java.util.concurrent.CompletableFuture;
 
 
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.transaction.annotation.Transactional;
 
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
@@ -292,7 +290,8 @@ public class AccountService {
         );
     }
 
-    
+    @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
+    @Async("AsyncTaskExecutor")
     public CompletableFuture<List<RecommendAccountResponse>> getRecommendedAccounts(int page, int perPage){
         Calendar calendar = Calendar.getInstance();
         calendar.add(Calendar.HOUR, -48);
