@@ -7,6 +7,7 @@ import com.FA24SE088.OnlineForum.entity.Otp;
 import com.FA24SE088.OnlineForum.enums.SuccessReturnMessage;
 import com.FA24SE088.OnlineForum.service.AccountService;
 import com.FA24SE088.OnlineForum.service.AuthenticateService;
+import com.FA24SE088.OnlineForum.utils.EmailTemplate;
 import com.FA24SE088.OnlineForum.utils.EmailUtil;
 import com.FA24SE088.OnlineForum.utils.OtpUtil;
 import com.nimbusds.jose.JOSEException;
@@ -50,10 +51,16 @@ public class AuthenticationController {
     public ApiResponse<AccountResponse> create(@Valid @RequestBody AccountRequest request) {
         AccountResponse response = accountService.create(request);
         Otp otp = otpUtil.generateOtp(request.getEmail());
-        emailUtil.sendToAnEmail(
+
+
+        emailUtil.sendToAnEmailWithHTMLEnabled(
                 response.getEmail(),
-                "Mã OTP của bạn là: " + otp.getOtpEmail(),
+                EmailTemplate.teamplateSendOtp(otp.getOtpEmail()),
                 "Mã OTP xác thực tài khoản");
+//        emailUtil.sendToAnEmail(
+//                response.getEmail(),
+////                "Mã OTP của bạn là: " + otp.getOtpEmail(),
+//                "Mã OTP xác thực tài khoản");
         return ApiResponse.<AccountResponse>builder()
                 .entity(response)
                 .build();

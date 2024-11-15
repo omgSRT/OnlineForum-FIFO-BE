@@ -1,6 +1,7 @@
 package com.FA24SE088.OnlineForum.controller;
 
-
+import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import com.FA24SE088.OnlineForum.dto.request.AccountUpdateCategoryRequest;
 import com.FA24SE088.OnlineForum.dto.request.AccountUpdateInfoRequest;
 import com.FA24SE088.OnlineForum.dto.response.AccountResponse;
@@ -12,7 +13,7 @@ import com.FA24SE088.OnlineForum.service.AccountService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
-import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -22,8 +23,12 @@ import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.constraints.NotNull;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.RestTemplate;
 
+import java.io.IOException;
+import java.net.http.HttpHeaders;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @RequiredArgsConstructor
@@ -33,6 +38,8 @@ import java.util.UUID;
 @Slf4j
 public class AccountController {
     AccountService accountService;
+
+
 
     @Operation(summary = "Find Account", description = "Find By Username")
     @GetMapping(path = "/find/by-username")
@@ -54,10 +61,30 @@ public class AccountController {
         ).join();
     }
 
+//    @GetMapping(path = "/google-login-success")
+//    public ApiResponse<AccountResponse> loginGG(OAuth2User oAuth2User) {
+//        return ApiResponse.<AccountResponse>builder()
+//                .entity(accountService.loginGG(oAuth2User))
+//                .build();
+//    }
+@GetMapping("/profile")
+public String profile(OAuth2AuthenticationToken token, Model model) {
+    if (token != null) {
+        // Lấy thông tin người dùng từ token
+        model.addAttribute("name", token.getPrincipal().getAttribute("name"));
+        model.addAttribute("email", token.getPrincipal().getAttribute("email"));
+        model.addAttribute("photo", token.getPrincipal().getAttribute("picture"));
+    } else {
+        System.out.println("No token received!");
+    }
+    return "user-profile";  // Tên của view (HTML page) để hiển thị (Nếu không dùng view, có thể trả về JSON)
+}
+
+
     @Operation(summary = "Get Recommended Accounts", description = "Get Accounts Based On Last Activities From 48 Hours Ago")
     @GetMapping(path = "/get/recommended")
     public ApiResponse<List<RecommendAccountResponse>> getRecommendedAccounts(@RequestParam(defaultValue = "1") int page,
-                                                                              @RequestParam(defaultValue = "10") int perPage){
+                                                                              @RequestParam(defaultValue = "10") int perPage) {
         return accountService.getRecommendedAccounts(page, perPage).thenApply(recommendAccountResponses ->
                 ApiResponse.<List<RecommendAccountResponse>>builder()
                         .entity(recommendAccountResponses)
@@ -66,7 +93,7 @@ public class AccountController {
     }
 
     @PutMapping("/update-info")
-    public ApiResponse<AccountResponse> updateInfo(@RequestBody AccountUpdateInfoRequest request){
+    public ApiResponse<AccountResponse> updateInfo(@RequestBody AccountUpdateInfoRequest request) {
         return ApiResponse.<AccountResponse>builder()
                 .entity(accountService.updateInfo(request))
                 .build();
@@ -77,14 +104,13 @@ public class AccountController {
                                                      @RequestParam(defaultValue = "10") int perPage,
                                                      @RequestParam(required = false) String username,
                                                      @RequestParam(required = false) String email,
-                                                     @RequestParam(required = false,defaultValue = "ACTIVE")AccountStatus status,
-                                                     @RequestParam(required = false)RoleAccount role) {
+                                                     @RequestParam(required = false, defaultValue = "ACTIVE") AccountStatus status,
+                                                     @RequestParam(required = false) RoleAccount role) {
 
         return ApiResponse.<List<AccountResponse>>builder()
-                .entity(accountService.filter(page, perPage,username, email, status, role))
+                .entity(accountService.filter(page, perPage, username, email, status, role))
                 .build();
     }
-
 
 
     @GetMapping("/get-by-id/{id}")
@@ -95,7 +121,7 @@ public class AccountController {
     }
 
     @PutMapping("/update-category-for-staff/{id}")
-    public ApiResponse<AccountResponse> updateCategory(@PathVariable UUID id, AccountUpdateCategoryRequest request){
+    public ApiResponse<AccountResponse> updateCategory(@PathVariable UUID id, AccountUpdateCategoryRequest request) {
         return ApiResponse.<AccountResponse>builder()
                 .entity(accountService.updateCategoryOfStaff(id, request))
                 .build();
@@ -110,7 +136,7 @@ public class AccountController {
 
     @Operation(summary = "Delete Account", description = "Delete Account By ID")
     @DeleteMapping(path = "/delete/{accountId}")
-    public ApiResponse<Account> deleteAccount(@PathVariable UUID accountId){
+    public ApiResponse<Account> deleteAccount(@PathVariable UUID accountId) {
         return accountService.delete(accountId).thenApply(account ->
                 ApiResponse.<Account>builder()
                         .message(SuccessReturnMessage.DELETE_SUCCESS.getMessage())

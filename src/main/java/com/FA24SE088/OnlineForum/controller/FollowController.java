@@ -22,7 +22,7 @@ public class FollowController {
     FollowService followService;
 
     @Operation(summary = "Create follow", description = "Create a new follow for the current user")
-    @PostMapping("/create")
+    @PostMapping("/follow-or-unfollow")
     public ApiResponse<Follow2Response> createFollow(@RequestBody UUID accountId) {
         followService.followOrUnfollow(accountId);
         return ApiResponse.<Follow2Response>builder()
