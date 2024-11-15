@@ -11,6 +11,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.web.SecurityFilterChain;
@@ -20,13 +21,13 @@ import org.springframework.security.web.SecurityFilterChain;
 @EnableWebSecurity
 @EnableMethodSecurity
 public class SecurityConfiguration {
-//    private final String[] PUBLIC_ENDPOINTS_POST = {"/authenticate/login", "/authenticate/introspect", "/authenticate/logout",
+    //    private final String[] PUBLIC_ENDPOINTS_POST = {"/authenticate/login", "/authenticate/introspect", "/authenticate/logout",
 //            "/authenticate/refresh", "/email/send", "/authenticate/sign-up",
 //            "/daily-point/create", "/notification/create", "/notification/change/status",
 //            "/account/create", "/authenticate/sign-up", "/authenticate/resend-otp", "/authenticate/verify-email",
 //            "/authenticate/forget-password"};
-private final String[] PUBLIC_ENDPOINTS_POST = {"/authenticate/**", "/email/send",
-        "/daily-point/create", "/notification/create", "/notification/change/status", "/account/create", "/transaction/create"};
+    private final String[] PUBLIC_ENDPOINTS_POST = {"/authenticate/**", "/email/send",
+            "/daily-point/create", "/notification/create", "/notification/change/status", "/account/create", "/transaction/create"};
     private final String[] PUBLIC_ENDPOINTS_GET = {"/swagger-ui/**", "/v3/api-docs/**", "/swagger-resources/**"
     };
     private final String[] PUBLIC_ENDPOINTS_PUT = {
@@ -44,9 +45,16 @@ private final String[] PUBLIC_ENDPOINTS_POST = {"/authenticate/**", "/email/send
                                 .requestMatchers(HttpMethod.GET, PUBLIC_ENDPOINTS_GET).permitAll()
                                 .requestMatchers(HttpMethod.POST, PUBLIC_ENDPOINTS_POST).permitAll()
                                 .requestMatchers(HttpMethod.PUT, PUBLIC_ENDPOINTS_PUT).permitAll()
-                                .requestMatchers("/websocket/**","/payment/**").permitAll()
+                                .requestMatchers("/websocket/**", "/payment/**", "/**").permitAll()
                                 .anyRequest().authenticated())
-                .formLogin(AbstractHttpConfigurer::disable)
+//                .formLogin(AbstractHttpConfigurer::disable)
+                .oauth2Login(oauth2login -> oauth2login
+                        .successHandler((request, response, authentication) ->
+                                response.sendRedirect("/account/profile")  // Sau khi đăng nhập thành công, chuyển hướng tới trang profile
+                        )
+                )
+
+                .formLogin(Customizer.withDefaults())
         ;
 
         http.oauth2ResourceServer(oauth2 ->
