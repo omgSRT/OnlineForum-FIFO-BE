@@ -131,6 +131,8 @@ public enum ErrorCode {
     CANNOT_REPORT_ADMIN_POST(10113, "Cannot Report Admin Post", HttpStatus.BAD_REQUEST),
     REWARD_INVALID_NAME(10039, "Name of Reward is required to have a name and name that is not duplicate", HttpStatus.NOT_FOUND),
     REWARD_INVALID_PRICE(10039, "Price of Reward must be greater than or equal 10", HttpStatus.NOT_FOUND),
+    REWARD_NOT_AVAILABLE(10039, "Reward not available", HttpStatus.BAD_REQUEST),
+    FILE_NOT_READABLE(10039, "File not readable", HttpStatus.BAD_REQUEST),
     ;
 
     private int code;

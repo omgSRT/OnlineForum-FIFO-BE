@@ -14,6 +14,14 @@ import com.FA24SE088.OnlineForum.mapper.RewardMapper;
 import com.FA24SE088.OnlineForum.mapper.SectionMapper;
 import com.FA24SE088.OnlineForum.repository.UnitOfWork.UnitOfWork;
 import lombok.AccessLevel;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
+
+import java.io.File;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
@@ -21,6 +29,10 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.net.MalformedURLException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -283,5 +295,45 @@ public class RewardService {
                 .toList();
     }
 
+    public ResponseEntity<Resource> downloadFileSourceCode(UUID rewardId) {
+        // Lấy thông tin người dùng hiện tại
+        Account currentUser = getCurrentUser();
+
+        // Tìm Reward theo rewardId
+        Reward reward = unitOfWork.getRewardRepository().findById(rewardId)
+                .orElseThrow(() -> new AppException(ErrorCode.REWARD_NOT_FOUND));
+
+        // Kiểm tra trạng thái của reward (nếu cần)
+        if (!RewardStatus.ACTIVE.name().equalsIgnoreCase(reward.getStatus())) {
+            throw new AppException(ErrorCode.REWARD_NOT_AVAILABLE);
+        }
+
+        // Đường dẫn file source code
+        String linkSourceCode = reward.getLinkSourceCode();
+
+        // Kiểm tra xem file có tồn tại không
+        Path filePath = Paths.get(linkSourceCode);
+        if (!Files.exists(filePath)) {
+            throw new AppException(ErrorCode.FILE_NOT_FOUND);
+        }
+
+        // Trả file dưới dạng ResponseEntity
+        try {
+            Resource fileResource = new UrlResource(filePath.toUri());
+
+            if (!fileResource.exists() || !fileResource.isReadable()) {
+                throw new AppException(ErrorCode.FILE_NOT_READABLE);
+            }
+
+            // Thiết lập headers để trả file về máy
+            String fileName = filePath.getFileName().toString();
+            return ResponseEntity.ok()
+                    .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + fileName + "\"")
+                    .body(fileResource);
+        } catch (MalformedURLException e) {
+            throw new RuntimeException("Lỗi khi truy cập file.", e);
+        }
+    }
 }
 
