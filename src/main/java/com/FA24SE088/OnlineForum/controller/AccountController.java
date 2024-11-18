@@ -9,7 +9,6 @@ import io.swagger.annotations.ApiOperation;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import com.FA24SE088.OnlineForum.dto.request.AccountUpdateCategoryRequest;
 import com.FA24SE088.OnlineForum.dto.request.AccountUpdateInfoRequest;
 import com.FA24SE088.OnlineForum.dto.response.AccountResponse;
@@ -22,7 +21,6 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.security.oauth2.core.user.OAuth2User;
-import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -60,7 +58,7 @@ public class AccountController {
                 .entity(accountService.findByUsername(username))
                 .build();
     }
-
+   
     @Operation(summary = "Find Account", description = "Find By Username Contain Any Letter")
     @GetMapping(path = "/list/find/by-username")
     public ApiResponse<List<Account>> findByUsernameContainingAsync(@NotNull String username) {

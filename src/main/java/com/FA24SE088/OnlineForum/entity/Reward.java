@@ -6,6 +6,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
+import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
@@ -21,20 +22,25 @@ public class Reward {
     @GeneratedValue(strategy = GenerationType.UUID)
     UUID rewardId;
     String name;
+    @Column(columnDefinition = "MEDIUMTEXT")
     String image;
     double price;
-    String type;
     String status;
+    @Column(columnDefinition = "MEDIUMTEXT")
+    String description;
+    @Column(columnDefinition = "MEDIUMTEXT")
+    String linkSourceCode;
+    Date createdDate;
 
     @JsonIgnoreProperties(value = {"reward","account"}, allowSetters = true)
     @JsonIgnore
     @OneToMany(mappedBy = "reward", cascade = CascadeType.ALL, orphanRemoval = true)
     List<Redeem> redeemList;
 
-    @JsonIgnoreProperties(value = { "reward"}, allowSetters = true)
-//    @OneToMany(mappedBy = "reward", cascade = CascadeType.ALL, orphanRemoval = true)
-    @OneToMany(mappedBy = "reward", cascade = CascadeType.ALL)
-    List<Section> sectionList;
+//    @JsonIgnoreProperties(value = { "reward"}, allowSetters = true)
+////    @OneToMany(mappedBy = "reward", cascade = CascadeType.ALL, orphanRemoval = true)
+//    @OneToMany(mappedBy = "reward", cascade = CascadeType.ALL)
+//    List<Section> sectionList;
 
     @JsonIgnoreProperties(value = { "reward"}, allowSetters = true)
     @OneToMany(mappedBy = "reward", cascade = CascadeType.ALL, orphanRemoval = true)
