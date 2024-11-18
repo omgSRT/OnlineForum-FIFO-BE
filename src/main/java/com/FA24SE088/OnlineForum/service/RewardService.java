@@ -1,9 +1,6 @@
 package com.FA24SE088.OnlineForum.service;
 
-import com.FA24SE088.OnlineForum.dto.request.ContentSectionRequest;
-import com.FA24SE088.OnlineForum.dto.request.MediaRequest;
-import com.FA24SE088.OnlineForum.dto.request.RewardRequest;
-import com.FA24SE088.OnlineForum.dto.request.SectionRequest;
+import com.FA24SE088.OnlineForum.dto.request.*;
 import com.FA24SE088.OnlineForum.dto.response.ContentSectionResponse;
 import com.FA24SE088.OnlineForum.dto.response.MediaResponse;
 import com.FA24SE088.OnlineForum.dto.response.RewardResponse;
@@ -25,6 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
@@ -35,64 +33,64 @@ public class RewardService {
     RewardMapper rewardMapper;
     SectionMapper sectionMapper;
 
-    @Transactional
-    public RewardResponse update(UUID rewardId, RewardRequest rewardRequest) {
-        Reward reward = unitOfWork.getRewardRepository().findById(rewardId)
-                .orElseThrow(() -> new AppException(ErrorCode.REWARD_NOT_FOUND));
-        // Cập nhật thông tin cho Reward từ RewardRequest
-        reward.setName(rewardRequest.getName());
-        reward.setImage(rewardRequest.getImage());
-        reward.setPrice(rewardRequest.getPrice());
-        reward.setType(rewardRequest.getType());
-        reward.setStatus(rewardRequest.getStatus());
-        unitOfWork.getRewardRepository().save(reward);
-
-        unitOfWork.getSectionRepository().deleteAllByReward(reward);
-        reward.getSectionList().clear();
-
-        // Tạo và thêm các Section mới từ request
-        List<Section> sections = new ArrayList<>();
-        int sectionNumber = 1;
-
-        for (SectionRequest sectionRequest : rewardRequest.getSectionList()) {
-            Section section = new Section();
-            section.setTitle(sectionRequest.getTitle());
-            section.setNumber(sectionNumber++);
-            section.setReward(reward);
-
-            List<ContentSection> contentSections = new ArrayList<>();
-            int contentSectionNumber = 1;
-
-            for (ContentSectionRequest contentRequest : sectionRequest.getContentSectionList()) {
-                ContentSection contentSection = new ContentSection();
-                contentSection.setContent(contentRequest.getContent());
-                contentSection.setCode(contentRequest.getCode());
-                contentSection.setNumber(contentSectionNumber++);
-                contentSection.setSection(section);
-
-                List<Media> mediaList = new ArrayList<>();
-                int mediaNumber = 1;
-
-                for (MediaRequest mediaRequest : contentRequest.getMediaList()) {
-                    Media media = new Media();
-                    media.setLink(mediaRequest.getLink());
-                    media.setNumber(mediaNumber++);
-                    media.setContentSection(contentSection);
-                    mediaList.add(media);
-                }
-
-                contentSection.setMedias(mediaList);
-                contentSections.add(contentSection);
-            }
-
-            section.setContentSectionList(contentSections);
-            sections.add(section);
-        }
-        reward.setSectionList(sections);
-        Reward updatedReward = unitOfWork.getRewardRepository().saveAndFlush(reward);
-
-        return mapToRewardResponse(updatedReward);
-    }
+//    @Transactional
+//    public RewardResponse update(UUID rewardId, RewardRequest rewardRequest) {
+//        Reward reward = unitOfWork.getRewardRepository().findById(rewardId)
+//                .orElseThrow(() -> new AppException(ErrorCode.REWARD_NOT_FOUND));
+//        // Cập nhật thông tin cho Reward từ RewardRequest
+//        reward.setName(rewardRequest.getName());
+//        reward.setImage(rewardRequest.getImage());
+//        reward.setPrice(rewardRequest.getPrice());
+//        reward.setType(rewardRequest.getType());
+//        reward.setStatus(rewardRequest.getStatus());
+//        unitOfWork.getRewardRepository().save(reward);
+//
+//        unitOfWork.getSectionRepository().deleteAllByReward(reward);
+//        reward.getSectionList().clear();
+//
+//        // Tạo và thêm các Section mới từ request
+//        List<Section> sections = new ArrayList<>();
+//        int sectionNumber = 1;
+//
+//        for (SectionRequest sectionRequest : rewardRequest.getSectionList()) {
+//            Section section = new Section();
+//            section.setTitle(sectionRequest.getTitle());
+//            section.setNumber(sectionNumber++);
+//            section.setReward(reward);
+//
+//            List<ContentSection> contentSections = new ArrayList<>();
+//            int contentSectionNumber = 1;
+//
+//            for (ContentSectionRequest contentRequest : sectionRequest.getContentSectionList()) {
+//                ContentSection contentSection = new ContentSection();
+//                contentSection.setContent(contentRequest.getContent());
+//                contentSection.setCode(contentRequest.getCode());
+//                contentSection.setNumber(contentSectionNumber++);
+//                contentSection.setSection(section);
+//
+//                List<Media> mediaList = new ArrayList<>();
+//                int mediaNumber = 1;
+//
+//                for (MediaRequest mediaRequest : contentRequest.getMediaList()) {
+//                    Media media = new Media();
+//                    media.setLink(mediaRequest.getLink());
+//                    media.setNumber(mediaNumber++);
+//                    media.setContentSection(contentSection);
+//                    mediaList.add(media);
+//                }
+//
+//                contentSection.setMedias(mediaList);
+//                contentSections.add(contentSection);
+//            }
+//
+//            section.setContentSectionList(contentSections);
+//            sections.add(section);
+//        }
+//        reward.setSectionList(sections);
+//        Reward updatedReward = unitOfWork.getRewardRepository().saveAndFlush(reward);
+//
+//        return mapToRewardResponse(updatedReward);
+//    }
 
     @Transactional
     public void deleteReward(UUID rewardId) {
@@ -106,110 +104,150 @@ public class RewardService {
         unitOfWork.getRewardRepository().delete(reward);
     }
 
-    @Transactional
-    public RewardResponse createReward(RewardRequest rewardRequest) {
-        Reward reward = rewardMapper.toReward(rewardRequest);
-        reward.setStatus(RewardStatus.ACTIVE.name());
+//    @Transactional
+//    public RewardResponse createReward(RewardRequest rewardRequest) {
+//        Reward reward = rewardMapper.toReward(rewardRequest);
+//        reward.setStatus(RewardStatus.ACTIVE.name());
+//
+//        List<Section> sections = new ArrayList<>();
+//        int sectionNumber = 1;
+//
+//        for (SectionRequest sectionRequest : rewardRequest.getSectionList()) {
+//            Section section = new Section();
+//            section.setTitle(sectionRequest.getTitle());
+//            section.setNumber(sectionNumber++);
+//            section.setReward(reward);
+//
+//            List<ContentSection> contentSections = new ArrayList<>();
+//            int contentSectionNumber = 1;
+//
+//            for (ContentSectionRequest contentRequest : sectionRequest.getContentSectionList()) {
+//                ContentSection contentSection = new ContentSection();
+//                contentSection.setContent(contentRequest.getContent());
+//                contentSection.setCode(contentRequest.getCode());
+//                contentSection.setNumber(contentSectionNumber++);
+//                contentSection.setSection(section);
+//
+//                List<Media> mediaList = new ArrayList<>();
+//                int mediaNumber = 1;
+//
+//                for (MediaRequest mediaRequest : contentRequest.getMediaList()) {
+//                    Media media = new Media();
+//                    media.setLink(mediaRequest.getLink());
+//                    media.setNumber(mediaNumber++);
+//                    media.setContentSection(contentSection);
+//                    mediaList.add(media);
+//                }
+//
+//                contentSection.setMedias(mediaList);
+//                contentSections.add(contentSection);
+//            }
+//
+//            section.setContentSectionList(contentSections);
+//            sections.add(section);
+//        }
+//
+//        reward.setSectionList(sections);
+//        Reward savedReward = unitOfWork.getRewardRepository().save(reward);
+//
+//        return mapToRewardResponse(savedReward);
+//    }
 
-        List<Section> sections = new ArrayList<>();
-        int sectionNumber = 1;
 
-        for (SectionRequest sectionRequest : rewardRequest.getSectionList()) {
-            Section section = new Section();
-            section.setTitle(sectionRequest.getTitle());
-            section.setNumber(sectionNumber++);
-            section.setReward(reward);
+//    private RewardResponse mapToRewardResponse(Reward reward) {
+//        RewardResponse rewardResponse = new RewardResponse();
+//        rewardResponse.setRewardId(reward.getRewardId());
+//        rewardResponse.setName(reward.getName());
+//        rewardResponse.setImage(reward.getImage());
+//        rewardResponse.setPrice(reward.getPrice());
+//        rewardResponse.setType(reward.getType());
+//        rewardResponse.setStatus(reward.getStatus());
+//
+//        List<SectionResponse> sectionResponses = reward.getSectionList().stream()
+//                .sorted(Comparator.comparingInt(Section::getNumber))
+//                .map(section -> {
+//                    SectionResponse sectionResponse = new SectionResponse();
+//                    sectionResponse.setTitle(section.getTitle());
+//                    sectionResponse.setNumber(section.getNumber());
+//
+//                    List<ContentSectionResponse> contentResponses = section.getContentSectionList().stream()
+//                            .sorted(Comparator.comparingInt(ContentSection::getNumber))
+//                            .map(contentSection -> {
+//                                ContentSectionResponse contentSectionResponse = new ContentSectionResponse();
+//                                contentSectionResponse.setContent(contentSection.getContent());
+//                                contentSectionResponse.setCode(contentSection.getCode());
+//                                contentSectionResponse.setNumber(contentSection.getNumber());
+//
+//                                List<MediaResponse> mediaResponses = contentSection.getMedias().stream()
+//                                        .sorted(Comparator.comparingInt(Media::getNumber))
+//                                        .map(media -> {
+//                                            MediaResponse mediaResponse = new MediaResponse();
+//                                            mediaResponse.setNumber(media.getNumber());
+//                                            mediaResponse.setLink(media.getLink());
+//                                            return mediaResponse;
+//                                        }).toList();
+//
+//                                contentSectionResponse.setMediaList(mediaResponses);
+//                                return contentSectionResponse;
+//                            }).toList();
+//
+//                    sectionResponse.setContentSectionResponses(contentResponses);
+//                    return sectionResponse;
+//                }).toList();
+//
+//        rewardResponse.setSectionList(sectionResponses);
+//        return rewardResponse;
+//    }
 
-            List<ContentSection> contentSections = new ArrayList<>();
-            int contentSectionNumber = 1;
+    //    public List<RewardResponse> getAll() {
+//        return unitOfWork.getRewardRepository().findAll().stream()
+//                .map(this::mapToRewardResponse)
+//                .toList();
+//    }
+//
+    public RewardResponse getById(UUID id) {
+        return unitOfWork.getRewardRepository().findById(id).map(rewardMapper::toResponse).orElseThrow(() -> new AppException(ErrorCode.REWARD_NOT_FOUND));
+    }
 
-            for (ContentSectionRequest contentRequest : sectionRequest.getContentSectionList()) {
-                ContentSection contentSection = new ContentSection();
-                contentSection.setContent(contentRequest.getContent());
-                contentSection.setCode(contentRequest.getCode());
-                contentSection.setNumber(contentSectionNumber++);
-                contentSection.setSection(section);
-
-                List<Media> mediaList = new ArrayList<>();
-                int mediaNumber = 1;
-
-                for (MediaRequest mediaRequest : contentRequest.getMediaList()) {
-                    Media media = new Media();
-                    media.setLink(mediaRequest.getLink());
-                    media.setNumber(mediaNumber++);
-                    media.setContentSection(contentSection);
-                    mediaList.add(media);
-                }
-
-                contentSection.setMedias(mediaList);
-                contentSections.add(contentSection);
-            }
-
-            section.setContentSectionList(contentSections);
-            sections.add(section);
+    public RewardResponse create(RewardRequest rewardRequest) {
+        if (rewardRequest.getName() == null) {
+            throw new AppException(ErrorCode.REWARD_INVALID_NAME);
+        }
+        if (rewardRequest.getPrice() < 10) {
+            throw new AppException(ErrorCode.REWARD_INVALID_PRICE);
         }
 
-        reward.setSectionList(sections);
-        Reward savedReward = unitOfWork.getRewardRepository().save(reward);
+        Reward reward = rewardMapper.toReward(rewardRequest);
+        reward.setStatus(RewardStatus.ACTIVE.name());
+        reward.setCreatedDate(new Date());
 
-        return mapToRewardResponse(savedReward);
+        unitOfWork.getRewardRepository().save(reward);
+
+        return rewardMapper.toResponse(reward);
     }
 
-
-    private RewardResponse mapToRewardResponse(Reward reward) {
-        RewardResponse rewardResponse = new RewardResponse();
-        rewardResponse.setRewardId(reward.getRewardId());
-        rewardResponse.setName(reward.getName());
-        rewardResponse.setImage(reward.getImage());
-        rewardResponse.setPrice(reward.getPrice());
-        rewardResponse.setType(reward.getType());
-        rewardResponse.setStatus(reward.getStatus());
-
-        List<SectionResponse> sectionResponses = reward.getSectionList().stream()
-                .sorted(Comparator.comparingInt(Section::getNumber))
-                .map(section -> {
-                    SectionResponse sectionResponse = new SectionResponse();
-                    sectionResponse.setTitle(section.getTitle());
-                    sectionResponse.setNumber(section.getNumber());
-
-                    List<ContentSectionResponse> contentResponses = section.getContentSectionList().stream()
-                            .sorted(Comparator.comparingInt(ContentSection::getNumber))
-                            .map(contentSection -> {
-                                ContentSectionResponse contentSectionResponse = new ContentSectionResponse();
-                                contentSectionResponse.setContent(contentSection.getContent());
-                                contentSectionResponse.setCode(contentSection.getCode());
-                                contentSectionResponse.setNumber(contentSection.getNumber());
-
-                                List<MediaResponse> mediaResponses = contentSection.getMedias().stream()
-                                        .sorted(Comparator.comparingInt(Media::getNumber))
-                                        .map(media -> {
-                                            MediaResponse mediaResponse = new MediaResponse();
-                                            mediaResponse.setNumber(media.getNumber());
-                                            mediaResponse.setLink(media.getLink());
-                                            return mediaResponse;
-                                        }).toList();
-
-                                contentSectionResponse.setMediaList(mediaResponses);
-                                return contentSectionResponse;
-                            }).toList();
-
-                    sectionResponse.setContentSectionResponses(contentResponses);
-                    return sectionResponse;
-                }).toList();
-
-        rewardResponse.setSectionList(sectionResponses);
-        return rewardResponse;
+    public RewardResponse update(UUID rewardId, RewardUpdateRequest rewardRequest) {
+        Reward reward = unitOfWork.getRewardRepository().findById(rewardId).orElseThrow(() -> new AppException(ErrorCode.REWARD_NOT_FOUND));
+        if (rewardRequest.getName() != null && !rewardRequest.getName().isEmpty()) {
+            reward.setName(reward.getName());
+        }
+        if (rewardRequest.getImage() != null && !rewardRequest.getImage().isEmpty()) {
+            reward.setImage(rewardRequest.getImage());
+        }
+        reward.setPrice(rewardRequest.getPrice());
+        if (rewardRequest.getDescription() != null && !rewardRequest.getDescription().isEmpty()) {
+            reward.setDescription(rewardRequest.getDescription());
+        }
+        if (rewardRequest.getStatus() != null) {
+            reward.setStatus(rewardRequest.getStatus().name());
+        }
+        if (rewardRequest.getLinkSourceCode() != null && !rewardRequest.getLinkSourceCode().isEmpty()) {
+            reward.setLinkSourceCode(rewardRequest.getLinkSourceCode());
+        }
+        unitOfWork.getRewardRepository().save(reward);
+        return rewardMapper.toResponse(reward);
     }
 
-    public List<RewardResponse> getAll() {
-        return unitOfWork.getRewardRepository().findAll().stream()
-                .map(this::mapToRewardResponse)
-                .toList();
-    }
-
-    public RewardResponse getById(UUID id) {
-        return unitOfWork.getRewardRepository().findById(id).map(this::mapToRewardResponse).orElseThrow(() -> new AppException(ErrorCode.REWARD_NOT_FOUND));
-    }
 
     private Account getCurrentUser() {
         var context = SecurityContextHolder.getContext();
@@ -218,24 +256,30 @@ public class RewardService {
 
     public List<RewardResponse> getAllRewardOfCurrentUser() {
         Account currentUser = getCurrentUser();
-
         return unitOfWork.getRedeemRepository().findAllByAccount(currentUser)
                 .stream()
-                .map(Redeem::getReward).map(rewardMapper::toResponse)
+                .map(Redeem::getReward)
+                .sorted(Comparator.comparing(Reward::getCreatedDate).reversed()) // Sắp xếp theo ngày mới nhất giảm dần
+                .map(rewardMapper::toResponse)
                 .toList();
 
     }
 
+    public List<RewardResponse> getAll() {
+        return unitOfWork.getRewardRepository().findAll().stream().map(rewardMapper::toResponse)
+                .toList();
+    }
+
     public List<RewardResponse> getUnredeemedRewardsForCurrentUser() {
         Account currentUser = getCurrentUser();
-
         List<UUID> redeemedRewardIds = unitOfWork.getRedeemRepository()
                 .findAllByAccount(currentUser).stream()
                 .map(redeem -> redeem.getReward().getRewardId())
                 .toList();
         return unitOfWork.getRewardRepository().findAll().stream()
                 .filter(reward -> !redeemedRewardIds.contains(reward.getRewardId()))
-                .map(this::mapToRewardResponse)
+                .sorted(Comparator.comparing(Reward::getCreatedDate).reversed())
+                .map(rewardMapper::toResponse)
                 .toList();
     }
 

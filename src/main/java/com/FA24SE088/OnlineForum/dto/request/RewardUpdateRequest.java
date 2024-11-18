@@ -1,35 +1,26 @@
 package com.FA24SE088.OnlineForum.dto.request;
 
+import com.FA24SE088.OnlineForum.enums.RewardStatus;
 import jakarta.persistence.Column;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
-import jakarta.validation.constraints.Size;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
-
-import javax.annotation.Nullable;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class RewardRequest {
+public class RewardUpdateRequest {
     String name;
-    @Pattern(regexp = "^(http|https)://.*$|^$", message = "Image must be a valid URL")
+    @Pattern(regexp = "^(http|https)://.*$|^$", message = "Avatar must be a valid URL")
     @Column(columnDefinition = "MEDIUMTEXT")
-    @Nullable
     String image;
-
     double price;
-
+    RewardStatus status;
     @Column(columnDefinition = "MEDIUMTEXT")
     String description;
-
+    @Pattern(regexp = "^(http|https)://.*$|^$", message = "Avatar must be a valid URL")
     @Column(columnDefinition = "MEDIUMTEXT")
-    @NotNull
-    @Pattern(regexp = "^(http|https)://.*$|^$", message = "Link SourceCode must be a valid URL")
     String linkSourceCode;
-
-//    List<SectionRequest> sectionList;
 }

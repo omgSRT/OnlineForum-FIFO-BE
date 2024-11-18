@@ -3,6 +3,7 @@ package com.FA24SE088.OnlineForum.dto.response;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
+import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
@@ -16,7 +17,9 @@ public class RewardResponse {
     String name;
     String image;
     double price;
-    String type;
     String status;
-    List<SectionResponse> sectionList;
+    String linkSourceCode;
+    String description;
+    Date createdDate;
+
 }

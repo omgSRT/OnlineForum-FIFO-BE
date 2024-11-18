@@ -2,14 +2,17 @@ package com.FA24SE088.OnlineForum.controller;
 
 
 import com.FA24SE088.OnlineForum.dto.request.RewardRequest;
+import com.FA24SE088.OnlineForum.dto.request.RewardUpdateRequest;
 import com.FA24SE088.OnlineForum.dto.response.ApiResponse;
 import com.FA24SE088.OnlineForum.dto.response.RewardResponse;
 import com.FA24SE088.OnlineForum.service.RewardService;
 import io.swagger.v3.oas.annotations.Operation;
+import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -24,9 +27,9 @@ public class RewardController {
     RewardService rewardService;
 
     @PostMapping("/create-reward")
-    public ApiResponse<RewardResponse> create1(@RequestBody RewardRequest request) {
+    public ApiResponse<RewardResponse> create1(@RequestBody @Validated RewardRequest request) {
         return ApiResponse.<RewardResponse>builder()
-                .entity(rewardService.createReward(request))
+                .entity(rewardService.create(request))
                 .build();
     }
 
@@ -34,6 +37,12 @@ public class RewardController {
     public ApiResponse<List<RewardResponse>> getAll(){
         return ApiResponse.<List<RewardResponse>>builder()
                 .entity(rewardService.getUnredeemedRewardsForCurrentUser())
+                .build();
+    }
+    @GetMapping("/getAll/admin")
+    public ApiResponse<List<RewardResponse>> getAllAdmin(){
+        return ApiResponse.<List<RewardResponse>>builder()
+                .entity(rewardService.getAll())
                 .build();
     }
     @GetMapping("/get/{rewardId}")
@@ -54,14 +63,14 @@ public class RewardController {
             "ACTIVE,\n" +
             "    INACTIVE")
     @PutMapping("/update/{id}")
-    public ApiResponse<RewardResponse> update(@PathVariable UUID id, @RequestBody RewardRequest request) {
+    public ApiResponse<RewardResponse> update(@PathVariable UUID id, @RequestBody @Valid RewardUpdateRequest request) {
         return ApiResponse.<RewardResponse>builder()
                 .entity(rewardService.update(id, request))
                 .build();
     }
 
     @DeleteMapping("/delete/{id}")
-    public ApiResponse<RewardResponse> update(@PathVariable UUID id) {
+    public ApiResponse<RewardResponse> delete(@PathVariable UUID id) {
         rewardService.deleteReward(id);
         return ApiResponse.<RewardResponse>builder()
                 .build();
