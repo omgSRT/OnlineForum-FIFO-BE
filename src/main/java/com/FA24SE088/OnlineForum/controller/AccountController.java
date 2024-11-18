@@ -9,7 +9,6 @@ import io.swagger.annotations.ApiOperation;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import com.FA24SE088.OnlineForum.dto.request.AccountUpdateCategoryRequest;
 import com.FA24SE088.OnlineForum.dto.request.AccountUpdateInfoRequest;
 import com.FA24SE088.OnlineForum.dto.response.AccountResponse;
@@ -22,7 +21,6 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.security.oauth2.core.user.OAuth2User;
-import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -61,14 +59,14 @@ public class AccountController {
                 .build();
     }
 
-    @GetMapping("/login/google")
-    public ApiResponse<String> loginGG() {
-        String url = "https://accounts.google.com/o/oauth2/v2/auth/oauthchooseaccount?response_type=code&client_id=376166376344-tqh1arjjec1n55khfkv9mosg882bgn7o.apps.googleusercontent.com&scope=email%20profile&state=ua-Zwcfy0imSTBXTkwGv-Yb-bO6wNHzwJlPqsfRWQwk%3D&redirect_uri=http%3A%2F%2Flocalhost%3A8080%2Flogin%2Foauth2%2Fcode%2Fgoogle&service=lso&o2v=2&ddm=1&flowName=GeneralOAuthFlow";
-        return ApiResponse.<String>builder()
-                .message(SuccessReturnMessage.SEARCH_SUCCESS.getMessage())
-                .entity(url)
-                .build();
-    }
+//    @GetMapping("/login/google")
+//    public ApiResponse<String> loginGG() {
+//        String url = "https://accounts.google.com/o/oauth2/v2/auth/oauthchooseaccount?response_type=code&client_id=376166376344-tqh1arjjec1n55khfkv9mosg882bgn7o.apps.googleusercontent.com&scope=email%20profile&state=ua-Zwcfy0imSTBXTkwGv-Yb-bO6wNHzwJlPqsfRWQwk%3D&redirect_uri=http%3A%2F%2Flocalhost%3A8080%2Flogin%2Foauth2%2Fcode%2Fgoogle&service=lso&o2v=2&ddm=1&flowName=GeneralOAuthFlow";
+//        return ApiResponse.<String>builder()
+//                .message(SuccessReturnMessage.SEARCH_SUCCESS.getMessage())
+//                .entity(url)
+//                .build();
+//    }
     
 
     @Operation(summary = "Find Account", description = "Find By Username Contain Any Letter")

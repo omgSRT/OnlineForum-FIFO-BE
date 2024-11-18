@@ -1,5 +1,6 @@
 package com.FA24SE088.OnlineForum.controller;
 
+import com.FA24SE088.OnlineForum.dto.request.FollowUnfollowRequest;
 import com.FA24SE088.OnlineForum.dto.response.*;
 
 import com.FA24SE088.OnlineForum.service.FollowService;
@@ -23,10 +24,10 @@ public class FollowController {
 
     @Operation(summary = "Create follow", description = "Create a new follow for the current user")
     @PostMapping("/follow-or-unfollow")
-    public ApiResponse<Follow2Response> createFollow(@RequestBody UUID accountId) {
-        followService.followOrUnfollow(accountId);
+    public ApiResponse<Follow2Response> createFollow(@RequestBody FollowUnfollowRequest request) {
+//        followService.followOrUnfollow(request.getAccountId());
         return ApiResponse.<Follow2Response>builder()
-                .entity(followService.followOrUnfollow(accountId))
+                .entity(followService.followOrUnfollow(request.getAccountId()))
                 .build();
     }
 
