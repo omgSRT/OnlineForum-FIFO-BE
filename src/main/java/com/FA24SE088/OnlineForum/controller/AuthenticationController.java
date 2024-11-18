@@ -57,10 +57,6 @@ public class AuthenticationController {
                 response.getEmail(),
                 EmailTemplate.teamplateSendOtp(otp.getOtpEmail()),
                 "Mã OTP xác thực tài khoản");
-//        emailUtil.sendToAnEmail(
-//                response.getEmail(),
-////                "Mã OTP của bạn là: " + otp.getOtpEmail(),
-//                "Mã OTP xác thực tài khoản");
         return ApiResponse.<AccountResponse>builder()
                 .entity(response)
                 .build();
