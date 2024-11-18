@@ -18,6 +18,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -43,6 +45,24 @@ public class AuthenticationController {
     public ApiResponse<AuthenticationResponse> login(@Validated @RequestBody AuthenticationRequest request) {
         return ApiResponse.<AuthenticationResponse>builder()
                 .entity(authenticateService.authenticated(request))
+                .build();
+    }
+
+    @GetMapping("/login/google")
+    public ApiResponse<String> loginGG() {
+        String url = "https://accounts.google.com/o/oauth2/v2/auth/oauthchooseaccount?response_type=code&client_id=376166376344-tqh1arjjec1n55khfkv9mosg882bgn7o.apps.googleusercontent.com&scope=email%20profile&state=ua-Zwcfy0imSTBXTkwGv-Yb-bO6wNHzwJlPqsfRWQwk%3D&redirect_uri=http%3A%2F%2Flocalhost%3A8080%2Flogin%2Foauth2%2Fcode%2Fgoogle&service=lso&o2v=2&ddm=1&flowName=GeneralOAuthFlow";
+        return ApiResponse.<String>builder()
+                .message(SuccessReturnMessage.SEARCH_SUCCESS.getMessage())
+                .entity(url)
+                .build();
+    }
+
+    @GetMapping("/callback")
+    public ApiResponse<AccountResponse> callbackLoginGoogle(@AuthenticationPrincipal OAuth2User oAuth2User) {
+        AccountResponse response = accountService.callbackLoginGoogle(oAuth2User);
+        return ApiResponse.<AccountResponse>builder()
+                .message(SuccessReturnMessage.LOGIN_SUCCESS.getMessage())
+                .entity(response)
                 .build();
     }
 

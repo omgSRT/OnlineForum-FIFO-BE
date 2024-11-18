@@ -29,7 +29,7 @@ public class SecurityConfiguration {
 //            "/authenticate/forget-password"};
     private final String[] PUBLIC_ENDPOINTS_POST = {"/authenticate/**", "/email/send",
             "/daily-point/create", "/notification/create", "/notification/change/status", "/account/create", "/transaction/create"};
-    private final String[] PUBLIC_ENDPOINTS_GET = {"/swagger-ui/**", "/v3/api-docs/**", "/swagger-resources/**","/account/callback"
+    private final String[] PUBLIC_ENDPOINTS_GET = {"/swagger-ui/**", "/v3/api-docs/**", "/swagger-resources/**","authenticate/**"
     };
     private final String[] PUBLIC_ENDPOINTS_PUT = {
             "/authenticate/change-password"
@@ -58,7 +58,7 @@ public class SecurityConfiguration {
 
         http.oauth2Login(oauth2Login ->
                 oauth2Login
-                        .defaultSuccessUrl("/account/callback", true)
+                        .defaultSuccessUrl("/authenticate/callback", true)
                         .failureUrl("/login?error=true")
                         .successHandler(oAuth2LoginSuccessHandler)
                         .userInfoEndpoint(userInfo ->

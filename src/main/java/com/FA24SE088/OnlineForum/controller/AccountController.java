@@ -61,16 +61,6 @@ public class AccountController {
                 .build();
     }
 
-    @GetMapping("/login/google")
-    public ApiResponse<String> loginGG() {
-        String url = "https://accounts.google.com/o/oauth2/v2/auth/oauthchooseaccount?response_type=code&client_id=376166376344-tqh1arjjec1n55khfkv9mosg882bgn7o.apps.googleusercontent.com&scope=email%20profile&state=ua-Zwcfy0imSTBXTkwGv-Yb-bO6wNHzwJlPqsfRWQwk%3D&redirect_uri=http%3A%2F%2Flocalhost%3A8080%2Flogin%2Foauth2%2Fcode%2Fgoogle&service=lso&o2v=2&ddm=1&flowName=GeneralOAuthFlow";
-        return ApiResponse.<String>builder()
-                .message(SuccessReturnMessage.SEARCH_SUCCESS.getMessage())
-                .entity(url)
-                .build();
-    }
-    
-
     @Operation(summary = "Find Account", description = "Find By Username Contain Any Letter")
     @GetMapping(path = "/list/find/by-username")
     public ApiResponse<List<Account>> findByUsernameContainingAsync(@NotNull String username) {
@@ -80,15 +70,6 @@ public class AccountController {
                         .entity(accounts)
                         .build()
         ).join();
-    }
-
-    @GetMapping("/callback")
-    public ApiResponse<AccountResponse> callbackLoginGoogle(@AuthenticationPrincipal OAuth2User oAuth2User) {
-        AccountResponse response = accountService.callbackLoginGoogle(oAuth2User);
-        return ApiResponse.<AccountResponse>builder()
-                .message(SuccessReturnMessage.LOGIN_SUCCESS.getMessage())
-                .entity(response)
-                .build();
     }
 
     @Operation(summary = "Get Recommended Accounts", description = "Get Accounts Based On Last Activities From 48 Hours Ago")
