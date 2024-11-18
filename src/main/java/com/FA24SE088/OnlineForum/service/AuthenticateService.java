@@ -96,7 +96,7 @@ public class AuthenticateService {
                 .build();
     }
 
-    private String generateToken(Account account, int expirationDay) {
+    public String generateToken(Account account, int expirationDay) {
         Date now = new Date();
         Instant nowInstant = now.toInstant();
         Instant expirationInstant = nowInstant.plus(expirationDay, ChronoUnit.DAYS);

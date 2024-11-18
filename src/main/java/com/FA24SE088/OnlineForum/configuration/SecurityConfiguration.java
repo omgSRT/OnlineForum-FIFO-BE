@@ -1,5 +1,7 @@
 package com.FA24SE088.OnlineForum.configuration;
 
+import com.FA24SE088.OnlineForum.service.CustomOAuth2UserService;
+import com.FA24SE088.OnlineForum.utils.OAuth2LoginSuccessHandler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -27,7 +29,7 @@ public class SecurityConfiguration {
 //            "/authenticate/forget-password"};
     private final String[] PUBLIC_ENDPOINTS_POST = {"/authenticate/**", "/email/send",
             "/daily-point/create", "/notification/create", "/notification/change/status", "/account/create", "/transaction/create"};
-    private final String[] PUBLIC_ENDPOINTS_GET = {"/swagger-ui/**", "/v3/api-docs/**", "/swagger-resources/**"
+    private final String[] PUBLIC_ENDPOINTS_GET = {"/swagger-ui/**", "/v3/api-docs/**", "/swagger-resources/**","/account/callback"
     };
     private final String[] PUBLIC_ENDPOINTS_PUT = {
             "/authenticate/change-password"
@@ -35,6 +37,10 @@ public class SecurityConfiguration {
 
     @Autowired
     private CustomJwtDecoder customJwtDecoder;
+    @Autowired
+    private CustomOAuth2UserService customOAuth2UserService;
+    @Autowired
+    OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -44,11 +50,20 @@ public class SecurityConfiguration {
                                 .requestMatchers(HttpMethod.GET, PUBLIC_ENDPOINTS_GET).permitAll()
                                 .requestMatchers(HttpMethod.POST, PUBLIC_ENDPOINTS_POST).permitAll()
                                 .requestMatchers(HttpMethod.PUT, PUBLIC_ENDPOINTS_PUT).permitAll()
-                                .requestMatchers("/websocket/**", "/payment/**", "/**").permitAll()
+                                .requestMatchers("/websocket/**", "/payment/**").permitAll()
                                 .anyRequest().authenticated())
                 .formLogin(AbstractHttpConfigurer::disable)
 
         ;
+
+        http.oauth2Login(oauth2Login ->
+                oauth2Login
+                        .defaultSuccessUrl("/account/callback", true)
+                        .failureUrl("/login?error=true")
+                        .successHandler(oAuth2LoginSuccessHandler)
+                        .userInfoEndpoint(userInfo ->
+                                userInfo.userService(customOAuth2UserService)) // Service để xử lý thông tin user từ Google
+        );
 
         http.oauth2ResourceServer(oauth2 ->
                 oauth2.jwt(jwtConfigurer ->
