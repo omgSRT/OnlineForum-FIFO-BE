@@ -55,7 +55,7 @@ public class ReportController {
     public ApiResponse<List<ReportResponse>> getAllReports(@RequestParam(defaultValue = "1") int page,
                                                              @RequestParam(defaultValue = "10") int perPage,
                                                              @RequestParam(required = false) UUID postId,
-                                                             @RequestParam(required = false) List<ReportPostStatus> reportPostStatusList,
+                                                             @RequestParam(required = false, defaultValue = "PENDING") List<ReportPostStatus> reportPostStatusList,
                                                              @RequestParam(required = false) String username){
         return reportService.getAllReports(page, perPage, postId, reportPostStatusList, username).thenApply(reportResponses ->
                 ApiResponse.<List<ReportResponse>>builder()
@@ -68,7 +68,7 @@ public class ReportController {
     @GetMapping(path = "/getall/for-staff")
     public ApiResponse<List<ReportResponse>> getAllReportsForStaff(@RequestParam(defaultValue = "1") int page,
                                                            @RequestParam(defaultValue = "10") int perPage,
-                                                           @RequestParam(required = false) List<ReportPostStatus> reportPostStatusList,
+                                                           @RequestParam(required = false, defaultValue = "PENDING") List<ReportPostStatus> reportPostStatusList,
                                                            @RequestParam(required = false) String username){
         return reportService.getAllReportsForStaff(page, perPage, reportPostStatusList, username).thenApply(reportResponses ->
                 ApiResponse.<List<ReportResponse>>builder()
