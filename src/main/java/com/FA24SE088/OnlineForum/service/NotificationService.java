@@ -30,7 +30,7 @@ import java.util.UUID;
 public class NotificationService {
     UnitOfWork unitOfWork;
     NotificationMapper notificationMapper;
-    DataHandler dataHandler;
+    //DataHandler dataHandler;
 
     private Account getCurrentUser(){
         var context = SecurityContextHolder.getContext();
@@ -52,7 +52,7 @@ public class NotificationService {
 
     public void sendPrivateNotification(NotificationRequest notificationRequest) {
         var savedData = saveNotification(notificationRequest);
-        dataHandler.sendToUser(notificationRequest.getAccountId(), savedData);
+        //dataHandler.sendToUser(notificationRequest.getAccountId(), savedData);
     }
 
     private Notification saveNotification(NotificationRequest notificationRequest) {

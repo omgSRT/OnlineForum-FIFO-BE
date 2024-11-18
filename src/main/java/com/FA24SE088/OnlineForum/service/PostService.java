@@ -33,6 +33,7 @@ import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -609,95 +610,22 @@ public class PostService {
 
         return CompletableFuture.allOf(accountFuture, postFuture, pointFuture).thenCompose(v -> {
             ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+            AtomicBoolean isZipEmpty = new AtomicBoolean(true);
 
             var accountDownloader = accountFuture.join();
             var post = postFuture.join();
             var pointList = pointFuture.join();
             var accountOwner = post.getAccount();
 
-            //get wallets of both downloader and owner of the src code
-            var walletDownloader = accountDownloader.getWallet();
-            var walletOwner = accountOwner.getWallet();
+            boolean isAdminOrStaff = accountDownloader.getRole().getName().equalsIgnoreCase("ADMIN") ||
+                    accountDownloader.getRole().getName().equalsIgnoreCase("STAFF");
 
-            Point point;
-            if(pointList.isEmpty()){
-                throw new AppException(ErrorCode.POINT_NOT_FOUND);
-            }
-            point = pointList.get(0);
-
-            if(!walletDownloader.equals(walletOwner)){
-                //check current user have enough balance
-                if(walletDownloader.getBalance() < point.getPointCostPerDownload()){
-                    throw new AppException(ErrorCode.BALANCE_NOT_SUFFICIENT_TO_DOWNLOAD);
-                }
-                walletDownloader.setBalance(walletDownloader.getBalance() - point.getPointCostPerDownload());
-                walletOwner.setBalance(walletOwner.getBalance() + point.getPointEarnedPerDownload());
-
-                var dailyPointFuture = createDailyPointLogForSourceOwner(accountOwner, post, point);
-                var transactionFuture = createTransactionForDownloader(walletDownloader, point);
-                var postFileListFuture = unitOfWork.getPostFileRepository().findByPost(post);
-
-                return CompletableFuture.allOf(dailyPointFuture, postFileListFuture, transactionFuture).thenCompose(voidData -> {
-                    var dailyPoint = dailyPointFuture.join();
-                    var transaction = transactionFuture.join();
-                    var postFileList = postFileListFuture.join();
-
-                    if(dailyPoint != null){
-                        unitOfWork.getDailyPointRepository().save(dailyPoint);
-                    }
-                    unitOfWork.getTransactionRepository().save(transaction);
-                    unitOfWork.getWalletRepository().save(walletDownloader);
-                    unitOfWork.getWalletRepository().save(walletOwner);
-
-                    var fileNames = extractFileNames(postFileList);
-
-                    try (ZipOutputStream zipOutputStream = new ZipOutputStream(byteArrayOutputStream)) {
-                        for (String fileName : fileNames) {
-                            // Download the file content from Firebase Storage
-                            byte[] fileContent = downloadFile(fileName);
-
-                            // Create a new ZipEntry for each file and add it to the ZIP output stream
-                            ZipEntry zipEntry = new ZipEntry(fileName);
-                            zipOutputStream.putNextEntry(zipEntry);
-
-                            // Write the file content to the ZIP stream
-                            zipOutputStream.write(fileContent);
-                            zipOutputStream.closeEntry();
-                        }
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
-
-                    return CompletableFuture.completedFuture(byteArrayOutputStream.toByteArray());
-                });
+            if(isAdminOrStaff || accountDownloader.equals(accountOwner)){
+                return processDownload(post, byteArrayOutputStream, isZipEmpty);
             }
             else{
-                var postFileListFuture = unitOfWork.getPostFileRepository().findByPost(post);
-
-                return CompletableFuture.allOf(postFileListFuture).thenCompose(voidData -> {
-                    var postFileList = postFileListFuture.join();
-
-                    var fileNames = extractFileNames(postFileList);
-
-                    try (ZipOutputStream zipOutputStream = new ZipOutputStream(byteArrayOutputStream)) {
-                        for (String fileName : fileNames) {
-                            // Download the file content from Firebase Storage
-                            byte[] fileContent = downloadFile(fileName);
-
-                            // Create a new ZipEntry for each file and add it to the ZIP output stream
-                            ZipEntry zipEntry = new ZipEntry(fileName);
-                            zipOutputStream.putNextEntry(zipEntry);
-
-                            // Write the file content to the ZIP stream
-                            zipOutputStream.write(fileContent);
-                            zipOutputStream.closeEntry();
-                        }
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
-
-                    return CompletableFuture.completedFuture(byteArrayOutputStream.toByteArray());
-                });
+                return processUserDownload(accountDownloader, post, pointList,
+                        byteArrayOutputStream, isZipEmpty, accountOwner);
             }
         });
     }
@@ -1051,9 +979,15 @@ public class PostService {
             return CompletableFuture.completedFuture(null);
         }
 
+        List<ImageRequest> validImageRequests = extractAndCheckImageNames(new HashSet<>(request.getImageUrlList()));
+
+        if (validImageRequests.isEmpty()) {
+            return CompletableFuture.completedFuture(null);
+        }
+
         List<Image> imageList = new ArrayList<>();
 
-        for(ImageRequest imageRequest : request.getImageUrlList()){
+        for(ImageRequest imageRequest : validImageRequests){
             Image newImage = imageMapper.toImage(imageRequest);
             newImage.setPost(savedPost);
             imageList.add(newImage);
@@ -1068,9 +1002,15 @@ public class PostService {
             return CompletableFuture.completedFuture(null);
         }
 
+        List<ImageRequest> validImageRequests = extractAndCheckImageNames(new HashSet<>(request.getImageUrlList()));
+
+        if (validImageRequests.isEmpty()) {
+            return CompletableFuture.completedFuture(null);
+        }
+
         List<Image> imageList = new ArrayList<>();
 
-        for(ImageRequest imageRequest : request.getImageUrlList()){
+        for(ImageRequest imageRequest : validImageRequests){
             Image newImage = imageMapper.toImage(imageRequest);
             newImage.setPost(savedPost);
             imageList.add(newImage);
@@ -1085,9 +1025,15 @@ public class PostService {
             return CompletableFuture.completedFuture(null);
         }
 
+        List<ImageRequest> validImageRequests = extractAndCheckImageNames(new HashSet<>(request.getImageUrlList()));
+
+        if (validImageRequests.isEmpty()) {
+            return CompletableFuture.completedFuture(null);
+        }
+
         List<Image> imageList = new ArrayList<>();
 
-        for(ImageRequest imageRequest : request.getImageUrlList()){
+        for(ImageRequest imageRequest : validImageRequests){
             Image newImage = imageMapper.toImage(imageRequest);
             newImage.setPost(savedPost);
             imageList.add(newImage);
@@ -1102,9 +1048,15 @@ public class PostService {
             return CompletableFuture.completedFuture(null);
         }
 
+        List<ImageRequest> validImageRequests = extractAndCheckImageNames(new HashSet<>(request.getImageUrlList()));
+
+        if (validImageRequests.isEmpty()) {
+            return CompletableFuture.completedFuture(null);
+        }
+
         List<Image> imageList = new ArrayList<>();
 
-        for(ImageRequest imageRequest : request.getImageUrlList()){
+        for(ImageRequest imageRequest : validImageRequests){
             Image newImage = imageMapper.toImage(imageRequest);
             newImage.setPost(savedPost);
             imageList.add(newImage);
@@ -1119,9 +1071,15 @@ public class PostService {
             return CompletableFuture.completedFuture(null);
         }
 
+        List<PostFileRequest> validPostFileRequests = extractAndCheckFileNames(new HashSet<>(request.getPostFileUrlRequest()));
+
+        if (validPostFileRequests.isEmpty()) {
+            return CompletableFuture.completedFuture(null);
+        }
+
         List<PostFile> postFileList = new ArrayList<>();
 
-        for(PostFileRequest postFileRequest : request.getPostFileUrlRequest()){
+        for(PostFileRequest postFileRequest : validPostFileRequests){
             PostFile newPostFile = postFileMapper.toPostFile(postFileRequest);
             newPostFile.setPost(savedPost);
             postFileList.add(newPostFile);
@@ -1136,9 +1094,15 @@ public class PostService {
             return CompletableFuture.completedFuture(null);
         }
 
+        List<PostFileRequest> validPostFileRequests = extractAndCheckFileNames(new HashSet<>(request.getPostFileUrlRequest()));
+
+        if (validPostFileRequests.isEmpty()) {
+            return CompletableFuture.completedFuture(null);
+        }
+
         List<PostFile> postFileList = new ArrayList<>();
 
-        for(PostFileRequest postFileRequest : request.getPostFileUrlRequest()){
+        for(PostFileRequest postFileRequest : validPostFileRequests){
             PostFile newPostFile = postFileMapper.toPostFile(postFileRequest);
             newPostFile.setPost(savedPost);
             postFileList.add(newPostFile);
@@ -1153,9 +1117,15 @@ public class PostService {
             return CompletableFuture.completedFuture(null);
         }
 
+        List<PostFileRequest> validPostFileRequests = extractAndCheckFileNames(new HashSet<>(request.getPostFileUrlRequest()));
+
+        if (validPostFileRequests.isEmpty()) {
+            return CompletableFuture.completedFuture(null);
+        }
+
         List<PostFile> postFileList = new ArrayList<>();
 
-        for(PostFileRequest postFileRequest : request.getPostFileUrlRequest()){
+        for(PostFileRequest postFileRequest : validPostFileRequests){
             PostFile newPostFile = postFileMapper.toPostFile(postFileRequest);
             newPostFile.setPost(savedPost);
             postFileList.add(newPostFile);
@@ -1170,9 +1140,15 @@ public class PostService {
             return CompletableFuture.completedFuture(null);
         }
 
+        List<PostFileRequest> validPostFileRequests = extractAndCheckFileNames(new HashSet<>(request.getPostFileUrlRequest()));
+
+        if (validPostFileRequests.isEmpty()) {
+            return CompletableFuture.completedFuture(null);
+        }
+
         List<PostFile> postFileList = new ArrayList<>();
 
-        for(PostFileRequest postFileRequest : request.getPostFileUrlRequest()){
+        for(PostFileRequest postFileRequest : validPostFileRequests){
             PostFile newPostFile = postFileMapper.toPostFile(postFileRequest);
             newPostFile.setPost(savedPost);
             postFileList.add(newPostFile);
@@ -1521,6 +1497,10 @@ public class PostService {
         });
     }
     private List<String> extractFileNames(List<PostFile> postFileList) {
+        if(postFileList == null || postFileList.isEmpty()){
+            return new ArrayList<>();
+        }
+
         List<String> fileNames = new ArrayList<>();
 
         for (PostFile postFile : postFileList) {
@@ -1538,16 +1518,176 @@ public class PostService {
 
         return fileNames;
     }
+    private List<ImageRequest> extractAndCheckImageNames(Set<ImageRequest> imageRequestSet) {
+        if(imageRequestSet == null || imageRequestSet.isEmpty()){
+            return new ArrayList<>();
+        }
+
+        List<ImageRequest> validFileNames = new ArrayList<>();
+
+        for (ImageRequest request : imageRequestSet) {
+            String url = request.getUrl();
+
+            // Extract the part of the URL after "files%2F" and before "?"
+            String filePath = url.split("image-description-detail.appspot.com/o/")[1].split("\\?")[0];
+
+            // URL decode to handle any URL-encoded characters
+            String decodedFilePath = URLDecoder.decode(filePath, StandardCharsets.UTF_8);
+
+            // Extract the file name from the filePath
+            String fileName = decodedFilePath.substring(decodedFilePath.lastIndexOf('/') + 1);
+
+            // Extract the file extension
+            String fileExtension = fileName.substring(fileName.lastIndexOf('.') + 1).toLowerCase();
+
+            if (imageExtensionList.contains(fileExtension)) {
+                validFileNames.add(request);
+            }
+        }
+
+        return validFileNames;
+    }
+    private List<PostFileRequest> extractAndCheckFileNames(Set<PostFileRequest> postFileRequestSet) {
+        if(postFileRequestSet == null || postFileRequestSet.isEmpty()){
+            return new ArrayList<>();
+        }
+
+        List<PostFileRequest> validFileNames = new ArrayList<>();
+
+        for (PostFileRequest request : postFileRequestSet) {
+            String url = request.getUrl();
+
+            // Extract the part of the URL after "files%2F" and before "?"
+            String filePath = url.split("image-description-detail.appspot.com/o/")[1].split("\\?")[0];
+
+            // URL decode to handle any URL-encoded characters
+            String decodedFilePath = URLDecoder.decode(filePath, StandardCharsets.UTF_8);
+
+            // Extract the file name from the filePath
+            String fileName = decodedFilePath.substring(decodedFilePath.lastIndexOf('/') + 1);
+
+            // Extract the file extension
+            String fileExtension = fileName.substring(fileName.lastIndexOf('.') + 1).toLowerCase();
+
+            if (compressedFileExtensionList.contains(fileExtension)) {
+                validFileNames.add(request);
+            }
+        }
+
+        return validFileNames;
+    }
     private byte[] downloadFile(String name) throws IOException {
         Bucket bucket = StorageClient.getInstance().bucket();
 
         Blob blob = bucket.get(name);
 
         if (blob == null) {
-            throw new AppException(ErrorCode.FILE_NOT_FOUND);
+            return null;
+            //throw new AppException(ErrorCode.FILE_NOT_FOUND);
         }
 
         return blob.getContent();
+    }
+    private CompletableFuture<byte[]> processDownload(Post post,
+                                                      ByteArrayOutputStream byteArrayOutputStream, AtomicBoolean isZipEmpty) {
+        var postFileListFuture = unitOfWork.getPostFileRepository().findByPost(post);
+
+        return postFileListFuture.thenCompose(postFileList -> {
+            var fileNames = extractFileNames(postFileList);
+            try (ZipOutputStream zipOutputStream = new ZipOutputStream(byteArrayOutputStream)) {
+                for (String fileName : fileNames) {
+                    byte[] fileContent = downloadFile(fileName);
+
+                    if (fileContent == null) {
+                        continue;
+                    }
+
+                    ZipEntry zipEntry = new ZipEntry(fileName);
+                    zipOutputStream.putNextEntry(zipEntry);
+
+                    zipOutputStream.write(fileContent);
+                    zipOutputStream.closeEntry();
+
+                    isZipEmpty.set(false);
+                }
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+
+            if (isZipEmpty.get()) {
+                throw new AppException(ErrorCode.NO_FILES_TO_DOWNLOAD);
+            }
+
+            return CompletableFuture.completedFuture(byteArrayOutputStream.toByteArray());
+        });
+    }
+
+    private CompletableFuture<byte[]> processUserDownload(Account accountDownloader, Post post, List<Point> pointList,
+                                                          ByteArrayOutputStream byteArrayOutputStream, AtomicBoolean isZipEmpty,
+                                                          Account accountOwner) {
+        //get wallets of both downloader and owner of the src code
+        var walletDownloader = accountDownloader.getWallet();
+        var walletOwner = accountOwner.getWallet();
+
+        if (pointList.isEmpty()) {
+            throw new AppException(ErrorCode.POINT_NOT_FOUND);
+        }
+        Point point = pointList.get(0);
+
+        //check current user have enough balance
+        if (walletDownloader.getBalance() < point.getPointCostPerDownload()) {
+            throw new AppException(ErrorCode.BALANCE_NOT_SUFFICIENT_TO_DOWNLOAD);
+        }
+        walletDownloader.setBalance(walletDownloader.getBalance() - point.getPointCostPerDownload());
+        walletOwner.setBalance(walletOwner.getBalance() + point.getPointEarnedPerDownload());
+
+        var dailyPointFuture = createDailyPointLogForSourceOwner(accountOwner, post, point);
+        var transactionFuture = createTransactionForDownloader(walletDownloader, point);
+        var postFileListFuture = unitOfWork.getPostFileRepository().findByPost(post);
+
+        return CompletableFuture.allOf(dailyPointFuture, postFileListFuture, transactionFuture).thenCompose(voidData -> {
+            var dailyPoint = dailyPointFuture.join();
+            var transaction = transactionFuture.join();
+            var postFileList = postFileListFuture.join();
+
+            if (dailyPoint != null) {
+                unitOfWork.getDailyPointRepository().save(dailyPoint);
+            }
+            unitOfWork.getTransactionRepository().save(transaction);
+            unitOfWork.getWalletRepository().save(walletDownloader);
+            unitOfWork.getWalletRepository().save(walletOwner);
+
+            var fileNames = extractFileNames(postFileList);
+
+            try (ZipOutputStream zipOutputStream = new ZipOutputStream(byteArrayOutputStream)) {
+                for (String fileName : fileNames) {
+                    // Download the file content from Firebase Storage
+                    byte[] fileContent = downloadFile(fileName);
+
+                    if (fileContent == null) {
+                        continue;
+                    }
+
+                    // Create a new ZipEntry for each file and add it to the ZIP output stream
+                    ZipEntry zipEntry = new ZipEntry(fileName);
+                    zipOutputStream.putNextEntry(zipEntry);
+
+                    // Write the file content to the ZIP stream
+                    zipOutputStream.write(fileContent);
+                    zipOutputStream.closeEntry();
+
+                    isZipEmpty.set(false);
+                }
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+
+            if (isZipEmpty.get()) {
+                throw new AppException(ErrorCode.NO_FILES_TO_DOWNLOAD);
+            }
+
+            return CompletableFuture.completedFuture(byteArrayOutputStream.toByteArray());
+        });
     }
     //endregion
 }

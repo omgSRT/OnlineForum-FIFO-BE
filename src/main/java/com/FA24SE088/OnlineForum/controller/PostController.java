@@ -11,6 +11,8 @@ import com.FA24SE088.OnlineForum.dto.response.PostResponse;
 import com.FA24SE088.OnlineForum.enums.PostStatus;
 import com.FA24SE088.OnlineForum.enums.SuccessReturnMessage;
 import com.FA24SE088.OnlineForum.enums.UpdatePostStatus;
+import com.FA24SE088.OnlineForum.exception.AppException;
+import com.FA24SE088.OnlineForum.exception.ErrorCode;
 import com.FA24SE088.OnlineForum.service.PostService;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
@@ -212,6 +214,10 @@ public class PostController {
     @GetMapping(path = "/download/{postId}")
     public ResponseEntity<byte[]> downloadFilesFromAPost(@PathVariable UUID postId){
         return postService.downloadFiles(postId).thenApply(bytes -> {
+            if (bytes == null || bytes.length == 0) {
+                throw new AppException(ErrorCode.NO_FILES_TO_DOWNLOAD);
+            }
+
             HttpHeaders headers = new HttpHeaders();
             headers.setContentDispositionFormData("attachment", "Download_" +UUID.randomUUID()+ ".zip");
             headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);

@@ -18,6 +18,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
@@ -35,6 +36,7 @@ public class TagService {
     UnitOfWork unitOfWork;
     PaginationUtils paginationUtils;
     TagMapper tagMapper;
+    SimpMessagingTemplate simpMessagingTemplate;
 
     @PreAuthorize("hasRole('ADMIN')")
     public CompletableFuture<TagResponse> createTag(TagRequest request){
@@ -79,7 +81,11 @@ public class TagService {
                     .map(tagMapper::toTagResponse)
                     .toList();
 
-            return paginationUtils.convertListToPage(page, perPage, list);
+            var paginatedList = paginationUtils.convertListToPage(page, perPage, list);
+
+            simpMessagingTemplate.convertAndSend("/app/notification", paginatedList);
+
+            return paginatedList;
         });
     }
 

@@ -5,26 +5,22 @@ import com.FA24SE088.OnlineForum.dto.request.*;
 import com.FA24SE088.OnlineForum.dto.response.FeedbackResponse;
 import com.FA24SE088.OnlineForum.dto.response.NotificationResponse;
 import com.FA24SE088.OnlineForum.entity.*;
-import com.FA24SE088.OnlineForum.enums.ChatEvent;
 import com.FA24SE088.OnlineForum.enums.FeedbackStatus;
 import com.FA24SE088.OnlineForum.enums.FeedbackUpdateStatus;
 import com.FA24SE088.OnlineForum.exception.AppException;
 import com.FA24SE088.OnlineForum.exception.ErrorCode;
 import com.FA24SE088.OnlineForum.mapper.FeedbackMapper;
 import com.FA24SE088.OnlineForum.repository.UnitOfWork.UnitOfWork;
-import com.FA24SE088.OnlineForum.utils.DataHandler;
+//import com.FA24SE088.OnlineForum.utils.DataHandler;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Sort;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
@@ -34,7 +30,7 @@ public class FeedbackService {
     @Autowired
     UnitOfWork unitOfWork;
     FeedbackMapper feedbackMapper;
-    DataHandler dataHandler;
+    //DataHandler dataHandler;
 
     private Account getCurrentUser() {
         var context = SecurityContextHolder.getContext();
@@ -67,7 +63,7 @@ public class FeedbackService {
                 .type("feedback")
                 .build();
         unitOfWork.getNotificationRepository().save(notification);
-        dataHandler.sendToUser(account.getAccountId(),responseNoti);
+        //dataHandler.sendToUser(account.getAccountId(),responseNoti);
         FeedbackResponse response = feedbackMapper.toResponse(savedFeedback);
 //        response.setNotification(notification);
         return response;

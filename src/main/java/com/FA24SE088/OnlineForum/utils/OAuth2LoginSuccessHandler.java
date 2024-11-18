@@ -27,7 +27,7 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
     UnitOfWork unitOfWork;
 
     @Override
-    public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, IOException {
+    public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException {
 //        DefaultOAuth2User oAuth2User = (DefaultOAuth2User) authentication.getPrincipal();
 //        String email = oAuth2User.getAttribute("email");
 

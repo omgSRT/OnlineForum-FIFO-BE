@@ -1,4 +1,19 @@
 spring:
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: 765797941898-1j31g2v6eoa94ktultp59putq41ivksk.apps.googleusercontent.com
+            client-secret: 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
+            scope: email, profile
+            redirect-uri: "http://localhost:8080/login/oauth2/code/google"
+            client-name: Google
+        provider:
+          google:
+            authorization-uri: https://accounts.google.com/o/oauth2/v2/auth
+            token-uri: https://oauth2.googleapis.com/token
+            user-info-uri: https://openidconnect.googleapis.com/v1/userinfo
   jpa:
     hibernate:
       ddl-auto: update

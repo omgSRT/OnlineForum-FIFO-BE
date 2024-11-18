@@ -136,6 +136,7 @@ public class AccountService {
         newAccount.setWallet(wallet);
 
         unitOfWork.getAccountRepository().save(newAccount);
+        unitOfWork.getWalletRepository().save(wallet);
 
         return accountMapper.toResponse(newAccount);
     }
