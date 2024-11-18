@@ -10,6 +10,7 @@ import com.FA24SE088.OnlineForum.dto.response.RecommendAccountResponse;
 import com.FA24SE088.OnlineForum.entity.*;
 import com.FA24SE088.OnlineForum.enums.AccountStatus;
 
+import com.FA24SE088.OnlineForum.enums.OrderPointStatus;
 import com.FA24SE088.OnlineForum.enums.RoleAccount;
 import com.FA24SE088.OnlineForum.exception.AppException;
 import com.FA24SE088.OnlineForum.exception.ErrorCode;
@@ -17,6 +18,7 @@ import com.FA24SE088.OnlineForum.mapper.AccountMapper;
 
 import com.FA24SE088.OnlineForum.repository.UnitOfWork.UnitOfWork;
 import com.FA24SE088.OnlineForum.utils.PaginationUtils;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -35,6 +37,7 @@ import java.util.concurrent.CompletableFuture;
 
 
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.servlet.view.RedirectView;
 
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
@@ -104,19 +107,38 @@ public class AccountService {
         return response;
     }
 
-//    public AccountResponse loginGG(OAuth2User oAuth2User){
-//        Account account = new Account();
-//        account.setEmail(oAuth2User.getAttribute("email"));
-//        account.setUsername(oAuth2User.getAttribute("name"));
-//        account.setAvatar(oAuth2User.getAttribute("picture"));
-//        account.setStatus(AccountStatus.ACTIVE.name());
-//        String handle = String.format("@%s","haodudai@gmail.com");
-//        account.setHandle(handle);
-//
-//        unitOfWork.getAccountRepository().save(account);
-//        return accountMapper.toResponse(account);
-//    }
+    public AccountResponse callbackLoginGoogle(OAuth2User oAuth2User) {
+        String email = oAuth2User.getAttribute("email");
+        String avatar = oAuth2User.getAttribute("picture");
+        String username = email.split("@")[0];
 
+        if (unitOfWork.getAccountRepository().existsByEmail(email)) {
+            Account existingAccount = unitOfWork.getAccountRepository().findByEmail(email);
+            if(existingAccount != null) throw new AppException(ErrorCode.EMAIL_IS_EXISTED);
+//            return accountMapper.toResponse(existingAccount);
+        }
+
+        Account newAccount = new Account();
+        newAccount.setEmail(email);
+        newAccount.setUsername(username);
+        newAccount.setAvatar(avatar);
+        newAccount.setStatus(AccountStatus.ACTIVE.name());
+        newAccount.setHandle(String.format("@%s", username));
+        newAccount.setCreatedDate(LocalDateTime.now());
+
+        Role role = unitOfWork.getRoleRepository().findByName("USER");
+        if (role == null) throw new AppException(ErrorCode.ROLE_NOT_FOUND);
+        newAccount.setRole(role);
+
+        Wallet wallet = new Wallet();
+        wallet.setBalance(0);
+        wallet.setAccount(newAccount);
+        newAccount.setWallet(wallet);
+
+        unitOfWork.getAccountRepository().save(newAccount);
+
+        return accountMapper.toResponse(newAccount);
+    }
 
     public AccountResponse updateCategoryOfStaff(UUID id, AccountUpdateCategoryRequest request) {
         Account account = findAccount(id);

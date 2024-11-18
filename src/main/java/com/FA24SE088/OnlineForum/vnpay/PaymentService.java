@@ -98,7 +98,7 @@ public class PaymentService {
 
         String status = request.getParameter("vnp_ResponseCode");
         String orderId = request.getParameter("vnp_TxnRef");
-        String returnUrl = request.getParameter("returnUrl");
+        String returnUrl = request.getParameter("returnUrl"); //returnUrl
 
         OrderPoint orderPoint = unitOfWork.getOrderPointRepository().findById(UUID.fromString(orderId))
                 .orElseThrow(() -> new AppException(ErrorCode.ORDER_POINT_NOT_FOUND));

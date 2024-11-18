@@ -1,6 +1,14 @@
 package com.FA24SE088.OnlineForum.controller;
 
+import com.FA24SE088.OnlineForum.entity.OrderPoint;
+import com.FA24SE088.OnlineForum.entity.Wallet;
+import com.FA24SE088.OnlineForum.enums.OrderPointStatus;
+import com.FA24SE088.OnlineForum.exception.AppException;
+import com.FA24SE088.OnlineForum.exception.ErrorCode;
+import io.swagger.annotations.ApiOperation;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import com.FA24SE088.OnlineForum.dto.request.AccountUpdateCategoryRequest;
 import com.FA24SE088.OnlineForum.dto.request.AccountUpdateInfoRequest;
@@ -13,6 +21,7 @@ import com.FA24SE088.OnlineForum.service.AccountService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -24,8 +33,10 @@ import jakarta.validation.constraints.NotNull;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.servlet.view.RedirectView;
 
 import java.io.IOException;
+import java.net.URI;
 import java.net.http.HttpHeaders;
 import java.util.List;
 import java.util.Map;
@@ -50,6 +61,16 @@ public class AccountController {
                 .build();
     }
 
+    @GetMapping("/login/google")
+    public ApiResponse<String> loginGG() {
+        String url = "https://accounts.google.com/o/oauth2/v2/auth/oauthchooseaccount?response_type=code&client_id=376166376344-tqh1arjjec1n55khfkv9mosg882bgn7o.apps.googleusercontent.com&scope=email%20profile&state=ua-Zwcfy0imSTBXTkwGv-Yb-bO6wNHzwJlPqsfRWQwk%3D&redirect_uri=http%3A%2F%2Flocalhost%3A8080%2Flogin%2Foauth2%2Fcode%2Fgoogle&service=lso&o2v=2&ddm=1&flowName=GeneralOAuthFlow";
+        return ApiResponse.<String>builder()
+                .message(SuccessReturnMessage.SEARCH_SUCCESS.getMessage())
+                .entity(url)
+                .build();
+    }
+    
+
     @Operation(summary = "Find Account", description = "Find By Username Contain Any Letter")
     @GetMapping(path = "/list/find/by-username")
     public ApiResponse<List<Account>> findByUsernameContainingAsync(@NotNull String username) {
@@ -61,25 +82,14 @@ public class AccountController {
         ).join();
     }
 
-//    @GetMapping(path = "/google-login-success")
-//    public ApiResponse<AccountResponse> loginGG(OAuth2User oAuth2User) {
-//        return ApiResponse.<AccountResponse>builder()
-//                .entity(accountService.loginGG(oAuth2User))
-//                .build();
-//    }
-@GetMapping("/profile")
-public String profile(OAuth2AuthenticationToken token, Model model) {
-    if (token != null) {
-        // Lấy thông tin người dùng từ token
-        model.addAttribute("name", token.getPrincipal().getAttribute("name"));
-        model.addAttribute("email", token.getPrincipal().getAttribute("email"));
-        model.addAttribute("photo", token.getPrincipal().getAttribute("picture"));
-    } else {
-        System.out.println("No token received!");
+    @GetMapping("/callback")
+    public ApiResponse<AccountResponse> callbackLoginGoogle(@AuthenticationPrincipal OAuth2User oAuth2User) {
+        AccountResponse response = accountService.callbackLoginGoogle(oAuth2User);
+        return ApiResponse.<AccountResponse>builder()
+                .message(SuccessReturnMessage.LOGIN_SUCCESS.getMessage())
+                .entity(response)
+                .build();
     }
-    return "user-profile";  // Tên của view (HTML page) để hiển thị (Nếu không dùng view, có thể trả về JSON)
-}
-
 
     @Operation(summary = "Get Recommended Accounts", description = "Get Accounts Based On Last Activities From 48 Hours Ago")
     @GetMapping(path = "/get/recommended")
