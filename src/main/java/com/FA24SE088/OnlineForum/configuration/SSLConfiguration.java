@@ -14,6 +14,7 @@ import java.io.InputStream;
 import java.security.KeyFactory;
 import java.security.KeyStore;
 import java.security.PrivateKey;
+import java.security.cert.Certificate;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.security.spec.PKCS8EncodedKeySpec;
@@ -23,6 +24,11 @@ import java.util.Base64;
 @Order(Ordered.HIGHEST_PRECEDENCE)
 public class SSLConfiguration {
     private static final String KEY_STORE_PATH = "src/main/resources/keystore.p12";
+    private static final String PRIVATE_KEY_PATH = "src/main/resources/privkey.pem";
+    private static final String CERT_PATH = "src/main/resources/cert.pem";
+    private static final String CHAIN_PATH = "src/main/resources/chain.pem";
+    private static final String KEYSTORE_PASSWORD = "password";
+    private static final String KEY_ALIAS = "keyAlias";
 
     @PostConstruct
     public void init() throws Exception {
@@ -30,41 +36,56 @@ public class SSLConfiguration {
     }
 
     private void createKeyStore() throws Exception {
-        InputStream inputStream = getClass().getClassLoader().getResourceAsStream("serverCertification.json");
-        if (inputStream == null) {
-            throw new IOException("Server Certificate JSON file not found.");
-        }
+        PrivateKey privateKey = loadPrivateKey(PRIVATE_KEY_PATH);
+        X509Certificate certificate = loadCertificate(CERT_PATH);
+        Certificate[] certificateChain = loadCertificateChain(CHAIN_PATH);
 
-        ObjectMapper mapper = new ObjectMapper();
-        JsonNode root = mapper.readTree(inputStream);
-
-        String privateKeyStr = root.get("privateKey").asText();
-        String certificateStr = root.get("certificate").asText();
-
-        byte[] privateKeyBytes = Base64.getDecoder().decode(privateKeyStr.replace("-----BEGIN PRIVATE KEY-----", "")
-                .replace("-----END PRIVATE KEY-----", "").replace("\n", ""));
-        byte[] certificateBytes = Base64.getDecoder().decode(certificateStr.replace("-----BEGIN CERTIFICATE-----", "")
-                .replace("-----END CERTIFICATE-----", "").replace("\n", ""));
-
-        // Load the private key
-        KeyFactory keyFactory = KeyFactory.getInstance("RSA");
-        PrivateKey privateKey = keyFactory.generatePrivate(new PKCS8EncodedKeySpec(privateKeyBytes));
-
-        // Load the certificate
-        CertificateFactory certFactory = CertificateFactory.getInstance("X.509");
-        X509Certificate certificate = (X509Certificate) certFactory.generateCertificate(new ByteArrayInputStream(certificateBytes));
-
-        // Create a KeyStore and load the private key and certificate
         KeyStore keyStore = KeyStore.getInstance("PKCS12");
-        keyStore.load(null, null); // Initialize empty keystore
+        keyStore.load(null, null);
 
-        // Set the private key and certificate in the keystore
-        keyStore.setKeyEntry("keyAlias", privateKey, "password".toCharArray(),
-                new java.security.cert.Certificate[]{certificate});
+        keyStore.setKeyEntry(KEY_ALIAS, privateKey, KEYSTORE_PASSWORD.toCharArray(), certificateChain);
 
-        // Save the keystore to a file (in .p12 format)
         try (FileOutputStream fos = new FileOutputStream(KEY_STORE_PATH)) {
-            keyStore.store(fos, "password".toCharArray());
+            keyStore.store(fos, KEYSTORE_PASSWORD.toCharArray());
         }
+    }
+
+    private PrivateKey loadPrivateKey(String privateKeyPath) throws Exception {
+        String privateKeyContent = new String(java.nio.file.Files.readAllBytes(java.nio.file.Paths.get(privateKeyPath)));
+        privateKeyContent = privateKeyContent.replace("-----BEGIN PRIVATE KEY-----", "")
+                .replace("-----END PRIVATE KEY-----", "").replaceAll("\\s", "");
+
+        byte[] encodedKey = Base64.getDecoder().decode(privateKeyContent);
+        PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(encodedKey);
+        KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+        return keyFactory.generatePrivate(keySpec);
+    }
+
+    private X509Certificate loadCertificate(String certPath) throws Exception {
+        String certContent = new String(java.nio.file.Files.readAllBytes(java.nio.file.Paths.get(certPath)));
+        certContent = certContent.replace("-----BEGIN CERTIFICATE-----", "")
+                .replace("-----END CERTIFICATE-----", "").replaceAll("\\s", "");
+
+        byte[] encodedCert = Base64.getDecoder().decode(certContent);
+        CertificateFactory certFactory = CertificateFactory.getInstance("X.509");
+        return (X509Certificate) certFactory.generateCertificate(new ByteArrayInputStream(encodedCert));
+    }
+
+    private Certificate[] loadCertificateChain(String chainPath) throws Exception {
+        String chainContent = new String(java.nio.file.Files.readAllBytes(java.nio.file.Paths.get(chainPath)));
+        String[] certs = chainContent.split("-----END CERTIFICATE-----");
+
+        Certificate[] certificates = new Certificate[certs.length];
+        CertificateFactory certFactory = CertificateFactory.getInstance("X.509");
+
+        for (int i = 0; i < certs.length; i++) {
+            if (certs[i].contains("-----BEGIN CERTIFICATE-----")) {
+                String cert = certs[i].replace("-----BEGIN CERTIFICATE-----", "")
+                        .replace("-----END CERTIFICATE-----", "").replaceAll("\\s", "");
+                byte[] encodedCert = Base64.getDecoder().decode(cert);
+                certificates[i] = certFactory.generateCertificate(new ByteArrayInputStream(encodedCert));
+            }
+        }
+        return certificates;
     }
 }
