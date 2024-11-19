@@ -58,14 +58,14 @@ public class SecurityConfiguration {
 
         ;
 
-        http.oauth2Login(oauth2Login ->
-                oauth2Login
-                        .defaultSuccessUrl("/authenticate/callback", true)
-                        .failureUrl("/login?error=true")
-                        .successHandler(oAuth2LoginSuccessHandler)
-                        .userInfoEndpoint(userInfo ->
-                                userInfo.userService(customOAuth2UserService)) // Service để xử lý thông tin user từ Google
-        );
+//        http.oauth2Login(oauth2Login ->
+//                oauth2Login
+//                        .defaultSuccessUrl("/authenticate/callback", true)
+//                        .failureUrl("/login?error=true")
+//                        .successHandler(oAuth2LoginSuccessHandler)
+//                        .userInfoEndpoint(userInfo ->
+//                                userInfo.userService(customOAuth2UserService)) // Service để xử lý thông tin user từ Google
+//        );
 
         http.oauth2ResourceServer(oauth2 ->
                 oauth2.jwt(jwtConfigurer ->

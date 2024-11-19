@@ -6,12 +6,15 @@ import com.FA24SE088.OnlineForum.dto.request.RewardUpdateRequest;
 import com.FA24SE088.OnlineForum.dto.response.ApiResponse;
 import com.FA24SE088.OnlineForum.dto.response.RewardResponse;
 import com.FA24SE088.OnlineForum.service.RewardService;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -38,6 +41,10 @@ public class RewardController {
         return ApiResponse.<List<RewardResponse>>builder()
                 .entity(rewardService.getUnredeemedRewardsForCurrentUser())
                 .build();
+    }
+    @GetMapping("/{rewardId}/download")
+    public ResponseEntity<Resource> downloadFileSourceCode(@PathVariable UUID rewardId) {
+        return rewardService.downloadFileSourceCode(rewardId);
     }
     @GetMapping("/getAll/admin")
     public ApiResponse<List<RewardResponse>> getAllAdmin(){
