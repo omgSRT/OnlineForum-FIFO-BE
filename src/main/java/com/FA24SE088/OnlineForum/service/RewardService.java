@@ -309,7 +309,7 @@ public class RewardService {
                 .toList();
     }
 
-    public ResponseEntity<byte[]> downloadFileSourceCode(UUID rewardId) {
+    public byte[] downloadFileSourceCode(UUID rewardId) {
         // Lấy thông tin người dùng hiện tại
         Account currentUser = getCurrentUser();
 
@@ -341,19 +341,7 @@ public class RewardService {
             return null;
         }
 
-        //lấy file từ firebase về
-        var bytes = blob.getContent();
-        if (bytes == null || bytes.length == 0) {
-            throw new AppException(ErrorCode.NO_FILES_TO_DOWNLOAD);
-        }
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentDispositionFormData("attachment", "Source_Code_" +UUID.randomUUID()+ ".zip");
-        headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
-
-        return ResponseEntity.ok()
-                .headers(headers)
-                .body(bytes);
+        return blob.getContent();
     }
 
 

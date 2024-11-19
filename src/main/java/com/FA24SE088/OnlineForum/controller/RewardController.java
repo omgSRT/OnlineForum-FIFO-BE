@@ -47,8 +47,10 @@ public class RewardController {
                 .build();
     }
     @GetMapping("/{rewardId}/download")
-    public ResponseEntity<byte[]> downloadFileSourceCode(@PathVariable UUID rewardId) {
-        return rewardService.downloadFileSourceCode(rewardId);
+    public ApiResponse<byte[]> downloadFileSourceCode(@PathVariable UUID rewardId) {
+        return ApiResponse.<byte[]>builder()
+                .entity(rewardService.downloadFileSourceCode(rewardId))
+                .build();
     }
     @GetMapping("/getAll/admin")
     public ApiResponse<List<RewardResponse>> getAllAdmin(){

@@ -212,19 +212,15 @@ public class PostController {
 
     @Operation(summary = "Download Files From A Post")
     @GetMapping(path = "/download/{postId}")
-    public ResponseEntity<byte[]> downloadFilesFromAPost(@PathVariable UUID postId){
+    public ApiResponse<byte[]> downloadFilesFromAPost(@PathVariable UUID postId){
         return postService.downloadFiles(postId).thenApply(bytes -> {
             if (bytes == null || bytes.length == 0) {
                 throw new AppException(ErrorCode.NO_FILES_TO_DOWNLOAD);
             }
 
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentDispositionFormData("attachment", "Download_" +UUID.randomUUID()+ ".zip");
-            headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
-
-            return ResponseEntity.ok()
-                    .headers(headers)
-                    .body(bytes);
+            return ApiResponse.<byte[]>builder()
+                    .entity(bytes)
+                    .build();
         }).join();
     }
 }
