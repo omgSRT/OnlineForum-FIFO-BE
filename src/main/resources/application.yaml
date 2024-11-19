@@ -26,7 +26,7 @@ spring:
     jwt:
       secret: 9fpGEUpGqiplW2HJB7UDOpJScDgzJWJR5xqOP3zsJQKs8fuIQpvw37BP3hmNmb/9
   cache:
-    type: redis # Sử dụng Redis cho caching
+    type: redis
   data:
     redis:
       host: redis-14089.c334.asia-southeast2-1.gce.redns.redis-cloud.com
