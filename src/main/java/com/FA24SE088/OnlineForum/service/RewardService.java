@@ -1,12 +1,29 @@
 package com.FA24SE088.OnlineForum.service;
 
 import com.FA24SE088.OnlineForum.dto.request.*;
-import com.FA24SE088.OnlineForum.dto.response.ContentSectionResponse;
-import com.FA24SE088.OnlineForum.dto.response.MediaResponse;
-import com.FA24SE088.OnlineForum.dto.response.RewardResponse;
-import com.FA24SE088.OnlineForum.dto.response.SectionResponse;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.core.io.ByteArrayResource;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
+import java.util.concurrent.atomic.AtomicBoolean;
+import org.springframework.stereotype.Service;
+import java.util.List;
+import java.util.UUID;
+
+import com.FA24SE088.OnlineForum.dto.response.RewardResponse;;
 import com.FA24SE088.OnlineForum.entity.*;
-import com.FA24SE088.OnlineForum.enums.DocumentStatus;
 import com.FA24SE088.OnlineForum.enums.RewardStatus;
 import com.FA24SE088.OnlineForum.exception.AppException;
 import com.FA24SE088.OnlineForum.exception.ErrorCode;
@@ -17,19 +34,11 @@ import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.Bucket;
 import com.google.firebase.cloud.StorageClient;
 import lombok.AccessLevel;
-import org.springframework.core.io.Resource;
-import org.springframework.core.io.UrlResource;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 
-import java.io.File;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.net.MalformedURLException;
@@ -39,7 +48,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
-import java.util.stream.Collectors;
+
 
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
@@ -308,12 +317,10 @@ public class RewardService {
         Reward reward = unitOfWork.getRewardRepository().findById(rewardId)
                 .orElseThrow(() -> new AppException(ErrorCode.REWARD_NOT_FOUND));
 
-        // Kiểm tra trạng thái của reward (nếu cần)
         if (!RewardStatus.ACTIVE.name().equalsIgnoreCase(reward.getStatus())) {
             throw new AppException(ErrorCode.REWARD_NOT_AVAILABLE);
         }
 
-        // Đường dẫn file source code
         String linkSourceCode = reward.getLinkSourceCode();
 
         //tách đường dẫn lấy file ra từ link
@@ -348,5 +355,8 @@ public class RewardService {
                 .headers(headers)
                 .body(bytes);
     }
+
+
+
 }
 
