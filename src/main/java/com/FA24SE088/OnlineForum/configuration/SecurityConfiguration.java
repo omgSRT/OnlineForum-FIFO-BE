@@ -52,7 +52,7 @@ public class SecurityConfiguration {
                                 .requestMatchers(HttpMethod.POST, PUBLIC_ENDPOINTS_POST).permitAll()
                                 .requestMatchers(HttpMethod.PUT, PUBLIC_ENDPOINTS_PUT).permitAll()
                                 .requestMatchers("/ws/**", "/websocket/**", "websocket/app/**",
-                                        "/payment/**").permitAll()
+                                        "/payment/**","/**").permitAll()
                                 //.requestMatchers("/**").permitAll()
                                 .anyRequest().authenticated())
                 .formLogin(AbstractHttpConfigurer::disable)

@@ -1,12 +1,29 @@
 package com.FA24SE088.OnlineForum.service;
 
 import com.FA24SE088.OnlineForum.dto.request.*;
-import com.FA24SE088.OnlineForum.dto.response.ContentSectionResponse;
-import com.FA24SE088.OnlineForum.dto.response.MediaResponse;
-import com.FA24SE088.OnlineForum.dto.response.RewardResponse;
-import com.FA24SE088.OnlineForum.dto.response.SectionResponse;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.core.io.ByteArrayResource;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
+import java.util.concurrent.atomic.AtomicBoolean;
+import org.springframework.stereotype.Service;
+import java.util.List;
+import java.util.UUID;
+
+import com.FA24SE088.OnlineForum.dto.response.RewardResponse;;
 import com.FA24SE088.OnlineForum.entity.*;
-import com.FA24SE088.OnlineForum.enums.DocumentStatus;
 import com.FA24SE088.OnlineForum.enums.RewardStatus;
 import com.FA24SE088.OnlineForum.exception.AppException;
 import com.FA24SE088.OnlineForum.exception.ErrorCode;
@@ -14,27 +31,15 @@ import com.FA24SE088.OnlineForum.mapper.RewardMapper;
 import com.FA24SE088.OnlineForum.mapper.SectionMapper;
 import com.FA24SE088.OnlineForum.repository.UnitOfWork.UnitOfWork;
 import lombok.AccessLevel;
-import org.springframework.core.io.Resource;
-import org.springframework.core.io.UrlResource;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 
-import java.io.File;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.net.MalformedURLException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
-import java.util.stream.Collectors;
+
 
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
@@ -296,44 +301,81 @@ public class RewardService {
     }
 
     public ResponseEntity<Resource> downloadFileSourceCode(UUID rewardId) {
-        // Lấy thông tin người dùng hiện tại
-        Account currentUser = getCurrentUser();
-
-        // Tìm Reward theo rewardId
+        // Lấy Reward từ cơ sở dữ liệu
         Reward reward = unitOfWork.getRewardRepository().findById(rewardId)
                 .orElseThrow(() -> new AppException(ErrorCode.REWARD_NOT_FOUND));
 
-        // Kiểm tra trạng thái của reward (nếu cần)
         if (!RewardStatus.ACTIVE.name().equalsIgnoreCase(reward.getStatus())) {
             throw new AppException(ErrorCode.REWARD_NOT_AVAILABLE);
         }
 
-        // Đường dẫn file source code
         String linkSourceCode = reward.getLinkSourceCode();
 
-        // Kiểm tra xem file có tồn tại không
-        Path filePath = Paths.get(linkSourceCode);
-        if (!Files.exists(filePath)) {
-            throw new AppException(ErrorCode.FILE_NOT_FOUND);
-        }
-
-        // Trả file dưới dạng ResponseEntity
         try {
-            Resource fileResource = new UrlResource(filePath.toUri());
+            Resource fileResource;
+
+            // Kiểm tra xem link là URL hay đường dẫn cục bộ
+            if (linkSourceCode.startsWith("http://") || linkSourceCode.startsWith("https://")) {
+                // Xử lý URL (tải tệp từ URL)
+                URL url = new URL(linkSourceCode);
+                fileResource = new UrlResource(url);
+            } else {
+                // Xử lý đường dẫn cục bộ
+                Path filePath = Paths.get(linkSourceCode);
+                if (!Files.exists(filePath)) {
+                    throw new AppException(ErrorCode.FILE_NOT_FOUND);
+                }
+                fileResource = new UrlResource(filePath.toUri());
+            }
 
             if (!fileResource.exists() || !fileResource.isReadable()) {
                 throw new AppException(ErrorCode.FILE_NOT_READABLE);
             }
 
-            // Thiết lập headers để trả file về máy
-            String fileName = filePath.getFileName().toString();
+            // Tạo tệp ZIP tạm thời (dùng phương thức trong mã của bạn để nén tệp vào ZIP nếu cần)
+            ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+            AtomicBoolean isZipEmpty = new AtomicBoolean(true);
+
+            try (ZipOutputStream zipOutputStream = new ZipOutputStream(byteArrayOutputStream)) {
+                String fileName = linkSourceCode.substring(linkSourceCode.lastIndexOf('/') + 1); // Tên tệp gốc
+
+                // Thêm file vào file zip
+                ZipEntry zipEntry = new ZipEntry(fileName);
+                zipOutputStream.putNextEntry(zipEntry);
+
+                // Đọc dữ liệu tệp và ghi vào ZipOutputStream
+                try (InputStream inputStream = fileResource.getInputStream()) {
+                    byte[] buffer = new byte[1024];
+                    int length;
+                    while ((length = inputStream.read(buffer)) >= 0) {
+                        zipOutputStream.write(buffer, 0, length);
+                    }
+                }
+
+                zipOutputStream.closeEntry(); // Đóng entry trong ZIP
+                isZipEmpty.set(false);
+            } catch (IOException e) {
+                throw new RuntimeException("Lỗi khi tạo file zip.", e);
+            }
+
+            if (isZipEmpty.get()) {
+                throw new AppException(ErrorCode.NO_FILES_TO_DOWNLOAD);
+            }
+
+            // Trả về file ZIP dưới dạng ResponseEntity
             return ResponseEntity.ok()
                     .contentType(MediaType.APPLICATION_OCTET_STREAM)
-                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + fileName + "\"")
-                    .body(fileResource);
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + "reward-source-code.zip" + "\"")
+                    .body(new ByteArrayResource(byteArrayOutputStream.toByteArray()));
+
         } catch (MalformedURLException e) {
-            throw new RuntimeException("Lỗi khi truy cập file.", e);
+            throw new RuntimeException("Lỗi khi truy cập URL file.", e);
+        } catch (IOException e) {
+            throw new RuntimeException("Lỗi khi xử lý tệp nguồn.", e);
         }
     }
+
+
+
 }
 
