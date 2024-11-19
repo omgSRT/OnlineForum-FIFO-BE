@@ -29,8 +29,8 @@ public class SwaggerConfiguration implements WebMvcConfigurer {
                                                 .bearerFormat("JWT")
                                 )
                 )
-                .info(info());
-//                .servers(servers());
+                .info(info())
+                .servers(servers());
     }
     private Info info() {
         Info info = new Info();

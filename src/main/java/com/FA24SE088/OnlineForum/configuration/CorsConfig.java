@@ -12,8 +12,7 @@ public class CorsConfig implements WebMvcConfigurer {
                 .allowedOrigins("*")
 //                .allowedOrigins("http://*/swagger-ui/swagger-ui/index.html","https://*/swagger-ui/swagger-ui/index.html")
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
-                .allowedHeaders("*")
-        .allowCredentials(true);
+                .allowedHeaders("*");
     }
 }
 
