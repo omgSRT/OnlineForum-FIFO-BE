@@ -8,6 +8,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import java.io.*;
+import java.net.URL;
 import java.security.KeyFactory;
 import java.security.KeyStore;
 import java.security.PrivateKey;
@@ -34,8 +35,8 @@ public class SSLConfiguration {
     }
 
     private void createKeyStore() throws Exception {
-        File keystoreFile = new File(KEY_STORE_PATH);
-        if (keystoreFile.exists()) {
+        URL keystoreUrl = getClass().getClassLoader().getResource("keystore.p12");
+        if (keystoreUrl != null) {
             System.out.println("Keystore already exists at: " + KEY_STORE_PATH);
             return;
         }
@@ -135,7 +136,30 @@ public class SSLConfiguration {
             connector.setPort(8080);
 
             // Set up SSL properties using connector attributes
-            connector.setProperty("keystoreFile", new File("src/main/resources/keystore.p12").getAbsolutePath());
+            URL keystoreUrl = getClass().getClassLoader().getResource("keystore.p12");
+            if (keystoreUrl != null) {
+                try (InputStream keystoreInputStream = getClass().getClassLoader().getResourceAsStream("keystore.p12")) {
+                    // Create a temporary file to store the keystore content
+                    File tempKeystoreFile = File.createTempFile("keystore", ".p12");
+                    tempKeystoreFile.deleteOnExit();  // Ensure it gets cleaned up after the JVM exits
+
+                    // Copy the InputStream content to the temporary file
+                    try (FileOutputStream fos = new FileOutputStream(tempKeystoreFile)) {
+                        byte[] buffer = new byte[1024];
+                        int bytesRead;
+                        while ((bytesRead = keystoreInputStream.read(buffer)) != -1) {
+                            fos.write(buffer, 0, bytesRead);
+                        }
+                    }
+
+                    // Set the keystore file path in the Tomcat connector
+                    connector.setProperty("keystoreFile", tempKeystoreFile.getAbsolutePath());
+                } catch (IOException e) {
+                    System.err.println("Keystore file not found in resources.");
+                }
+            } else {
+                connector.setProperty("keystoreFile", new File("src/main/resources/keystore.p12").getAbsolutePath());
+            }
             connector.setProperty("keystorePass", "password");
             connector.setProperty("keyAlias", "keyAlias");
             connector.setProperty("keystoreType", "PKCS12");

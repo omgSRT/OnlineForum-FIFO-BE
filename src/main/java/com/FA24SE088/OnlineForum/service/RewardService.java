@@ -13,6 +13,9 @@ import com.FA24SE088.OnlineForum.exception.ErrorCode;
 import com.FA24SE088.OnlineForum.mapper.RewardMapper;
 import com.FA24SE088.OnlineForum.mapper.SectionMapper;
 import com.FA24SE088.OnlineForum.repository.UnitOfWork.UnitOfWork;
+import com.google.cloud.storage.Blob;
+import com.google.cloud.storage.Bucket;
+import com.google.firebase.cloud.StorageClient;
 import lombok.AccessLevel;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
@@ -30,6 +33,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.net.MalformedURLException;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -295,7 +300,7 @@ public class RewardService {
                 .toList();
     }
 
-    public ResponseEntity<Resource> downloadFileSourceCode(UUID rewardId) {
+    public ResponseEntity<byte[]> downloadFileSourceCode(UUID rewardId) {
         // Lấy thông tin người dùng hiện tại
         Account currentUser = getCurrentUser();
 
@@ -311,29 +316,37 @@ public class RewardService {
         // Đường dẫn file source code
         String linkSourceCode = reward.getLinkSourceCode();
 
-        // Kiểm tra xem file có tồn tại không
-        Path filePath = Paths.get(linkSourceCode);
-        if (!Files.exists(filePath)) {
-            throw new AppException(ErrorCode.FILE_NOT_FOUND);
+        //tách đường dẫn lấy file ra từ link
+        String filePath = linkSourceCode.split("image-description-detail.appspot.com/o/")[1].split("\\?")[0];
+
+        //giải mã đường dẫn nếu vẫn còn %2F, %20, etc.
+        String decodedFilePath = URLDecoder.decode(filePath, StandardCharsets.UTF_8);
+
+        //demo link
+        //https://firebasestorage.googleapis.com/v0/b/image-description-detail.appspot.com/o/Post%20image%2Ftest02-master.zip?alt=media&token=7b0c7c14-b1e4-4426-b2b9-0bf9b271c177
+        //gọi firebase
+        Bucket bucket = StorageClient.getInstance().bucket();
+
+
+        Blob blob = bucket.get(decodedFilePath);
+
+        if (blob == null) {
+            return null;
         }
 
-        // Trả file dưới dạng ResponseEntity
-        try {
-            Resource fileResource = new UrlResource(filePath.toUri());
-
-            if (!fileResource.exists() || !fileResource.isReadable()) {
-                throw new AppException(ErrorCode.FILE_NOT_READABLE);
-            }
-
-            // Thiết lập headers để trả file về máy
-            String fileName = filePath.getFileName().toString();
-            return ResponseEntity.ok()
-                    .contentType(MediaType.APPLICATION_OCTET_STREAM)
-                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + fileName + "\"")
-                    .body(fileResource);
-        } catch (MalformedURLException e) {
-            throw new RuntimeException("Lỗi khi truy cập file.", e);
+        //lấy file từ firebase về
+        var bytes = blob.getContent();
+        if (bytes == null || bytes.length == 0) {
+            throw new AppException(ErrorCode.NO_FILES_TO_DOWNLOAD);
         }
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentDispositionFormData("attachment", "Source_Code_" +UUID.randomUUID()+ ".zip");
+        headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+
+        return ResponseEntity.ok()
+                .headers(headers)
+                .body(bytes);
     }
 }
 
