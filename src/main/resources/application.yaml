@@ -34,8 +34,6 @@ spring:
       username: default
       port: 14089
 
-
-
 payment:
   vnPay:
     url: https://sandbox.vnpayment.vn/paymentv2/vpcpay.html
