@@ -144,3 +144,4 @@ replay_pid*
 target/
 src/main/resources/serviceAccountCloudGoogleKey.json
 src/main/resources/serviceAccountFirebaseKey.json
+src/main/resources/serverCertification.json

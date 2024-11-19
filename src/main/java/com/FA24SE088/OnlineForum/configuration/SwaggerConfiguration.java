@@ -42,10 +42,11 @@ public class SwaggerConfiguration implements WebMvcConfigurer {
         info.setLicense(license);
         return info;
     }
-//    private List<Server> servers() {
-//        return Arrays.asList(
-//                new Server().url("http://103.162.14.151:8080").description("Online Production server"),
-//                new Server().url("http://localhost:8080").description("Local server")
-//        );
-//    }
+    private List<Server> servers() {
+        return Arrays.asList(
+                new Server().url("https://fifoforumonline.click").description("Online Production server With HTTPS"),
+                new Server().url("http://103.162.14.151:8080").description("Online Production server"),
+                new Server().url("http://localhost:8080").description("Local server")
+        );
+    }
 }
