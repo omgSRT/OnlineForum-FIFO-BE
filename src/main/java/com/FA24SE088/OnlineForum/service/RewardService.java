@@ -30,6 +30,9 @@ import com.FA24SE088.OnlineForum.exception.ErrorCode;
 import com.FA24SE088.OnlineForum.mapper.RewardMapper;
 import com.FA24SE088.OnlineForum.mapper.SectionMapper;
 import com.FA24SE088.OnlineForum.repository.UnitOfWork.UnitOfWork;
+import com.google.cloud.storage.Blob;
+import com.google.cloud.storage.Bucket;
+import com.google.firebase.cloud.StorageClient;
 import lombok.AccessLevel;
 import org.springframework.security.core.context.SecurityContextHolder;
 
@@ -38,6 +41,12 @@ import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.net.MalformedURLException;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 
 
@@ -300,8 +309,11 @@ public class RewardService {
                 .toList();
     }
 
-    public ResponseEntity<Resource> downloadFileSourceCode(UUID rewardId) {
-        // Lấy Reward từ cơ sở dữ liệu
+    public byte[] downloadFileSourceCode(UUID rewardId) {
+        // Lấy thông tin người dùng hiện tại
+        Account currentUser = getCurrentUser();
+
+        // Tìm Reward theo rewardId
         Reward reward = unitOfWork.getRewardRepository().findById(rewardId)
                 .orElseThrow(() -> new AppException(ErrorCode.REWARD_NOT_FOUND));
 
@@ -311,68 +323,25 @@ public class RewardService {
 
         String linkSourceCode = reward.getLinkSourceCode();
 
-        try {
-            Resource fileResource;
+        //tách đường dẫn lấy file ra từ link
+        String filePath = linkSourceCode.split("image-description-detail.appspot.com/o/")[1].split("\\?")[0];
 
-            // Kiểm tra xem link là URL hay đường dẫn cục bộ
-            if (linkSourceCode.startsWith("http://") || linkSourceCode.startsWith("https://")) {
-                // Xử lý URL (tải tệp từ URL)
-                URL url = new URL(linkSourceCode);
-                fileResource = new UrlResource(url);
-            } else {
-                // Xử lý đường dẫn cục bộ
-                Path filePath = Paths.get(linkSourceCode);
-                if (!Files.exists(filePath)) {
-                    throw new AppException(ErrorCode.FILE_NOT_FOUND);
-                }
-                fileResource = new UrlResource(filePath.toUri());
-            }
+        //giải mã đường dẫn nếu vẫn còn %2F, %20, etc.
+        String decodedFilePath = URLDecoder.decode(filePath, StandardCharsets.UTF_8);
 
-            if (!fileResource.exists() || !fileResource.isReadable()) {
-                throw new AppException(ErrorCode.FILE_NOT_READABLE);
-            }
+        //demo link
+        //https://firebasestorage.googleapis.com/v0/b/image-description-detail.appspot.com/o/Post%20image%2Ftest02-master.zip?alt=media&token=7b0c7c14-b1e4-4426-b2b9-0bf9b271c177
+        //gọi firebase
+        Bucket bucket = StorageClient.getInstance().bucket();
 
-            // Tạo tệp ZIP tạm thời (dùng phương thức trong mã của bạn để nén tệp vào ZIP nếu cần)
-            ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-            AtomicBoolean isZipEmpty = new AtomicBoolean(true);
 
-            try (ZipOutputStream zipOutputStream = new ZipOutputStream(byteArrayOutputStream)) {
-                String fileName = linkSourceCode.substring(linkSourceCode.lastIndexOf('/') + 1); // Tên tệp gốc
+        Blob blob = bucket.get(decodedFilePath);
 
-                // Thêm file vào file zip
-                ZipEntry zipEntry = new ZipEntry(fileName);
-                zipOutputStream.putNextEntry(zipEntry);
-
-                // Đọc dữ liệu tệp và ghi vào ZipOutputStream
-                try (InputStream inputStream = fileResource.getInputStream()) {
-                    byte[] buffer = new byte[1024];
-                    int length;
-                    while ((length = inputStream.read(buffer)) >= 0) {
-                        zipOutputStream.write(buffer, 0, length);
-                    }
-                }
-
-                zipOutputStream.closeEntry(); // Đóng entry trong ZIP
-                isZipEmpty.set(false);
-            } catch (IOException e) {
-                throw new RuntimeException("Lỗi khi tạo file zip.", e);
-            }
-
-            if (isZipEmpty.get()) {
-                throw new AppException(ErrorCode.NO_FILES_TO_DOWNLOAD);
-            }
-
-            // Trả về file ZIP dưới dạng ResponseEntity
-            return ResponseEntity.ok()
-                    .contentType(MediaType.APPLICATION_OCTET_STREAM)
-                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + "reward-source-code.zip" + "\"")
-                    .body(new ByteArrayResource(byteArrayOutputStream.toByteArray()));
-
-        } catch (MalformedURLException e) {
-            throw new RuntimeException("Lỗi khi truy cập URL file.", e);
-        } catch (IOException e) {
-            throw new RuntimeException("Lỗi khi xử lý tệp nguồn.", e);
+        if (blob == null) {
+            return null;
         }
+
+        return blob.getContent();
     }
 
 

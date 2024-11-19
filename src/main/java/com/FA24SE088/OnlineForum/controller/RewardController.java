@@ -5,6 +5,8 @@ import com.FA24SE088.OnlineForum.dto.request.RewardRequest;
 import com.FA24SE088.OnlineForum.dto.request.RewardUpdateRequest;
 import com.FA24SE088.OnlineForum.dto.response.ApiResponse;
 import com.FA24SE088.OnlineForum.dto.response.RewardResponse;
+import com.FA24SE088.OnlineForum.exception.AppException;
+import com.FA24SE088.OnlineForum.exception.ErrorCode;
 import com.FA24SE088.OnlineForum.service.RewardService;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
@@ -14,6 +16,8 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -43,8 +47,10 @@ public class RewardController {
                 .build();
     }
     @GetMapping("/{rewardId}/download")
-    public ResponseEntity<Resource> downloadFileSourceCode(@PathVariable UUID rewardId) {
-        return rewardService.downloadFileSourceCode(rewardId);
+    public ApiResponse<byte[]> downloadFileSourceCode(@PathVariable UUID rewardId) {
+        return ApiResponse.<byte[]>builder()
+                .entity(rewardService.downloadFileSourceCode(rewardId))
+                .build();
     }
     @GetMapping("/getAll/admin")
     public ApiResponse<List<RewardResponse>> getAllAdmin(){

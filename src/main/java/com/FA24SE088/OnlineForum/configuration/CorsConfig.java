@@ -20,17 +20,17 @@ public class CorsConfig {
 //                .allowedHeaders("*")
 //        .allowCredentials(true);
 //    }
-@Bean
-public CorsFilter corsFilter() {
-    UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-    CorsConfiguration config = new CorsConfiguration();
-//    config.setAllowCredentials(true);
-    config.addAllowedOriginPattern("*"); // Access-Control-Allow-Origin
-    config.addAllowedHeader("*"); // Access-Control-Request-Headers
-    config.addAllowedMethod("*"); // Access-Control-Request-Method
+    @Bean
+    public CorsFilter corsFilter() {
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        CorsConfiguration config = new CorsConfiguration();
+    //    config.setAllowCredentials(true);
+        config.addAllowedOriginPattern("*"); // Access-Control-Allow-Origin
+        config.addAllowedHeader("*"); // Access-Control-Request-Headers
+        config.addAllowedMethod("*"); // Access-Control-Request-Method
 
-    source.registerCorsConfiguration("/**", config);
-    return new CorsFilter(source);
-}
+        source.registerCorsConfiguration("/**", config);
+        return new CorsFilter(source);
+    }
 }
 
