@@ -133,6 +133,7 @@ public enum ErrorCode {
     REWARD_INVALID_PRICE(10039, "Price of Reward must be greater than or equal 10", HttpStatus.NOT_FOUND),
     REWARD_NOT_AVAILABLE(10039, "Reward not available", HttpStatus.BAD_REQUEST),
     FILE_NOT_READABLE(10039, "File not readable", HttpStatus.BAD_REQUEST),
+    NO_FILES_TO_DOWNLOAD(10114, "Found No Files To Download", HttpStatus.NOT_FOUND),
     ;
 
     private int code;
