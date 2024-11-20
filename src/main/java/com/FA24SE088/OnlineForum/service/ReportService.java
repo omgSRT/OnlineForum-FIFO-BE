@@ -118,13 +118,31 @@ public class ReportService {
         return CompletableFuture.allOf(accountFuture).thenCompose(v -> {
             var account = accountFuture.join();
 
+            if(account.getRole().getName().equalsIgnoreCase("ADMIN")){
+                return unitOfWork.getCategoryRepository().findByAccount(account).thenCompose(categoryList -> {
+                    var list = unitOfWork.getReportRepository().findAllByOrderByReportTimeDesc().stream()
+                            .filter(report -> reportPostStatusList == null || reportPostStatusList.isEmpty() ||
+                                    (safeValueOf(report.getStatus()) != null
+                                            && reportPostStatusList.contains(safeValueOf(report.getStatus()))))
+                            .filter(report -> accountUsername == null || accountUsername.isEmpty()
+                                    || report.getAccount().getUsername().contains(accountUsername))
+                            .map(reportMapper::toReportResponse)
+                            .toList();
+
+                    var paginatedList = paginationUtils.convertListToPage(page, perPage, list);
+
+                    return CompletableFuture.completedFuture(paginatedList);
+                });
+            }
+
             return unitOfWork.getCategoryRepository().findByAccount(account).thenCompose(categoryList -> {
                 var list = unitOfWork.getReportRepository().findAllByOrderByReportTimeDesc().stream()
                         .filter(report -> categoryList.contains(report.getPost().getTopic().getCategory()))
                         .filter(report -> reportPostStatusList == null || reportPostStatusList.isEmpty() ||
                                 (safeValueOf(report.getStatus()) != null
                                         && reportPostStatusList.contains(safeValueOf(report.getStatus()))))
-                        .filter(report -> accountUsername == null || accountUsername.isEmpty() || report.getAccount().getUsername().contains(accountUsername))
+                        .filter(report -> accountUsername == null || accountUsername.isEmpty()
+                                || report.getAccount().getUsername().contains(accountUsername))
                         .map(reportMapper::toReportResponse)
                         .toList();
 
