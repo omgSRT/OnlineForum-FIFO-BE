@@ -30,8 +30,8 @@ public class SwaggerConfiguration implements WebMvcConfigurer {
                                                 .bearerFormat("JWT")
                                 )
                 )
-                .info(info());
-                //.servers(servers());
+                .info(info())
+                .servers(servers());
     }
 
     private Info info() {
@@ -46,8 +46,8 @@ public class SwaggerConfiguration implements WebMvcConfigurer {
     }
     private List<Server> servers() {
         return Arrays.asList(
-                new Server().url("https://fifoforumonline.click").description("Online Production server With HTTPS"),
                 new Server().url("http://103.162.14.151:8080").description("Online Production server"),
+                new Server().url("https://fifoforumonline.click").description("Online Production server With HTTPS"),
                 new Server().url("http://localhost:8080").description("Local server")
         );
     }
