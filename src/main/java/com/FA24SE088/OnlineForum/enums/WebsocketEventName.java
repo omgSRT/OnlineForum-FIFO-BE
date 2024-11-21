@@ -5,4 +5,5 @@ public enum WebsocketEventName {
     DATA_SYNC,
     STATUS_UPDATE,
     NOTIFICATION,
+    WHEEL_OF_NAME,
 }

@@ -12,6 +12,7 @@ import com.FA24SE088.OnlineForum.exception.ErrorCode;
 import com.FA24SE088.OnlineForum.mapper.FeedbackMapper;
 import com.FA24SE088.OnlineForum.repository.UnitOfWork.UnitOfWork;
 //import com.FA24SE088.OnlineForum.utils.DataHandler;
+import com.corundumstudio.socketio.SocketIOServer;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -30,6 +31,7 @@ public class FeedbackService {
     @Autowired
     UnitOfWork unitOfWork;
     FeedbackMapper feedbackMapper;
+    SocketIOServer socketIOServer;
     //DataHandler dataHandler;
 
     private Account getCurrentUser() {
@@ -63,9 +65,9 @@ public class FeedbackService {
                 .type("feedback")
                 .build();
         unitOfWork.getNotificationRepository().save(notification);
-        //dataHandler.sendToUser(account.getAccountId(),responseNoti);
+        socketIOServer.getBroadcastOperations().sendEvent("message",responseNoti);
         FeedbackResponse response = feedbackMapper.toResponse(savedFeedback);
-//        response.setNotification(notification);
+        response.setNotification(notification);
         return response;
     }
 

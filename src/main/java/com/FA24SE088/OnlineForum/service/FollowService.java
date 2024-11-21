@@ -26,6 +26,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.logging.SocketHandler;
 
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
@@ -35,6 +36,7 @@ public class FollowService {
     AccountMapper accountMapper;
     UnitOfWork unitOfWork;
     PaginationUtils paginationUtils;
+
     FollowMapper followMapper;
 
     private Account getCurrentUser() {
