@@ -9,14 +9,15 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Slf4j
 @Component
 public class PaginationUtils {
     public <T> List<T> convertListToPage(int page, int perPage, List<T> list){
-        if(list.isEmpty()){
-            throw new AppException(ErrorCode.EMPTY_LIST);
+        if(list == null || list.isEmpty()){
+            list = new ArrayList<>();
         }
         if(page <= 0){
             throw new AppException(ErrorCode.INVALID_PAGE_NUMBER);
