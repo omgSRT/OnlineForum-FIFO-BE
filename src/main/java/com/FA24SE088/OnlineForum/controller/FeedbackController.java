@@ -52,7 +52,7 @@ public class FeedbackController {
     public ApiResponse<List<FeedbackResponse>> filter(
             @RequestParam(required = false) UUID accountId,
             @RequestParam(required = false) String username,
-            @RequestParam(required = false) FeedbackStatus status,
+            @RequestParam(required = false, defaultValue = "PENDING") FeedbackStatus status,
             @RequestParam(defaultValue = "true") boolean acsending) {
         return ApiResponse.<List<FeedbackResponse>>builder()
                 .entity(feedbackService.filter(accountId,username, status, acsending))
