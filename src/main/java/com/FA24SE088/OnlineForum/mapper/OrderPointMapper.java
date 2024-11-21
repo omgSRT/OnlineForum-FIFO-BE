@@ -16,6 +16,7 @@ import java.util.List;
 @Mapper(componentModel = "spring")
 public interface OrderPointMapper {
     OrderPoint toOrderPoint(OrderPointRequest request);
+    @Mapping(target = "method",source = "method")
     OrderPointResponse toOderPointResponse(OrderPoint orderPoint);
     List<OrderPointResponse> toOderPointResponseList(List<OrderPoint> list);
 }

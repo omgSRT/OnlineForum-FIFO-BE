@@ -87,6 +87,9 @@ public class AuthenticateService {
         if(account.getStatus().equals(AccountStatus.PENDING_APPROVAL.name())){
             throw new AppException(ErrorCode.ACCOUNT_HAS_NOT_BEEN_AUTHENTICATED);
         }
+        if(account.getStatus().equals(AccountStatus.INACTIVE.name())){
+            throw new AppException(ErrorCode.ACCOUNT_INACTIVE);
+        }
         var token = generateToken(account, 1);
         var refreshToken = generateToken(account, 365);
         return AuthenticationResponse.builder()

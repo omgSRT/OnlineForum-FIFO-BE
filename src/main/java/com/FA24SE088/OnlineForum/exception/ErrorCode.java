@@ -135,6 +135,8 @@ public enum ErrorCode {
     FILE_NOT_READABLE(10117, "File not readable", HttpStatus.BAD_REQUEST),
     NO_FILES_TO_DOWNLOAD(10118, "Found No Files To Download", HttpStatus.NOT_FOUND),
     TITLE_OR_CONTENT_CONTAIN_INAPPROPRIATE_CONTENT(10119, "Title Or Content Contains Inappropriate Content", HttpStatus.BAD_REQUEST),
+    ACCOUNT_INACTIVE(10120, "Your account is inactive", HttpStatus.BAD_REQUEST),
+
     ;
 
     private int code;

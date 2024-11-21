@@ -20,6 +20,7 @@ public class OrderPoint {
     UUID orderId;
     double amount;
     String status;
+    String method;
     Date orderDate;
 
     @ManyToOne

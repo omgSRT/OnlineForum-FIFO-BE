@@ -71,6 +71,7 @@ public class PaymentService {
         orderPoint.setMonkeyCoinPack(monkeyCoinPack);
         orderPoint.setAmount(amount / 100.0);
         orderPoint.setOrderDate(new Date());
+        orderPoint.setMethod("VNPay");
         orderPoint.setStatus("PENDING");
         unitOfWork.getOrderPointRepository().save(orderPoint);
 

@@ -164,7 +164,7 @@ public class UtilityService {
             endDate = startDate;
         }
 
-        boolean includeAll = !viewTransaction && !dailyPoint && !bonusPoint;
+        boolean includeAll = !viewTransaction && !dailyPoint && !bonusPoint && !orderPoint;
 
         CompletableFuture<List<TransactionResponse>> transactionFuture = getTransactionFuture(viewTransaction, includeAll, currentUser, startDate, endDate);
         CompletableFuture<List<DailyPoint2Response>> dailyPointFuture = getDailyPointFuture(dailyPoint, includeAll, currentUser, startDate, endDate);
