@@ -51,7 +51,7 @@ public class SecurityConfiguration {
                                 .requestMatchers(HttpMethod.GET, PUBLIC_ENDPOINTS_GET).permitAll()
                                 .requestMatchers(HttpMethod.POST, PUBLIC_ENDPOINTS_POST).permitAll()
                                 .requestMatchers(HttpMethod.PUT, PUBLIC_ENDPOINTS_PUT).permitAll()
-                                .requestMatchers("/ws/**", "/websocket/**", "websocket/app/**",
+                                .requestMatchers("/ws/**", "/websocket/**", "websocket/app/**", "/socket.io/**",
                                         "/payment/**","/**").permitAll()
                                 //.requestMatchers("/**").permitAll()
                                 .anyRequest().authenticated())

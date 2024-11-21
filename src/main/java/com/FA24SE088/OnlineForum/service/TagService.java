@@ -13,6 +13,7 @@ import com.FA24SE088.OnlineForum.exception.ErrorCode;
 import com.FA24SE088.OnlineForum.mapper.TagMapper;
 import com.FA24SE088.OnlineForum.repository.UnitOfWork.UnitOfWork;
 import com.FA24SE088.OnlineForum.utils.PaginationUtils;
+import com.corundumstudio.socketio.SocketIOServer;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -36,7 +37,7 @@ public class TagService {
     UnitOfWork unitOfWork;
     PaginationUtils paginationUtils;
     TagMapper tagMapper;
-    SimpMessagingTemplate simpMessagingTemplate;
+    SocketIOServer socketIOServer;
 
     @PreAuthorize("hasRole('ADMIN')")
     public CompletableFuture<TagResponse> createTag(TagRequest request){
@@ -83,7 +84,7 @@ public class TagService {
 
             var paginatedList = paginationUtils.convertListToPage(page, perPage, list);
 
-            simpMessagingTemplate.convertAndSend("/app/notification", paginatedList);
+            socketIOServer.getBroadcastOperations().sendEvent("message", paginatedList);
 
             return paginatedList;
         });
