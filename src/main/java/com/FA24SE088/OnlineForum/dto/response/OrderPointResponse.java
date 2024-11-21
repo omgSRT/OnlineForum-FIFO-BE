@@ -16,6 +16,7 @@ import java.util.UUID;
 public class OrderPointResponse {
     UUID orderId;
     double amount;
+    String method;
     String status;
     Date orderDate;
     @JsonIgnoreProperties(value = {"orderPointList"})
