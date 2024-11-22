@@ -2,6 +2,7 @@ package com.FA24SE088.OnlineForum.vnpay;
 
 import com.FA24SE088.OnlineForum.dto.request.MCRequest;
 import com.FA24SE088.OnlineForum.dto.response.ResponseObject;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -40,7 +41,7 @@ public class PaymentController {
     }
 
     @GetMapping("/vn-pay-callback")
-    public RedirectView payCallbackHandler(HttpServletRequest request) {
+    public RedirectView payCallbackHandler(HttpServletRequest request) throws JsonProcessingException {
         return paymentService.handleVnPayCallback(request);
 
     }
