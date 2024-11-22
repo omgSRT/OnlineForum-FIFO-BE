@@ -29,10 +29,10 @@ spring:
     type: redis
   data:
     redis:
-      host: redis-14089.c334.asia-southeast2-1.gce.redns.redis-cloud.com
-      password: gQt9d6tzgYPC9GI6RCdNGvvUdKGotWNO
+      host: redis-11347.c280.us-central1-2.gce.redns.redis-cloud.com
+      password: yI9lNn7eX6DC7vJpe6mEKRZ1r0pZjwak
       username: default
-      port: 14089
+      port: 11347
 
 payment:
   vnPay:

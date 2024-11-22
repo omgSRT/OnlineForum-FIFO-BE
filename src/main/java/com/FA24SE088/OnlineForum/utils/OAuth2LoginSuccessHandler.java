@@ -28,8 +28,6 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException {
-//        DefaultOAuth2User oAuth2User = (DefaultOAuth2User) authentication.getPrincipal();
-//        String email = oAuth2User.getAttribute("email");
 
         UUID accountId = (UUID) ((DefaultOAuth2User) authentication.getPrincipal()).getAttributes().get("accountId");
         Account account = unitOfWork.getAccountRepository()
