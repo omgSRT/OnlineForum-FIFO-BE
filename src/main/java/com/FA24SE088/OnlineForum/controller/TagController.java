@@ -4,6 +4,7 @@ import com.FA24SE088.OnlineForum.dto.request.TagRequest;
 import com.FA24SE088.OnlineForum.dto.response.ApiResponse;
 import com.FA24SE088.OnlineForum.dto.response.TagResponse;
 import com.FA24SE088.OnlineForum.enums.SuccessReturnMessage;
+import com.FA24SE088.OnlineForum.service.SocketIOService;
 import com.FA24SE088.OnlineForum.service.TagService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -26,9 +27,7 @@ import java.util.UUID;
 @Slf4j
 public class TagController {
     TagService tagService;
-
-    ObjectMapper objectMapper;
-    SimpMessagingTemplate messagingTemplate;
+    SocketIOService socketIOService;
 
     @Operation(summary = "Create New Tag")
     @PostMapping(path = "/create")
@@ -47,11 +46,12 @@ public class TagController {
                                                          @RequestParam(defaultValue = "10") int perPage,
                                                          @RequestParam(required = false) String name,
                                                          @RequestParam(required = false) String targetColorHex){
-        return tagService.getAllTagsByFilteringNameAndColor(page, perPage, name, targetColorHex).thenApply(tagResponses ->
-                ApiResponse.<List<TagResponse>>builder()
-                        .entity(tagResponses)
-                        .build()
-        ).join();
+        return tagService.getAllTagsByFilteringNameAndColor(page, perPage, name, targetColorHex).thenApply(tagResponses -> {
+            socketIOService.sendEventToAllClientInAServer( "test", tagResponses);
+            return ApiResponse.<List<TagResponse>>builder()
+                    .entity(tagResponses)
+                    .build();
+        }).join();
     }
 
     @Operation(summary = "Get A Tag", description = "Get A Tag By ID")
