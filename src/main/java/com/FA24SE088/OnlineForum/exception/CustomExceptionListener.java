@@ -3,10 +3,12 @@ package com.FA24SE088.OnlineForum.exception;
 import com.corundumstudio.socketio.SocketIOClient;
 import com.corundumstudio.socketio.listener.ExceptionListenerAdapter;
 import io.netty.channel.ChannelHandlerContext;
+import org.springframework.stereotype.Component;
 
 import java.util.Arrays;
 import java.util.List;
 
+@Component
 public class CustomExceptionListener extends ExceptionListenerAdapter {
     @Override
     public void onEventException(Exception e, List<Object> data, SocketIOClient client) {

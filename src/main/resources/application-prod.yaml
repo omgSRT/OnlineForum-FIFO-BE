@@ -27,6 +27,7 @@ server:
   error:
     include-stacktrace: never
     include-message: always
+  protocol-method: https
 springdoc:
   #  api-docs:
   #    path: /info

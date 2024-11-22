@@ -37,7 +37,6 @@ public class TagService {
     UnitOfWork unitOfWork;
     PaginationUtils paginationUtils;
     TagMapper tagMapper;
-    SocketIOServer socketIOServer;
 
     @PreAuthorize("hasRole('ADMIN')")
     public CompletableFuture<TagResponse> createTag(TagRequest request){
@@ -83,8 +82,6 @@ public class TagService {
                     .toList();
 
             var paginatedList = paginationUtils.convertListToPage(page, perPage, list);
-
-            socketIOServer.getBroadcastOperations().sendEvent("message", paginatedList);
 
             return paginatedList;
         });

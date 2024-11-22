@@ -31,7 +31,6 @@ public class FeedbackService {
     @Autowired
     UnitOfWork unitOfWork;
     FeedbackMapper feedbackMapper;
-    SocketIOServer socketIOServer;
     //DataHandler dataHandler;
 
     private Account getCurrentUser() {
@@ -65,7 +64,6 @@ public class FeedbackService {
                 .type("feedback")
                 .build();
         unitOfWork.getNotificationRepository().save(notification);
-        socketIOServer.getBroadcastOperations().sendEvent("message",responseNoti);
         FeedbackResponse response = feedbackMapper.toResponse(savedFeedback);
         response.setNotification(notification);
         return response;
