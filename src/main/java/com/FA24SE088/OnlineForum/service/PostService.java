@@ -21,6 +21,7 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -31,6 +32,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -47,6 +49,7 @@ public class PostService {
     ImageMapper imageMapper;
     PostFileMapper postFileMapper;
     PaginationUtils paginationUtils;
+    RedisTemplate<String, List<PostResponse>> redisTemplate;
     Set<String> imageExtensionList = Set.of("ai", "jpg", "jpeg", "png", "gif", "indd", "raw", "avif", "eps", "bmp",
             "psd", "svg", "webp", "xcf");
     Set<String> compressedFileExtensionList = Set.of("7z", "tar", "gzip", "binhex", "cpio", "z", "rar", "zip", "arj", "deb",
@@ -153,6 +156,7 @@ public class PostService {
                             ? findAccountById(accountId)
                             : CompletableFuture.completedFuture(null);
         var username = getUsernameFromJwt();
+        var currentAccountFuture = findAccountByUsername(username);
         var blockedListFuture = getBlockedAccountListByUsername(username);
         var categoryFuture = categoryId != null
                 ? findCategoryById(categoryId)
@@ -166,9 +170,10 @@ public class PostService {
         var followerListFuture = getFollowerList();
 
         return CompletableFuture.allOf(postListFuture, accountFuture, topicFuture,
-                tagFuture, followerListFuture, blockedListFuture).thenCompose(v -> {
+                tagFuture, followerListFuture, blockedListFuture, currentAccountFuture).thenCompose(v -> {
             var postList = postListFuture.join();
             var account = accountFuture.join();
+            var currentAccount = currentAccountFuture.join();
             var category = (Category) categoryFuture.join();
             var topic = (Topic) topicFuture.join();
             var tag = tagFuture.join();
@@ -222,7 +227,15 @@ public class PostService {
                             .map(CompletableFuture::join)
                             .toList()
                     )
-                    .thenApply(list -> paginationUtils.convertListToPage(page, perPage, list));
+                    .thenApply(list -> {
+                        var paginatedList = paginationUtils.convertListToPage(page, perPage, list);
+
+//                        String redisKey = "postList_" + currentAccount.getUsername();
+//                        System.out.println(redisKey);
+//                        //var redisData = redisTemplate.opsForValue().get(redisKey);
+//                        redisTemplate.opsForValue().set(redisKey, paginatedList, Duration.ofHours(6));
+                        return paginatedList;
+                    });
         });
     }
     @Async("AsyncTaskExecutor")
@@ -1254,7 +1267,7 @@ public class PostService {
             var currentWalletBalance = wallet.getBalance();
             var totalPoint = totalPointFuture.join();
 
-            if(totalPoint + point.getPointPerPost() < point.getMaxPoint())
+            if(totalPoint + point.getPointPerPost() <= point.getMaxPoint())
                 wallet.setBalance(currentWalletBalance + point.getPointPerPost());
 
             return CompletableFuture.completedFuture(unitOfWork.getWalletRepository().save(wallet));
