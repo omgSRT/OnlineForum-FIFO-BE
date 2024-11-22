@@ -1,6 +1,5 @@
 package com.FA24SE088.OnlineForum.utils;
 
-import com.FA24SE088.OnlineForum.dto.response.OtpResponse;
 import com.FA24SE088.OnlineForum.entity.Account;
 import com.FA24SE088.OnlineForum.entity.Otp;
 import com.FA24SE088.OnlineForum.enums.AccountStatus;
@@ -11,6 +10,7 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
@@ -20,7 +20,6 @@ import java.time.ZoneId;
 import java.util.Date;
 import java.util.List;
 import java.util.Random;
-import java.util.concurrent.TimeUnit;
 
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
@@ -28,7 +27,7 @@ import java.util.concurrent.TimeUnit;
 @Component
 public class OtpUtil {
     final UnitOfWork unitOfWork;
-//    private final RedisTemplate<String, String> redisTemplate;
+    private final RedisTemplate<String, String> redisTemplate;
     public Otp generateOtp(String email){
         Random random = new Random();
         int randomNumber = random.nextInt(9999);
@@ -42,6 +41,37 @@ public class OtpUtil {
         unitOfWork.getOtpRepository().save(otp1);
         return otp1;
     }
+
+    public String generateOtpRedis(String email) {
+        Random random = new Random();
+        int randomNumber = random.nextInt(9999);
+        String otp = String.format("%04d", randomNumber);
+
+        redisTemplate.opsForValue().set(email, otp, Duration.ofMinutes(5));
+        return otp;
+    }
+
+    public boolean verifyOTPRedis(String email, String otp) {
+        String storedOtp = redisTemplate.opsForValue().get(email);
+        Account account = unitOfWork.getAccountRepository().findByEmail(email);
+        if (account == null) {
+            throw new AppException(ErrorCode.ACCOUNT_NOT_FOUND);
+        }
+
+        if (account.getStatus().equals(AccountStatus.ACTIVE.name())){
+            throw new AppException(ErrorCode.ACCOUNT_WAS_ACTIVE);
+        }
+
+        if (storedOtp == null) {
+            throw new AppException(ErrorCode.OTP_NOT_FOUND);
+        }
+        if (!storedOtp.equals(otp)) {
+            throw new AppException(ErrorCode.WRONG_OTP);
+        }
+        redisTemplate.delete(email);
+        return true;
+    }
+
 
     //email để tìm tài khoản tồn tại hay chưa
     //otp chứa thông tin người dùng nhập
@@ -106,6 +136,7 @@ public class OtpUtil {
 //        redisTemplate.delete(email);
         return true;
     }
+
     public boolean verifyOTPForForgetPassword(String email, String otp) {
         Account account = unitOfWork.getAccountRepository().findByEmail(email);
         if (account == null) {
