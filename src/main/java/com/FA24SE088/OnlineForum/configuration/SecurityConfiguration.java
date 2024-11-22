@@ -52,21 +52,21 @@ public class SecurityConfiguration {
                                 .requestMatchers(HttpMethod.POST, PUBLIC_ENDPOINTS_POST).permitAll()
                                 .requestMatchers(HttpMethod.PUT, PUBLIC_ENDPOINTS_PUT).permitAll()
                                 .requestMatchers("/ws/**", "/websocket/**", "websocket/app/**", "/socket.io/**",
-                                        "/payment/**","/**").permitAll()
+                                        "/payment/**").permitAll()
                                 //.requestMatchers("/**").permitAll()
                                 .anyRequest().authenticated())
                 .formLogin(AbstractHttpConfigurer::disable)
 
         ;
 
-//        http.oauth2Login(oauth2Login ->
-//                oauth2Login
-//                        .defaultSuccessUrl("/authenticate/callback", true)
-//                        .failureUrl("/login?error=true")
-//                        .successHandler(oAuth2LoginSuccessHandler)
-//                        .userInfoEndpoint(userInfo ->
-//                                userInfo.userService(customOAuth2UserService)) // Service để xử lý thông tin user từ Google
-//        );
+        http.oauth2Login(oauth2Login ->
+                oauth2Login
+                        .defaultSuccessUrl("/authenticate/callback", true)
+                        .failureUrl("/login?error=true")
+                        .successHandler(oAuth2LoginSuccessHandler)
+                        .userInfoEndpoint(userInfo ->
+                                userInfo.userService(customOAuth2UserService)) // Service để xử lý thông tin user từ Google
+        );
 
         http.oauth2ResourceServer(oauth2 ->
                 oauth2.jwt(jwtConfigurer ->

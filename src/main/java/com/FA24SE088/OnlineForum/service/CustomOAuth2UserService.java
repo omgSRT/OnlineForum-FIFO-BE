@@ -27,14 +27,13 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
         OAuth2User oAuth2User = new DefaultOAuth2UserService().loadUser(userRequest);
 
         String email = oAuth2User.getAttribute("email");
-        String name = oAuth2User.getAttribute("name");
         String avatar = oAuth2User.getAttribute("picture");
 
         Account account = unitOfWork.getAccountRepository().findByEmail(email);
         if (account == null) {
             account = new Account();
             account.setEmail(email);
-            account.setUsername(name);
+            account.setUsername(email.split("@")[0]);
             account.setAvatar(avatar);
             account.setStatus(AccountStatus.ACTIVE.name());
             account.setCreatedDate(LocalDateTime.now());

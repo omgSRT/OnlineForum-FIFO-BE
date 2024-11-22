@@ -5,6 +5,8 @@ import com.FA24SE088.OnlineForum.dto.request.*;
 import com.FA24SE088.OnlineForum.dto.response.*;
 import com.FA24SE088.OnlineForum.entity.Otp;
 import com.FA24SE088.OnlineForum.enums.SuccessReturnMessage;
+import com.FA24SE088.OnlineForum.exception.AppException;
+import com.FA24SE088.OnlineForum.exception.ErrorCode;
 import com.FA24SE088.OnlineForum.service.AccountService;
 import com.FA24SE088.OnlineForum.service.AuthenticateService;
 import com.FA24SE088.OnlineForum.utils.EmailTemplate;
@@ -12,6 +14,8 @@ import com.FA24SE088.OnlineForum.utils.EmailUtil;
 import com.FA24SE088.OnlineForum.utils.OtpUtil;
 import com.nimbusds.jose.JOSEException;
 import io.swagger.v3.oas.annotations.Operation;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -48,17 +52,8 @@ public class AuthenticationController {
                 .build();
     }
 
-    @GetMapping("/login/google")
-    public ApiResponse<String> loginGG() {
-        String url = "https://accounts.google.com/o/oauth2/v2/auth/oauthchooseaccount?response_type=code&client_id=376166376344-tqh1arjjec1n55khfkv9mosg882bgn7o.apps.googleusercontent.com&scope=email%20profile&state=ua-Zwcfy0imSTBXTkwGv-Yb-bO6wNHzwJlPqsfRWQwk%3D&redirect_uri=http%3A%2F%2Flocalhost%3A8080%2Flogin%2Foauth2%2Fcode%2Fgoogle&service=lso&o2v=2&ddm=1&flowName=GeneralOAuthFlow";
-        return ApiResponse.<String>builder()
-                .message(SuccessReturnMessage.SEARCH_SUCCESS.getMessage())
-                .entity(url)
-                .build();
-    }
-
     @GetMapping("/callback")
-    public ApiResponse<AccountResponse> callbackLoginGoogle(@AuthenticationPrincipal OAuth2User oAuth2User) {
+    public ApiResponse<AccountResponse> callbackLoginGoogle(@AuthenticationPrincipal OAuth2User oAuth2User, HttpServletRequest request) {
         AccountResponse response = accountService.callbackLoginGoogle(oAuth2User);
         return ApiResponse.<AccountResponse>builder()
                 .message(SuccessReturnMessage.LOGIN_SUCCESS.getMessage())
@@ -70,12 +65,9 @@ public class AuthenticationController {
     @Transactional
     public ApiResponse<AccountResponse> create(@Valid @RequestBody AccountRequest request) {
         AccountResponse response = accountService.create(request);
-        Otp otp = otpUtil.generateOtp(request.getEmail());
-
-
         emailUtil.sendToAnEmailWithHTMLEnabled(
                 response.getEmail(),
-                EmailTemplate.teamplateSendOtp(otp.getOtpEmail()),
+                EmailTemplate.teamplateSendOtp(otpUtil.generateOtpRedis(request.getEmail())),
                 "Mã OTP xác thực tài khoản");
         return ApiResponse.<AccountResponse>builder()
                 .entity(response)
@@ -95,7 +87,7 @@ public class AuthenticationController {
 
     @PostMapping("/verify-otp")
     public ApiResponse<AccountResponse> verifyOtp(@RequestBody OtpRequest request) {
-        otpUtil.verifyOTP(request.getEmail(), request.getOtp());
+        otpUtil.verifyOTPRedis(request.getEmail(), request.getOtp());
         return ApiResponse.<AccountResponse>builder()
                 .message(SuccessReturnMessage.VERIFY_SUCCESS.getMessage())
                 .entity(accountService.verifyAccount(request.getEmail()))
