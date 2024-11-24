@@ -1,6 +1,7 @@
 package com.FA24SE088.OnlineForum.configuration;
 
 
+import com.FA24SE088.OnlineForum.utils.LongRedisSerializer;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -37,7 +38,18 @@ public class RedisConfig {
         redisTemplate.setValueSerializer(new StringRedisSerializer());
         return redisTemplate;
     }
+    @Bean
+    public RedisTemplate<String, Long> redisTemplateForLong(RedisConnectionFactory redisConnectionFactory) {
+        RedisTemplate<String, Long> redisTemplate = new RedisTemplate<>();
+        redisTemplate.setConnectionFactory(redisConnectionFactory);
 
+        redisTemplate.setKeySerializer(new StringRedisSerializer());
+        redisTemplate.setValueSerializer(new LongRedisSerializer());
+
+        return redisTemplate;
+    }
+
+    //setup for generic objects
     @Bean
     public <T> RedisTemplate<String, List<T>> redisTemplateForListObject(RedisConnectionFactory redisConnectionFactory) {
         RedisTemplate<String, List<T>> redisTemplate = new RedisTemplate<>();
@@ -48,7 +60,6 @@ public class RedisConfig {
 
         return redisTemplate;
     }
-
     @Bean
     public <T> RedisTemplate<String, T> redisTemplateWithObject(RedisConnectionFactory redisConnectionFactory) {
         RedisTemplate<String, T> redisTemplate = new RedisTemplate<>();
