@@ -46,7 +46,7 @@ public class SocketIOConfiguration {
 //        config.setPingTimeout(10000);
 
         config.setExceptionListener(customExceptionListener);
-        config.setAuthorizationListener(new CustomAuthorizationListener());
+        //config.setAuthorizationListener(new CustomAuthorizationListener());
         //set socket.io to accept Date-related data
         config.setJsonSupport(new CustomJsonSupportHandler());
 
