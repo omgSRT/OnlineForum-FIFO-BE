@@ -8,6 +8,9 @@ import com.FA24SE088.OnlineForum.dto.response.AccountResponse;
 import com.FA24SE088.OnlineForum.dto.response.ApiResponse;
 import com.FA24SE088.OnlineForum.dto.response.EventResponse;
 import com.FA24SE088.OnlineForum.entity.Account;
+import com.FA24SE088.OnlineForum.enums.AccountStatus;
+import com.FA24SE088.OnlineForum.enums.EventStatus;
+import com.FA24SE088.OnlineForum.enums.RoleAccount;
 import com.FA24SE088.OnlineForum.enums.SuccessReturnMessage;
 import com.FA24SE088.OnlineForum.service.AccountService;
 import com.FA24SE088.OnlineForum.service.EventService;
@@ -64,6 +67,17 @@ public class EventController {
     public ApiResponse<List<EventResponse>> getAllEvents() {
         return ApiResponse.<List<EventResponse>>builder()
                 .entity(eventService.getAllEvents())
+                .build();
+    }
+
+    @GetMapping("/filter")
+    public ApiResponse<List<EventResponse>> filter(@RequestParam(defaultValue = "1") int page,
+                                                   @RequestParam(defaultValue = "10") int perPage,
+                                                   @RequestParam(required = false) String title,
+                                                   @RequestParam(required = false) String location,
+                                                   @RequestParam(required = false) EventStatus status) {
+        return ApiResponse.<List<EventResponse>>builder()
+                .entity(eventService.filterEvents(page,perPage,title,location,status))
                 .build();
     }
 
