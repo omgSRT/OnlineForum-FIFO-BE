@@ -123,7 +123,7 @@ public class PaymentService {
                     .message(messageJson)
                     .isRead(false)
                     .build();
-
+            unitOfWork.getNotificationRepository().save(notification);
             socketIOServer.getBroadcastOperations().sendEvent(WebsocketEventName.NOTIFICATION.name(), notification);
             redirectUrl = returnUrl;
         } else {

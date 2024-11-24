@@ -4,8 +4,6 @@ import com.FA24SE088.OnlineForum.dto.request.EventRequest;
 import com.FA24SE088.OnlineForum.dto.response.EventResponse;
 import com.FA24SE088.OnlineForum.entity.*;
 import com.FA24SE088.OnlineForum.enums.EventStatus;
-import com.FA24SE088.OnlineForum.exception.AppException;
-import com.FA24SE088.OnlineForum.exception.ErrorCode;
 import com.FA24SE088.OnlineForum.mapper.EventMapper;
 import com.FA24SE088.OnlineForum.repository.UnitOfWork.UnitOfWork;
 import com.FA24SE088.OnlineForum.utils.PaginationUtils;
@@ -15,6 +13,8 @@ import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.*;
 
 @RequiredArgsConstructor
@@ -30,31 +30,29 @@ public class EventService {
         if (eventRequest.getEndDate() != null) {
             validateEventDates(eventRequest.getStartDate(), eventRequest.getEndDate());
         }
-        if (!eventRequest.getStatus().equals(EventStatus.UPCOMING.name()) &&
-                !eventRequest.getStatus().equals(EventStatus.ONGOING.name()) &&
-                !eventRequest.getStatus().equals(EventStatus.CONCLUDED.name())) {
-            throw new AppException(ErrorCode.WRONG_STATUS);
-        } else {
-            Event event = eventMapper.toEvent(eventRequest);
-            Event savedEvent = unitOfWork.getEventRepository().save(event);
-            return mapToResponse(savedEvent);
-        }
+        Event event = eventMapper.toEvent(eventRequest);
+        Event savedEvent = unitOfWork.getEventRepository().save(event);
+        return mapToResponse(savedEvent);
     }
-    public List<EventResponse> filterEvents(int page, int perPage, String title, String location, String status) {
-        List<EventResponse> result;
 
+    public List<EventResponse> filterEvents(int page, int perPage, String title, String location, EventStatus eventStatus) {
+        List<EventResponse> result;
         List<EventResponse> allEvents = unitOfWork.getEventRepository().findAll().stream()
                 .map(eventMapper::toResponse)
                 .toList();
-
-        if (title == null && location == null && status == null) {
+        String status = eventStatus != null ? eventStatus.name() : null;
+        if (title == null && location == null && eventStatus == null) {
             result = allEvents.stream()
                     .sorted(Comparator.comparingInt(x -> {
                         switch (x.getStatus()) {
-                            case "ONGOING": return 1;
-                            case "UPCOMING": return 2;
-                            case "CONCLUDED": return 3;
-                            default: return 4;
+                            case "ONGOING":
+                                return 1;
+                            case "UPCOMING":
+                                return 2;
+                            case "CONCLUDED":
+                                return 3;
+                            default:
+                                return 4;
                         }
                     }))
                     .toList();
@@ -66,10 +64,14 @@ public class EventService {
                     .filter(x -> (status == null || (x.getStatus() != null && x.getStatus().equals(status))))
                     .sorted(Comparator.comparingInt(x -> {
                         switch (x.getStatus()) {
-                            case "ONGOING": return 1;
-                            case "UPCOMING": return 2;
-                            case "CONCLUDED": return 3;
-                            default: return 4;
+                            case "ONGOING":
+                                return 1;
+                            case "UPCOMING":
+                                return 2;
+                            case "CONCLUDED":
+                                return 3;
+                            default:
+                                return 4;
                         }
                     }))
                     .toList();
@@ -82,10 +84,6 @@ public class EventService {
     public Optional<EventResponse> updateEvent(UUID eventId, EventRequest eventRequest) {
         Optional<Event> eventOptional = unitOfWork.getEventRepository().findById(eventId);
         validateEventDates(eventRequest.getStartDate(), eventRequest.getEndDate());
-        if (!eventRequest.getStatus().equals(EventStatus.UPCOMING.name()) &&
-                !eventRequest.getStatus().equals(EventStatus.ONGOING.name()) &&
-                !eventRequest.getStatus().equals(EventStatus.CONCLUDED.name()))
-            throw new AppException(ErrorCode.WRONG_STATUS);
         if (eventOptional.isPresent()) {
             Event event = eventOptional.get();
             event.setTitle(eventRequest.getTitle());
@@ -95,7 +93,6 @@ public class EventService {
             event.setImage(eventRequest.getImage());
             event.setContent(eventRequest.getContent());
             event.setLink(eventRequest.getLink());
-            event.setStatus(eventRequest.getStatus());
 
             Event updatedEvent = unitOfWork.getEventRepository().save(event);
             return Optional.of(mapToResponse(updatedEvent));
@@ -109,8 +106,40 @@ public class EventService {
 
     public List<EventResponse> getAllEvents() {
         List<Event> events = unitOfWork.getEventRepository().findAll();
-        return events.stream().map(eventMapper::toResponse).toList();
+        LocalDate today = LocalDate.now();
+
+        List<Event> sortedEvents = events.stream()
+                .peek(event -> {
+                    LocalDate startDate = event.getStartDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+                    LocalDate endDate = event.getEndDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+
+                    if (startDate.isAfter(today)) {
+                        event.setStatus(EventStatus.UPCOMING.name());
+                        unitOfWork.getEventRepository().save(event);
+                    } else if (!startDate.isAfter(today) && !endDate.isBefore(today)) {
+                        event.setStatus(EventStatus.ONGOING.name());
+                        unitOfWork.getEventRepository().save(event);
+                    } else {
+                        event.setStatus(EventStatus.CONCLUDED.name());
+                        unitOfWork.getEventRepository().save(event);
+                    }
+                })
+                .sorted((e1, e2) -> {
+                    EventStatus status1 = EventStatus.valueOf(e1.getStatus());
+                    EventStatus status2 = EventStatus.valueOf(e2.getStatus());
+                    int statusComparison = status1.compareTo(status2);
+                    if (statusComparison == 0) {
+                        return e1.getStartDate().compareTo(e2.getStartDate());
+                    }
+                    return statusComparison;
+                })
+                .toList();
+
+        return sortedEvents.stream()
+                .map(eventMapper::toResponse)
+                .toList();
     }
+
 
     public Optional<EventResponse> getEventById(UUID eventId) {
         Optional<Event> event = unitOfWork.getEventRepository().findById(eventId);

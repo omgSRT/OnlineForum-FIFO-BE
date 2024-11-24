@@ -22,6 +22,6 @@ public class EventRequest {
     String image;
     String content;
     String link;
-    String status;
+//    String status;
 
 }
