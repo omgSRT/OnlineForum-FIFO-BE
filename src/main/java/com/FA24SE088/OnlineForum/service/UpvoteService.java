@@ -12,7 +12,7 @@ import com.FA24SE088.OnlineForum.exception.ErrorCode;
 import com.FA24SE088.OnlineForum.mapper.UpvoteMapper;
 import com.FA24SE088.OnlineForum.repository.UnitOfWork.UnitOfWork;
 import com.FA24SE088.OnlineForum.utils.PaginationUtils;
-import jakarta.persistence.EntityManager;
+import com.corundumstudio.socketio.SocketIOServer;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -36,7 +36,7 @@ public class UpvoteService {
     UnitOfWork unitOfWork;
     UpvoteMapper upvoteMapper;
     PaginationUtils paginationUtils;
-    EntityManager entityManager;
+    SocketIOServer socketIOServer;
 
     @Async("AsyncTaskExecutor")
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")

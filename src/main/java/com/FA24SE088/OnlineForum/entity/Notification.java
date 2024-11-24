@@ -23,8 +23,6 @@ public class Notification {
     String message;
     boolean isRead;
     LocalDateTime createdDate;
-    String type;
-
 
     @ManyToOne
     @JoinColumn(name = "accountId")

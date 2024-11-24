@@ -1,6 +1,8 @@
 package com.FA24SE088.OnlineForum.configuration;
 
 import com.FA24SE088.OnlineForum.exception.CustomExceptionListener;
+import com.FA24SE088.OnlineForum.handler.CustomAuthorizationListener;
+import com.FA24SE088.OnlineForum.handler.CustomJsonSupportHandler;
 import com.FA24SE088.OnlineForum.handler.SocketIOEventHandler;
 import com.corundumstudio.socketio.SocketIOServer;
 import jakarta.annotation.PreDestroy;
@@ -33,14 +35,21 @@ public class SocketIOConfiguration {
     }
 
     //link -> ws://localhost:16234/socket.io/?EIO=4&transport=websocket
-    //link -> ws://103.162.14.151:16234/socket.io/?EIO=4&transport=websocket
     //link -> wss://fifoforumonline.click:16234/socket.io/?EIO=4&transport=websocket
     @Bean
     public SocketIOServer socketIOServer(SocketIOEventHandler socketIOEventHandler, CustomExceptionListener customExceptionListener) {
         com.corundumstudio.socketio.Configuration config = new com.corundumstudio.socketio.Configuration();
         config.setPort(16234);
         config.setUpgradeTimeout(15000);
+        config.setAllowCustomRequests(true);
+//        config.setPingInterval(5000);
+//        config.setPingTimeout(10000);
+
         config.setExceptionListener(customExceptionListener);
+        //config.setAuthorizationListener(new CustomAuthorizationListener());
+        //set socket.io to accept Date-related data
+        config.setJsonSupport(new CustomJsonSupportHandler());
+
         if(protocolMethod.equalsIgnoreCase("https")){
             config.setHostname("fifoforumonline.click");
             InputStream keystoreStream = getClass().getClassLoader().getResourceAsStream("keystore.p12");

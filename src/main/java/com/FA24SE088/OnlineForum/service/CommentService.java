@@ -11,11 +11,15 @@ import com.FA24SE088.OnlineForum.entity.Account;
 import com.FA24SE088.OnlineForum.entity.Comment;
 import com.FA24SE088.OnlineForum.entity.Post;
 import com.FA24SE088.OnlineForum.enums.PostStatus;
+import com.FA24SE088.OnlineForum.enums.WebsocketEventName;
 import com.FA24SE088.OnlineForum.exception.AppException;
 import com.FA24SE088.OnlineForum.exception.ErrorCode;
 import com.FA24SE088.OnlineForum.mapper.CommentMapper;
 import com.FA24SE088.OnlineForum.repository.UnitOfWork.UnitOfWork;
 import com.FA24SE088.OnlineForum.utils.PaginationUtils;
+import com.FA24SE088.OnlineForum.utils.SocketIOUtil;
+import com.corundumstudio.socketio.SocketIOServer;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -38,6 +42,7 @@ public class CommentService {
     UnitOfWork unitOfWork;
     CommentMapper commentMapper;
     PaginationUtils paginationUtils;
+    SocketIOUtil socketIOUtil;
 
     @Async("AsyncTaskExecutor")
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
@@ -60,9 +65,17 @@ public class CommentService {
             newComment.setParentComment(null);
             newComment.setReplies(new ArrayList<>());
 
-            return CompletableFuture.completedFuture(unitOfWork.getCommentRepository().save(newComment));
+            var savedComment = unitOfWork.getCommentRepository().save(newComment);
+
+            return CompletableFuture.completedFuture(savedComment);
         })
-                .thenApply(commentMapper::toCommentResponse);
+                .thenApply(comment -> {
+                    var response = commentMapper.toCommentResponse(comment);
+
+                    socketIOUtil.sendEventToAllClientInAServer(WebsocketEventName.NEW_DATA.name(), response);
+
+                    return response;
+                });
     }
     @Transactional
     @Async("AsyncTaskExecutor")
@@ -89,7 +102,13 @@ public class CommentService {
 
                     return CompletableFuture.completedFuture(unitOfWork.getCommentRepository().save(newReply));
                 })
-                .thenApply(commentMapper::toReplyCreateResponse);
+                .thenApply(comment -> {
+                    var response = commentMapper.toReplyCreateResponse(comment);
+
+                    socketIOUtil.sendEventToAllClientInAServer(WebsocketEventName.NEW_DATA.name(), response);
+
+                    return response;
+                });
     }
     @Async("AsyncTaskExecutor")
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")

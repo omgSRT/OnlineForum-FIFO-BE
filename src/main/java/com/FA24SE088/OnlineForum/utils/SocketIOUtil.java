@@ -1,4 +1,4 @@
-package com.FA24SE088.OnlineForum.service;
+package com.FA24SE088.OnlineForum.utils;
 
 import com.corundumstudio.socketio.SocketIOClient;
 import com.corundumstudio.socketio.SocketIOServer;
@@ -8,14 +8,13 @@ import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.util.Map;
 import java.util.UUID;
 
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Slf4j
 @Service
-public class SocketIOService {
+public class SocketIOUtil {
     SocketIOServer socketIOServer;
 
     public void sendEventToAllClientInAServer(String event, Object data) {

@@ -4,17 +4,13 @@ import com.FA24SE088.OnlineForum.dto.request.TagRequest;
 import com.FA24SE088.OnlineForum.dto.response.ApiResponse;
 import com.FA24SE088.OnlineForum.dto.response.TagResponse;
 import com.FA24SE088.OnlineForum.enums.SuccessReturnMessage;
-import com.FA24SE088.OnlineForum.service.SocketIOService;
 import com.FA24SE088.OnlineForum.service.TagService;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -27,7 +23,6 @@ import java.util.UUID;
 @Slf4j
 public class TagController {
     TagService tagService;
-    SocketIOService socketIOService;
 
     @Operation(summary = "Create New Tag")
     @PostMapping(path = "/create")
@@ -47,7 +42,6 @@ public class TagController {
                                                          @RequestParam(required = false) String name,
                                                          @RequestParam(required = false) String targetColorHex){
         return tagService.getAllTagsByFilteringNameAndColor(page, perPage, name, targetColorHex).thenApply(tagResponses -> {
-            socketIOService.sendEventToAllClientInAServer( "test", tagResponses);
             return ApiResponse.<List<TagResponse>>builder()
                     .entity(tagResponses)
                     .build();
