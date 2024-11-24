@@ -35,7 +35,6 @@ public class SocketIOConfiguration {
     }
 
     //link -> ws://localhost:16234/socket.io/?EIO=4&transport=websocket
-    //link -> ws://103.162.14.151:16234/socket.io/?EIO=4&transport=websocket
     //link -> wss://fifoforumonline.click:16234/socket.io/?EIO=4&transport=websocket
     @Bean
     public SocketIOServer socketIOServer(SocketIOEventHandler socketIOEventHandler, CustomExceptionListener customExceptionListener) {
