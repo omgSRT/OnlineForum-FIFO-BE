@@ -65,7 +65,6 @@ public class NotificationService {
                 .message(notificationRequest.getMessage())
                 .isRead(false)
                 .createdDate(LocalDateTime.now())
-                .type(notificationRequest.getType())
                 .account(account)
                 .build();
         return unitOfWork.getNotificationRepository().save(notification);

@@ -1,13 +1,10 @@
 package com.FA24SE088.OnlineForum.configuration;
 
 import com.FA24SE088.OnlineForum.exception.CustomExceptionListener;
+import com.FA24SE088.OnlineForum.handler.CustomAuthorizationListener;
 import com.FA24SE088.OnlineForum.handler.CustomJsonSupportHandler;
 import com.FA24SE088.OnlineForum.handler.SocketIOEventHandler;
 import com.corundumstudio.socketio.SocketIOServer;
-import com.corundumstudio.socketio.protocol.JacksonJsonSupport;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import jakarta.annotation.PreDestroy;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
@@ -45,8 +42,12 @@ public class SocketIOConfiguration {
         com.corundumstudio.socketio.Configuration config = new com.corundumstudio.socketio.Configuration();
         config.setPort(16234);
         config.setUpgradeTimeout(15000);
-        config.setExceptionListener(customExceptionListener);
+        config.setAllowCustomRequests(true);
+//        config.setPingInterval(5000);
+//        config.setPingTimeout(10000);
 
+        config.setExceptionListener(customExceptionListener);
+        config.setAuthorizationListener(new CustomAuthorizationListener());
         //set socket.io to accept Date-related data
         config.setJsonSupport(new CustomJsonSupportHandler());
 

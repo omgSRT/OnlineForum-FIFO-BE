@@ -18,6 +18,7 @@ import com.FA24SE088.OnlineForum.mapper.CommentMapper;
 import com.FA24SE088.OnlineForum.repository.UnitOfWork.UnitOfWork;
 import com.FA24SE088.OnlineForum.utils.PaginationUtils;
 import com.FA24SE088.OnlineForum.utils.SocketIOUtil;
+import com.corundumstudio.socketio.SocketIOServer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -42,7 +43,6 @@ public class CommentService {
     CommentMapper commentMapper;
     PaginationUtils paginationUtils;
     SocketIOUtil socketIOUtil;
-    ObjectMapper objectMapper;
 
     @Async("AsyncTaskExecutor")
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
@@ -102,7 +102,13 @@ public class CommentService {
 
                     return CompletableFuture.completedFuture(unitOfWork.getCommentRepository().save(newReply));
                 })
-                .thenApply(commentMapper::toReplyCreateResponse);
+                .thenApply(comment -> {
+                    var response = commentMapper.toReplyCreateResponse(comment);
+
+                    socketIOUtil.sendEventToAllClientInAServer(WebsocketEventName.NEW_DATA.name(), response);
+
+                    return response;
+                });
     }
     @Async("AsyncTaskExecutor")
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")

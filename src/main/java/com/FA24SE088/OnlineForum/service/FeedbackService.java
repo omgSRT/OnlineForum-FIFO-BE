@@ -53,7 +53,6 @@ public class FeedbackService {
                 .title("Feedback Noitfication")
                 .message("Your feedback send success!")
                 .isRead(false)
-                .type("Feedback")
                 .account(account)
                 .createdDate(feedback.getCreatedDate())
                 .build();
