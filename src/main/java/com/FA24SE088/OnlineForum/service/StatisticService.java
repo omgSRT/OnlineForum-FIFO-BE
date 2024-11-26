@@ -14,6 +14,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
+import java.text.DecimalFormat;
 import java.time.Duration;
 import java.util.concurrent.CompletableFuture;
 
@@ -60,15 +61,19 @@ public class StatisticService {
             double accountGrowthRate = (countAccountRedis != 0)
                     ? (double) ((countAccount - countAccountRedis) / countAccountRedis) * 100
                     : 0;
+            accountGrowthRate = formatToTwoDecimalPlaces(accountGrowthRate);
             double postGrowthRate = (countPostRedis != 0)
                     ? (double) ((countPost - countPostRedis) / countPostRedis) * 100
                     : 0;
+            postGrowthRate = formatToTwoDecimalPlaces(postGrowthRate);
             double activityGrowthRate = (countActivity != 0)
                     ? (double) ((countActivity - countActivityRedis) / countActivity) * 100
                     : 0;
+            activityGrowthRate = formatToTwoDecimalPlaces(activityGrowthRate);
             double moneyGrowthRate = (countMoneyRedis != 0)
                     ? (double) ((countMoney - countMoneyRedis) / countMoneyRedis) * 100
                     : 0;
+            moneyGrowthRate = formatToTwoDecimalPlaces(moneyGrowthRate);
 
             DoDResponse dodResponse = DoDResponse.builder()
                     .accountAmount(countAccount)
@@ -126,5 +131,8 @@ public class StatisticService {
 
             return amount;
         });
+    }
+    private double formatToTwoDecimalPlaces(double value) {
+        return Math.round(value * 100.0) / 100.0;
     }
 }
