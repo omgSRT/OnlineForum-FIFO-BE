@@ -75,7 +75,9 @@ public class PostService {
                     var topic = topicFuture.join();
                     var tag = tagFuture.join();
 
-                    var imageUrlList = request.getImageUrlList().stream()
+                    var imageUrlList = request.getImageUrlList() == null || request.getImageUrlList().isEmpty()
+                            ? null
+                            : request.getImageUrlList().stream()
                             .map(ImageRequest::getUrl)
                             .toList();
                     ensureContentSafe(imageUrlList, request.getTitle(), request.getContent());
@@ -911,7 +913,9 @@ public class PostService {
             if(post.getTag() == null || post.getTopic() == null){
                 throw new AppException(ErrorCode.TYPE_OR_TOPIC_NOT_FOUND);
             }
-            var imageUrlList = post.getImageList().stream()
+            var imageUrlList = post.getImageList() == null || post.getImageList().isEmpty()
+                    ? null
+                    : post.getImageList().stream()
                     .map(Image::getUrl)
                     .toList();
             ensureContentSafe(imageUrlList, post.getTitle(), post.getContent());
