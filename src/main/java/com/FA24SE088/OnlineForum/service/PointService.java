@@ -52,8 +52,6 @@ public class PointService {
             }
 
             var newPoint = pointMapper.toPoint(request);
-            newPoint.setPointCostPerDownload(15);
-            newPoint.setPointEarnedPerDownload(2);
 
             return pointMapper.toPointResponse(unitOfWork.getPointRepository().save(newPoint));
         });
