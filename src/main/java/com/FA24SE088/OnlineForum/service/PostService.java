@@ -911,6 +911,10 @@ public class PostService {
             if(post.getTag() == null || post.getTopic() == null){
                 throw new AppException(ErrorCode.TYPE_OR_TOPIC_NOT_FOUND);
             }
+            var imageUrlList = post.getImageList().stream()
+                    .map(Image::getUrl)
+                    .toList();
+            ensureContentSafe(imageUrlList, post.getTitle(), post.getContent());
 
             var dailyPointFuture = createDailyPointLog(account.getAccountId(), post);
             var walletFuture = addPointToWallet(account.getAccountId());
