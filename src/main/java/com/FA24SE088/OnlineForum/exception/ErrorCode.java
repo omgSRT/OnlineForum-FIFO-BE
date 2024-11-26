@@ -122,7 +122,7 @@ public enum ErrorCode {
     PRICING_INVALID(10104, "Pricing invalid", HttpStatus.BAD_REQUEST),
     POST_VIEW_NOT_FOUND(10105, "Post View Not Found", HttpStatus.NOT_FOUND),
     WRONG_DATE_FORMAT(10106, "Invalid date format. Please use yyyy-MM-dd.", HttpStatus.BAD_REQUEST),
-    POINT_PAY_FOR_DOWNLOAD_LESS_THAN_ONE(10107, "Point pay for download must be greater than or equal to 1", HttpStatus.BAD_REQUEST),
+    POINT_COST_PER_DOWNLOAD_LESS_THAN_ONE(10107, "Point pay per download must be greater than or equal to 1", HttpStatus.BAD_REQUEST),
     BALANCE_NOT_SUFFICIENT_TO_DOWNLOAD(10108, "Balance Is Not Sufficient To Download", HttpStatus.PAYMENT_REQUIRED),
     INVALID_REFRESH_TOKEN(10109, "Invalid refresh token", HttpStatus.BAD_REQUEST),
     TRANSACTION_AMOUNT_LESS_THAN_ZERO(10110, "Amount transaction must be greater than or equal to 0", HttpStatus.BAD_REQUEST),
@@ -134,9 +134,9 @@ public enum ErrorCode {
     REWARD_NOT_AVAILABLE(10116, "Reward not available", HttpStatus.BAD_REQUEST),
     FILE_NOT_READABLE(10117, "File not readable", HttpStatus.BAD_REQUEST),
     NO_FILES_TO_DOWNLOAD(10118, "Found No Files To Download", HttpStatus.NOT_FOUND),
-    TITLE_OR_CONTENT_CONTAIN_INAPPROPRIATE_CONTENT(10119, "Title Or Content Contains Inappropriate Content", HttpStatus.BAD_REQUEST),
+    TITLE_OR_CONTENT_OR_IMAGES_CONTAIN_INAPPROPRIATE_CONTENT(10119, "Title Or Content Or Images Contains Inappropriate Content", HttpStatus.BAD_REQUEST),
     ACCOUNT_INACTIVE(10120, "Your account is inactive", HttpStatus.BAD_REQUEST),
-
+    POINT_EARNED_PER_DOWNLOAD_LESS_THAN_ONE(10121, "Point earned per download must be greater than or equal to 1", HttpStatus.BAD_REQUEST),
     ;
 
     private int code;

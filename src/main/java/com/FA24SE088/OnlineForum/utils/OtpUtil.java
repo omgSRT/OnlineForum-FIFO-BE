@@ -28,6 +28,7 @@ import java.util.Random;
 public class OtpUtil {
     final UnitOfWork unitOfWork;
     private final RedisTemplate<String, String> redisTemplate;
+
     public Otp generateOtp(String email){
         Random random = new Random();
         int randomNumber = random.nextInt(9999);

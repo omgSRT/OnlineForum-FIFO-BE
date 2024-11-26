@@ -4,8 +4,10 @@ import com.FA24SE088.OnlineForum.dto.request.ImageCreateRequest;
 import com.FA24SE088.OnlineForum.dto.response.ImageResponse;
 import com.FA24SE088.OnlineForum.dto.response.TopicNoCategoryResponse;
 import com.FA24SE088.OnlineForum.entity.Account;
+import com.FA24SE088.OnlineForum.entity.BlockedAccount;
 import com.FA24SE088.OnlineForum.entity.Image;
 import com.FA24SE088.OnlineForum.entity.Post;
+import com.FA24SE088.OnlineForum.enums.PostStatus;
 import com.FA24SE088.OnlineForum.exception.AppException;
 import com.FA24SE088.OnlineForum.exception.ErrorCode;
 import com.FA24SE088.OnlineForum.mapper.ImageMapper;
@@ -97,6 +99,43 @@ public class ImageService {
     }
     @Async("AsyncTaskExecutor")
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
+    public CompletableFuture<List<ImageResponse>> getAllImagesFromOtherUser(int page, int perPage, UUID otherAccountId) {
+        var imageListResponse = getAllImages();
+        var username = getUsernameFromJwt();
+        var currentAccountFuture = findAccountByUsername(username);
+        var otherAccountFuture = findAccountById(otherAccountId);
+        var blockedListFuture = getBlockedAccountListByUsername(username);
+
+        return CompletableFuture.allOf(imageListResponse, currentAccountFuture, otherAccountFuture, blockedListFuture)
+                .thenCompose(v -> {
+                    var imageList = imageListResponse.join();
+                    var currentAccount = currentAccountFuture.join();
+                    var otherAccount = otherAccountFuture.join();
+                    var blockedAccountList = blockedListFuture.join();
+
+                    boolean isBlockedByCurrent = blockedAccountList.contains(otherAccount);
+                    boolean isBlockedByOther = unitOfWork.getBlockedAccountRepository()
+                            .findByBlockerAndBlocked(otherAccount, currentAccount).isPresent();
+                    boolean isFollowing = isFollowing(currentAccount, otherAccount);
+                    boolean isAuthor = currentAccount.equals(otherAccount);
+                    boolean isStaffOrAdmin = hasRole(currentAccount, "ADMIN") || hasRole(currentAccount, "STAFF");
+
+                    var responses = imageList.stream()
+                            .filter(image -> image.getPost() != null && image.getPost().getAccount().equals(otherAccount))
+                            .filter(image -> isAuthor || isStaffOrAdmin
+                                    || image.getPost().getStatus().equals(PostStatus.PUBLIC.name())
+                                    || (image.getPost().getStatus().equals(PostStatus.PRIVATE.name()) && isFollowing))
+                            .filter(image -> !isBlockedByCurrent && !isBlockedByOther)
+                            .map(imageMapper::toImageResponse)
+                            .toList();
+
+                    var paginatedList = paginationUtils.convertListToPage(page, perPage, responses);
+
+                    return CompletableFuture.completedFuture(paginatedList);
+                });
+    }
+    @Async("AsyncTaskExecutor")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
     public CompletableFuture<ImageResponse> getImageById(UUID imageId){
         var imageFuture = findImageById(imageId);
 
@@ -150,5 +189,33 @@ public class ImageService {
                 unitOfWork.getAccountRepository().findByUsername(username)
                         .orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND))
         );
+    }
+    @Async("AsyncTaskExecutor")
+    public CompletableFuture<List<Image>> getAllImages() {
+        return CompletableFuture.supplyAsync(() -> unitOfWork.getImageRepository().findAll().stream()
+                .toList());
+    }
+    @Async("AsyncTaskExecutor")
+    private CompletableFuture<List<Account>> getBlockedAccountListByUsername(String username) {
+        var accountFuture = findAccountByUsername(username);
+
+        return accountFuture.thenApply(account -> {
+            var blockedAccountEntityList = unitOfWork.getBlockedAccountRepository().findByBlocker(account);
+
+            return blockedAccountEntityList.stream()
+                    .map(BlockedAccount::getBlocked)
+                    .toList();
+        });
+    }
+    private boolean isFollowing(Account currentAccount, Account postOwner) {
+        if(postOwner == null){
+            return false;
+        }
+        return unitOfWork.getFollowRepository()
+                .findByFollowerAndFollowee(currentAccount, postOwner)
+                .isPresent();
+    }
+    private boolean hasRole(Account account, String role) {
+        return account.getRole().getName().equals(role);
     }
 }
