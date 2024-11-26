@@ -6,8 +6,10 @@ import com.FA24SE088.OnlineForum.dto.request.CommentUpdateRequest;
 import com.FA24SE088.OnlineForum.dto.request.ReplyCreateRequest;
 import com.FA24SE088.OnlineForum.dto.response.CommentNoPostResponse;
 import com.FA24SE088.OnlineForum.dto.response.CommentResponse;
+import com.FA24SE088.OnlineForum.dto.response.PostResponse;
 import com.FA24SE088.OnlineForum.dto.response.ReplyCreateResponse;
 import com.FA24SE088.OnlineForum.entity.Account;
+import com.FA24SE088.OnlineForum.entity.BlockedAccount;
 import com.FA24SE088.OnlineForum.entity.Comment;
 import com.FA24SE088.OnlineForum.entity.Post;
 import com.FA24SE088.OnlineForum.enums.PostStatus;
@@ -119,6 +121,43 @@ public class CommentService {
                     .toList();
             return paginationUtils.convertListToPage(page, perPage, list);
         });
+    }
+    @Async("AsyncTaskExecutor")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
+    public CompletableFuture<List<CommentResponse>> getAllCommentsFromOtherUser(int page, int perPage, UUID otherAccountId){
+        var commentListFuture = getAllComments();
+        var username = getUsernameFromJwt();
+        var currentAccountFuture = findAccountByUsername(username);
+        var otherAccountFuture = findAccountById(otherAccountId);
+        var blockedListFuture = getBlockedAccountListByUsername(username);
+
+        return CompletableFuture.allOf(commentListFuture, currentAccountFuture, otherAccountFuture, blockedListFuture)
+                .thenCompose(v -> {
+                    var commentList = commentListFuture.join();
+                    var currentAccount = currentAccountFuture.join();
+                    var otherAccount = otherAccountFuture.join();
+                    var blockedAccountList = blockedListFuture.join();
+
+                    boolean isBlockedByCurrent = blockedAccountList.contains(otherAccount);
+                    boolean isBlockedByOther = unitOfWork.getBlockedAccountRepository()
+                            .findByBlockerAndBlocked(otherAccount, currentAccount).isPresent();
+                    boolean isFollowing = isFollowing(currentAccount, otherAccount);
+                    boolean isAuthor = currentAccount.equals(otherAccount);
+                    boolean isStaffOrAdmin = hasRole(currentAccount, "ADMIN") || hasRole(currentAccount, "STAFF");
+
+                    var responses = commentList.stream()
+                            .filter(comment -> comment.getAccount().equals(otherAccount))
+                            .filter(comment -> isAuthor || isStaffOrAdmin
+                                    || comment.getPost().getStatus().equals(PostStatus.PUBLIC.name())
+                                || (comment.getPost().getStatus().equals(PostStatus.PRIVATE.name()) && isFollowing))
+                            .filter(comment -> !isBlockedByCurrent && !isBlockedByOther)
+                            .map(commentMapper::toCommentResponse)
+                            .toList();
+
+                    var paginatedList = paginationUtils.convertListToPage(page, perPage, responses);
+
+                    return CompletableFuture.completedFuture(paginatedList);
+                });
     }
     @Async("AsyncTaskExecutor")
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
@@ -243,13 +282,30 @@ public class CommentService {
                         .orElseThrow(() -> new AppException(ErrorCode.COMMENT_NOT_FOUND))
         );
     }
-    @Async("AsyncTaskExecutor")
     public String getUsernameFromJwt() {
         var authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null && authentication.getPrincipal() instanceof Jwt jwt) {
             return jwt.getClaim("username");
         }
         return null;
+    }
+    @Async("AsyncTaskExecutor")
+    private CompletableFuture<List<Account>> getBlockedAccountListByUsername(String username) {
+        var accountFuture = findAccountByUsername(username);
+
+        return accountFuture.thenApply(account -> {
+            var blockedAccountEntityList = unitOfWork.getBlockedAccountRepository().findByBlocker(account);
+
+            return blockedAccountEntityList.stream()
+                    .map(BlockedAccount::getBlocked)
+                    .toList();
+        });
+    }
+    @Async("AsyncTaskExecutor")
+    private CompletableFuture<List<Comment>> getAllComments(){
+        return CompletableFuture.supplyAsync(() ->
+                unitOfWork.getCommentRepository().findAll().stream()
+                    .toList());
     }
     private void deleteRepliesRecursively(Comment comment) {
         List<Comment> replies = comment.getReplies();
@@ -261,5 +317,16 @@ public class CommentService {
             }
             replies.clear();
         }
+    }
+    private boolean isFollowing(Account currentAccount, Account postOwner) {
+        if(postOwner == null){
+            return false;
+        }
+        return unitOfWork.getFollowRepository()
+                .findByFollowerAndFollowee(currentAccount, postOwner)
+                .isPresent();
+    }
+    private boolean hasRole(Account account, String role) {
+        return account.getRole().getName().equals(role);
     }
 }
