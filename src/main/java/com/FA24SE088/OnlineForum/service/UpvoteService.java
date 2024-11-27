@@ -35,8 +35,6 @@ import java.util.concurrent.CompletableFuture;
 public class UpvoteService {
     UnitOfWork unitOfWork;
     UpvoteMapper upvoteMapper;
-    PaginationUtils paginationUtils;
-    SocketIOServer socketIOServer;
 
     @Async("AsyncTaskExecutor")
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
@@ -64,7 +62,7 @@ public class UpvoteService {
                                 return unitOfWork.getTypeBonusRepository().findByNameAndQuantity(TypeBonusNameEnum.UPVOTE.name(), amount)
                                         .thenCompose(typeBonus -> {
                                             if (typeBonus != null) {
-                                                return createDailyPointLog(account, post, typeBonus)
+                                                return createDailyPointLog(post.getAccount(), post, typeBonus)
                                                         .thenCompose(existingDailyPoint -> {
                                                             Upvote newUpvote = new Upvote();
                                                             newUpvote.setAccount(account);
