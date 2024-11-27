@@ -140,7 +140,25 @@
 			<version>2.18.1</version>
 		</dependency>
 
-        <!-- Compressed File Dependency -->
+		<!-- Language Detection Dependency -->
+		<dependency>
+			<groupId>org.apache.tika</groupId>
+			<artifactId>tika-core</artifactId>
+			<version>3.0.0</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.tika</groupId>
+			<artifactId>tika-langdetect</artifactId>
+			<version>3.0.0</version>
+			<type>pom</type>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.tika</groupId>
+			<artifactId>tika-langdetect-optimaize</artifactId>
+			<version>3.0.0</version>
+		</dependency>
+
+		<!-- Compressed File Dependency -->
 		<dependency>
 			<groupId>org.apache.commons</groupId>
 			<artifactId>commons-compress</artifactId>
