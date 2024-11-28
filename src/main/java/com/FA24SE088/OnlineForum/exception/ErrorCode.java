@@ -137,6 +137,8 @@ public enum ErrorCode {
     TITLE_OR_CONTENT_OR_IMAGES_CONTAIN_INAPPROPRIATE_CONTENT(10119, "Title Or Content Or Images Contains Inappropriate Content", HttpStatus.BAD_REQUEST),
     ACCOUNT_INACTIVE(10120, "Your account is inactive", HttpStatus.BAD_REQUEST),
     POINT_EARNED_PER_DOWNLOAD_LESS_THAN_ONE(10121, "Point earned per download must be greater than or equal to 1", HttpStatus.BAD_REQUEST),
+    INVALID_START_DATE(10122, "Start date cannot be after end date.", HttpStatus.BAD_REQUEST),
+    INVALID_END_DATE(10122, "The end date must be after the current date", HttpStatus.BAD_REQUEST),
     ;
 
     private int code;

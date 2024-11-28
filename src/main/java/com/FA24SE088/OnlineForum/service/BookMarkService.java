@@ -14,11 +14,9 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
-import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -68,16 +66,16 @@ public class BookMarkService {
     public List<PostResponse> listBookmarks() {
         Account currentUser = getCurrentUser();
         List<BookMark> bookmarks = unitOfWork.getBookMarkRepository().findByAccount(currentUser);
-//        return bookmarks.stream()
-//                .map(BookMark::getPost) // Lấy Post từ mỗi BookMark
-//                .toList();
-//    }
         return bookmarks.stream()
                 .map(bookMark -> {
                     Post post = bookMark.getPost();
-                    return postMapper.toPostResponse(post);
+                    int upvoteCount = post.getUpvoteList() != null ? post.getUpvoteList().size() : 0;
+                    int commentCount = post.getCommentList() != null ? post.getCommentList().size() : 0;
+                    PostResponse postResponse = postMapper.toPostResponse(post);
+                    postResponse.setUpvoteCount(upvoteCount);
+                    postResponse.setCommentCount(commentCount);
+                    return postResponse;
                 })
                 .toList();
     }
-
 }
