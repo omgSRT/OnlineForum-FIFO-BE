@@ -74,7 +74,7 @@ public class CommentService {
                                             newComment.setReplies(new ArrayList<>());
 
                                             var savedComment = unitOfWork.getCommentRepository().save(newComment);
-
+                                            socketIOUtil.sendEventToAllClientInAServer(WebsocketEventName.NOTIFICATION.toString(),newComment);
                                             return CompletableFuture.completedFuture(savedComment);
                                         });
                             }
@@ -86,7 +86,7 @@ public class CommentService {
                                 newComment.setReplies(new ArrayList<>());
 
                                 var savedComment = unitOfWork.getCommentRepository().save(newComment);
-
+                                socketIOUtil.sendEventToAllClientInAServer(WebsocketEventName.NOTIFICATION.toString(),newComment);
                                 return CompletableFuture.completedFuture(savedComment);
                             }
                         });
@@ -124,7 +124,7 @@ public class CommentService {
                                                     newReply.setPost(post);
                                                     newReply.setParentComment(parentComment);
                                                     newReply.setReplies(new ArrayList<>());
-
+                                                    socketIOUtil.sendEventToAllClientInAServer(WebsocketEventName.NOTIFICATION.toString(),newReply);
                                                     return CompletableFuture.completedFuture(unitOfWork.getCommentRepository().save(newReply));
                                                 });
                                     }
@@ -134,7 +134,7 @@ public class CommentService {
                                         newReply.setPost(post);
                                         newReply.setParentComment(parentComment);
                                         newReply.setReplies(new ArrayList<>());
-
+                                        socketIOUtil.sendEventToAllClientInAServer(WebsocketEventName.NOTIFICATION.toString(),newReply);
                                         return CompletableFuture.completedFuture(unitOfWork.getCommentRepository().save(newReply));
                                     }
                                 });

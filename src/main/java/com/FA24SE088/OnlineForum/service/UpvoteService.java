@@ -7,11 +7,13 @@ import com.FA24SE088.OnlineForum.dto.response.UpvoteResponse;
 import com.FA24SE088.OnlineForum.entity.*;
 import com.FA24SE088.OnlineForum.enums.SuccessReturnMessage;
 import com.FA24SE088.OnlineForum.enums.TypeBonusNameEnum;
+import com.FA24SE088.OnlineForum.enums.WebsocketEventName;
 import com.FA24SE088.OnlineForum.exception.AppException;
 import com.FA24SE088.OnlineForum.exception.ErrorCode;
 import com.FA24SE088.OnlineForum.mapper.UpvoteMapper;
 import com.FA24SE088.OnlineForum.repository.UnitOfWork.UnitOfWork;
 import com.FA24SE088.OnlineForum.utils.PaginationUtils;
+import com.FA24SE088.OnlineForum.utils.SocketIOUtil;
 import com.corundumstudio.socketio.SocketIOServer;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -35,6 +37,7 @@ import java.util.concurrent.CompletableFuture;
 public class UpvoteService {
     UnitOfWork unitOfWork;
     UpvoteMapper upvoteMapper;
+    SocketIOUtil socketIOUtil;
 
     @Async("AsyncTaskExecutor")
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
@@ -68,16 +71,20 @@ public class UpvoteService {
                                                             newUpvote.setAccount(account);
                                                             newUpvote.setPost(post);
 
+                                                            socketIOUtil.sendEventToAllClientInAServer(WebsocketEventName.NOTIFICATION.toString(),newUpvote);
                                                             var upvoteResponse = upvoteMapper.toUpvoteCreateDeleteResponse(unitOfWork.getUpvoteRepository().save(newUpvote));
                                                             upvoteResponse.setMessage(SuccessReturnMessage.CREATE_SUCCESS.getMessage());
                                                             return CompletableFuture.completedFuture(upvoteResponse);
                                                         });
                                             } else {
+
+
+
                                                 Upvote newUpvote = new Upvote();
                                                 newUpvote.setAccount(account);
                                                 newUpvote.setPost(post);
 
-                                                var upvoteResponse = upvoteMapper.toUpvoteCreateDeleteResponse(unitOfWork.getUpvoteRepository().save(newUpvote));
+                                                socketIOUtil.sendEventToAllClientInAServer(WebsocketEventName.NOTIFICATION.toString(),newUpvote);                                                var upvoteResponse = upvoteMapper.toUpvoteCreateDeleteResponse(unitOfWork.getUpvoteRepository().save(newUpvote));
                                                 upvoteResponse.setMessage(SuccessReturnMessage.CREATE_SUCCESS.getMessage());
                                                 return CompletableFuture.completedFuture(upvoteResponse);
                                             }
