@@ -20,8 +20,7 @@ public class EventRequest {
     String location;
     @Column(columnDefinition = "MEDIUMTEXT")
     String image;
+    @Column(columnDefinition = "MEDIUMTEXT")
     String content;
     String link;
-//    String status;
-
 }

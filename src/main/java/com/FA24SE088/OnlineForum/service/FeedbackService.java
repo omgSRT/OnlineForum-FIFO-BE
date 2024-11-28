@@ -7,6 +7,7 @@ import com.FA24SE088.OnlineForum.dto.response.NotificationResponse;
 import com.FA24SE088.OnlineForum.entity.*;
 import com.FA24SE088.OnlineForum.enums.FeedbackStatus;
 import com.FA24SE088.OnlineForum.enums.FeedbackUpdateStatus;
+import com.FA24SE088.OnlineForum.enums.WebsocketEventName;
 import com.FA24SE088.OnlineForum.exception.AppException;
 import com.FA24SE088.OnlineForum.exception.ErrorCode;
 import com.FA24SE088.OnlineForum.mapper.FeedbackMapper;
@@ -31,7 +32,7 @@ public class FeedbackService {
     @Autowired
     UnitOfWork unitOfWork;
     FeedbackMapper feedbackMapper;
-    //DataHandler dataHandler;
+    SocketIOServer socketIOServer;
 
     private Account getCurrentUser() {
         var context = SecurityContextHolder.getContext();
@@ -62,9 +63,10 @@ public class FeedbackService {
                 .isRead(false)
                 .type("feedback")
                 .build();
+//        socketIOServer.getBroadcastOperations().sendEvent(WebsocketEventName.NOTIFICATION.name(), responseNoti);
         unitOfWork.getNotificationRepository().save(notification);
         FeedbackResponse response = feedbackMapper.toResponse(savedFeedback);
-        response.setNotification(notification);
+//        response.setNotification(notification);
         return response;
     }
 

@@ -31,6 +31,7 @@ public class PaymentService {
     @Autowired
     OrderPointMapper orderPointMapper;
     SocketIOServer socketIOServer;
+    @Autowired
     ObjectMapper objectMapper;
 
     public PaymentDTO.VNPayResponse createVnPayPayment(HttpServletRequest request) {
@@ -117,14 +118,14 @@ public class PaymentService {
             wallet.setBalance(wallet.getBalance() + orderPoint.getMonkeyCoinPack().getPoint());
             unitOfWork.getWalletRepository().save(wallet);
 
-            String messageJson = objectMapper.writeValueAsString(orderPoint);
-            Notification notification = Notification.builder()
-                    .title("Load money into the wallet successfully")
-                    .message(messageJson)
-                    .isRead(false)
-                    .build();
-            unitOfWork.getNotificationRepository().save(notification);
-            socketIOServer.getBroadcastOperations().sendEvent(WebsocketEventName.NOTIFICATION.name(), notification);
+//            String messageJson = objectMapper.writeValueAsString(orderPoint);
+//            Notification notification = Notification.builder()
+//                    .title("Load money into the wallet successfully")
+//                    .message(messageJson)
+//                    .isRead(false)
+//                    .build();
+//            unitOfWork.getNotificationRepository().save(notification);
+//            socketIOServer.getBroadcastOperations().sendEvent(WebsocketEventName.NOTIFICATION.name(), notification);
             redirectUrl = returnUrl;
         } else {
             orderPoint.setStatus(OrderPointStatus.FAILED.name());
