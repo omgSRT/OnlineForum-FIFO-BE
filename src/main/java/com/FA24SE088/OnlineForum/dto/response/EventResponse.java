@@ -21,5 +21,4 @@ public class EventResponse {
     private String content;
     private String link;
     private String status;
-
 }

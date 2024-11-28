@@ -23,6 +23,4 @@ public class EventRequest {
     @Column(columnDefinition = "MEDIUMTEXT")
     String content;
     String link;
-//    String status;
-
 }

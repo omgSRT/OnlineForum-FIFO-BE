@@ -4,6 +4,8 @@ import com.FA24SE088.OnlineForum.dto.request.EventRequest;
 import com.FA24SE088.OnlineForum.dto.response.EventResponse;
 import com.FA24SE088.OnlineForum.entity.*;
 import com.FA24SE088.OnlineForum.enums.EventStatus;
+import com.FA24SE088.OnlineForum.exception.AppException;
+import com.FA24SE088.OnlineForum.exception.ErrorCode;
 import com.FA24SE088.OnlineForum.mapper.EventMapper;
 import com.FA24SE088.OnlineForum.repository.UnitOfWork.UnitOfWork;
 import com.FA24SE088.OnlineForum.utils.PaginationUtils;
@@ -26,14 +28,37 @@ public class EventService {
     EventMapper eventMapper;
     PaginationUtils paginationUtils;
 
+    //    public EventResponse createEvent(EventRequest eventRequest) {
+//        if (eventRequest.getEndDate() != null) {
+//            validateEventDates(eventRequest.getStartDate(), eventRequest.getEndDate());
+//        }
+//        Event event = eventMapper.toEvent(eventRequest);
+//        Event savedEvent = unitOfWork.getEventRepository().save(event);
+//        return mapToResponse(savedEvent);
+//    }
     public EventResponse createEvent(EventRequest eventRequest) {
         if (eventRequest.getEndDate() != null) {
             validateEventDates(eventRequest.getStartDate(), eventRequest.getEndDate());
         }
+
         Event event = eventMapper.toEvent(eventRequest);
+        LocalDate today = LocalDate.now();
+        LocalDate startDate = event.getStartDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+        LocalDate endDate = event.getEndDate() != null
+                ? event.getEndDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate()
+                : null;
+
+        if (startDate.isAfter(today)) {
+            event.setStatus(EventStatus.UPCOMING.name());
+        } else if (endDate != null && !startDate.isAfter(today) && !endDate.isBefore(today)) {
+            event.setStatus(EventStatus.ONGOING.name());
+        } else {
+            event.setStatus(EventStatus.CONCLUDED.name());
+        }
         Event savedEvent = unitOfWork.getEventRepository().save(event);
         return mapToResponse(savedEvent);
     }
+
 
     public List<EventResponse> filterEvents(int page, int perPage, String title, String location, EventStatus eventStatus) {
         List<EventResponse> result;
@@ -151,8 +176,15 @@ public class EventService {
     }
 
     private void validateEventDates(Date startDate, Date endDate) {
+        LocalDate today = LocalDate.now();
+        LocalDate endDate1 = endDate != null
+                ? endDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate()
+                : null;
+        if (endDate1 != null && endDate1.isBefore(today)) {
+            throw new AppException(ErrorCode.INVALID_END_DATE);
+        }
         if (startDate.after(endDate)) {
-            throw new IllegalArgumentException("Start date cannot be after end date.");
+            throw new AppException(ErrorCode.INVALID_START_DATE);
         }
     }
 }
