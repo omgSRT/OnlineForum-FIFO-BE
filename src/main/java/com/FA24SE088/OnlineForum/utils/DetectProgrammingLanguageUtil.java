@@ -6,15 +6,16 @@ import com.github.junrar.rarfile.FileHeader;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import net.sf.sevenzipjbinding.*;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
+import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
 import org.springframework.stereotype.Component;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.zip.GZIPInputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -138,110 +139,87 @@ public class DetectProgrammingLanguageUtil {
             Map.entry("sh", "Shell Script"),
             Map.entry("zsh", "Shell Script"),
             Map.entry("bash", "Shell Script"),
-            Map.entry("conf", "Configuration")
+            Map.entry("conf", "Configuration"),
+
+            // Unknown Extension
+            Map.entry("unknown", "Unknown")
     );
 
-    public Map<String, Integer> countFileTypes(byte[] fileData) throws IOException, RarException {
-        Map<String, Integer> fileTypeCountMap = new HashMap<>();
-
-        if (isZipFile(fileData)) {
-            processZipFile(fileData, fileTypeCountMap);
-        } else if (isTarFile(fileData)) {
-            processTarFile(fileData, fileTypeCountMap);
-        } else if(isRarFile(fileData)){
-            processRarFile(fileData, fileTypeCountMap);
-        } else {
-            throw new IllegalArgumentException("The provided data is neither a valid ZIP nor RAR nor TAR file.");
-        }
-
-        return fileTypeCountMap;
-    }
-
-    private void processZipFile(byte[] zipData, Map<String, Integer> fileTypeCountMap) throws IOException, RarException {
-        try (ZipInputStream zipInputStream = new ZipInputStream(new ByteArrayInputStream(zipData))) {
-            ZipEntry entry;
-            while ((entry = zipInputStream.getNextEntry()) != null) {
-                if (!entry.isDirectory()) {
-                    String fileTypeOrLanguage = getLanguageFromFileName(entry.getName());
-                    fileTypeCountMap.put(fileTypeOrLanguage, fileTypeCountMap.getOrDefault(fileTypeOrLanguage, 0) + 1);
-
-                    if (entry.getName().toLowerCase().endsWith(".zip")) {
-                        byte[] nestedZipData = zipInputStream.readAllBytes();
-                        countFileTypes(nestedZipData);
-                    } else if (entry.getName().toLowerCase().endsWith(".tar")) {
-                        byte[] nestedTarData = zipInputStream.readAllBytes();
-                        countFileTypes(nestedTarData);
-                    } else if (entry.getName().toLowerCase().endsWith(".rar")) {
-                        byte[] nestedRarData = zipInputStream.readAllBytes();
-                        countFileTypes(nestedRarData);
-                    }
-                }
+    public Map<String, Integer> countLanguagesInZip(byte[] zipFileBytes) throws IOException {
+        Map<String, Integer> languageCountMap = new HashMap<>();
+        try (ZipInputStream zipInputStream = new ZipInputStream(new ByteArrayInputStream(zipFileBytes))) {
+            ZipEntry zipEntry;
+            while ((zipEntry = zipInputStream.getNextEntry()) != null) {
+                String extension = getFileExtension(zipEntry.getName());
+                String language = extensionToLanguageMap.getOrDefault(extension, "Unknown");
+                // Count languages in the map
+                languageCountMap.put(language, languageCountMap.getOrDefault(language, 0) + 1);
                 zipInputStream.closeEntry();
             }
         }
+        return languageCountMap;
     }
-
-    private void processTarFile(byte[] tarData, Map<String, Integer> fileTypeCountMap) throws IOException, RarException {
-        try (TarArchiveInputStream tarInputStream = new TarArchiveInputStream(new ByteArrayInputStream(tarData))) {
-            TarArchiveEntry entry;
-            while ((entry = tarInputStream.getNextEntry()) != null) {
-                if (!entry.isDirectory()) {
-                    String fileTypeOrLanguage = getLanguageFromFileName(entry.getName());
-                    fileTypeCountMap.put(fileTypeOrLanguage, fileTypeCountMap.getOrDefault(fileTypeOrLanguage, 0) + 1);
-
-                    if (entry.getName().toLowerCase().endsWith(".zip")) {
-                        byte[] nestedZipData = readTarEntryContent(tarInputStream);
-                        countFileTypes(nestedZipData);
-                    } else if (entry.getName().toLowerCase().endsWith(".tar")) {
-                        byte[] nestedTarData = readTarEntryContent(tarInputStream);
-                        countFileTypes(nestedTarData);
-                    } else if (entry.getName().toLowerCase().endsWith(".rar")) {
-                        byte[] nestedRarData = readTarEntryContent(tarInputStream);
-                        countFileTypes(nestedRarData);
-                    }
-                }
+    public Map<String, Integer> countLanguagesInTar(byte[] tarFileBytes) throws IOException {
+        Map<String, Integer> languageCountMap = new HashMap<>();
+        try (TarArchiveInputStream tarInputStream = new TarArchiveInputStream(new ByteArrayInputStream(tarFileBytes))) {
+            TarArchiveEntry tarEntry;
+            while ((tarEntry = tarInputStream.getNextTarEntry()) != null) {
+                String extension = getFileExtension(tarEntry.getName());
+                String language = extensionToLanguageMap.getOrDefault(extension, "Unknown");
+                languageCountMap.put(language, languageCountMap.getOrDefault(language, 0) + 1);
             }
         }
+        return languageCountMap;
     }
-
-    private void processRarFile(byte[] rarData, Map<String, Integer> fileTypeCountMap) throws IOException, RarException {
-        try (ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(rarData);
-             Archive archive = new Archive(byteArrayInputStream)) {
-
+    public Map<String, Integer> countLanguagesInRar(byte[] rarFileBytes) throws IOException, RarException {
+        Map<String, Integer> languageCountMap = new HashMap<>();
+        try (Archive archive = new Archive(new ByteArrayInputStream(rarFileBytes))) {
             FileHeader fileHeader;
             while ((fileHeader = archive.nextFileHeader()) != null) {
-                if (!fileHeader.isDirectory()) {
-                    String fileTypeOrLanguage = getLanguageFromFileName(fileHeader.getFileNameString());
-                    fileTypeCountMap.put(fileTypeOrLanguage, fileTypeCountMap.getOrDefault(fileTypeOrLanguage, 0) + 1);
-
-                    if (fileHeader.getFileNameString().toLowerCase().endsWith(".zip")) {
-                        byte[] nestedZipData = extractRarFile(archive, fileHeader);
-                        countFileTypes(nestedZipData);
-                    } else if (fileHeader.getFileNameString().toLowerCase().endsWith(".tar")) {
-                        byte[] nestedTarData = extractRarFile(archive, fileHeader);
-                        countFileTypes(nestedTarData);
-                    } else if (fileHeader.getFileNameString().toLowerCase().endsWith(".rar")) {
-                        byte[] nestedRarData = extractRarFile(archive, fileHeader);
-                        countFileTypes(nestedRarData);
-                    }
-                }
+                String extension = getFileExtension(fileHeader.getFileNameString());
+                String language = extensionToLanguageMap.getOrDefault(extension, "Unknown");
+                languageCountMap.put(language, languageCountMap.getOrDefault(language, 0) + 1);
             }
         }
+        return languageCountMap;
     }
-    private byte[] readTarEntryContent(TarArchiveInputStream tarInputStream) throws IOException {
-        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        byte[] buffer = new byte[1024];
-        int bytesRead;
-        while ((bytesRead = tarInputStream.read(buffer)) != -1) {
-            byteArrayOutputStream.write(buffer, 0, bytesRead);
+    public static Map<String, Integer> countLanguagesInGz(byte[] gzFileBytes) throws IOException {
+        Map<String, Integer> languageCountMap = new HashMap<>();
+        try (ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(gzFileBytes);
+             GZIPInputStream gzipInputStream = new GZIPInputStream(byteArrayInputStream);
+             ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream()) {
+            byte[] buffer = new byte[1024];
+            int bytesRead;
+            while ((bytesRead = gzipInputStream.read(buffer)) != -1) {
+                byteArrayOutputStream.write(buffer, 0, bytesRead);
+            }
+            String extractedFileName = "extractedFile"; // Or get the name from metadata if available
+            String extension = getFileExtension(extractedFileName);
+            String language = extensionToLanguageMap.getOrDefault(extension, "Unknown");
+            languageCountMap.put(language, languageCountMap.getOrDefault(language, 0) + 1);
         }
-        return byteArrayOutputStream.toByteArray();
+        return languageCountMap;
     }
-    private byte[] extractRarFile(Archive archive, FileHeader fileHeader) throws RarException {
-        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        archive.extractFile(fileHeader, byteArrayOutputStream);
-        return byteArrayOutputStream.toByteArray();
-    }
+//    public static Map<String, Integer> countLanguagesIn7z(byte[] sevenZipFileBytes) throws Exception {
+//        Map<String, Integer> languageCountMap = new HashMap<>();
+//        try (ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(sevenZipFileBytes)) {
+//            IInArchive inArchive = SevenZip.openInArchive(null, byteArrayInputStream);
+//            int numberOfItems = inArchive.getNumberOfItems();
+//
+//            for (int i = 0; i < numberOfItems; i++) {
+//                IArchiveItem item = inArchive.getItem(i);
+//                String fileName = item.getFileName();
+//                String extension = getFileExtension(fileName);
+//
+//                // Get the language from the extension
+//                String language = extensionToLanguageMap.getOrDefault(extension, "Unknown");
+//
+//                // Increment the language count
+//                languageCountMap.put(language, languageCountMap.getOrDefault(language, 0) + 1);
+//            }
+//        }
+//        return languageCountMap;
+//    }
 
     private static String getFileExtension(String fileName) {
         int lastDotIndex = fileName.lastIndexOf('.');
@@ -265,30 +243,5 @@ public class DetectProgrammingLanguageUtil {
     }
     private byte[] extractZipData(ZipInputStream zipInputStream) throws IOException {
         return zipInputStream.readAllBytes();
-    }
-    private boolean isZipFile(byte[] data) {
-        return data.length >= 4
-                && data[0] == 0x50  // 'P'
-                && data[1] == 0x4B  // 'K'
-                && data[2] == 0x03  // 0x03
-                && data[3] == 0x04; // 0x04
-    }
-    private boolean isRarFile(byte[] data) {
-        return data.length >= 7
-                && data[0] == 0x52  // 'R'
-                && data[1] == 0x61  // 'a'
-                && data[2] == 0x72  // 'r'
-                && data[3] == 0x21  // '!'
-                && data[4] == 0x1A  // (Control-Z)
-                && data[5] == 0x07  // ?
-                && data[6] == 0x00; // Null byte
-    }
-    private boolean isTarFile(byte[] data) {
-        return data.length >= 265
-                && data[257] == 'u'  // 'u'
-                && data[258] == 's'  // 's'
-                && data[259] == 't'  // 't'
-                && data[260] == 'a'  // 'a'
-                && data[261] == 'r'; // 'r'
     }
 }
