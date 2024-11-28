@@ -6,11 +6,11 @@ import com.FA24SE088.OnlineForum.dto.request.CommentUpdateRequest;
 import com.FA24SE088.OnlineForum.dto.request.ReplyCreateRequest;
 import com.FA24SE088.OnlineForum.dto.response.CommentNoPostResponse;
 import com.FA24SE088.OnlineForum.dto.response.CommentResponse;
+import com.FA24SE088.OnlineForum.dto.response.PostResponse;
 import com.FA24SE088.OnlineForum.dto.response.ReplyCreateResponse;
-import com.FA24SE088.OnlineForum.entity.Account;
-import com.FA24SE088.OnlineForum.entity.Comment;
-import com.FA24SE088.OnlineForum.entity.Post;
+import com.FA24SE088.OnlineForum.entity.*;
 import com.FA24SE088.OnlineForum.enums.PostStatus;
+import com.FA24SE088.OnlineForum.enums.TypeBonusNameEnum;
 import com.FA24SE088.OnlineForum.enums.WebsocketEventName;
 import com.FA24SE088.OnlineForum.exception.AppException;
 import com.FA24SE088.OnlineForum.exception.ErrorCode;
@@ -55,27 +55,44 @@ public class CommentService {
             var account = accountFuture.join();
             var post = postFuture.join();
 
-            if(post.getStatus().equals(PostStatus.DRAFT.name())){
+            if(post.getStatus().equals(PostStatus.DRAFT.name()) || post.getStatus().equals(PostStatus.HIDDEN.name())){
                 throw new AppException(ErrorCode.CANNOT_COMMENT_ON_DRAFT);
             }
 
-            Comment newComment = commentMapper.toComment(request);
-            newComment.setAccount(account);
-            newComment.setPost(post);
-            newComment.setParentComment(null);
-            newComment.setReplies(new ArrayList<>());
+            return unitOfWork.getCommentRepository().countByPost(post).thenCompose(commentCount -> {
+                long amount = commentCount + 1;
 
-            var savedComment = unitOfWork.getCommentRepository().save(newComment);
+                return unitOfWork.getTypeBonusRepository().findByNameAndQuantity(TypeBonusNameEnum.COMMENT.name(), amount)
+                        .thenCompose(typeBonus -> {
+                            if(typeBonus != null){
+                                return createDailyPointLog(post.getAccount(), post, typeBonus)
+                                        .thenCompose(dailyPoint -> {
+                                            Comment newComment = commentMapper.toComment(request);
+                                            newComment.setAccount(account);
+                                            newComment.setPost(post);
+                                            newComment.setParentComment(null);
+                                            newComment.setReplies(new ArrayList<>());
 
-            return CompletableFuture.completedFuture(savedComment);
+                                            var savedComment = unitOfWork.getCommentRepository().save(newComment);
+
+                                            return CompletableFuture.completedFuture(savedComment);
+                                        });
+                            }
+                            else{
+                                Comment newComment = commentMapper.toComment(request);
+                                newComment.setAccount(account);
+                                newComment.setPost(post);
+                                newComment.setParentComment(null);
+                                newComment.setReplies(new ArrayList<>());
+
+                                var savedComment = unitOfWork.getCommentRepository().save(newComment);
+
+                                return CompletableFuture.completedFuture(savedComment);
+                            }
+                        });
+            });
         })
-                .thenApply(comment -> {
-                    var response = commentMapper.toCommentResponse(comment);
-
-                    socketIOUtil.sendEventToAllClientInAServer(WebsocketEventName.NEW_DATA.name(), response);
-
-                    return response;
-                });
+                .thenApply(commentMapper::toCommentResponse);
     }
     @Transactional
     @Async("AsyncTaskExecutor")
@@ -90,25 +107,40 @@ public class CommentService {
                     var parentComment = parentCommentFuture.join();
                     var post = parentComment.getPost();
 
-                    if(post.getStatus().equals(PostStatus.DRAFT.name())){
+                    if(post.getStatus().equals(PostStatus.DRAFT.name()) || post.getStatus().equals(PostStatus.HIDDEN.name())){
                         throw new AppException(ErrorCode.CANNOT_COMMENT_ON_DRAFT);
                     }
 
-                    Comment newReply = commentMapper.toCommentFromReplyRequest(request);
-                    newReply.setAccount(account);
-                    newReply.setPost(post);
-                    newReply.setParentComment(parentComment);
-                    newReply.setReplies(new ArrayList<>());
+                    return unitOfWork.getCommentRepository().countByPost(post).thenCompose(commentCount -> {
+                        long amount = commentCount + 1;
 
-                    return CompletableFuture.completedFuture(unitOfWork.getCommentRepository().save(newReply));
+                        return unitOfWork.getTypeBonusRepository().findByNameAndQuantity(TypeBonusNameEnum.COMMENT.name(), amount)
+                                .thenCompose(typeBonus -> {
+                                    if(typeBonus != null){
+                                        return createDailyPointLog(post.getAccount(), post, typeBonus)
+                                                .thenCompose(dailyPoint -> {
+                                                    Comment newReply = commentMapper.toCommentFromReplyRequest(request);
+                                                    newReply.setAccount(account);
+                                                    newReply.setPost(post);
+                                                    newReply.setParentComment(parentComment);
+                                                    newReply.setReplies(new ArrayList<>());
+
+                                                    return CompletableFuture.completedFuture(unitOfWork.getCommentRepository().save(newReply));
+                                                });
+                                    }
+                                    else{
+                                        Comment newReply = commentMapper.toCommentFromReplyRequest(request);
+                                        newReply.setAccount(account);
+                                        newReply.setPost(post);
+                                        newReply.setParentComment(parentComment);
+                                        newReply.setReplies(new ArrayList<>());
+
+                                        return CompletableFuture.completedFuture(unitOfWork.getCommentRepository().save(newReply));
+                                    }
+                                });
+                    });
                 })
-                .thenApply(comment -> {
-                    var response = commentMapper.toReplyCreateResponse(comment);
-
-                    socketIOUtil.sendEventToAllClientInAServer(WebsocketEventName.NEW_DATA.name(), response);
-
-                    return response;
-                });
+                .thenApply(commentMapper::toReplyCreateResponse);
     }
     @Async("AsyncTaskExecutor")
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
@@ -119,6 +151,43 @@ public class CommentService {
                     .toList();
             return paginationUtils.convertListToPage(page, perPage, list);
         });
+    }
+    @Async("AsyncTaskExecutor")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
+    public CompletableFuture<List<CommentResponse>> getAllCommentsFromOtherUser(int page, int perPage, UUID otherAccountId){
+        var commentListFuture = getAllComments();
+        var username = getUsernameFromJwt();
+        var currentAccountFuture = findAccountByUsername(username);
+        var otherAccountFuture = findAccountById(otherAccountId);
+        var blockedListFuture = getBlockedAccountListByUsername(username);
+
+        return CompletableFuture.allOf(commentListFuture, currentAccountFuture, otherAccountFuture, blockedListFuture)
+                .thenCompose(v -> {
+                    var commentList = commentListFuture.join();
+                    var currentAccount = currentAccountFuture.join();
+                    var otherAccount = otherAccountFuture.join();
+                    var blockedAccountList = blockedListFuture.join();
+
+                    boolean isBlockedByCurrent = blockedAccountList.contains(otherAccount);
+                    boolean isBlockedByOther = unitOfWork.getBlockedAccountRepository()
+                            .findByBlockerAndBlocked(otherAccount, currentAccount).isPresent();
+                    boolean isFollowing = isFollowing(currentAccount, otherAccount);
+                    boolean isAuthor = currentAccount.equals(otherAccount);
+                    boolean isStaffOrAdmin = hasRole(currentAccount, "ADMIN") || hasRole(currentAccount, "STAFF");
+
+                    var responses = commentList.stream()
+                            .filter(comment -> comment.getAccount().equals(otherAccount))
+                            .filter(comment -> isAuthor || isStaffOrAdmin
+                                    || comment.getPost().getStatus().equals(PostStatus.PUBLIC.name())
+                                || (comment.getPost().getStatus().equals(PostStatus.PRIVATE.name()) && isFollowing))
+                            .filter(comment -> !isBlockedByCurrent && !isBlockedByOther)
+                            .map(commentMapper::toCommentResponse)
+                            .toList();
+
+                    var paginatedList = paginationUtils.convertListToPage(page, perPage, responses);
+
+                    return CompletableFuture.completedFuture(paginatedList);
+                });
     }
     @Async("AsyncTaskExecutor")
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
@@ -243,13 +312,30 @@ public class CommentService {
                         .orElseThrow(() -> new AppException(ErrorCode.COMMENT_NOT_FOUND))
         );
     }
-    @Async("AsyncTaskExecutor")
     public String getUsernameFromJwt() {
         var authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null && authentication.getPrincipal() instanceof Jwt jwt) {
             return jwt.getClaim("username");
         }
         return null;
+    }
+    @Async("AsyncTaskExecutor")
+    private CompletableFuture<List<Account>> getBlockedAccountListByUsername(String username) {
+        var accountFuture = findAccountByUsername(username);
+
+        return accountFuture.thenApply(account -> {
+            var blockedAccountEntityList = unitOfWork.getBlockedAccountRepository().findByBlocker(account);
+
+            return blockedAccountEntityList.stream()
+                    .map(BlockedAccount::getBlocked)
+                    .toList();
+        });
+    }
+    @Async("AsyncTaskExecutor")
+    private CompletableFuture<List<Comment>> getAllComments(){
+        return CompletableFuture.supplyAsync(() ->
+                unitOfWork.getCommentRepository().findAll().stream()
+                    .toList());
     }
     private void deleteRepliesRecursively(Comment comment) {
         List<Comment> replies = comment.getReplies();
@@ -261,5 +347,59 @@ public class CommentService {
             }
             replies.clear();
         }
+    }
+    private boolean isFollowing(Account currentAccount, Account postOwner) {
+        if(postOwner == null){
+            return false;
+        }
+        return unitOfWork.getFollowRepository()
+                .findByFollowerAndFollowee(currentAccount, postOwner)
+                .isPresent();
+    }
+    private boolean hasRole(Account account, String role) {
+        return account.getRole().getName().equals(role);
+    }
+    @Async("AsyncTaskExecutor")
+    private CompletableFuture<DailyPoint> createDailyPointLog(Account account, Post post, TypeBonus typeBonus) {
+        return unitOfWork.getDailyPointRepository()
+                .findByPostAndTypeBonus(post, typeBonus)
+                .thenCompose(dailyPoint -> {
+                    if (dailyPoint != null) {
+                        return CompletableFuture.completedFuture(null);
+                    }
+
+                    DailyPoint newDailyPoint = new DailyPoint();
+                    newDailyPoint.setCreatedDate(new Date());
+                    newDailyPoint.setPoint(null);
+                    newDailyPoint.setPost(post);
+                    newDailyPoint.setAccount(account);
+                    newDailyPoint.setTypeBonus(typeBonus);
+                    newDailyPoint.setPointEarned(typeBonus.getPointBonus());
+
+                    var walletFuture = addPointToWallet(account, typeBonus);
+                    return walletFuture.thenApply(wallet -> {
+                        if(wallet == null){
+                            System.out.println("This Account Doesn't Have Wallet. Continuing without adding points");
+                        }
+
+                        return unitOfWork.getDailyPointRepository().save(newDailyPoint);
+                    });
+                });
+    }
+    @Async("AsyncTaskExecutor")
+    private CompletableFuture<Wallet> addPointToWallet(Account account, TypeBonus typeBonus){
+        var walletFuture = unitOfWork.getWalletRepository().findByAccount(account);
+
+        return walletFuture.thenCompose(wallet -> {
+            if(wallet == null){
+                return CompletableFuture.completedFuture(null);
+            }
+
+            var balance = wallet.getBalance();
+            balance = balance + typeBonus.getPointBonus();
+            wallet.setBalance(balance);
+
+            return CompletableFuture.completedFuture(unitOfWork.getWalletRepository().save(wallet));
+        });
     }
 }

@@ -46,6 +46,18 @@ public class ImageController {
         ).join();
     }
 
+    @Operation(summary = "Get All Images", description = "Get All Images From Other User By Current User")
+    @GetMapping(path = "/getall/other-user/{otherAccountId}")
+    public ApiResponse<List<ImageResponse>> getImagesFromOtherUser(@RequestParam(defaultValue = "1") int page,
+                                                      @RequestParam(defaultValue = "10") int perPage,
+                                                      @PathVariable UUID otherAccountId){
+        return imageService.getAllImagesFromOtherUser(page, perPage, otherAccountId).thenApply(imageResponses ->
+                ApiResponse.<List<ImageResponse>>builder()
+                        .entity(imageResponses)
+                        .build()
+        ).join();
+    }
+
     @Operation(summary = "Get All Images")
     @GetMapping(path = "/getall/by-current-account")
     public ApiResponse<List<ImageResponse>> getImagesByAccount(@RequestParam(defaultValue = "1") int page,

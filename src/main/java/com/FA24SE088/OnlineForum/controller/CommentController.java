@@ -60,6 +60,18 @@ public class CommentController {
                                 .build()
         ).join();
     }
+    @Operation(summary = "Get All Comments", description = "Get All Comments From Other User By Current User")
+    @GetMapping(path = "/getall/other-user/{otherAccountId}")
+    public ApiResponse<List<CommentResponse>> getAllComments(@RequestParam(defaultValue = "1") int page,
+                                                                   @RequestParam(defaultValue = "10") int perPage,
+                                                                   @PathVariable UUID otherAccountId){
+        return commentService.getAllCommentsFromOtherUser(page, perPage, otherAccountId).thenApply(
+                commentResponses ->
+                        ApiResponse.<List<CommentResponse>>builder()
+                                .entity(commentResponses)
+                                .build()
+        ).join();
+    }
     @Operation(summary = "Get All Comments", description = "Get All Comments By Post")
     @GetMapping(path = "/getall/by-post/{postId}")
     public ApiResponse<List<CommentNoPostResponse>> getAllCommentsByPost(@RequestParam(defaultValue = "1") int page,

@@ -26,6 +26,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @RequiredArgsConstructor
@@ -91,11 +92,11 @@ public class PostController {
     }
 
     @Operation(summary = "Get All Posts", description = "Get All Posts From Another User By Current User")
-    @GetMapping(path = "/getall/other-user/{accountId}")
+    @GetMapping(path = "/getall/other-user/{otherAccountId}")
     public ApiResponse<List<PostResponse>> getAllPostsFromAnotherUser(@RequestParam(defaultValue = "1") int page,
                                                                       @RequestParam(defaultValue = "10") int perPage,
-                                                                      @PathVariable UUID accountId){
-        return postService.getAllPostsFromOtherUser(page, perPage, accountId).thenApply(postResponses ->
+                                                                      @PathVariable UUID otherAccountId){
+        return postService.getAllPostsFromOtherUser(page, perPage, otherAccountId).thenApply(postResponses ->
                 ApiResponse.<List<PostResponse>>builder()
                         .entity(postResponses)
                         .build()

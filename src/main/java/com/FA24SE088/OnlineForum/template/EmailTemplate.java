@@ -1,4 +1,4 @@
-package com.FA24SE088.OnlineForum.utils;
+package com.FA24SE088.OnlineForum.template;
 
 public class EmailTemplate {
     public static String teamplateSendOtp( String otp){

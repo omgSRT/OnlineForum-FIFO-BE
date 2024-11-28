@@ -12,8 +12,11 @@ import com.FA24SE088.OnlineForum.mapper.ImageMapper;
 import com.FA24SE088.OnlineForum.mapper.PostFileMapper;
 import com.FA24SE088.OnlineForum.mapper.PostMapper;
 import com.FA24SE088.OnlineForum.repository.UnitOfWork.UnitOfWork;
+import com.FA24SE088.OnlineForum.utils.ContentFilterUtil;
+import com.FA24SE088.OnlineForum.utils.DetectProgrammingLanguageUtil;
 import com.FA24SE088.OnlineForum.utils.PaginationUtils;
 import com.corundumstudio.socketio.SocketIOServer;
+import com.github.junrar.exception.RarException;
 import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.Bucket;
 import com.google.firebase.cloud.StorageClient;
@@ -49,6 +52,8 @@ public class PostService {
     ImageMapper imageMapper;
     PostFileMapper postFileMapper;
     PaginationUtils paginationUtils;
+    DetectProgrammingLanguageUtil detectProgrammingLanguageUtil;
+    ContentFilterUtil contentFilterUtil;
     RedisTemplate<String, List<PostResponse>> redisTemplate;
     Set<String> imageExtensionList = Set.of("ai", "jpg", "jpeg", "png", "gif", "indd", "raw", "avif", "eps", "bmp",
             "psd", "svg", "webp", "xcf");
@@ -69,6 +74,13 @@ public class PostService {
                     var account = accountFuture.join();
                     var topic = topicFuture.join();
                     var tag = tagFuture.join();
+
+                    var imageUrlList = request.getImageUrlList() == null || request.getImageUrlList().isEmpty()
+                            ? null
+                            : request.getImageUrlList().stream()
+                            .map(ImageRequest::getUrl)
+                            .toList();
+                    ensureContentSafe(imageUrlList, request.getTitle(), request.getContent());
 
                     Post newPost = postMapper.toPost(request);
                     newPost.setCreatedDate(new Date());
@@ -377,7 +389,8 @@ public class PostService {
         var otherAccountFuture = findAccountById(otherAccountId);
         var blockedListFuture = getBlockedAccountListByUsername(username);
 
-        return CompletableFuture.allOf(postListFuture, currentAccountFuture, otherAccountFuture, blockedListFuture).thenCompose(v -> {
+        return CompletableFuture.allOf(postListFuture, currentAccountFuture, otherAccountFuture, blockedListFuture)
+                .thenCompose(v -> {
             var postList = postListFuture.join();
             var currentAccount = currentAccountFuture.join();
             var otherAccount = otherAccountFuture.join();
@@ -900,6 +913,12 @@ public class PostService {
             if(post.getTag() == null || post.getTopic() == null){
                 throw new AppException(ErrorCode.TYPE_OR_TOPIC_NOT_FOUND);
             }
+            var imageUrlList = post.getImageList() == null || post.getImageList().isEmpty()
+                    ? null
+                    : post.getImageList().stream()
+                    .map(Image::getUrl)
+                    .toList();
+            ensureContentSafe(imageUrlList, post.getTitle(), post.getContent());
 
             var dailyPointFuture = createDailyPointLog(account.getAccountId(), post);
             var walletFuture = addPointToWallet(account.getAccountId());
@@ -1531,6 +1550,17 @@ public class PostService {
 
         return fileNames;
     }
+    private String extractFileName(String url){
+        if(url == null || url.isEmpty()){
+            return null;
+        }
+
+        // Extract the part of the URL after "files%2F" and before "?"
+        String filePath = url.split("image-description-detail.appspot.com/o/")[1].split("\\?")[0];
+
+        // URL decode to handle any URL-encoded characters
+        return URLDecoder.decode(filePath, StandardCharsets.UTF_8);
+    }
     private List<ImageRequest> extractAndCheckImageNames(Set<ImageRequest> imageRequestSet) {
         if(imageRequestSet == null || imageRequestSet.isEmpty()){
             return new ArrayList<>();
@@ -1589,18 +1619,32 @@ public class PostService {
 
         return validFileNames;
     }
-    private byte[] downloadFile(String name) throws IOException {
+    private byte[] getByteFromFilePath(String path) throws IOException {
         Bucket bucket = StorageClient.getInstance().bucket();
 
-        Blob blob = bucket.get(name);
+        Blob blob = bucket.get(path);
 
         if (blob == null) {
             return null;
             //throw new AppException(ErrorCode.FILE_NOT_FOUND);
         }
 
+        String inferredContentType = inferContentTypeFromNameOrData(blob.getName(), blob.getContent());
+        blob.toBuilder().setContentType(inferredContentType).build().update();
+
         return blob.getContent();
     }
+    private String inferContentTypeFromNameOrData(String fileName, byte[] fileData) {
+        if (fileName.toLowerCase().endsWith(".zip")) {
+            return "application/zip";
+        } else if (fileName.toLowerCase().endsWith(".rar")) {
+            return "application/vnd.rar";
+        } else if (fileName.toLowerCase().endsWith(".tar")) {
+            return "application/x-tar";
+        }
+        return "application/octet-stream";
+    }
+    @Async("AsyncTaskExecutor")
     private CompletableFuture<byte[]> processDownload(Post post,
                                                       ByteArrayOutputStream byteArrayOutputStream, AtomicBoolean isZipEmpty) {
         var postFileListFuture = unitOfWork.getPostFileRepository().findByPost(post);
@@ -1609,7 +1653,7 @@ public class PostService {
             var fileNames = extractFileNames(postFileList);
             try (ZipOutputStream zipOutputStream = new ZipOutputStream(byteArrayOutputStream)) {
                 for (String fileName : fileNames) {
-                    byte[] fileContent = downloadFile(fileName);
+                    byte[] fileContent = getByteFromFilePath(fileName);
 
                     if (fileContent == null) {
                         continue;
@@ -1634,7 +1678,7 @@ public class PostService {
             return CompletableFuture.completedFuture(byteArrayOutputStream.toByteArray());
         });
     }
-
+    @Async("AsyncTaskExecutor")
     private CompletableFuture<byte[]> processUserDownload(Account accountDownloader, Post post, List<Point> pointList,
                                                           ByteArrayOutputStream byteArrayOutputStream, AtomicBoolean isZipEmpty,
                                                           Account accountOwner) {
@@ -1675,7 +1719,7 @@ public class PostService {
             try (ZipOutputStream zipOutputStream = new ZipOutputStream(byteArrayOutputStream)) {
                 for (String fileName : fileNames) {
                     // Download the file content from Firebase Storage
-                    byte[] fileContent = downloadFile(fileName);
+                    byte[] fileContent = getByteFromFilePath(fileName);
 
                     if (fileContent == null) {
                         continue;
@@ -1700,6 +1744,40 @@ public class PostService {
             }
 
             return CompletableFuture.completedFuture(byteArrayOutputStream.toByteArray());
+        });
+    }
+    private void ensureContentSafe(List<String> imageUrls, String title, String description){
+        boolean checkContentSafe;
+        try {
+            checkContentSafe = contentFilterUtil.areContentsSafe(imageUrls,
+                    title,
+                    description);
+            if(!checkContentSafe){
+                throw new AppException(ErrorCode.TITLE_OR_CONTENT_OR_IMAGES_CONTAIN_INAPPROPRIATE_CONTENT);
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+    @Async("AsyncTaskExecutor")
+    @PreAuthorize("hasRole('ADMIN')")
+    public CompletableFuture<Map<String, Integer>> countLanguageFromPostFile(UUID postId){
+        var postFuture = findPostById(postId);
+
+        return postFuture.thenCompose(post -> {
+            Map<String, Integer> map = new HashMap<>();
+
+            for(PostFile postFile : post.getPostFileList()){
+                var fileName = extractFileName(postFile.getUrl());
+                try {
+                    byte[] bytes = getByteFromFilePath(fileName);
+                    map = detectProgrammingLanguageUtil.countFileTypes(bytes);
+                } catch (IOException | RarException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+
+            return CompletableFuture.completedFuture(map);
         });
     }
     //endregion
