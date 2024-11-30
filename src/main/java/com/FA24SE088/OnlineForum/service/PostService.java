@@ -1759,26 +1759,5 @@ public class PostService {
             throw new RuntimeException(e);
         }
     }
-    @Async("AsyncTaskExecutor")
-    @PreAuthorize("hasRole('ADMIN')")
-    public CompletableFuture<Map<String, Integer>> countLanguageFromPostFile(UUID postId){
-        var postFuture = findPostById(postId);
-
-        return postFuture.thenCompose(post -> {
-            Map<String, Integer> map = new HashMap<>();
-
-            for(PostFile postFile : post.getPostFileList()){
-                var fileName = extractFileName(postFile.getUrl());
-                try {
-                    byte[] bytes = getByteFromFilePath(fileName);
-                    map = detectProgrammingLanguageUtil.countFileTypes(bytes);
-                } catch (IOException | RarException e) {
-                    throw new RuntimeException(e);
-                }
-            }
-
-            return CompletableFuture.completedFuture(map);
-        });
-    }
     //endregion
 }
