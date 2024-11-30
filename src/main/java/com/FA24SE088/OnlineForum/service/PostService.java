@@ -14,6 +14,7 @@ import com.FA24SE088.OnlineForum.mapper.PostMapper;
 import com.FA24SE088.OnlineForum.repository.UnitOfWork.UnitOfWork;
 import com.FA24SE088.OnlineForum.utils.ContentFilterUtil;
 import com.FA24SE088.OnlineForum.utils.DetectProgrammingLanguageUtil;
+import com.FA24SE088.OnlineForum.utils.OpenAIUtil;
 import com.FA24SE088.OnlineForum.utils.PaginationUtils;
 import com.corundumstudio.socketio.SocketIOServer;
 import com.github.junrar.exception.RarException;
@@ -53,12 +54,14 @@ public class PostService {
     PostFileMapper postFileMapper;
     PaginationUtils paginationUtils;
     DetectProgrammingLanguageUtil detectProgrammingLanguageUtil;
+    OpenAIUtil openAIUtil;
     ContentFilterUtil contentFilterUtil;
     RedisTemplate<String, List<PostResponse>> redisTemplate;
     Set<String> imageExtensionList = Set.of("ai", "jpg", "jpeg", "png", "gif", "indd", "raw", "avif", "eps", "bmp",
             "psd", "svg", "webp", "xcf");
     Set<String> compressedFileExtensionList = Set.of("7z", "tar", "gzip", "binhex", "cpio", "z", "rar", "zip", "arj", "deb",
             "bz2", "cabinet", "bzip2", "iso");
+    Set<String> backupCompressedFileExtensionList = Set.of("zip", "rar", "tar", "7z");
 
     //region CRUD Completed Post
     @Async("AsyncTaskExecutor")
@@ -80,7 +83,16 @@ public class PostService {
                             : request.getImageUrlList().stream()
                             .map(ImageRequest::getUrl)
                             .toList();
-                    ensureContentSafe(imageUrlList, request.getTitle(), request.getContent());
+                    var checkContentSafe = ensureContentSafe(imageUrlList, request.getTitle(), request.getContent());
+                    if(!checkContentSafe){
+                        throw new AppException(ErrorCode.TITLE_OR_CONTENT_OR_IMAGES_CONTAIN_INAPPROPRIATE_CONTENT);
+                    }
+
+                    var checkContentRelated = openAIUtil.isRelated(request.getTitle(), request.getContent(),
+                            topic.getName());
+                    if(!checkContentRelated){
+                        throw new AppException(ErrorCode.ERROR_CHECK_RELATED);
+                    }
 
                     Post newPost = postMapper.toPost(request);
                     newPost.setCreatedDate(new Date());
@@ -497,6 +509,22 @@ public class PostService {
             CompletableFuture<List<PostFile>> finalCreatePostFileFuture = createPostFileFuture;
             return CompletableFuture.allOf(deleteImageListFuture, createImageFuture, finalCreateImageFuture,
                     deletePostFileFuture, createPostFileFuture, finalCreatePostFileFuture).thenCompose(voidData -> {
+                var imageUrlList = request.getImageUrlList() == null || request.getImageUrlList().isEmpty()
+                        ? null
+                        : request.getImageUrlList().stream()
+                        .map(ImageRequest::getUrl)
+                        .toList();
+                var checkContentSafe = ensureContentSafe(imageUrlList, request.getTitle(), request.getContent());
+                if(!checkContentSafe){
+                    throw new AppException(ErrorCode.TITLE_OR_CONTENT_OR_IMAGES_CONTAIN_INAPPROPRIATE_CONTENT);
+                }
+
+                var checkContentRelated = openAIUtil.isRelated(request.getTitle(), request.getContent(),
+                        post.getTopic().getName());
+                if(!checkContentRelated){
+                    throw new AppException(ErrorCode.ERROR_CHECK_RELATED);
+                }
+
                 postMapper.updatePost(post, request);
                 if (request.getImageUrlList() != null && !request.getImageUrlList().isEmpty()) {
                     post.setImageList(finalCreateImageFuture.join() != null ? finalCreateImageFuture.join() : new ArrayList<>());
@@ -918,7 +946,16 @@ public class PostService {
                     : post.getImageList().stream()
                     .map(Image::getUrl)
                     .toList();
-            ensureContentSafe(imageUrlList, post.getTitle(), post.getContent());
+            var checkContentSafe = ensureContentSafe(imageUrlList, post.getTitle(), post.getContent());
+            if(!checkContentSafe){
+                throw new AppException(ErrorCode.TITLE_OR_CONTENT_OR_IMAGES_CONTAIN_INAPPROPRIATE_CONTENT);
+            }
+
+            var checkContentRelated = openAIUtil.isRelated(post.getTitle(), post.getContent(),
+                    post.getTopic().getName());
+            if(!checkContentRelated){
+                throw new AppException(ErrorCode.ERROR_CHECK_RELATED);
+            }
 
             var dailyPointFuture = createDailyPointLog(account.getAccountId(), post);
             var walletFuture = addPointToWallet(account.getAccountId());
@@ -1629,20 +1666,7 @@ public class PostService {
             //throw new AppException(ErrorCode.FILE_NOT_FOUND);
         }
 
-        String inferredContentType = inferContentTypeFromNameOrData(blob.getName(), blob.getContent());
-        blob.toBuilder().setContentType(inferredContentType).build().update();
-
         return blob.getContent();
-    }
-    private String inferContentTypeFromNameOrData(String fileName, byte[] fileData) {
-        if (fileName.toLowerCase().endsWith(".zip")) {
-            return "application/zip";
-        } else if (fileName.toLowerCase().endsWith(".rar")) {
-            return "application/vnd.rar";
-        } else if (fileName.toLowerCase().endsWith(".tar")) {
-            return "application/x-tar";
-        }
-        return "application/octet-stream";
     }
     @Async("AsyncTaskExecutor")
     private CompletableFuture<byte[]> processDownload(Post post,
@@ -1746,15 +1770,13 @@ public class PostService {
             return CompletableFuture.completedFuture(byteArrayOutputStream.toByteArray());
         });
     }
-    private void ensureContentSafe(List<String> imageUrls, String title, String description){
+    private boolean ensureContentSafe(List<String> imageUrls, String title, String description){
         boolean checkContentSafe;
         try {
-            checkContentSafe = contentFilterUtil.areContentsSafe(imageUrls,
+            return contentFilterUtil.areContentsSafe(imageUrls,
                     title,
                     description);
-            if(!checkContentSafe){
-                throw new AppException(ErrorCode.TITLE_OR_CONTENT_OR_IMAGES_CONTAIN_INAPPROPRIATE_CONTENT);
-            }
+
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

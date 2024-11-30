@@ -19,4 +19,7 @@ public interface ReportRepository extends JpaRepository<Report, UUID> {
     CompletableFuture<List<Report>> findByPostAndTitleAndDescription(Post post, String title, String description);
 
     List<Report> findAllByOrderByReportTimeDesc();
+
+    @Async("AsyncTaskExecutor")
+    CompletableFuture<Long> countByPostAndStatus(Post post, String status);
 }

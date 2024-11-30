@@ -1,6 +1,10 @@
 package com.FA24SE088.OnlineForum.utils;
 
 import com.FA24SE088.OnlineForum.dto.response.OpenAIResponse;
+import com.FA24SE088.OnlineForum.exception.AppException;
+import com.FA24SE088.OnlineForum.exception.ErrorCode;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -18,13 +22,13 @@ import java.util.Map;
 @Component
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class RelatedContentUtil {
+public class OpenAIUtil {
     @Value("${openai.api.key}")
     String openaiKey;
 
-    String OPENAI_API_URL = "https://api.openai.com/v1/chat/completions";
+    final String OPENAI_API_URL = "https://api.openai.com/v1/chat/completions";
 
-    public boolean isRelatedToTopic(String title, String content, String topicName) {
+    public boolean isRelated(String title, String content, String topicName) {
         RestTemplate restTemplate = new RestTemplate();
         HttpHeaders headers = new HttpHeaders();
         headers.set("Authorization", "Bearer " + openaiKey);
@@ -46,13 +50,12 @@ public class RelatedContentUtil {
                         Map.of("role", "system", "content", "You are an assistant that responds with structured answers. Provide answers exactly as instructed in the user's prompt."),
                         Map.of("role", "user", "content", prompt)
                 },
-                "max_tokens", 50,  // Increased to handle longer structured response
+                "max_tokens", 50,
                 "temperature", 0
         );
 
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
 
-        try {
             ResponseEntity<String> response = restTemplate.exchange(
                     OPENAI_API_URL,
                     HttpMethod.POST,
@@ -60,9 +63,14 @@ public class RelatedContentUtil {
                     String.class
             );
 
-            OpenAIResponse openAIResponse = new ObjectMapper().readValue(response.getBody(), OpenAIResponse.class);
+        OpenAIResponse openAIResponse = null;
+        try {
+            openAIResponse = new ObjectMapper().readValue(response.getBody(), OpenAIResponse.class);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
 
-            if (openAIResponse.getChoices() != null && !openAIResponse.getChoices().isEmpty()) {
+        if (openAIResponse.getChoices() != null && !openAIResponse.getChoices().isEmpty()) {
                 String result = openAIResponse.getChoices().get(0).getMessage().getContent().trim().toLowerCase();
 
                 boolean titleTopicRelated = false;
@@ -76,12 +84,15 @@ public class RelatedContentUtil {
                     }
                 }
 
-                return titleTopicRelated && contentTitleRelated;
+                if(!titleTopicRelated){
+                    throw new AppException(ErrorCode.TITLE_AND_CONTENT_NOT_RELATED_TO_TOPIC);
+                }
+                if(!contentTitleRelated){
+                    throw new AppException(ErrorCode.CONTENT_NOT_RELATED_TO_TITLE);
+                }
+
+                return true;
             }
             return false;
-        } catch (Exception e) {
-            e.printStackTrace();
-            return false;
-        }
     }
 }

@@ -162,61 +162,71 @@ public class ReportService {
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
     @Async("AsyncTaskExecutor")
     public CompletableFuture<ReportResponse> updateReportStatus(UUID reportId, ReportPostUpdateStatus status) {
+        long maxReportPost = 5;
         var reportFuture = findReportById(reportId);
         var username = getUsernameFromJwt();
         var accountFuture = findAccountByUsername(username);
         var pointFuture = getPoint();
 
-        return CompletableFuture.allOf(reportFuture, accountFuture).thenCompose(v -> {
+        return CompletableFuture.allOf(reportFuture, accountFuture, pointFuture).thenCompose(v -> {
                 var report = reportFuture.join();
                 var account = accountFuture.join();
-                var pointList = pointFuture.join();
-                if(pointList.isEmpty()){
-                    throw new AppException(ErrorCode.POINT_NOT_FOUND);
-                }
-                Point point = pointList.get(0);
-                var postOwner = report.getPost().getAccount();
-                var walletPostOwnerFuture = unitOfWork.getWalletRepository().findByAccount(postOwner);
 
                 if(!report.getStatus().equals(ReportPostStatus.PENDING.name())){
                     throw new AppException(ErrorCode.REPORT_POST_NOT_PENDING);
                 }
 
-                    if (status.name().equals(ReportPostStatus.APPROVED.name())) {
-                        return walletPostOwnerFuture.thenCompose(walletPostOwner -> {
-                            if (walletPostOwner != null) {
-                                createTransaction(walletPostOwner, point);
-                                var pointDeduction = walletPostOwner.getBalance() - point.getPointPerPost();
-                                walletPostOwner.setBalance(pointDeduction);
-                                unitOfWork.getWalletRepository().save(walletPostOwner);
-
-                                report.setStatus(status.name());
-                                return CompletableFuture.completedFuture(unitOfWork.getReportRepository().save(report));
-                            } else {
-                                return CompletableFuture.completedFuture(null);
-                            }
-                        });
-                    }
+//                    if (status.name().equals(ReportPostStatus.APPROVED.name())) {
+//                        return walletPostOwnerFuture.thenCompose(walletPostOwner -> {
+//                            if (walletPostOwner != null) {
+//                                createTransaction(walletPostOwner, point);
+//                                var pointDeduction = walletPostOwner.getBalance() - point.getPointPerPost();
+//                                walletPostOwner.setBalance(pointDeduction);
+//                                unitOfWork.getWalletRepository().save(walletPostOwner);
+//
+//                                report.setStatus(status.name());
+//                                return CompletableFuture.completedFuture(unitOfWork.getReportRepository().save(report));
+//                            } else {
+//                                return CompletableFuture.completedFuture(null);
+//                            }
+//                        });
+//                    }
 
                 report.setStatus(status.name());
 
                 return CompletableFuture.completedFuture(unitOfWork.getReportRepository().save(report));
         })
-                .thenCompose(report -> {
-                    var reportPostListFuture = unitOfWork.getReportRepository()
-                            .findByPostAndTitleAndDescription(report.getPost(), report.getTitle(), report.getDescription());
+                .thenCompose(report -> unitOfWork.getReportRepository()
+                        .countByPostAndStatus(report.getPost(), ReportPostStatus.APPROVED.name())
+                        .thenCompose(count -> {
+                            var pointList = pointFuture.join();
+                            if(pointList.isEmpty()){
+                                throw new AppException(ErrorCode.POINT_NOT_FOUND);
+                            }
+                            Point point = pointList.get(0);
+                            var postOwner = report.getPost().getAccount();
+                            var walletPostOwnerFuture = unitOfWork.getWalletRepository().findByAccount(postOwner);
 
-                    return reportPostListFuture.thenCompose(reportList -> {
-                        if(reportList != null && !reportList.isEmpty()){
-                            reportList.forEach(otherReport -> {
-                                otherReport.setStatus(report.getStatus());
-                                unitOfWork.getReportRepository().save(otherReport);
-                            });
-                        }
+                            if (count >= maxReportPost) {
+                                walletPostOwnerFuture.thenCompose(walletPostOwner -> {
+                                    if (walletPostOwner != null) {
+                                        createTransaction(walletPostOwner, point);
+                                        var pointDeduction = walletPostOwner.getBalance() - point.getPointPerPost();
+                                        walletPostOwner.setBalance(pointDeduction);
+                                        var post = report.getPost();
+                                        post.setStatus(PostStatus.HIDDEN.name());
 
-                        return CompletableFuture.completedFuture(report);
-                    });
-                })
+                                        unitOfWork.getWalletRepository().save(walletPostOwner);
+                                        unitOfWork.getPostRepository().save(post);
+                                        return CompletableFuture.completedFuture(null);
+                                    } else {
+                                        return CompletableFuture.completedFuture(null);
+                                    }
+                                });
+                            }
+
+                            return CompletableFuture.completedFuture(report);
+                        }))
                 .thenApply(reportMapper::toReportResponse);
     }
 

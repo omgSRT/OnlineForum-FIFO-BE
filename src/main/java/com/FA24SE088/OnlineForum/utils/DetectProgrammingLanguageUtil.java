@@ -6,16 +6,16 @@ import com.github.junrar.rarfile.FileHeader;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
-import net.sf.sevenzipjbinding.*;
+import org.apache.commons.compress.archivers.sevenz.SevenZArchiveEntry;
+import org.apache.commons.compress.archivers.sevenz.SevenZFile;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
-import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
 import org.springframework.stereotype.Component;
 
 import java.io.*;
+import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.zip.GZIPInputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -27,12 +27,17 @@ public class DetectProgrammingLanguageUtil {
             // Java-related
             Map.entry("java", "Java"),
             Map.entry("jsp", "Java"), // Java Server Pages
+            Map.entry("class", "Java"),
+            Map.entry("jar", "Java"),
+            Map.entry("war", "Java"),
 
             // Python-related
             Map.entry("py", "Python"),
             Map.entry("pyc", "Python"), // Compiled Python
             Map.entry("pyo", "Python"), // Optimized Python
             Map.entry("pyw", "Python"), // Windows Python scripts
+            Map.entry("ipynb", "Python"),
+            Map.entry("pyd", "Python"),
 
             // JavaScript and its frameworks
             Map.entry("js", "JavaScript"),
@@ -50,15 +55,22 @@ public class DetectProgrammingLanguageUtil {
             Map.entry("cc", "C++"),
             Map.entry("hh", "C++"), // Header files for C++
             Map.entry("hpp", "C++"),
+            Map.entry("hxx", "C++"),
+            Map.entry("inl", "C++"),
 
             // C# and .NET
             Map.entry("cs", "C#"),
             Map.entry("xaml", "C#"), // XML-based UI definitions for .NET
+            Map.entry("dll", "C#"),
+            Map.entry("exe", "C#"),
+            Map.entry("resx", "C#"),
 
             // Ruby-related
             Map.entry("rb", "Ruby"),
             Map.entry("erb", "Ruby"), // Embedded Ruby
             Map.entry("rake", "Ruby"), // Rake build scripts
+            Map.entry("gem", "Ruby"),
+            Map.entry("rbw", "Ruby"),
 
             // Go language
             Map.entry("go", "Go"),
@@ -68,6 +80,7 @@ public class DetectProgrammingLanguageUtil {
             Map.entry("phtml", "PHP"), // PHP HTML embedded files
             Map.entry("php4", "PHP"),
             Map.entry("php5", "PHP"),
+            Map.entry("phar", "PHP"),
 
             // Kotlin-related
             Map.entry("kt", "Kotlin"),
@@ -75,16 +88,20 @@ public class DetectProgrammingLanguageUtil {
 
             // Dart and Flutter
             Map.entry("dart", "Dart"),
+            Map.entry("flutter", "Flutter"),
 
             // Swift-related
             Map.entry("swift", "Swift"),
+            Map.entry("xcodeproj", "Swift"),
 
             // Rust-related
             Map.entry("rs", "Rust"),
+            Map.entry("cargo", "Rust"),
 
             // Scala-related
             Map.entry("scala", "Scala"),
             Map.entry("sc", "Scala"), // Scala scripts
+            Map.entry("sbt", "Scala"),
 
             // Julia-related
             Map.entry("jl", "Julia"),
@@ -92,6 +109,7 @@ public class DetectProgrammingLanguageUtil {
             // Perl-related
             Map.entry("pl", "Perl"),
             Map.entry("pm", "Perl"), // Perl module files
+            Map.entry("t", "Perl"),
 
             // Nim-related
             Map.entry("nim", "Nim"),
@@ -112,34 +130,40 @@ public class DetectProgrammingLanguageUtil {
             Map.entry("html", "HTML"),
             Map.entry("htm", "HTML"), // Alternate HTML extension
             Map.entry("css", "CSS"),
-            Map.entry("scss", "CSS"), // SASS CSS preprocessor
+            Map.entry("scss", "CSS"), // SCSS CSS preprocessor
+            Map.entry("sass", "CSS"), // SASS CSS preprocessor
             Map.entry("less", "CSS"), // LESS CSS preprocessor
             Map.entry("xml", "XML"),
             Map.entry("xsl", "XML"), // XML stylesheet
+            Map.entry("xsd", "XML"),
+            Map.entry("svg", "SVG"),
 
             // Special files
             Map.entry("readme", "Documentation"),
             Map.entry("gitignore", "Configuration"),
             Map.entry("gitattributes", "Configuration"),
             Map.entry("editorconfig", "Configuration"),
+            Map.entry("env", "Configuration"),
+            Map.entry("ini", "Configuration"),
+            Map.entry("conf", "Configuration"),
             Map.entry("dockerfile", "Configuration"),
             Map.entry("docker-compose.yml", "Configuration"),
+            Map.entry("apache", "Configuration"),
+            Map.entry("nginx", "Configuration"),
+            Map.entry("toml", "Configuration"),
             Map.entry("license", "Legal"),
-
-            // Databases
-            Map.entry("sql", "DATABASE"),
-            Map.entry("sqlite", "DATABASE"),
-            Map.entry("db", "DATABASE"),
-            Map.entry("db3", "DATABASE"), // SQLite3 database
-            Map.entry("json", "DATABASE"), // JSON databases
-            Map.entry("yaml", "DATABASE"), // YAML configuration files
-
-            // Miscellaneous
             Map.entry("bat", "Batch"),
             Map.entry("sh", "Shell Script"),
             Map.entry("zsh", "Shell Script"),
             Map.entry("bash", "Shell Script"),
-            Map.entry("conf", "Configuration"),
+
+            // Databases
+            Map.entry("sql", "SQL"),
+            Map.entry("sqlite", "SQLITE"),
+            Map.entry("db", "DATABASE"),
+            Map.entry("json", "JSON"), // JSON databases
+            Map.entry("yaml", "YAML"), // YAML configuration files
+            Map.entry("yml", "YML"), // YML configuration files
 
             // Unknown Extension
             Map.entry("unknown", "Unknown")
@@ -183,44 +207,35 @@ public class DetectProgrammingLanguageUtil {
         }
         return languageCountMap;
     }
-    public static Map<String, Integer> countLanguagesInGz(byte[] gzFileBytes) throws IOException {
+    //bug af
+    public Map<String, Integer> countLanguagesIn7z(byte[] sevenZBytes) throws IOException {
         Map<String, Integer> languageCountMap = new HashMap<>();
-        try (ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(gzFileBytes);
-             GZIPInputStream gzipInputStream = new GZIPInputStream(byteArrayInputStream);
-             ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream()) {
-            byte[] buffer = new byte[1024];
-            int bytesRead;
-            while ((bytesRead = gzipInputStream.read(buffer)) != -1) {
-                byteArrayOutputStream.write(buffer, 0, bytesRead);
-            }
-            String extractedFileName = "extractedFile"; // Or get the name from metadata if available
-            String extension = getFileExtension(extractedFileName);
-            String language = extensionToLanguageMap.getOrDefault(extension, "Unknown");
-            languageCountMap.put(language, languageCountMap.getOrDefault(language, 0) + 1);
+
+        File tempFile = File.createTempFile("temp-archive", ".7z");
+        try (FileOutputStream fos = new FileOutputStream(tempFile)) {
+            fos.write(sevenZBytes);
         }
+
+        try (SevenZFile sevenZFile = new SevenZFile(tempFile)) {
+            SevenZArchiveEntry entry;
+            while ((entry = sevenZFile.getNextEntry()) != null) {
+                if (entry.isDirectory()) {
+                    continue;
+                }
+
+                String fileName = entry.getName();
+                String extension = getFileExtension(fileName);
+                String language = extensionToLanguageMap.getOrDefault(extension, "Unknown");
+
+                // Count languages in the map
+                languageCountMap.put(language, languageCountMap.getOrDefault(language, 0) + 1);
+            }
+        } finally {
+            Files.delete(tempFile.toPath());
+        }
+
         return languageCountMap;
     }
-//    public static Map<String, Integer> countLanguagesIn7z(byte[] sevenZipFileBytes) throws Exception {
-//        Map<String, Integer> languageCountMap = new HashMap<>();
-//        try (ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(sevenZipFileBytes)) {
-//            IInArchive inArchive = SevenZip.openInArchive(null, byteArrayInputStream);
-//            int numberOfItems = inArchive.getNumberOfItems();
-//
-//            for (int i = 0; i < numberOfItems; i++) {
-//                IArchiveItem item = inArchive.getItem(i);
-//                String fileName = item.getFileName();
-//                String extension = getFileExtension(fileName);
-//
-//                // Get the language from the extension
-//                String language = extensionToLanguageMap.getOrDefault(extension, "Unknown");
-//
-//                // Increment the language count
-//                languageCountMap.put(language, languageCountMap.getOrDefault(language, 0) + 1);
-//            }
-//        }
-//        return languageCountMap;
-//    }
-
     private static String getFileExtension(String fileName) {
         int lastDotIndex = fileName.lastIndexOf('.');
         if (lastDotIndex == -1 || lastDotIndex == fileName.length() - 1) {
@@ -240,8 +255,5 @@ public class DetectProgrammingLanguageUtil {
 
         String extension = getFileExtension(fileName);
         return extensionToLanguageMap.getOrDefault(extension, "Unknown");
-    }
-    private byte[] extractZipData(ZipInputStream zipInputStream) throws IOException {
-        return zipInputStream.readAllBytes();
     }
 }
