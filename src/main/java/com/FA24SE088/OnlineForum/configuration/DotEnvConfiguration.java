@@ -9,7 +9,7 @@ public class DotEnvConfiguration {
     @PostConstruct
     public void loadEnvVars() {
         Dotenv dotenv = Dotenv.configure()
-                .directory(".")
+                .directory("src/main/resources")
                 .filename("local.env")
                 .load();
         String apiKey = dotenv.get("OPENAI_API_KEY");
