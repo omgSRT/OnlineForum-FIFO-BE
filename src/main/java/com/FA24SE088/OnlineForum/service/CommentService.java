@@ -16,6 +16,7 @@ import com.FA24SE088.OnlineForum.exception.AppException;
 import com.FA24SE088.OnlineForum.exception.ErrorCode;
 import com.FA24SE088.OnlineForum.mapper.CommentMapper;
 import com.FA24SE088.OnlineForum.repository.UnitOfWork.UnitOfWork;
+import com.FA24SE088.OnlineForum.utils.ContentFilterUtil;
 import com.FA24SE088.OnlineForum.utils.PaginationUtils;
 import com.FA24SE088.OnlineForum.utils.SocketIOUtil;
 import com.corundumstudio.socketio.SocketIOServer;
@@ -43,6 +44,7 @@ public class CommentService {
     CommentMapper commentMapper;
     PaginationUtils paginationUtils;
     SocketIOUtil socketIOUtil;
+    ContentFilterUtil contentFilterUtil;
 
     @Async("AsyncTaskExecutor")
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
@@ -67,6 +69,11 @@ public class CommentService {
                             if(typeBonus != null){
                                 return createDailyPointLog(post.getAccount(), post, typeBonus)
                                         .thenCompose(dailyPoint -> {
+                                            var check = checkCommentContentSafe(request.getContent());
+                                            if(!check){
+                                                throw new AppException(ErrorCode.INAPPROPRIATE_COMMENT);
+                                            }
+
                                             Comment newComment = commentMapper.toComment(request);
                                             newComment.setAccount(account);
                                             newComment.setPost(post);
@@ -79,6 +86,11 @@ public class CommentService {
                                         });
                             }
                             else{
+                                var check = checkCommentContentSafe(request.getContent());
+                                if(!check){
+                                    throw new AppException(ErrorCode.INAPPROPRIATE_COMMENT);
+                                }
+
                                 Comment newComment = commentMapper.toComment(request);
                                 newComment.setAccount(account);
                                 newComment.setPost(post);
@@ -119,6 +131,11 @@ public class CommentService {
                                     if(typeBonus != null){
                                         return createDailyPointLog(post.getAccount(), post, typeBonus)
                                                 .thenCompose(dailyPoint -> {
+                                                    var check = checkCommentContentSafe(request.getContent());
+                                                    if(!check){
+                                                        throw new AppException(ErrorCode.INAPPROPRIATE_COMMENT);
+                                                    }
+
                                                     Comment newReply = commentMapper.toCommentFromReplyRequest(request);
                                                     newReply.setAccount(account);
                                                     newReply.setPost(post);
@@ -129,6 +146,11 @@ public class CommentService {
                                                 });
                                     }
                                     else{
+                                        var check = checkCommentContentSafe(request.getContent());
+                                        if(!check){
+                                            throw new AppException(ErrorCode.INAPPROPRIATE_COMMENT);
+                                        }
+
                                         Comment newReply = commentMapper.toCommentFromReplyRequest(request);
                                         newReply.setAccount(account);
                                         newReply.setPost(post);
@@ -401,5 +423,12 @@ public class CommentService {
 
             return CompletableFuture.completedFuture(unitOfWork.getWalletRepository().save(wallet));
         });
+    }
+    private boolean checkCommentContentSafe(String content){
+        try {
+            return contentFilterUtil.isTextSafe(content);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 }

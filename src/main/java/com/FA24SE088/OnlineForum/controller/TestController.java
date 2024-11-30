@@ -2,7 +2,6 @@ package com.FA24SE088.OnlineForum.controller;
 
 import com.FA24SE088.OnlineForum.service.*;
 import com.FA24SE088.OnlineForum.utils.*;
-import com.github.junrar.exception.RarException;
 import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.Bucket;
 import com.google.firebase.cloud.StorageClient;
@@ -59,7 +58,7 @@ public class TestController {
     TikaUtil tikaUtil;
     OtpUtil otpUtil;
     PaginationUtils paginationUtils;
-    RelatedContentUtil relatedContentUtil;
+    OpenAIUtil openAIUtil;
     SocketIOUtil socketIOUtil;
     //endregion
 
@@ -83,6 +82,8 @@ public class TestController {
             return null;
             //throw new AppException(ErrorCode.FILE_NOT_FOUND);
         }
+
+        System.out.println(blob.getContentType());
 
         return blob.getContent();
     }

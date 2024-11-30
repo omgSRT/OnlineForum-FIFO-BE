@@ -138,7 +138,11 @@ public enum ErrorCode {
     ACCOUNT_INACTIVE(10120, "Your account is inactive", HttpStatus.BAD_REQUEST),
     POINT_EARNED_PER_DOWNLOAD_LESS_THAN_ONE(10121, "Point earned per download must be greater than or equal to 1", HttpStatus.BAD_REQUEST),
     INVALID_START_DATE(10122, "Start date cannot be after end date.", HttpStatus.BAD_REQUEST),
-    INVALID_END_DATE(10122, "The end date must be after the current date", HttpStatus.BAD_REQUEST),
+    INVALID_END_DATE(10123, "The end date must be after the current date", HttpStatus.BAD_REQUEST),
+    INAPPROPRIATE_COMMENT(10024, "Inappropriate Content", HttpStatus.BAD_REQUEST),
+    TITLE_AND_CONTENT_NOT_RELATED_TO_TOPIC(10024, "Title And Content Do Not Related To Topic", HttpStatus.BAD_REQUEST),
+    CONTENT_NOT_RELATED_TO_TITLE(10025, "Content Do Not Related To Title", HttpStatus.BAD_REQUEST),
+    ERROR_CHECK_RELATED(10026, "Error While Checking Related Content", HttpStatus.INTERNAL_SERVER_ERROR),
     ;
 
     private int code;
