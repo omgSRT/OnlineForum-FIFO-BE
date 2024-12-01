@@ -65,7 +65,6 @@ public class PostService {
     OpenAIUtil openAIUtil;
     ContentFilterUtil contentFilterUtil;
     RedisTemplate<String, List<PostResponse>> redisTemplate;
-    @Autowired
     ObjectMapper objectMapper = new ObjectMapper();
     SocketIOUtil socketIOUtil;
     Set<String> imageExtensionList = Set.of("ai", "jpg", "jpeg", "png", "gif", "indd", "raw", "avif", "eps", "bmp",
