@@ -41,7 +41,7 @@ public class UpvoteService {
 
     @Async("AsyncTaskExecutor")
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
-    public CompletableFuture<UpvoteCreateDeleteResponse> addOrDeleteUpvote(UpvoteRequest request){
+    public CompletableFuture<UpvoteCreateDeleteResponse> addOrDeleteUpvote(UpvoteRequest request) {
         var username = getUsernameFromJwt();
         var accountFuture = findAccountByUsername(username);
         var postFuture = findPostById(request.getPostId());
@@ -52,13 +52,12 @@ public class UpvoteService {
             var existUpvoteFuture = unitOfWork.getUpvoteRepository().findByPostAndAccount(post, account);
 
             return existUpvoteFuture.thenCompose(existUpvote -> {
-                if(existUpvote.isPresent()){
+                if (existUpvote.isPresent()) {
                     unitOfWork.getUpvoteRepository().delete(existUpvote.get());
                     var upvoteResponse = upvoteMapper.toUpvoteCreateDeleteResponse(existUpvote.get());
                     upvoteResponse.setMessage(SuccessReturnMessage.DELETE_SUCCESS.getMessage());
                     return CompletableFuture.completedFuture(upvoteResponse);
-                }
-                else{
+                } else {
                     return unitOfWork.getUpvoteRepository().countByPost(post)
                             .thenCompose(upvoteAmount -> {
                                 long amount = upvoteAmount + 1;
@@ -70,8 +69,11 @@ public class UpvoteService {
                                                             Upvote newUpvote = new Upvote();
                                                             newUpvote.setAccount(account);
                                                             newUpvote.setPost(post);
+                                                            Notification notification = Notification.builder()
 
-                                                            socketIOUtil.sendEventToAllClientInAServer(WebsocketEventName.NOTIFICATION.toString(),newUpvote);
+                                                                    .build();
+
+                                                            socketIOUtil.sendEventToAllClientInAServer(WebsocketEventName.REFRESH.toString(), newUpvote);
                                                             var upvoteResponse = upvoteMapper.toUpvoteCreateDeleteResponse(unitOfWork.getUpvoteRepository().save(newUpvote));
                                                             upvoteResponse.setMessage(SuccessReturnMessage.CREATE_SUCCESS.getMessage());
                                                             return CompletableFuture.completedFuture(upvoteResponse);
@@ -80,8 +82,7 @@ public class UpvoteService {
                                                 Upvote newUpvote = new Upvote();
                                                 newUpvote.setAccount(account);
                                                 newUpvote.setPost(post);
-
-                                                socketIOUtil.sendEventToAllClientInAServer(WebsocketEventName.NOTIFICATION.toString(), newUpvote);
+                                                socketIOUtil.sendEventToAllClientInAServer(WebsocketEventName.REFRESH.toString(), newUpvote);
                                                 var upvoteResponse = upvoteMapper.toUpvoteCreateDeleteResponse(unitOfWork.getUpvoteRepository().save(newUpvote));
                                                 upvoteResponse.setMessage(SuccessReturnMessage.CREATE_SUCCESS.getMessage());
                                                 return CompletableFuture.completedFuture(upvoteResponse);
@@ -92,9 +93,10 @@ public class UpvoteService {
             });
         });
     }
+
     @Async("AsyncTaskExecutor")
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
-    public CompletableFuture<UpvoteGetAllResponse> getAllUpvoteByPostId(UUID postId){
+    public CompletableFuture<UpvoteGetAllResponse> getAllUpvoteByPostId(UUID postId) {
         var postFuture = findPostById(postId);
 
         return postFuture.thenCompose(post -> {
@@ -113,9 +115,10 @@ public class UpvoteService {
             });
         });
     }
+
     @Async("AsyncTaskExecutor")
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
-    public CompletableFuture<UpvoteGetAllResponse> getAllUpvoteByAccountId(UUID accountId){
+    public CompletableFuture<UpvoteGetAllResponse> getAllUpvoteByAccountId(UUID accountId) {
         var accountFuture = findAccountById(accountId);
 
         return accountFuture.thenCompose(account -> {
@@ -134,13 +137,14 @@ public class UpvoteService {
             });
         });
     }
+
     @Async("AsyncTaskExecutor")
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
-    public CompletableFuture<List<UpvoteResponse>> getAllUpvotes(){
+    public CompletableFuture<List<UpvoteResponse>> getAllUpvotes() {
         return CompletableFuture.supplyAsync(() ->
                 unitOfWork.getUpvoteRepository().findAll().stream()
-                .map(upvoteMapper::toUpvoteResponse)
-                .toList());
+                        .map(upvoteMapper::toUpvoteResponse)
+                        .toList());
     }
 
 
@@ -151,6 +155,7 @@ public class UpvoteService {
                         .orElseThrow(() -> new AppException(ErrorCode.POST_NOT_FOUND))
         );
     }
+
     @Async("AsyncTaskExecutor")
     private CompletableFuture<Account> findAccountById(UUID accountId) {
         return CompletableFuture.supplyAsync(() ->
@@ -158,6 +163,7 @@ public class UpvoteService {
                         .orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND))
         );
     }
+
     @Async("AsyncTaskExecutor")
     private CompletableFuture<Account> findAccountByUsername(String username) {
         return CompletableFuture.supplyAsync(() ->
@@ -165,6 +171,7 @@ public class UpvoteService {
                         .orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND))
         );
     }
+
     @Async("AsyncTaskExecutor")
     public String getUsernameFromJwt() {
         var authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -173,6 +180,7 @@ public class UpvoteService {
         }
         return null;
     }
+
     @Async("AsyncTaskExecutor")
     private CompletableFuture<DailyPoint> createDailyPointLog(Account account, Post post, TypeBonus typeBonus) {
         return unitOfWork.getDailyPointRepository()
@@ -192,7 +200,7 @@ public class UpvoteService {
 
                     var walletFuture = addPointToWallet(account, typeBonus);
                     return walletFuture.thenApply(wallet -> {
-                        if(wallet == null){
+                        if (wallet == null) {
                             System.out.println("This Account Doesn't Have Wallet. Continuing without adding points");
                         }
 
@@ -200,12 +208,13 @@ public class UpvoteService {
                     });
                 });
     }
+
     @Async("AsyncTaskExecutor")
-    private CompletableFuture<Wallet> addPointToWallet(Account account, TypeBonus typeBonus){
+    private CompletableFuture<Wallet> addPointToWallet(Account account, TypeBonus typeBonus) {
         var walletFuture = unitOfWork.getWalletRepository().findByAccount(account);
 
         return walletFuture.thenCompose(wallet -> {
-            if(wallet == null){
+            if (wallet == null) {
                 return CompletableFuture.completedFuture(null);
             }
 

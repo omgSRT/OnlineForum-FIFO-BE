@@ -22,6 +22,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
@@ -46,12 +47,27 @@ public class RewardController {
                 .entity(rewardService.getUnredeemedRewardsForCurrentUser())
                 .build();
     }
-    @GetMapping("/{rewardId}/download")
-    public ApiResponse<byte[]> downloadFileSourceCode(@PathVariable UUID rewardId) {
-        return ApiResponse.<byte[]>builder()
-                .entity(rewardService.downloadFileSourceCode(rewardId))
-                .build();
+//    @GetMapping("/{rewardId}/download")
+//    public ApiResponse<byte[]> downloadFileSourceCode(@PathVariable UUID rewardId) {
+//        return ApiResponse.<byte[]>builder()
+//                .entity(rewardService.downloadFileSourceCode(rewardId))
+//                .build();
+//    }
+@GetMapping("/{rewardId}/download")
+@Operation(summary = "Download Source Code for Reward")
+public ApiResponse<String> downloadFileSourceCode(@PathVariable UUID rewardId) {
+    byte[] fileBytes = rewardService.downloadFileSourceCode(rewardId);
+
+    if (fileBytes == null || fileBytes.length == 0) {
+        throw new AppException(ErrorCode.NO_FILES_TO_DOWNLOAD);
     }
+    String byteRepresentation = Arrays.toString(fileBytes);
+
+    return ApiResponse.<String>builder()
+            .entity(byteRepresentation)
+            .build();
+}
+
     @GetMapping("/getAll/admin")
     public ApiResponse<List<RewardResponse>> getAllAdmin(){
         return ApiResponse.<List<RewardResponse>>builder()

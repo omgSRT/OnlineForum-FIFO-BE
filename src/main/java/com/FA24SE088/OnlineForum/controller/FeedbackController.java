@@ -11,12 +11,14 @@ import com.FA24SE088.OnlineForum.exception.AppException;
 import com.FA24SE088.OnlineForum.exception.ErrorCode;
 
 import com.FA24SE088.OnlineForum.service.FeedbackService;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import io.swagger.v3.oas.annotations.Operation;
 
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -32,7 +34,7 @@ public class FeedbackController {
 
     @Operation(summary = "Create feedback", description = "Status: APPROVED,REJECTED")
     @PostMapping("/create")
-    public ApiResponse<FeedbackResponse> createFeedback(@RequestBody FeedbackRequest feedbackRequest) {
+    public ApiResponse<FeedbackResponse> createFeedback(@RequestBody @Validated FeedbackRequest feedbackRequest){
         return ApiResponse.<FeedbackResponse>builder()
                 .entity(feedbackService.createFeedback(feedbackRequest))
                 .build();
@@ -41,7 +43,7 @@ public class FeedbackController {
     @Operation(summary = "Update feedback", description = "Status: APPROVED,REJECTED")
     @PutMapping("/update/{id}")
     public ApiResponse<FeedbackResponse> updateFeedback(@PathVariable UUID id,
-                                                        @RequestParam(defaultValue = "REJECTED") FeedbackUpdateStatus status) {
+                                                        @RequestParam(defaultValue = "REJECTED") FeedbackUpdateStatus status) throws JsonProcessingException {
         return ApiResponse.<FeedbackResponse>builder()
                 .entity(feedbackService.updateFeedback(id, status)
                         .orElseThrow(() -> new AppException(ErrorCode.FEEDBACK_NOT_FOUND)))

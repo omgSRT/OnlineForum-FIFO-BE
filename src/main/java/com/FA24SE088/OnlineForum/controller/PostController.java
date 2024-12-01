@@ -25,6 +25,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -37,42 +38,52 @@ import java.util.UUID;
 public class PostController {
     PostService postService;
 
+//            @Operation(summary = "Create New Post")
+//    @PostMapping(path = "/create")
+//    public ApiResponse<PostResponse> createPost(@RequestBody @Valid PostCreateRequest request){
+//        return postService.createPost(request).thenApply(postResponse ->
+//                ApiResponse.<PostResponse>builder()
+//                        .message(SuccessReturnMessage.CREATE_SUCCESS.getMessage())
+//                        .entity(postResponse)
+//                        .build()
+//                ).join();
+//    }
     @Operation(summary = "Create New Post")
     @PostMapping(path = "/create")
-    public ApiResponse<PostResponse> createPost(@RequestBody @Valid PostCreateRequest request){
-        return postService.createPost(request).thenApply(postResponse ->
+    public ApiResponse<PostResponse> createPost(@RequestParam UUID clientSessionId, @RequestBody @Valid PostCreateRequest request) {
+        return postService.createPost(clientSessionId, request).thenApply(postResponse ->
                 ApiResponse.<PostResponse>builder()
                         .message(SuccessReturnMessage.CREATE_SUCCESS.getMessage())
                         .entity(postResponse)
                         .build()
-                ).join();
+        ).join();
     }
 
     @Operation(summary = "Get All Posts")
     @GetMapping(path = "/getall")
     public ApiResponse<List<PostResponse>> getAllPosts(@RequestParam(defaultValue = "1") int page,
-                                                        @RequestParam(defaultValue = "10") int perPage,
-                                                        @RequestParam(required = false) UUID accountId,
-                                                        @RequestParam(required = false) UUID topicId,
-                                                        @RequestParam(required = false) UUID tagId,
-                                                        @RequestParam(required = false) UUID categoryId,
-                                                        @RequestParam(required = false) List<PostStatus> statuses,
-                                                        @RequestParam(required = false) Boolean isFolloweeIncluded){
+                                                       @RequestParam(defaultValue = "10") int perPage,
+                                                       @RequestParam(required = false) UUID accountId,
+                                                       @RequestParam(required = false) UUID topicId,
+                                                       @RequestParam(required = false) UUID tagId,
+                                                       @RequestParam(required = false) UUID categoryId,
+                                                       @RequestParam(required = false) List<PostStatus> statuses,
+                                                       @RequestParam(required = false) Boolean isFolloweeIncluded) {
         return postService.getAllPosts(page, perPage, accountId, topicId, tagId, categoryId, statuses, isFolloweeIncluded).thenApply(postResponses ->
                 ApiResponse.<List<PostResponse>>builder()
                         .entity(postResponses)
                         .build()
-                ).join();
+        ).join();
     }
 
     @Operation(summary = "Get All Posts For Staff")
     @GetMapping(path = "/getall/for-current-staff")
     public ApiResponse<List<PostResponse>> getAllPostsForStaff(@RequestParam(defaultValue = "1") int page,
-                                                       @RequestParam(defaultValue = "10") int perPage,
-                                                       @RequestParam(required = false) UUID topicId,
-                                                       @RequestParam(required = false) UUID tagId,
-                                                       @RequestParam(required = false) UUID categoryId,
-                                                       @RequestParam(required = false) Boolean isFolloweeIncluded){
+                                                               @RequestParam(defaultValue = "10") int perPage,
+                                                               @RequestParam(required = false) UUID topicId,
+                                                               @RequestParam(required = false) UUID tagId,
+                                                               @RequestParam(required = false) UUID categoryId,
+                                                               @RequestParam(required = false) Boolean isFolloweeIncluded) {
         return postService.getAllPostsForCurrentStaff(page, perPage, topicId, tagId, categoryId, isFolloweeIncluded).thenApply(postResponses ->
                 ApiResponse.<List<PostResponse>>builder()
                         .entity(postResponses)
@@ -83,7 +94,7 @@ public class PostController {
     @Operation(summary = "Get All Posts", description = "Get All Posts For Current User")
     @GetMapping(path = "/getall/by-current-user")
     public ApiResponse<List<PostResponse>> getAllPostsForCurrentUser(@RequestParam(defaultValue = "1") int page,
-                                                                     @RequestParam(defaultValue = "10") int perPage){
+                                                                     @RequestParam(defaultValue = "10") int perPage) {
         return postService.getAllPostsForCurrentUser(page, perPage).thenApply(postResponses ->
                 ApiResponse.<List<PostResponse>>builder()
                         .entity(postResponses)
@@ -95,7 +106,7 @@ public class PostController {
     @GetMapping(path = "/getall/other-user/{otherAccountId}")
     public ApiResponse<List<PostResponse>> getAllPostsFromAnotherUser(@RequestParam(defaultValue = "1") int page,
                                                                       @RequestParam(defaultValue = "10") int perPage,
-                                                                      @PathVariable UUID otherAccountId){
+                                                                      @PathVariable UUID otherAccountId) {
         return postService.getAllPostsFromOtherUser(page, perPage, otherAccountId).thenApply(postResponses ->
                 ApiResponse.<List<PostResponse>>builder()
                         .entity(postResponses)
@@ -105,29 +116,29 @@ public class PostController {
 
     @Operation(summary = "Get Post", description = "Get Post By ID")
     @GetMapping(path = "/get/{postId}")
-    public ApiResponse<PostResponse> getPostById(@PathVariable UUID postId){
+    public ApiResponse<PostResponse> getPostById(@PathVariable UUID postId) {
         return postService.getPostById(postId).thenApply(postResponse ->
                 ApiResponse.<PostResponse>builder()
                         .entity(postResponse)
                         .build()
-                ).join();
+        ).join();
     }
 
     @Operation(summary = "Update Post", description = "Update Post By ID")
     @PutMapping(path = "/update/{postId}")
     public ApiResponse<PostResponse> updatePostById(@PathVariable UUID postId,
-                                                    @RequestBody @Valid PostUpdateRequest request){
+                                                    @RequestBody @Valid PostUpdateRequest request) {
         return postService.updatePostById(postId, request).thenApply(postResponse ->
                 ApiResponse.<PostResponse>builder()
                         .message(SuccessReturnMessage.UPDATE_SUCCESS.getMessage())
                         .entity(postResponse)
                         .build()
-                ).join();
+        ).join();
     }
 
     @Operation(summary = "Delete Post", description = "Delete Post By Changing Status")
     @PutMapping(path = "/update/{postId}/status/hidden")
-    public ApiResponse<PostResponse> deletePostByChangingStatusById(@PathVariable UUID postId){
+    public ApiResponse<PostResponse> deletePostByChangingStatusById(@PathVariable UUID postId) {
         return postService.deleteByChangingPostStatusById(postId).thenApply(postResponse ->
                 ApiResponse.<PostResponse>builder()
                         .message(SuccessReturnMessage.UPDATE_SUCCESS.getMessage())
@@ -139,7 +150,7 @@ public class PostController {
     @Operation(summary = "Update Post", description = "Update Status Post")
     @PutMapping(path = "/update/{postId}/status")
     public ApiResponse<PostResponse> deletePostByChangingStatusById(@PathVariable UUID postId,
-                                                                    @RequestParam UpdatePostStatus status){
+                                                                    @RequestParam UpdatePostStatus status) {
         return postService.updatePostStatusById(postId, status).thenApply(postResponse ->
                 ApiResponse.<PostResponse>builder()
                         .message(SuccessReturnMessage.UPDATE_SUCCESS.getMessage())
@@ -150,7 +161,7 @@ public class PostController {
 
     @Operation(summary = "Create New Draft")
     @PostMapping(path = "/create/draft")
-    public ApiResponse<PostResponse> createDraft(@RequestBody @Valid DraftCreateRequest request){
+    public ApiResponse<PostResponse> createDraft(@RequestBody @Valid DraftCreateRequest request) {
         return postService.createDraft(request).thenApply(postResponse ->
                 ApiResponse.<PostResponse>builder()
                         .message(SuccessReturnMessage.CREATE_SUCCESS.getMessage())
@@ -158,31 +169,34 @@ public class PostController {
                         .build()
         ).join();
     }
+
     @Operation(summary = "Get All Drafts")
     @GetMapping(path = "/getall/draft")
     public ApiResponse<List<PostResponse>> getAllDrafts(@RequestParam(defaultValue = "1") int page,
                                                         @RequestParam(defaultValue = "10") int perPage,
-                                                        @RequestParam(required = false) UUID accountId){
+                                                        @RequestParam(required = false) UUID accountId) {
         return postService.getAllDrafts(page, perPage, accountId).thenApply(postResponses ->
                 ApiResponse.<List<PostResponse>>builder()
                         .entity(postResponses)
                         .build()
         ).join();
     }
+
     @Operation(summary = "Get All Drafts", description = "Get All Drafts For Current User")
     @GetMapping(path = "/getall/draft/by-current-user")
     public ApiResponse<List<PostResponse>> getAllDraftsForCurrentUser(@RequestParam(defaultValue = "1") int page,
-                                                                      @RequestParam(defaultValue = "10") int perPage){
+                                                                      @RequestParam(defaultValue = "10") int perPage) {
         return postService.getAllDraftsForCurrentUser(page, perPage).thenApply(postResponses ->
                 ApiResponse.<List<PostResponse>>builder()
                         .entity(postResponses)
                         .build()
         ).join();
     }
+
     @Operation(summary = "Update Draft", description = "Update Draft By ID")
     @PutMapping(path = "/update/draft/{draftId}")
     public ApiResponse<PostResponse> updateDraft(@PathVariable UUID draftId,
-                                                 @RequestBody @Valid DraftUpdateRequest request){
+                                                 @RequestBody @Valid DraftUpdateRequest request) {
         return postService.updateDraftById(draftId, request).thenApply(postResponse ->
                 ApiResponse.<PostResponse>builder()
                         .message(SuccessReturnMessage.UPDATE_SUCCESS.getMessage())
@@ -190,9 +204,10 @@ public class PostController {
                         .build()
         ).join();
     }
+
     @Operation(summary = "Update Draft To Completed Post", description = "Update Draft To Completed Post By ID")
     @PutMapping(path = "/update/draft/to-post/{draftId}")
-    public ApiResponse<PostResponse> updateDraftToPost(@PathVariable UUID draftId){
+    public ApiResponse<PostResponse> updateDraftToPost(@PathVariable UUID draftId) {
         return postService.updateDraftToPostById(draftId).thenApply(postResponse ->
                 ApiResponse.<PostResponse>builder()
                         .message(SuccessReturnMessage.UPDATE_SUCCESS.getMessage())
@@ -200,9 +215,10 @@ public class PostController {
                         .build()
         ).join();
     }
+
     @Operation(summary = "Delete Drafts", description = "Delete Drafts By List Of Draft IDs")
     @DeleteMapping(path = "/delete/draft")
-    public ApiResponse<List<PostResponse>> deleteDraftsById(@RequestBody @Valid List<UUID> draftIds){
+    public ApiResponse<List<PostResponse>> deleteDraftsById(@RequestBody @Valid List<UUID> draftIds) {
         return postService.deleteDraftsById(draftIds).thenApply(postResponses ->
                 ApiResponse.<List<PostResponse>>builder()
                         .message(SuccessReturnMessage.DELETE_SUCCESS.getMessage())
@@ -211,17 +227,32 @@ public class PostController {
         ).join();
     }
 
+//    @Operation(summary = "Download Files From A Post")
+//    @GetMapping(path = "/download/{postId}")
+//    public ApiResponse<byte[]> downloadFilesFromAPost(@PathVariable UUID postId) {
+//        return postService.downloadFiles(postId).thenApply(bytes -> {
+//            if (bytes == null || bytes.length == 0) {
+//                throw new AppException(ErrorCode.NO_FILES_TO_DOWNLOAD);
+//            }
+//            return ApiResponse.<byte[]>builder()
+//                    .entity(bytes)
+//                    .build();
+//        }).join();
+//    }
+
     @Operation(summary = "Download Files From A Post")
     @GetMapping(path = "/download/{postId}")
-    public ApiResponse<byte[]> downloadFilesFromAPost(@PathVariable UUID postId){
+    public ApiResponse<String> downloadFilesFromAPost(@PathVariable UUID postId) {
         return postService.downloadFiles(postId).thenApply(bytes -> {
             if (bytes == null || bytes.length == 0) {
                 throw new AppException(ErrorCode.NO_FILES_TO_DOWNLOAD);
             }
-
-            return ApiResponse.<byte[]>builder()
-                    .entity(bytes)
+            // bùa đấy ng ae
+            String byteRepresentation = Arrays.toString(bytes);
+            return ApiResponse.<String>builder()
+                    .entity(byteRepresentation)
                     .build();
         }).join();
     }
+
 }

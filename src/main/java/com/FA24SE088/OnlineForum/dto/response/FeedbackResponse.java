@@ -23,8 +23,8 @@ public class FeedbackResponse {
      LocalDateTime createdDate;
      @JsonIgnoreProperties(value = { "password","followerList","redeemList","dailyPointList","postList","upvoteList","commentList","categoryList","eventList","blockedAccounts","feedbackList","reportList","reportsReceived","bookMarkList","followeeList", "address", "createdDate", "status", "role" })
      Account account;
-     @JsonIgnoreProperties(value = { "account"})
-     Notification notification;
+//     @JsonIgnoreProperties(value = { "account"})
+//     Notification notification;
 }
 
 
