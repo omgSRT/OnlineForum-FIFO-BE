@@ -1840,9 +1840,10 @@ public class PostService {
                         .account(accountOwner)
                         .createdDate(LocalDateTime.now())
                         .build();
-                unitOfWork.getNotificationRepository().save(notification);
-                socketIOUtil.sendEventToOneClientInAServer(clientSessionId, WebsocketEventName.NOTIFICATION.name(), notification);
-
+                if(clientSessionId != null) {
+                    unitOfWork.getNotificationRepository().save(notification);
+                    socketIOUtil.sendEventToOneClientInAServer(clientSessionId, WebsocketEventName.NOTIFICATION.name(), notification);
+                }
             } catch (JsonProcessingException e) {
                 throw new RuntimeException(e);
             }
