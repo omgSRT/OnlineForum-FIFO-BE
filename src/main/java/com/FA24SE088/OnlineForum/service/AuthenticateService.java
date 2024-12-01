@@ -51,7 +51,6 @@ public class AuthenticateService {
     final EmailUtil emailUtil;
     final AccountMapper accountMapper;
     final OtpUtil otpUtil;
-    final PasswordEncoder passwordEncoder;
     @Value("${spring.custom.jwt.secret}")
     String jwtSecret;
 
@@ -215,9 +214,12 @@ public class AuthenticateService {
         });
     }
     public CompletableFuture<AccountResponse> changePassword(String email, AccountChangePasswordRequest request){
+        PasswordEncoder passwordEncoder = new BCryptPasswordEncoder(10);
+
         var foundAccountFuture = unitOfWork.getAccountRepository().findByEmailIgnoreCase(email)
                 .thenApply(optionalAccount -> optionalAccount.orElseThrow(() ->
                         new AppException(ErrorCode.ACCOUNT_NOT_FOUND)));
+
         return foundAccountFuture.thenCompose(account -> {
             if(!request.getPassword().equals(request.getConfirmPassword())){
                 throw new AppException(ErrorCode.PASSWORD_NOT_MATCH);
