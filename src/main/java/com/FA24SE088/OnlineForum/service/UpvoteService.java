@@ -1,6 +1,7 @@
 package com.FA24SE088.OnlineForum.service;
 
 import com.FA24SE088.OnlineForum.dto.request.UpvoteRequest;
+import com.FA24SE088.OnlineForum.dto.response.DataNotification;
 import com.FA24SE088.OnlineForum.dto.response.UpvoteCreateDeleteResponse;
 import com.FA24SE088.OnlineForum.dto.response.UpvoteGetAllResponse;
 import com.FA24SE088.OnlineForum.dto.response.UpvoteResponse;
@@ -15,16 +16,20 @@ import com.FA24SE088.OnlineForum.repository.UnitOfWork.UnitOfWork;
 import com.FA24SE088.OnlineForum.utils.PaginationUtils;
 import com.FA24SE088.OnlineForum.utils.SocketIOUtil;
 import com.corundumstudio.socketio.SocketIOServer;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
@@ -38,6 +43,8 @@ public class UpvoteService {
     UnitOfWork unitOfWork;
     UpvoteMapper upvoteMapper;
     SocketIOUtil socketIOUtil;
+    @Autowired
+    ObjectMapper objectMapper = new ObjectMapper();
 
     @Async("AsyncTaskExecutor")
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
@@ -69,11 +76,8 @@ public class UpvoteService {
                                                             Upvote newUpvote = new Upvote();
                                                             newUpvote.setAccount(account);
                                                             newUpvote.setPost(post);
-                                                            Notification notification = Notification.builder()
-
-                                                                    .build();
-
-                                                            socketIOUtil.sendEventToAllClientInAServer(WebsocketEventName.REFRESH.toString(), newUpvote);
+                                                            realtime_upvote(newUpvote,account,"Upvote","Upvote notification");
+//                                                            realtime_dailyPoint(existingDailyPoint,post.getAccount(),"Daily Point","Daily Point notification",clientSessionId);
                                                             var upvoteResponse = upvoteMapper.toUpvoteCreateDeleteResponse(unitOfWork.getUpvoteRepository().save(newUpvote));
                                                             upvoteResponse.setMessage(SuccessReturnMessage.CREATE_SUCCESS.getMessage());
                                                             return CompletableFuture.completedFuture(upvoteResponse);
@@ -82,7 +86,7 @@ public class UpvoteService {
                                                 Upvote newUpvote = new Upvote();
                                                 newUpvote.setAccount(account);
                                                 newUpvote.setPost(post);
-                                                socketIOUtil.sendEventToAllClientInAServer(WebsocketEventName.REFRESH.toString(), newUpvote);
+                                                realtime_upvote(newUpvote,account,"Upvote","Upvote notification");
                                                 var upvoteResponse = upvoteMapper.toUpvoteCreateDeleteResponse(unitOfWork.getUpvoteRepository().save(newUpvote));
                                                 upvoteResponse.setMessage(SuccessReturnMessage.CREATE_SUCCESS.getMessage());
                                                 return CompletableFuture.completedFuture(upvoteResponse);
@@ -92,6 +96,49 @@ public class UpvoteService {
                 }
             });
         });
+    }
+    public void realtime_upvote(Upvote upvote,Account account, String entity, String titleNotification){
+        DataNotification dataNotification = DataNotification.builder()
+                .id(upvote.getUpvoteId())
+                .entity(entity)
+                .build();
+        String messageJson = null;
+        try {
+            messageJson = objectMapper.writeValueAsString(dataNotification);
+            Notification notification = Notification.builder()
+                    .title(titleNotification)
+                    .message(messageJson)
+                    .isRead(false)
+                    .account(account)
+                    .createdDate(LocalDateTime.now())
+                    .build();
+            unitOfWork.getNotificationRepository().save(notification);
+            socketIOUtil.sendEventToAllClientInAServer(WebsocketEventName.NOTIFICATION.name(), notification);
+            socketIOUtil.sendEventToAllClientInAServer(WebsocketEventName.REFRESH.toString(), upvote);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+    }
+    public void realtime_dailyPoint(DailyPoint dailyPoint,Account account, String entity, String titleNotification,UUID clientSessionId){
+        DataNotification dataNotification = DataNotification.builder()
+                .id(dailyPoint.getDailyPointId())
+                .entity(entity)
+                .build();
+        String messageJson = null;
+        try {
+            messageJson = objectMapper.writeValueAsString(dataNotification);
+            Notification notification = Notification.builder()
+                    .title(titleNotification)
+                    .message(messageJson)
+                    .isRead(false)
+                    .account(account)
+                    .createdDate(LocalDateTime.now())
+                    .build();
+            unitOfWork.getNotificationRepository().save(notification);
+            socketIOUtil.sendEventToOneClientInAServer(clientSessionId,WebsocketEventName.NOTIFICATION.toString(), dailyPoint);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Async("AsyncTaskExecutor")
