@@ -19,10 +19,8 @@ import com.FA24SE088.OnlineForum.utils.DetectProgrammingLanguageUtil;
 import com.FA24SE088.OnlineForum.utils.OpenAIUtil;
 import com.FA24SE088.OnlineForum.utils.PaginationUtils;
 import com.FA24SE088.OnlineForum.utils.SocketIOUtil;
-import com.corundumstudio.socketio.SocketIOServer;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.github.junrar.exception.RarException;
 import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.Bucket;
 import com.google.firebase.cloud.StorageClient;
@@ -30,7 +28,6 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -42,7 +39,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
-import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -69,9 +65,9 @@ public class PostService {
     SocketIOUtil socketIOUtil;
     Set<String> imageExtensionList = Set.of("ai", "jpg", "jpeg", "png", "gif", "indd", "raw", "avif", "eps", "bmp",
             "psd", "svg", "webp", "xcf");
-    Set<String> compressedFileExtensionList = Set.of("7z", "tar", "gzip", "binhex", "cpio", "z", "rar", "zip", "arj", "deb",
+    Set<String> exhaustiveCompressedFileExtensionList = Set.of("7z", "tar", "gzip", "binhex", "cpio", "z", "rar", "zip", "arj", "deb",
             "bz2", "cabinet", "bzip2", "iso");
-    Set<String> backupCompressedFileExtensionList = Set.of("zip", "rar", "tar", "7z");
+    Set<String> compressedFileExtensionList = Set.of("zip", "rar", "tar");
 
     //region CRUD Completed Post
     @Async("AsyncTaskExecutor")
@@ -173,9 +169,7 @@ public class PostService {
                                                         .id(dailyPointFuture.get().getDailyPointId())
                                                         .entity("DailyPoint")
                                                         .build();
-                                            } catch (InterruptedException e) {
-                                                throw new RuntimeException(e);
-                                            } catch (ExecutionException e) {
+                                            } catch (InterruptedException | ExecutionException e) {
                                                 throw new RuntimeException(e);
                                             }
                                             String messageJson = null;
@@ -188,8 +182,10 @@ public class PostService {
                                                         .account(account)
                                                         .createdDate(LocalDateTime.now())
                                                         .build();
-                                                unitOfWork.getNotificationRepository().save(notification);
-                                                socketIOUtil.sendEventToOneClientInAServer(clientSessionId, WebsocketEventName.NOTIFICATION.name(), notification);
+                                                if(clientSessionId != null){
+                                                    unitOfWork.getNotificationRepository().save(notification);
+                                                    socketIOUtil.sendEventToOneClientInAServer(clientSessionId, WebsocketEventName.NOTIFICATION.name(), notification);
+                                                }
 //                                                socketIOUtil.sendEventToAllClientInAServer(WebsocketEventName.NOTIFICATION.name(), notification);
                                                 response.setNotification(notification);
                                             } catch (JsonProcessingException e) {
@@ -218,7 +214,6 @@ public class PostService {
                 ? findAccountById(accountId)
                 : CompletableFuture.completedFuture(null);
         var username = getUsernameFromJwt();
-        var currentAccountFuture = findAccountByUsername(username);
         var blockedListFuture = getBlockedAccountListByUsername(username);
         var categoryFuture = categoryId != null
                 ? findCategoryById(categoryId)
@@ -232,10 +227,9 @@ public class PostService {
         var followerListFuture = getFollowerList();
 
         return CompletableFuture.allOf(postListFuture, accountFuture, topicFuture,
-                tagFuture, followerListFuture, blockedListFuture, currentAccountFuture).thenCompose(v -> {
+                tagFuture, followerListFuture, blockedListFuture).thenCompose(v -> {
             var postList = postListFuture.join();
             var account = accountFuture.join();
-            var currentAccount = currentAccountFuture.join();
             var category = (Category) categoryFuture.join();
             var topic = (Topic) topicFuture.join();
             var tag = tagFuture.join();
@@ -289,15 +283,7 @@ public class PostService {
                             .map(CompletableFuture::join)
                             .toList()
                     )
-                    .thenApply(list -> {
-                        var paginatedList = paginationUtils.convertListToPage(page, perPage, list);
-
-//                        String redisKey = "postList_" + currentAccount.getUsername();
-//                        System.out.println(redisKey);
-//                        //var redisData = redisTemplate.opsForValue().get(redisKey);
-//                        redisTemplate.opsForValue().set(redisKey, paginatedList, Duration.ofHours(6));
-                        return paginatedList;
-                    });
+                    .thenApply(list -> paginationUtils.convertListToPage(page, perPage, list));
         });
     }
 
@@ -1588,11 +1574,7 @@ public class PostService {
         if (role.equalsIgnoreCase("ADMIN") || role.equalsIgnoreCase("STAFF")) {
             return true;
         }
-        if (post.getAccount().equals(account)) {
-            return true;
-        }
-
-        return false;
+        return post.getAccount().equals(account);
     }
 
     private boolean isFollowing(Account currentAccount, Account postOwner) {
@@ -1741,8 +1723,8 @@ public class PostService {
         return validFileNames;
     }
 
-    private byte[] getByteFromFilePath(String path) throws IOException {
-        Bucket bucket = StorageClient.getInstance().bucket();
+    private byte[] getByteFromFilePath(String path) {
+        Bucket bucket = getBucket();
 
         Blob blob = bucket.get(path);
 
@@ -1752,6 +1734,20 @@ public class PostService {
         }
 
         return blob.getContent();
+    }
+    private String getContentTypeFromFilePath(String path) {
+        Bucket bucket = getBucket();
+
+        Blob blob = bucket.get(path);
+
+        if (blob == null) {
+            return null;
+        }
+
+        return blob.getContentType();
+    }
+    private Bucket getBucket(){
+        return StorageClient.getInstance().bucket();
     }
 
     @Async("AsyncTaskExecutor")
@@ -1807,7 +1803,9 @@ public class PostService {
             throw new AppException(ErrorCode.BALANCE_NOT_SUFFICIENT_TO_DOWNLOAD);
         }
         walletDownloader.setBalance(walletDownloader.getBalance() - point.getPointCostPerDownload());
-        walletOwner.setBalance(walletOwner.getBalance() + point.getPointEarnedPerDownload());
+        if(checkShouldUpdateWalletOwner(accountOwner)){
+            walletOwner.setBalance(walletOwner.getBalance() + point.getPointEarnedPerDownload());
+        }
 
         var dailyPointFuture = createDailyPointLogForSourceOwner(accountOwner, post, point);
         var transactionFuture = createTransactionForDownloader(walletDownloader, point);
@@ -1829,9 +1827,7 @@ public class PostService {
                         .id(dailyPointFuture.get().getDailyPointId())
                         .entity("Daily Point")
                         .build();
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            } catch (ExecutionException e) {
+            } catch (InterruptedException | ExecutionException e) {
                 throw new RuntimeException(e);
             }
             String messageJson = null;
@@ -1853,7 +1849,9 @@ public class PostService {
             //==========================================================
             unitOfWork.getTransactionRepository().save(transaction);
             unitOfWork.getWalletRepository().save(walletDownloader);
-            unitOfWork.getWalletRepository().save(walletOwner);
+            if(checkShouldUpdateWalletOwner(accountOwner)){
+                unitOfWork.getWalletRepository().save(walletOwner);
+            }
 
             var fileNames = extractFileNames(postFileList);
 
@@ -1889,7 +1887,6 @@ public class PostService {
     }
 
     private boolean ensureContentSafe(List<String> imageUrls, String title, String description) {
-        boolean checkContentSafe;
         try {
             return contentFilterUtil.areContentsSafe(imageUrls,
                     title,
@@ -1897,6 +1894,10 @@ public class PostService {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private boolean checkShouldUpdateWalletOwner(Account accountOwner) {
+        return accountOwner.getWallet() != null || !accountOwner.getRole().getName().equalsIgnoreCase("ADMIN");
     }
     //endregion
 }
