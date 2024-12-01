@@ -25,6 +25,5 @@ public class DotEnvConfiguration {
         }
 
         System.setProperty("OPENAI_API_KEY", apiKey);
-        System.out.println("Loaded OPENAI_API_KEY: " + apiKey);
     }
 }

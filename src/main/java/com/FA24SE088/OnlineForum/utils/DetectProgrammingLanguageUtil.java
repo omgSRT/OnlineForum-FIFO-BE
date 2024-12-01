@@ -1,5 +1,7 @@
 package com.FA24SE088.OnlineForum.utils;
 
+import com.FA24SE088.OnlineForum.exception.AppException;
+import com.FA24SE088.OnlineForum.exception.ErrorCode;
 import com.github.junrar.Archive;
 import com.github.junrar.exception.RarException;
 import com.github.junrar.rarfile.FileHeader;
@@ -14,6 +16,7 @@ import org.springframework.stereotype.Component;
 
 import java.io.*;
 import java.nio.file.Files;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.zip.ZipEntry;
@@ -23,7 +26,7 @@ import java.util.zip.ZipInputStream;
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class DetectProgrammingLanguageUtil {
-    private static final Map<String, String> extensionToLanguageMap = Map.<String, String>ofEntries(
+    private static final Map<String, String> EXTENSION_TO_LANGUAGE_MAP = Map.<String, String>ofEntries(
             // Java-related
             Map.entry("java", "Java"),
             Map.entry("jsp", "Java"), // Java Server Pages
@@ -138,8 +141,7 @@ public class DetectProgrammingLanguageUtil {
             Map.entry("xsd", "XML"),
             Map.entry("svg", "SVG"),
 
-            // Special files
-            Map.entry("readme", "Documentation"),
+            // Configuration Files
             Map.entry("gitignore", "Configuration"),
             Map.entry("gitattributes", "Configuration"),
             Map.entry("editorconfig", "Configuration"),
@@ -151,45 +153,110 @@ public class DetectProgrammingLanguageUtil {
             Map.entry("apache", "Configuration"),
             Map.entry("nginx", "Configuration"),
             Map.entry("toml", "Configuration"),
-            Map.entry("license", "Legal"),
-            Map.entry("bat", "Batch"),
-            Map.entry("sh", "Shell Script"),
-            Map.entry("zsh", "Shell Script"),
-            Map.entry("bash", "Shell Script"),
+            Map.entry("license", "Configuration"),
+            Map.entry("yaml", "Configuration"), // YAML configuration files
+            Map.entry("yml", "Configuration"), // YML configuration files
 
             // Databases
-            Map.entry("sql", "SQL"),
-            Map.entry("sqlite", "SQLITE"),
+            Map.entry("sql", "DATABASE"),
+            Map.entry("sqlite", "DATABASE"),
             Map.entry("db", "DATABASE"),
-            Map.entry("json", "JSON"), // JSON databases
-            Map.entry("yaml", "YAML"), // YAML configuration files
-            Map.entry("yml", "YML"), // YML configuration files
+            Map.entry("json", "DATABASE"), // JSON databases
+
+            // Documentation
+            Map.entry("readme", "Documentation"),
+            Map.entry("txt", "Documentation"),
+            Map.entry("excel", "Documentation"),
+            Map.entry("docx", "Documentation"),
+            Map.entry("pptx", "Documentation"),
 
             // Unknown Extension
             Map.entry("unknown", "Unknown")
     );
+    private static final Map<String, String> LANGUAGE_CATEGORY_MAP = Map.<String, String>ofEntries(
+            Map.entry("Java", "Programming"),
+            Map.entry("Python", "Programming"),
+            Map.entry("JavaScript", "Programming"),
+            Map.entry("C", "Programming"),
+            Map.entry("C++", "Programming"),
+            Map.entry("C#", "Programming"),
+            Map.entry("Ruby", "Programming"),
+            Map.entry("Go", "Programming"),
+            Map.entry("PHP", "Programming"),
+            Map.entry("Kotlin", "Programming"),
+            Map.entry("Dart", "Programming"),
+            Map.entry("Flutter", "Programming"),
+            Map.entry("Swift", "Programming"),
+            Map.entry("Rust", "Programming"),
+            Map.entry("Scala", "Programming"),
+            Map.entry("Julia", "Programming"),
+            Map.entry("Perl", "Programming"),
+            Map.entry("Nim", "Programming"),
+            Map.entry("Vala", "Programming"),
+            Map.entry("Elixir", "Programming"),
+            Map.entry("Svelte", "Programming"),
+            Map.entry("React", "Programming"),
+            Map.entry("TypeScript", "Programming"),
+            Map.entry("HTML", "Programming"),
+            Map.entry("CSS", "Programming"),
+            Map.entry("XML", "Programming"),
+            Map.entry("SVG", "Programming"),
 
-    public Map<String, Integer> countLanguagesInZip(byte[] zipFileBytes) throws IOException {
+            Map.entry("DATABASE", "DATABASE"),
+
+            Map.entry("Configuration", "Configuration"),
+
+            Map.entry("Documentation", "Documentation"),
+
+            Map.entry("Unknown", "Unknown")
+    );
+    private static final Map<String, Integer> CATEGORY_PRIORITY = Map.of(
+            "Programming", 3,
+            "DATABASE", 1,
+            "Configuration", 0,
+            "Documentation", 0,
+            "Unknown", 0
+    );
+
+    public String determineProgrammingLanguage(byte[] bytes, String contentType) throws IOException, RarException {
+        Map<String, Integer> map = switch (contentType) {
+            case "application/x-zip-compressed" -> countLanguagesInZip(bytes);
+            case "application/x-tar" -> countLanguagesInTar(bytes);
+            case "application/x-compressed" -> countLanguagesInRar(bytes);
+            default -> null;
+        };
+
+        if (map == null || map.isEmpty()) {
+            return "Unknown";
+        }
+
+        map.remove("Unknown");
+
+        if (map.isEmpty()) {
+            return "Unknown";
+        }
+
+        return determineDominantLanguage(map);
+    }
+
+    private Map<String, Integer> countLanguagesInZip(byte[] zipFileBytes) throws IOException {
         Map<String, Integer> languageCountMap = new HashMap<>();
         try (ZipInputStream zipInputStream = new ZipInputStream(new ByteArrayInputStream(zipFileBytes))) {
             ZipEntry zipEntry;
             while ((zipEntry = zipInputStream.getNextEntry()) != null) {
-                String extension = getFileExtension(zipEntry.getName());
-                String language = extensionToLanguageMap.getOrDefault(extension, "Unknown");
-                // Count languages in the map
+                String language = getLanguageFromFileName(zipEntry.getName());
                 languageCountMap.put(language, languageCountMap.getOrDefault(language, 0) + 1);
                 zipInputStream.closeEntry();
             }
         }
         return languageCountMap;
     }
-    public Map<String, Integer> countLanguagesInTar(byte[] tarFileBytes) throws IOException {
+    private Map<String, Integer> countLanguagesInTar(byte[] tarFileBytes) throws IOException {
         Map<String, Integer> languageCountMap = new HashMap<>();
         try (TarArchiveInputStream tarInputStream = new TarArchiveInputStream(new ByteArrayInputStream(tarFileBytes))) {
             TarArchiveEntry tarEntry;
             while ((tarEntry = tarInputStream.getNextTarEntry()) != null) {
-                String extension = getFileExtension(tarEntry.getName());
-                String language = extensionToLanguageMap.getOrDefault(extension, "Unknown");
+                String language = getLanguageFromFileName(tarEntry.getName());
                 languageCountMap.put(language, languageCountMap.getOrDefault(language, 0) + 1);
             }
         }
@@ -200,15 +267,14 @@ public class DetectProgrammingLanguageUtil {
         try (Archive archive = new Archive(new ByteArrayInputStream(rarFileBytes))) {
             FileHeader fileHeader;
             while ((fileHeader = archive.nextFileHeader()) != null) {
-                String extension = getFileExtension(fileHeader.getFileNameString());
-                String language = extensionToLanguageMap.getOrDefault(extension, "Unknown");
+                String language = getLanguageFromFileName(fileHeader.getFileNameString());
                 languageCountMap.put(language, languageCountMap.getOrDefault(language, 0) + 1);
             }
         }
         return languageCountMap;
     }
     //bug af
-    public Map<String, Integer> countLanguagesIn7z(byte[] sevenZBytes) throws IOException {
+    private Map<String, Integer> countLanguagesIn7z(byte[] sevenZBytes) throws IOException {
         Map<String, Integer> languageCountMap = new HashMap<>();
 
         File tempFile = File.createTempFile("temp-archive", ".7z");
@@ -225,7 +291,7 @@ public class DetectProgrammingLanguageUtil {
 
                 String fileName = entry.getName();
                 String extension = getFileExtension(fileName);
-                String language = extensionToLanguageMap.getOrDefault(extension, "Unknown");
+                String language = EXTENSION_TO_LANGUAGE_MAP.getOrDefault(extension, "Unknown");
 
                 // Count languages in the map
                 languageCountMap.put(language, languageCountMap.getOrDefault(language, 0) + 1);
@@ -243,7 +309,7 @@ public class DetectProgrammingLanguageUtil {
         }
         return fileName.substring(lastDotIndex + 1).toLowerCase();
     }
-    public static String getLanguageFromFileName(String fileName) {
+    private static String getLanguageFromFileName(String fileName) {
         fileName = fileName.toLowerCase();
 
         if (fileName.startsWith("readme")) return "Documentation";
@@ -254,6 +320,31 @@ public class DetectProgrammingLanguageUtil {
         if (fileName.startsWith("license")) return "Legal";
 
         String extension = getFileExtension(fileName);
-        return extensionToLanguageMap.getOrDefault(extension, "Unknown");
+        return EXTENSION_TO_LANGUAGE_MAP.getOrDefault(extension, "Unknown");
+    }
+    private Map<String, Integer> countLanguages(Map<String, Integer> languageCountMap) {
+        Map<String, Integer> languagePriorityMap = new HashMap<>();
+
+        for (Map.Entry<String, Integer> entry : languageCountMap.entrySet()) {
+            String language = entry.getKey();
+            int count = entry.getValue();
+
+            String category = LANGUAGE_CATEGORY_MAP.getOrDefault(language, "Unknown");
+            int priority = CATEGORY_PRIORITY.getOrDefault(category, 1);
+            int weightedCount = count * priority;
+
+            languagePriorityMap.put(language, languagePriorityMap.getOrDefault(language, 0) + weightedCount);
+        }
+
+        return languagePriorityMap;
+    }
+    public String determineDominantLanguage(Map<String, Integer> languageCountMap) {
+        Map<String, Integer> languagePriorityMap = countLanguages(languageCountMap);
+
+        return languagePriorityMap.entrySet()
+                .stream()
+                .max(Comparator.comparingInt(Map.Entry::getValue))
+                .map(Map.Entry::getKey)  // Return the language with the highest count
+                .orElse("Unknown");  // In case there are no languages found
     }
 }
