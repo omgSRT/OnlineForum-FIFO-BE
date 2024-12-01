@@ -77,7 +77,7 @@ public class PostService {
     //region CRUD Completed Post
     @Async("AsyncTaskExecutor")
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
-    public CompletableFuture<PostResponse> createPost(UUID clientSessionId,PostCreateRequest request) {
+    public CompletableFuture<PostResponse> createPost(UUID clientSessionId, PostCreateRequest request) {
         var username = getUsernameFromJwt();
         var accountFuture = findAccountByUsername(username);
         var topicFuture = findTopicById(request.getTopicId());
@@ -95,13 +95,13 @@ public class PostService {
                             .map(ImageRequest::getUrl)
                             .toList();
                     var checkContentSafe = ensureContentSafe(imageUrlList, request.getTitle(), request.getContent());
-                    if(!checkContentSafe){
+                    if (!checkContentSafe) {
                         throw new AppException(ErrorCode.TITLE_OR_CONTENT_OR_IMAGES_CONTAIN_INAPPROPRIATE_CONTENT);
                     }
 
                     var checkContentRelated = openAIUtil.isRelated(request.getTitle(), request.getContent(),
                             topic.getName());
-                    if(!checkContentRelated){
+                    if (!checkContentRelated) {
                         throw new AppException(ErrorCode.ERROR_CHECK_RELATED);
                     }
 
@@ -172,7 +172,7 @@ public class PostService {
                                             try {
                                                 dataNotification = DataNotification.builder()
                                                         .id(dailyPointFuture.get().getDailyPointId())
-                                                        .entity("Post")
+                                                        .entity("DailyPoint")
                                                         .build();
                                             } catch (InterruptedException e) {
                                                 throw new RuntimeException(e);
@@ -183,7 +183,7 @@ public class PostService {
                                             try {
                                                 messageJson = objectMapper.writeValueAsString(dataNotification);
                                                 Notification notification = Notification.builder()
-                                                        .title("Post Noitfication " + savedPost.getCreatedDate())
+                                                        .title("Daily point Noitfication " + savedPost.getCreatedDate())
                                                         .message(messageJson)
                                                         .isRead(false)
                                                         .account(account)
@@ -559,13 +559,13 @@ public class PostService {
                         .map(ImageRequest::getUrl)
                         .toList();
                 var checkContentSafe = ensureContentSafe(imageUrlList, request.getTitle(), request.getContent());
-                if(!checkContentSafe){
+                if (!checkContentSafe) {
                     throw new AppException(ErrorCode.TITLE_OR_CONTENT_OR_IMAGES_CONTAIN_INAPPROPRIATE_CONTENT);
                 }
 
                 var checkContentRelated = openAIUtil.isRelated(request.getTitle(), request.getContent(),
                         post.getTopic().getName());
-                if(!checkContentRelated){
+                if (!checkContentRelated) {
                     throw new AppException(ErrorCode.ERROR_CHECK_RELATED);
                 }
 
@@ -703,7 +703,7 @@ public class PostService {
 
     @Async("AsyncTaskExecutor")
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
-    public CompletableFuture<byte[]> downloadFiles(UUID postId) {
+    public CompletableFuture<byte[]> downloadFiles(UUID clientSessionId,UUID postId) {
         var username = getUsernameFromJwt();
         var accountFuture = findAccountByUsername(username);
         var postFuture = findPostById(postId);
@@ -725,7 +725,7 @@ public class PostService {
                 return processDownload(post, byteArrayOutputStream, isZipEmpty);
             } else {
                 return processUserDownload(accountDownloader, post, pointList,
-                        byteArrayOutputStream, isZipEmpty, accountOwner);
+                        byteArrayOutputStream, isZipEmpty, accountOwner,clientSessionId);
             }
         });
     }
@@ -993,13 +993,13 @@ public class PostService {
                     .map(Image::getUrl)
                     .toList();
             var checkContentSafe = ensureContentSafe(imageUrlList, post.getTitle(), post.getContent());
-            if(!checkContentSafe){
+            if (!checkContentSafe) {
                 throw new AppException(ErrorCode.TITLE_OR_CONTENT_OR_IMAGES_CONTAIN_INAPPROPRIATE_CONTENT);
             }
 
             var checkContentRelated = openAIUtil.isRelated(post.getTitle(), post.getContent(),
                     post.getTopic().getName());
-            if(!checkContentRelated){
+            if (!checkContentRelated) {
                 throw new AppException(ErrorCode.ERROR_CHECK_RELATED);
             }
 
@@ -1754,6 +1754,7 @@ public class PostService {
 
         return blob.getContent();
     }
+
     @Async("AsyncTaskExecutor")
     private CompletableFuture<byte[]> processDownload(Post post,
                                                       ByteArrayOutputStream byteArrayOutputStream, AtomicBoolean isZipEmpty) {
@@ -1792,7 +1793,7 @@ public class PostService {
     @Async("AsyncTaskExecutor")
     private CompletableFuture<byte[]> processUserDownload(Account accountDownloader, Post post, List<Point> pointList,
                                                           ByteArrayOutputStream byteArrayOutputStream, AtomicBoolean isZipEmpty,
-                                                          Account accountOwner) {
+                                                          Account accountOwner,UUID clientSessionId) {
         //get wallets of both downloader and owner of the src code
         var walletDownloader = accountDownloader.getWallet();
         var walletOwner = accountOwner.getWallet();
@@ -1823,6 +1824,36 @@ public class PostService {
             if (dailyPoint != null) {
                 unitOfWork.getDailyPointRepository().save(dailyPoint);
             }
+
+            //==========================================================
+            DataNotification dataNotification = null;
+            try {
+                dataNotification = DataNotification.builder()
+                        .id(dailyPointFuture.get().getDailyPointId())
+                        .entity("Daily Point")
+                        .build();
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            } catch (ExecutionException e) {
+                throw new RuntimeException(e);
+            }
+            String messageJson = null;
+            try {
+                messageJson = objectMapper.writeValueAsString(dataNotification);
+                Notification notification = Notification.builder()
+                        .title("Daily point Noitfication ")
+                        .message(messageJson)
+                        .isRead(false)
+                        .account(accountOwner)
+                        .createdDate(LocalDateTime.now())
+                        .build();
+                unitOfWork.getNotificationRepository().save(notification);
+                socketIOUtil.sendEventToOneClientInAServer(clientSessionId, WebsocketEventName.NOTIFICATION.name(), notification);
+
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException(e);
+            }
+            //==========================================================
             unitOfWork.getTransactionRepository().save(transaction);
             unitOfWork.getWalletRepository().save(walletDownloader);
             if(checkShouldUpdateWalletOwner(accountOwner)){
@@ -1862,7 +1893,7 @@ public class PostService {
         });
     }
 
-    private boolean ensureContentSafe(List<String> imageUrls, String title, String description){
+    private boolean ensureContentSafe(List<String> imageUrls, String title, String description) {
         boolean checkContentSafe;
         try {
             return contentFilterUtil.areContentsSafe(imageUrls,

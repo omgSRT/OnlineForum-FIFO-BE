@@ -115,7 +115,6 @@ public class AccountService {
         if (unitOfWork.getAccountRepository().existsByEmail(email)) {
             Account existingAccount = unitOfWork.getAccountRepository().findByEmail(email);
             if(existingAccount != null) throw new AppException(ErrorCode.EMAIL_IS_EXISTED);
-//            return accountMapper.toResponse(existingAccount);
         }
 
         Account newAccount = new Account();
