@@ -38,26 +38,26 @@ import java.util.UUID;
 public class PostController {
     PostService postService;
 
-            @Operation(summary = "Create New Post")
-    @PostMapping(path = "/create")
-    public ApiResponse<PostResponse> createPost(@RequestBody @Valid PostCreateRequest request){
-        return postService.createPost(request).thenApply(postResponse ->
-                ApiResponse.<PostResponse>builder()
-                        .message(SuccessReturnMessage.CREATE_SUCCESS.getMessage())
-                        .entity(postResponse)
-                        .build()
-                ).join();
-    }
-//    @Operation(summary = "Create New Post")
+//            @Operation(summary = "Create New Post")
 //    @PostMapping(path = "/create")
-//    public ApiResponse<PostResponse> createPost(@RequestParam UUID clientSessionId, @RequestBody @Valid PostCreateRequest request) {
-//        return postService.createPost(clientSessionId, request).thenApply(postResponse ->
+//    public ApiResponse<PostResponse> createPost(@RequestBody @Valid PostCreateRequest request){
+//        return postService.createPost(request).thenApply(postResponse ->
 //                ApiResponse.<PostResponse>builder()
 //                        .message(SuccessReturnMessage.CREATE_SUCCESS.getMessage())
 //                        .entity(postResponse)
 //                        .build()
-//        ).join();
+//                ).join();
 //    }
+    @Operation(summary = "Create New Post")
+    @PostMapping(path = "/create")
+    public ApiResponse<PostResponse> createPost(@RequestParam UUID clientSessionId, @RequestBody @Valid PostCreateRequest request) {
+        return postService.createPost(clientSessionId, request).thenApply(postResponse ->
+                ApiResponse.<PostResponse>builder()
+                        .message(SuccessReturnMessage.CREATE_SUCCESS.getMessage())
+                        .entity(postResponse)
+                        .build()
+        ).join();
+    }
 
     @Operation(summary = "Get All Posts")
     @GetMapping(path = "/getall")

@@ -77,7 +77,7 @@ public class PostService {
     //region CRUD Completed Post
     @Async("AsyncTaskExecutor")
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
-    public CompletableFuture<PostResponse> createPost(PostCreateRequest request) {
+    public CompletableFuture<PostResponse> createPost(UUID clientSessionId,PostCreateRequest request) {
         var username = getUsernameFromJwt();
         var accountFuture = findAccountByUsername(username);
         var topicFuture = findTopicById(request.getTopicId());
@@ -190,8 +190,8 @@ public class PostService {
                                                         .createdDate(LocalDateTime.now())
                                                         .build();
                                                 unitOfWork.getNotificationRepository().save(notification);
-//                                                socketIOUtil.sendEventToOneClientInAServer(clientSessionId, WebsocketEventName.NOTIFICATION.name(), notification);
-                                                socketIOUtil.sendEventToAllClientInAServer(WebsocketEventName.NOTIFICATION.name(), notification);
+                                                socketIOUtil.sendEventToOneClientInAServer(clientSessionId, WebsocketEventName.NOTIFICATION.name(), notification);
+//                                                socketIOUtil.sendEventToAllClientInAServer(WebsocketEventName.NOTIFICATION.name(), notification);
                                                 response.setNotification(notification);
                                             } catch (JsonProcessingException e) {
                                                 throw new RuntimeException(e);
