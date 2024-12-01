@@ -28,11 +28,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.text.ParseException;
 import java.time.Duration;
@@ -216,15 +214,18 @@ public class AuthenticateService {
         });
     }
     public CompletableFuture<AccountResponse> changePassword(String email, AccountChangePasswordRequest request){
+        PasswordEncoder passwordEncoder = new BCryptPasswordEncoder(10);
+
         var foundAccountFuture = unitOfWork.getAccountRepository().findByEmailIgnoreCase(email)
                 .thenApply(optionalAccount -> optionalAccount.orElseThrow(() ->
                         new AppException(ErrorCode.ACCOUNT_NOT_FOUND)));
+
         return foundAccountFuture.thenCompose(account -> {
             if(!request.getPassword().equals(request.getConfirmPassword())){
                 throw new AppException(ErrorCode.PASSWORD_NOT_MATCH);
             }
 
-            account.setPassword(request.getPassword());
+            account.setPassword(passwordEncoder.encode(request.getPassword()));
 
             return CompletableFuture.completedFuture(unitOfWork.getAccountRepository().save(account));
         })
