@@ -28,11 +28,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.text.ParseException;
 import java.time.Duration;
@@ -53,7 +51,7 @@ public class AuthenticateService {
     final EmailUtil emailUtil;
     final AccountMapper accountMapper;
     final OtpUtil otpUtil;
-    PasswordEncoder passwordEncoder;
+    final PasswordEncoder passwordEncoder;
     @Value("${spring.custom.jwt.secret}")
     String jwtSecret;
 
