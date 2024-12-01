@@ -1,6 +1,7 @@
 package com.FA24SE088.OnlineForum.controller;
 
 
+import com.FA24SE088.OnlineForum.dto.request.NotificationRequest;
 import com.FA24SE088.OnlineForum.dto.response.ApiResponse;
 import com.FA24SE088.OnlineForum.dto.response.NotificationResponse;
 import com.FA24SE088.OnlineForum.exception.AppException;
@@ -32,6 +33,12 @@ public class NotificationController {
                         .orElseThrow(() -> new AppException(ErrorCode.NOTIFICATION_NOT_FOUND)))
                 .build();
     }
+    @PostMapping("create")
+    public ApiResponse<NotificationResponse> create(@RequestBody NotificationRequest request) {
+        return ApiResponse.<NotificationResponse>builder()
+                .entity(notificationService.createNotification(request))
+                .build();
+    }
 
     @GetMapping("/get-all")
     public ApiResponse<List<NotificationResponse>> getAllNotifications() {
@@ -39,8 +46,15 @@ public class NotificationController {
                 .entity(notificationService.getAllNotifications())
                 .build();
     }
+    @GetMapping("/get-all-by-account/{accountId}")
+    public ApiResponse<List<NotificationResponse>> getAllNotificationsByAccount(@PathVariable UUID accountId) {
+        return ApiResponse.<List<NotificationResponse>>builder()
+                .entity(notificationService.getAllNotificationsByAccount(accountId))
+                .build();
+    }
 
-    @GetMapping("/get-my-notifications")
+//    @GetMapping("/get-my-notifications")
+@GetMapping("/get-all-of-current-user")
     public ApiResponse<List<NotificationResponse>> getMyNotifications() {
         return ApiResponse.<List<NotificationResponse>>builder()
                 .entity(notificationService.getAllNotificationsOfThisAccount())

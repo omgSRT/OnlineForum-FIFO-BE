@@ -19,7 +19,6 @@ public class NotificationRequest {
     String title;
     String message;
     boolean isRead;
-    String type;
     @Nullable
     UUID accountId;
 }

@@ -2,18 +2,20 @@ package com.FA24SE088.OnlineForum.service;
 
 
 import com.FA24SE088.OnlineForum.dto.request.*;
+import com.FA24SE088.OnlineForum.dto.response.DataNotification;
 import com.FA24SE088.OnlineForum.dto.response.FeedbackResponse;
-import com.FA24SE088.OnlineForum.dto.response.NotificationResponse;
 import com.FA24SE088.OnlineForum.entity.*;
 import com.FA24SE088.OnlineForum.enums.FeedbackStatus;
 import com.FA24SE088.OnlineForum.enums.FeedbackUpdateStatus;
-import com.FA24SE088.OnlineForum.enums.WebsocketEventName;
 import com.FA24SE088.OnlineForum.exception.AppException;
 import com.FA24SE088.OnlineForum.exception.ErrorCode;
 import com.FA24SE088.OnlineForum.mapper.FeedbackMapper;
 import com.FA24SE088.OnlineForum.repository.UnitOfWork.UnitOfWork;
 //import com.FA24SE088.OnlineForum.utils.DataHandler;
+import com.FA24SE088.OnlineForum.utils.SocketIOUtil;
 import com.corundumstudio.socketio.SocketIOServer;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -33,6 +35,9 @@ public class FeedbackService {
     UnitOfWork unitOfWork;
     FeedbackMapper feedbackMapper;
     SocketIOServer socketIOServer;
+    @Autowired
+    ObjectMapper objectMapper = new ObjectMapper();
+    SocketIOUtil socketIOUtil;
 
     private Account getCurrentUser() {
         var context = SecurityContextHolder.getContext();
@@ -41,32 +46,14 @@ public class FeedbackService {
 
     public FeedbackResponse createFeedback(FeedbackRequest feedbackRequest) {
         Account account = getCurrentUser();
-        if (!account.getRole().getName().equals("USER")){
+        if (!account.getRole().getName().equals("USER")) {
             throw new AppException(ErrorCode.FEEDBACK_JUST_FOR_USER);
         }
         Feedback feedback = feedbackMapper.toFeedback(feedbackRequest);
         feedback.setAccount(account);
         feedback.setStatus(FeedbackStatus.PENDING.name());
         Feedback savedFeedback = unitOfWork.getFeedbackRepository().save(feedback);
-
-
-        Notification notification = Notification.builder()
-                .title("Feedback Noitfication")
-                .message("Your feedback send success!")
-                .isRead(false)
-                .account(account)
-                .createdDate(feedback.getCreatedDate())
-                .build();
-        NotificationResponse responseNoti = NotificationResponse.builder()
-                .title(notification.getTitle())
-                .message(notification.getMessage())
-                .isRead(false)
-                .type("feedback")
-                .build();
-//        socketIOServer.getBroadcastOperations().sendEvent(WebsocketEventName.NOTIFICATION.name(), responseNoti);
-        unitOfWork.getNotificationRepository().save(notification);
         FeedbackResponse response = feedbackMapper.toResponse(savedFeedback);
-//        response.setNotification(notification);
         return response;
     }
 
@@ -75,22 +62,21 @@ public class FeedbackService {
         Optional<Feedback> feedbackOptional = unitOfWork.getFeedbackRepository().findById(feedbackId);
         if (feedbackOptional.isPresent()) {
             Feedback feedback = feedbackOptional.get();
-            if(!feedback.getStatus().equalsIgnoreCase(FeedbackStatus.PENDING.name())){
+            if (!feedback.getStatus().equalsIgnoreCase(FeedbackStatus.PENDING.name())) {
                 throw new AppException(ErrorCode.WRONG_STATUS);
             }
             feedback.setStatus(status.name());
             Feedback updatedFeedback = unitOfWork.getFeedbackRepository().save(feedback);
 
-//            Notification notification = Notification.builder()
-//                    .title("Feedback Noitfication")
-//                    .message("Your feedback send success!")
-//                    .isRead(false)
-//                    .type("Feedback")
-//                    .account(feedback.getAccount())
-//                    .createdDate(feedback.getCreatedDate())
-//                    .build();
-//            unitOfWork.getNotificationRepository().save(notification);
-//            dataHandler.sendToUser(feedbackOptional.get().getAccount().getAccountId(),updatedFeedback);
+            Notification notification = Notification.builder()
+                    .title("Feedback Noitfication")
+                    .message("Your feedback send success!")
+                    .isRead(false)
+                    .account(feedback.getAccount())
+                    .createdDate(feedback.getCreatedDate())
+                    .build();
+            unitOfWork.getNotificationRepository().save(notification);
+
             return Optional.of(feedbackMapper.toResponse(updatedFeedback));
         }
         return Optional.empty();
@@ -108,7 +94,7 @@ public class FeedbackService {
                 .toList();
     }
 
-    public List<FeedbackResponse> filter(UUID id,String username, FeedbackStatus status, boolean ascending) {
+    public List<FeedbackResponse> filter(UUID id, String username, FeedbackStatus status, boolean ascending) {
         List<FeedbackResponse> list = new ArrayList<>(unitOfWork.getFeedbackRepository().findAll().stream()
                 .filter(feedback -> (id == null || (feedback.getAccount() != null && feedback.getAccount().getAccountId() != null && feedback.getAccount().getAccountId().equals(id))))
                 .filter(feedback -> (username == null ||

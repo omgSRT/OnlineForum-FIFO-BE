@@ -47,7 +47,9 @@ public class NotificationService {
         notification.setCreatedDate(LocalDateTime.now());
 
         Notification savedNotification = unitOfWork.getNotificationRepository().save(notification);
-        return notificationMapper.toResponse(savedNotification);
+        NotificationResponse response = notificationMapper.toResponse(savedNotification);
+        response.setAccount(account);
+        return response;
     }
 
     public void sendPrivateNotification(NotificationRequest notificationRequest) {
@@ -74,11 +76,24 @@ public class NotificationService {
         return notificationOptional.map(notificationMapper::toResponse);
     }
 
+    public List<NotificationResponse> getAllNotificationsByAccount(UUID accountId) {
+        Account account = unitOfWork.getAccountRepository().findById(accountId).orElseThrow(
+                () -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND)
+        );
+        List<Notification> notifications = unitOfWork.getNotificationRepository().findByAccount(account);
+        return notifications.stream().map(notificationMapper::toResponse)
+                .toList();
+    }
+
     public List<NotificationResponse> getAllNotificationsOfThisAccount() {
         Account account = getCurrentUser();
         List<Notification> notifications = unitOfWork.getNotificationRepository().findByAccount(account);
         return notifications.stream()
-                .map(notificationMapper::toResponse)
+                .map(notification -> {
+                    NotificationResponse response = notificationMapper.toResponse(notification);
+                    response.setAccount(account);
+                    return response;
+                })
                 .toList();
     }
 

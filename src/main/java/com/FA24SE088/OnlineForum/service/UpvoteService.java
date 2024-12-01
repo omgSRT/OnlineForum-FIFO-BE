@@ -70,21 +70,21 @@ public class UpvoteService {
                                                             Upvote newUpvote = new Upvote();
                                                             newUpvote.setAccount(account);
                                                             newUpvote.setPost(post);
+                                                            Notification notification = Notification.builder()
 
-                                                            socketIOUtil.sendEventToAllClientInAServer(WebsocketEventName.NOTIFICATION.toString(),newUpvote);
+                                                                    .build();
+
+                                                            socketIOUtil.sendEventToAllClientInAServer(WebsocketEventName.REFRESH.toString(),newUpvote);
                                                             var upvoteResponse = upvoteMapper.toUpvoteCreateDeleteResponse(unitOfWork.getUpvoteRepository().save(newUpvote));
                                                             upvoteResponse.setMessage(SuccessReturnMessage.CREATE_SUCCESS.getMessage());
                                                             return CompletableFuture.completedFuture(upvoteResponse);
                                                         });
                                             } else {
 
-
-
                                                 Upvote newUpvote = new Upvote();
                                                 newUpvote.setAccount(account);
                                                 newUpvote.setPost(post);
-
-                                                socketIOUtil.sendEventToAllClientInAServer(WebsocketEventName.NOTIFICATION.toString(),newUpvote);                                                var upvoteResponse = upvoteMapper.toUpvoteCreateDeleteResponse(unitOfWork.getUpvoteRepository().save(newUpvote));
+                                                socketIOUtil.sendEventToAllClientInAServer(WebsocketEventName.REFRESH.toString(),newUpvote);                                                var upvoteResponse = upvoteMapper.toUpvoteCreateDeleteResponse(unitOfWork.getUpvoteRepository().save(newUpvote));
                                                 upvoteResponse.setMessage(SuccessReturnMessage.CREATE_SUCCESS.getMessage());
                                                 return CompletableFuture.completedFuture(upvoteResponse);
                                             }
