@@ -143,7 +143,8 @@ public enum ErrorCode {
     TITLE_AND_CONTENT_NOT_RELATED_TO_TOPIC(10024, "Title And Content Do Not Related To Topic", HttpStatus.BAD_REQUEST),
     CONTENT_NOT_RELATED_TO_TITLE(10025, "Content Do Not Related To Title", HttpStatus.BAD_REQUEST),
     ERROR_CHECK_RELATED(10026, "Error While Checking Related Content", HttpStatus.INTERNAL_SERVER_ERROR),
-    STAFF_AND_ADMIN_CANNOT_REDEEM(10026, "Staff and admin cannot redeem reward", HttpStatus.INTERNAL_SERVER_ERROR),
+    STAFF_AND_ADMIN_CANNOT_REDEEM(10027, "Staff and admin cannot redeem reward", HttpStatus.INTERNAL_SERVER_ERROR),
+    SOURCE_CODE_DOES_NOT_MATCH_CURRENT_TOPIC(10028, "Source Code Doesn't Match Current Selected Topic", HttpStatus.BAD_REQUEST)
     ;
 
     private int code;

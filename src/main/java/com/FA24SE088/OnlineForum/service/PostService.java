@@ -21,6 +21,7 @@ import com.FA24SE088.OnlineForum.utils.PaginationUtils;
 import com.FA24SE088.OnlineForum.utils.SocketIOUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.junrar.exception.RarException;
 import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.Bucket;
 import com.google.firebase.cloud.StorageClient;
@@ -44,6 +45,7 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -93,11 +95,17 @@ public class PostService {
                     if (!checkContentSafe) {
                         throw new AppException(ErrorCode.TITLE_OR_CONTENT_OR_IMAGES_CONTAIN_INAPPROPRIATE_CONTENT);
                     }
-
                     var checkContentRelated = openAIUtil.isRelated(request.getTitle(), request.getContent(),
                             topic.getName());
                     if (!checkContentRelated) {
                         throw new AppException(ErrorCode.ERROR_CHECK_RELATED);
+                    }
+                    if(request.getPostFileUrlRequest() != null && !request.getPostFileUrlRequest().isEmpty()){
+                        var programmingLanguage = determineProgrammingLanguage(request.getPostFileUrlRequest());
+                        programmingLanguage = programmingLanguage.toLowerCase();
+                        if(!topic.getName().toLowerCase().contains(programmingLanguage)){
+                            throw new AppException(ErrorCode.SOURCE_CODE_DOES_NOT_MATCH_CURRENT_TOPIC);
+                        }
                     }
 
                     Post newPost = postMapper.toPost(request);
@@ -519,6 +527,14 @@ public class PostService {
 
             if (!account.equals(post.getAccount())) {
                 throw new AppException(ErrorCode.ACCOUNT_NOT_THE_AUTHOR_OF_POST);
+            }
+
+            if(request.getPostFileUrlRequest() != null && !request.getPostFileUrlRequest().isEmpty()){
+                var programmingLanguage = determineProgrammingLanguage(request.getPostFileUrlRequest());
+                programmingLanguage = programmingLanguage.toLowerCase();
+                if(!post.getTopic().getName().toLowerCase().contains(programmingLanguage)){
+                    throw new AppException(ErrorCode.SOURCE_CODE_DOES_NOT_MATCH_CURRENT_TOPIC);
+                }
             }
 
             CompletableFuture<List<Image>> deleteImageListFuture = CompletableFuture.completedFuture(null);
@@ -981,11 +997,23 @@ public class PostService {
             if (!checkContentSafe) {
                 throw new AppException(ErrorCode.TITLE_OR_CONTENT_OR_IMAGES_CONTAIN_INAPPROPRIATE_CONTENT);
             }
-
             var checkContentRelated = openAIUtil.isRelated(post.getTitle(), post.getContent(),
                     post.getTopic().getName());
             if (!checkContentRelated) {
                 throw new AppException(ErrorCode.ERROR_CHECK_RELATED);
+            }
+            if(post.getPostFileList() != null && !post.getPostFileList().isEmpty()){
+                Set<PostFileRequest> postFileRequestList = post.getPostFileList().stream()
+                        .map(PostFile::getUrl)
+                        .map(url -> PostFileRequest.builder()
+                                .url(url)
+                                .build())
+                        .collect(Collectors.toSet());
+                var programmingLanguage = determineProgrammingLanguage(postFileRequestList);
+                programmingLanguage = programmingLanguage.toLowerCase();
+                if(!post.getTopic().getName().toLowerCase().contains(programmingLanguage)){
+                    throw new AppException(ErrorCode.SOURCE_CODE_DOES_NOT_MATCH_CURRENT_TOPIC);
+                }
             }
 
             var dailyPointFuture = createDailyPointLog(account.getAccountId(), post);
@@ -1899,6 +1927,40 @@ public class PostService {
 
     private boolean checkShouldUpdateWalletOwner(Account accountOwner) {
         return accountOwner.getWallet() != null || !accountOwner.getRole().getName().equalsIgnoreCase("ADMIN");
+    }
+
+    private String determineProgrammingLanguage(Set<PostFileRequest> postFileRequestList){
+        List<PostFileRequest> validPostFileRequests =
+                extractAndCheckFileNames(new HashSet<>(postFileRequestList));
+
+        if (validPostFileRequests.isEmpty()) {
+            return "Unknown";
+        }
+
+        Map<String, Integer> countProgrammingLanguage = new HashMap<>();
+
+        try {
+            for(PostFileRequest request : validPostFileRequests) {
+                String path = extractFileName(request.getUrl());
+                if(path != null && !path.isEmpty()){
+                    byte[] bytes = getByteFromFilePath(path);
+                    String contentType = getContentTypeFromFilePath(path);
+                    var language = detectProgrammingLanguageUtil
+                            .determineProgrammingLanguage(bytes, contentType);
+
+                    countProgrammingLanguage.put(language, countProgrammingLanguage.getOrDefault(language, 0) + 1);
+                }
+            }
+
+
+            return countProgrammingLanguage.entrySet()
+                    .stream()
+                    .max(Comparator.comparingInt(Map.Entry::getValue))
+                    .map(Map.Entry::getKey)  // Return the language with the highest count
+                    .orElse("Unknown");
+        } catch (IOException | RarException e) {
+            throw new RuntimeException(e);
+        }
     }
     //endregion
 }

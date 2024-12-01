@@ -43,11 +43,11 @@ public class DetectProgrammingLanguageUtil {
             Map.entry("pyd", "Python"),
 
             // JavaScript and its frameworks
-            Map.entry("js", "JavaScript"),
-            Map.entry("mjs", "JavaScript"), // ES Modules
-            Map.entry("cjs", "JavaScript"), // CommonJS
+            Map.entry("js", "JS"),
+            Map.entry("mjs", "JS"), // ES Modules
+            Map.entry("cjs", "JS"), // CommonJS
             Map.entry("jsx", "React"),
-            Map.entry("ts", "TypeScript"),
+            Map.entry("ts", "TS"),
             Map.entry("tsx", "React"),
 
             // C-based languages
@@ -141,6 +141,11 @@ public class DetectProgrammingLanguageUtil {
             Map.entry("xsd", "XML"),
             Map.entry("svg", "SVG"),
 
+            //Objective C
+            Map.entry("m", "Objective-C"),
+            Map.entry("mm", "Objective-C"),
+
+
             // Configuration Files
             Map.entry("gitignore", "Configuration"),
             Map.entry("gitattributes", "Configuration"),
@@ -176,7 +181,7 @@ public class DetectProgrammingLanguageUtil {
     private static final Map<String, String> LANGUAGE_CATEGORY_MAP = Map.<String, String>ofEntries(
             Map.entry("Java", "Programming"),
             Map.entry("Python", "Programming"),
-            Map.entry("JavaScript", "Programming"),
+            Map.entry("JS", "Programming"),
             Map.entry("C", "Programming"),
             Map.entry("C++", "Programming"),
             Map.entry("C#", "Programming"),
@@ -196,7 +201,7 @@ public class DetectProgrammingLanguageUtil {
             Map.entry("Elixir", "Programming"),
             Map.entry("Svelte", "Programming"),
             Map.entry("React", "Programming"),
-            Map.entry("TypeScript", "Programming"),
+            Map.entry("TS", "Programming"),
             Map.entry("HTML", "Programming"),
             Map.entry("CSS", "Programming"),
             Map.entry("XML", "Programming"),
@@ -219,6 +224,10 @@ public class DetectProgrammingLanguageUtil {
     );
 
     public String determineProgrammingLanguage(byte[] bytes, String contentType) throws IOException, RarException {
+        if(contentType == null || contentType.isEmpty()){
+            return "Unknown";
+        }
+
         Map<String, Integer> map = switch (contentType) {
             case "application/x-zip-compressed" -> countLanguagesInZip(bytes);
             case "application/x-tar" -> countLanguagesInTar(bytes);
