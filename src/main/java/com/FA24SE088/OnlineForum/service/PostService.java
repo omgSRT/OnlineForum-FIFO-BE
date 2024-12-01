@@ -1846,36 +1846,33 @@ public class PostService {
 
             if (dailyPoint != null) {
                 unitOfWork.getDailyPointRepository().save(dailyPoint);
-            }
-
-            //==========================================================
-            DataNotification dataNotification = null;
-            try {
+                //==========================================================
+                DataNotification dataNotification = null;
                 dataNotification = DataNotification.builder()
-                        .id(dailyPointFuture.get().getDailyPointId())
+                        .id(dailyPoint.getDailyPointId())
                         .entity("Daily Point")
                         .build();
-            } catch (InterruptedException | ExecutionException e) {
-                throw new RuntimeException(e);
-            }
-            String messageJson = null;
-            try {
-                messageJson = objectMapper.writeValueAsString(dataNotification);
-                Notification notification = Notification.builder()
-                        .title("Daily point Noitfication ")
-                        .message(messageJson)
-                        .isRead(false)
-                        .account(accountOwner)
-                        .createdDate(LocalDateTime.now())
-                        .build();
-                if(clientSessionId != null) {
-                    unitOfWork.getNotificationRepository().save(notification);
-                    socketIOUtil.sendEventToOneClientInAServer(clientSessionId, WebsocketEventName.NOTIFICATION.name(), notification);
+                String messageJson = null;
+                try {
+                    messageJson = objectMapper.writeValueAsString(dataNotification);
+                    Notification notification = Notification.builder()
+                            .title("Daily point Noitfication ")
+                            .message(messageJson)
+                            .isRead(false)
+                            .account(accountOwner)
+                            .createdDate(LocalDateTime.now())
+                            .build();
+                    if(clientSessionId != null) {
+                        unitOfWork.getNotificationRepository().save(notification);
+                        socketIOUtil.sendEventToOneClientInAServer(clientSessionId, WebsocketEventName.NOTIFICATION.name(), notification);
+                    }
+                } catch (JsonProcessingException e) {
+                    throw new RuntimeException(e);
                 }
-            } catch (JsonProcessingException e) {
-                throw new RuntimeException(e);
+                //==========================================================
             }
-            //==========================================================
+
+
             unitOfWork.getTransactionRepository().save(transaction);
             unitOfWork.getWalletRepository().save(walletDownloader);
             if(checkShouldUpdateWalletOwner(accountOwner)){

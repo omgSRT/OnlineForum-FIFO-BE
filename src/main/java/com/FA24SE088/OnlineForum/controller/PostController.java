@@ -242,7 +242,7 @@ public class PostController {
 
     @Operation(summary = "Download Files From A Post")
     @GetMapping(path = "/download/{postId}")
-    public ApiResponse<String> downloadFilesFromAPost(@PathVariable UUID clientSessionId, @PathVariable UUID postId) {
+    public ApiResponse<String> downloadFilesFromAPost(@RequestParam(required = false) UUID clientSessionId, @PathVariable UUID postId) {
         return postService.downloadFiles(clientSessionId,postId).thenApply(bytes -> {
             if (bytes == null || bytes.length == 0) {
                 throw new AppException(ErrorCode.NO_FILES_TO_DOWNLOAD);
