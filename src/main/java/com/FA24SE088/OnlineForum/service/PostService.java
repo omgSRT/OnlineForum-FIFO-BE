@@ -72,7 +72,7 @@ public class PostService {
             "psd", "svg", "webp", "xcf");
     Set<String> compressedFileExtensionList = Set.of("7z", "tar", "gzip", "binhex", "cpio", "z", "rar", "zip", "arj", "deb",
             "bz2", "cabinet", "bzip2", "iso");
-    Set<String> backupCompressedFileExtensionList = Set.of("zip", "rar", "tar", "7z");
+    Set<String> backupCompressedFileExtensionList = Set.of("zip", "rar", "tar");
 
     //region CRUD Completed Post
     @Async("AsyncTaskExecutor")
@@ -1807,7 +1807,9 @@ public class PostService {
             throw new AppException(ErrorCode.BALANCE_NOT_SUFFICIENT_TO_DOWNLOAD);
         }
         walletDownloader.setBalance(walletDownloader.getBalance() - point.getPointCostPerDownload());
-        walletOwner.setBalance(walletOwner.getBalance() + point.getPointEarnedPerDownload());
+        if(checkShouldUpdateWalletOwner(accountOwner)){
+            walletOwner.setBalance(walletOwner.getBalance() + point.getPointEarnedPerDownload());
+        }
 
         var dailyPointFuture = createDailyPointLogForSourceOwner(accountOwner, post, point);
         var transactionFuture = createTransactionForDownloader(walletDownloader, point);
@@ -1823,7 +1825,9 @@ public class PostService {
             }
             unitOfWork.getTransactionRepository().save(transaction);
             unitOfWork.getWalletRepository().save(walletDownloader);
-            unitOfWork.getWalletRepository().save(walletOwner);
+            if(checkShouldUpdateWalletOwner(accountOwner)){
+                unitOfWork.getWalletRepository().save(walletOwner);
+            }
 
             var fileNames = extractFileNames(postFileList);
 
@@ -1867,6 +1871,10 @@ public class PostService {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private boolean checkShouldUpdateWalletOwner(Account accountOwner) {
+        return accountOwner.getWallet() != null || !accountOwner.getRole().getName().equalsIgnoreCase("ADMIN");
     }
     //endregion
 }

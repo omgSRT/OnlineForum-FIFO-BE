@@ -386,7 +386,7 @@ public class CommentService {
         return unitOfWork.getDailyPointRepository()
                 .findByPostAndTypeBonus(post, typeBonus)
                 .thenCompose(dailyPoint -> {
-                    if (dailyPoint != null) {
+                    if (dailyPoint != null || account.getWallet() == null) {
                         return CompletableFuture.completedFuture(null);
                     }
 
