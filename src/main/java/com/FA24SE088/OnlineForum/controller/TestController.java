@@ -2,6 +2,7 @@ package com.FA24SE088.OnlineForum.controller;
 
 import com.FA24SE088.OnlineForum.service.*;
 import com.FA24SE088.OnlineForum.utils.*;
+import com.github.junrar.exception.RarException;
 import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.Bucket;
 import com.google.firebase.cloud.StorageClient;
@@ -62,18 +63,23 @@ public class TestController {
     SocketIOUtil socketIOUtil;
     //endregion
 
-    @GetMapping("/test")
-    public Map<String, Integer> test(String filePath){
-        try {
-            var bytes = getByteFromFilePath(filePath);
-            //tikaUtil.detectMimeType(bytes);
-            return detectProgrammingLanguageUtil.countLanguagesInZip(bytes);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
+//    @GetMapping("/test")
+//    public String test(String filePath){
+//        try {
+//            var blob = getByteFromFilePath(filePath);
+//            if(blob == null){
+//                return null;
+//            }
+//            //tikaUtil.detectMimeType(bytes);
+////            var map = detectProgrammingLanguageUtil.countLanguagesInRar(blob.getContent());
+////            return detectProgrammingLanguageUtil.countLanguages(map);
+//            return detectProgrammingLanguageUtil.determineProgrammingLanguage(blob.getContent(), blob.getContentType());
+//        } catch (IOException | RarException e) {
+//            throw new RuntimeException(e);
+//        }
+//    }
 
-    private byte[] getByteFromFilePath(String path) throws IOException {
+    private Blob getByteFromFilePath(String path) throws IOException {
         Bucket bucket = StorageClient.getInstance().bucket();
 
         Blob blob = bucket.get(path);
@@ -85,6 +91,6 @@ public class TestController {
 
         System.out.println(blob.getContentType());
 
-        return blob.getContent();
+        return blob;
     }
 }
