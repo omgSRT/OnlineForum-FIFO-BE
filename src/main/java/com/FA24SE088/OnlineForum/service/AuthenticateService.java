@@ -53,6 +53,7 @@ public class AuthenticateService {
     final EmailUtil emailUtil;
     final AccountMapper accountMapper;
     final OtpUtil otpUtil;
+    PasswordEncoder passwordEncoder;
     @Value("${spring.custom.jwt.secret}")
     String jwtSecret;
 
@@ -224,7 +225,7 @@ public class AuthenticateService {
                 throw new AppException(ErrorCode.PASSWORD_NOT_MATCH);
             }
 
-            account.setPassword(request.getPassword());
+            account.setPassword(passwordEncoder.encode(request.getPassword()));
 
             return CompletableFuture.completedFuture(unitOfWork.getAccountRepository().save(account));
         })
