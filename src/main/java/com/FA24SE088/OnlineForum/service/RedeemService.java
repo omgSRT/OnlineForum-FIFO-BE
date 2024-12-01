@@ -52,8 +52,11 @@ public class RedeemService {
             wallet.setBalance(result);
             unitOfWork.getWalletRepository().save(wallet);
 
+            var amount = reward.getPrice();
+            amount = -amount;
+
             Transaction transaction = Transaction.builder()
-                    .amount(reward.getPrice())
+                    .amount(amount)
                     .createdDate(new Date())
                     .wallet(wallet)
                     .reward(reward)
