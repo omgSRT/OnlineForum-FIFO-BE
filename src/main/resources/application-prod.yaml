@@ -68,3 +68,7 @@ payment:
     version: 2.1.0
     command: pay
     orderType: other
+
+openai:
+  api:
+    key: ${OPENAI_API_KEY}

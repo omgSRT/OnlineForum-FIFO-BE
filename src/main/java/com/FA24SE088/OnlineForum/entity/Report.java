@@ -32,6 +32,4 @@ public class Report {
     @ManyToOne
     @JoinColumn(name = "postID")
     Post post;
-
-
 }

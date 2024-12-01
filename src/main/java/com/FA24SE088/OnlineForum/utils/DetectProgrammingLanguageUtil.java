@@ -6,13 +6,14 @@ import com.github.junrar.rarfile.FileHeader;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import org.apache.commons.compress.archivers.sevenz.SevenZArchiveEntry;
+import org.apache.commons.compress.archivers.sevenz.SevenZFile;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.springframework.stereotype.Component;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
+import java.io.*;
+import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.zip.ZipEntry;
@@ -26,12 +27,17 @@ public class DetectProgrammingLanguageUtil {
             // Java-related
             Map.entry("java", "Java"),
             Map.entry("jsp", "Java"), // Java Server Pages
+            Map.entry("class", "Java"),
+            Map.entry("jar", "Java"),
+            Map.entry("war", "Java"),
 
             // Python-related
             Map.entry("py", "Python"),
             Map.entry("pyc", "Python"), // Compiled Python
             Map.entry("pyo", "Python"), // Optimized Python
             Map.entry("pyw", "Python"), // Windows Python scripts
+            Map.entry("ipynb", "Python"),
+            Map.entry("pyd", "Python"),
 
             // JavaScript and its frameworks
             Map.entry("js", "JavaScript"),
@@ -49,15 +55,22 @@ public class DetectProgrammingLanguageUtil {
             Map.entry("cc", "C++"),
             Map.entry("hh", "C++"), // Header files for C++
             Map.entry("hpp", "C++"),
+            Map.entry("hxx", "C++"),
+            Map.entry("inl", "C++"),
 
             // C# and .NET
             Map.entry("cs", "C#"),
             Map.entry("xaml", "C#"), // XML-based UI definitions for .NET
+            Map.entry("dll", "C#"),
+            Map.entry("exe", "C#"),
+            Map.entry("resx", "C#"),
 
             // Ruby-related
             Map.entry("rb", "Ruby"),
             Map.entry("erb", "Ruby"), // Embedded Ruby
             Map.entry("rake", "Ruby"), // Rake build scripts
+            Map.entry("gem", "Ruby"),
+            Map.entry("rbw", "Ruby"),
 
             // Go language
             Map.entry("go", "Go"),
@@ -67,6 +80,7 @@ public class DetectProgrammingLanguageUtil {
             Map.entry("phtml", "PHP"), // PHP HTML embedded files
             Map.entry("php4", "PHP"),
             Map.entry("php5", "PHP"),
+            Map.entry("phar", "PHP"),
 
             // Kotlin-related
             Map.entry("kt", "Kotlin"),
@@ -74,16 +88,20 @@ public class DetectProgrammingLanguageUtil {
 
             // Dart and Flutter
             Map.entry("dart", "Dart"),
+            Map.entry("flutter", "Flutter"),
 
             // Swift-related
             Map.entry("swift", "Swift"),
+            Map.entry("xcodeproj", "Swift"),
 
             // Rust-related
             Map.entry("rs", "Rust"),
+            Map.entry("cargo", "Rust"),
 
             // Scala-related
             Map.entry("scala", "Scala"),
             Map.entry("sc", "Scala"), // Scala scripts
+            Map.entry("sbt", "Scala"),
 
             // Julia-related
             Map.entry("jl", "Julia"),
@@ -91,6 +109,7 @@ public class DetectProgrammingLanguageUtil {
             // Perl-related
             Map.entry("pl", "Perl"),
             Map.entry("pm", "Perl"), // Perl module files
+            Map.entry("t", "Perl"),
 
             // Nim-related
             Map.entry("nim", "Nim"),
@@ -111,138 +130,112 @@ public class DetectProgrammingLanguageUtil {
             Map.entry("html", "HTML"),
             Map.entry("htm", "HTML"), // Alternate HTML extension
             Map.entry("css", "CSS"),
-            Map.entry("scss", "CSS"), // SASS CSS preprocessor
+            Map.entry("scss", "CSS"), // SCSS CSS preprocessor
+            Map.entry("sass", "CSS"), // SASS CSS preprocessor
             Map.entry("less", "CSS"), // LESS CSS preprocessor
             Map.entry("xml", "XML"),
             Map.entry("xsl", "XML"), // XML stylesheet
+            Map.entry("xsd", "XML"),
+            Map.entry("svg", "SVG"),
 
             // Special files
             Map.entry("readme", "Documentation"),
             Map.entry("gitignore", "Configuration"),
             Map.entry("gitattributes", "Configuration"),
             Map.entry("editorconfig", "Configuration"),
+            Map.entry("env", "Configuration"),
+            Map.entry("ini", "Configuration"),
+            Map.entry("conf", "Configuration"),
             Map.entry("dockerfile", "Configuration"),
             Map.entry("docker-compose.yml", "Configuration"),
+            Map.entry("apache", "Configuration"),
+            Map.entry("nginx", "Configuration"),
+            Map.entry("toml", "Configuration"),
             Map.entry("license", "Legal"),
-
-            // Databases
-            Map.entry("sql", "DATABASE"),
-            Map.entry("sqlite", "DATABASE"),
-            Map.entry("db", "DATABASE"),
-            Map.entry("db3", "DATABASE"), // SQLite3 database
-            Map.entry("json", "DATABASE"), // JSON databases
-            Map.entry("yaml", "DATABASE"), // YAML configuration files
-
-            // Miscellaneous
             Map.entry("bat", "Batch"),
             Map.entry("sh", "Shell Script"),
             Map.entry("zsh", "Shell Script"),
             Map.entry("bash", "Shell Script"),
-            Map.entry("conf", "Configuration")
+
+            // Databases
+            Map.entry("sql", "SQL"),
+            Map.entry("sqlite", "SQLITE"),
+            Map.entry("db", "DATABASE"),
+            Map.entry("json", "JSON"), // JSON databases
+            Map.entry("yaml", "YAML"), // YAML configuration files
+            Map.entry("yml", "YML"), // YML configuration files
+
+            // Unknown Extension
+            Map.entry("unknown", "Unknown")
     );
 
-    public Map<String, Integer> countFileTypes(byte[] fileData) throws IOException, RarException {
-        Map<String, Integer> fileTypeCountMap = new HashMap<>();
-
-        if (isZipFile(fileData)) {
-            processZipFile(fileData, fileTypeCountMap);
-        } else if (isTarFile(fileData)) {
-            processTarFile(fileData, fileTypeCountMap);
-        } else if(isRarFile(fileData)){
-            processRarFile(fileData, fileTypeCountMap);
-        } else {
-            throw new IllegalArgumentException("The provided data is neither a valid ZIP nor RAR nor TAR file.");
-        }
-
-        return fileTypeCountMap;
-    }
-
-    private void processZipFile(byte[] zipData, Map<String, Integer> fileTypeCountMap) throws IOException, RarException {
-        try (ZipInputStream zipInputStream = new ZipInputStream(new ByteArrayInputStream(zipData))) {
-            ZipEntry entry;
-            while ((entry = zipInputStream.getNextEntry()) != null) {
-                if (!entry.isDirectory()) {
-                    String fileTypeOrLanguage = getLanguageFromFileName(entry.getName());
-                    fileTypeCountMap.put(fileTypeOrLanguage, fileTypeCountMap.getOrDefault(fileTypeOrLanguage, 0) + 1);
-
-                    if (entry.getName().toLowerCase().endsWith(".zip")) {
-                        byte[] nestedZipData = zipInputStream.readAllBytes();
-                        countFileTypes(nestedZipData);
-                    } else if (entry.getName().toLowerCase().endsWith(".tar")) {
-                        byte[] nestedTarData = zipInputStream.readAllBytes();
-                        countFileTypes(nestedTarData);
-                    } else if (entry.getName().toLowerCase().endsWith(".rar")) {
-                        byte[] nestedRarData = zipInputStream.readAllBytes();
-                        countFileTypes(nestedRarData);
-                    }
-                }
+    public Map<String, Integer> countLanguagesInZip(byte[] zipFileBytes) throws IOException {
+        Map<String, Integer> languageCountMap = new HashMap<>();
+        try (ZipInputStream zipInputStream = new ZipInputStream(new ByteArrayInputStream(zipFileBytes))) {
+            ZipEntry zipEntry;
+            while ((zipEntry = zipInputStream.getNextEntry()) != null) {
+                String extension = getFileExtension(zipEntry.getName());
+                String language = extensionToLanguageMap.getOrDefault(extension, "Unknown");
+                // Count languages in the map
+                languageCountMap.put(language, languageCountMap.getOrDefault(language, 0) + 1);
                 zipInputStream.closeEntry();
             }
         }
+        return languageCountMap;
     }
-
-    private void processTarFile(byte[] tarData, Map<String, Integer> fileTypeCountMap) throws IOException, RarException {
-        try (TarArchiveInputStream tarInputStream = new TarArchiveInputStream(new ByteArrayInputStream(tarData))) {
-            TarArchiveEntry entry;
-            while ((entry = tarInputStream.getNextEntry()) != null) {
-                if (!entry.isDirectory()) {
-                    String fileTypeOrLanguage = getLanguageFromFileName(entry.getName());
-                    fileTypeCountMap.put(fileTypeOrLanguage, fileTypeCountMap.getOrDefault(fileTypeOrLanguage, 0) + 1);
-
-                    if (entry.getName().toLowerCase().endsWith(".zip")) {
-                        byte[] nestedZipData = readTarEntryContent(tarInputStream);
-                        countFileTypes(nestedZipData);
-                    } else if (entry.getName().toLowerCase().endsWith(".tar")) {
-                        byte[] nestedTarData = readTarEntryContent(tarInputStream);
-                        countFileTypes(nestedTarData);
-                    } else if (entry.getName().toLowerCase().endsWith(".rar")) {
-                        byte[] nestedRarData = readTarEntryContent(tarInputStream);
-                        countFileTypes(nestedRarData);
-                    }
-                }
+    public Map<String, Integer> countLanguagesInTar(byte[] tarFileBytes) throws IOException {
+        Map<String, Integer> languageCountMap = new HashMap<>();
+        try (TarArchiveInputStream tarInputStream = new TarArchiveInputStream(new ByteArrayInputStream(tarFileBytes))) {
+            TarArchiveEntry tarEntry;
+            while ((tarEntry = tarInputStream.getNextTarEntry()) != null) {
+                String extension = getFileExtension(tarEntry.getName());
+                String language = extensionToLanguageMap.getOrDefault(extension, "Unknown");
+                languageCountMap.put(language, languageCountMap.getOrDefault(language, 0) + 1);
             }
         }
+        return languageCountMap;
     }
-
-    private void processRarFile(byte[] rarData, Map<String, Integer> fileTypeCountMap) throws IOException, RarException {
-        try (ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(rarData);
-             Archive archive = new Archive(byteArrayInputStream)) {
-
+    public Map<String, Integer> countLanguagesInRar(byte[] rarFileBytes) throws IOException, RarException {
+        Map<String, Integer> languageCountMap = new HashMap<>();
+        try (Archive archive = new Archive(new ByteArrayInputStream(rarFileBytes))) {
             FileHeader fileHeader;
             while ((fileHeader = archive.nextFileHeader()) != null) {
-                if (!fileHeader.isDirectory()) {
-                    String fileTypeOrLanguage = getLanguageFromFileName(fileHeader.getFileNameString());
-                    fileTypeCountMap.put(fileTypeOrLanguage, fileTypeCountMap.getOrDefault(fileTypeOrLanguage, 0) + 1);
-
-                    if (fileHeader.getFileNameString().toLowerCase().endsWith(".zip")) {
-                        byte[] nestedZipData = extractRarFile(archive, fileHeader);
-                        countFileTypes(nestedZipData);
-                    } else if (fileHeader.getFileNameString().toLowerCase().endsWith(".tar")) {
-                        byte[] nestedTarData = extractRarFile(archive, fileHeader);
-                        countFileTypes(nestedTarData);
-                    } else if (fileHeader.getFileNameString().toLowerCase().endsWith(".rar")) {
-                        byte[] nestedRarData = extractRarFile(archive, fileHeader);
-                        countFileTypes(nestedRarData);
-                    }
-                }
+                String extension = getFileExtension(fileHeader.getFileNameString());
+                String language = extensionToLanguageMap.getOrDefault(extension, "Unknown");
+                languageCountMap.put(language, languageCountMap.getOrDefault(language, 0) + 1);
             }
         }
+        return languageCountMap;
     }
-    private byte[] readTarEntryContent(TarArchiveInputStream tarInputStream) throws IOException {
-        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        byte[] buffer = new byte[1024];
-        int bytesRead;
-        while ((bytesRead = tarInputStream.read(buffer)) != -1) {
-            byteArrayOutputStream.write(buffer, 0, bytesRead);
-        }
-        return byteArrayOutputStream.toByteArray();
-    }
-    private byte[] extractRarFile(Archive archive, FileHeader fileHeader) throws RarException {
-        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        archive.extractFile(fileHeader, byteArrayOutputStream);
-        return byteArrayOutputStream.toByteArray();
-    }
+    //bug af
+    public Map<String, Integer> countLanguagesIn7z(byte[] sevenZBytes) throws IOException {
+        Map<String, Integer> languageCountMap = new HashMap<>();
 
+        File tempFile = File.createTempFile("temp-archive", ".7z");
+        try (FileOutputStream fos = new FileOutputStream(tempFile)) {
+            fos.write(sevenZBytes);
+        }
+
+        try (SevenZFile sevenZFile = new SevenZFile(tempFile)) {
+            SevenZArchiveEntry entry;
+            while ((entry = sevenZFile.getNextEntry()) != null) {
+                if (entry.isDirectory()) {
+                    continue;
+                }
+
+                String fileName = entry.getName();
+                String extension = getFileExtension(fileName);
+                String language = extensionToLanguageMap.getOrDefault(extension, "Unknown");
+
+                // Count languages in the map
+                languageCountMap.put(language, languageCountMap.getOrDefault(language, 0) + 1);
+            }
+        } finally {
+            Files.delete(tempFile.toPath());
+        }
+
+        return languageCountMap;
+    }
     private static String getFileExtension(String fileName) {
         int lastDotIndex = fileName.lastIndexOf('.');
         if (lastDotIndex == -1 || lastDotIndex == fileName.length() - 1) {
@@ -262,33 +255,5 @@ public class DetectProgrammingLanguageUtil {
 
         String extension = getFileExtension(fileName);
         return extensionToLanguageMap.getOrDefault(extension, "Unknown");
-    }
-    private byte[] extractZipData(ZipInputStream zipInputStream) throws IOException {
-        return zipInputStream.readAllBytes();
-    }
-    private boolean isZipFile(byte[] data) {
-        return data.length >= 4
-                && data[0] == 0x50  // 'P'
-                && data[1] == 0x4B  // 'K'
-                && data[2] == 0x03  // 0x03
-                && data[3] == 0x04; // 0x04
-    }
-    private boolean isRarFile(byte[] data) {
-        return data.length >= 7
-                && data[0] == 0x52  // 'R'
-                && data[1] == 0x61  // 'a'
-                && data[2] == 0x72  // 'r'
-                && data[3] == 0x21  // '!'
-                && data[4] == 0x1A  // (Control-Z)
-                && data[5] == 0x07  // ?
-                && data[6] == 0x00; // Null byte
-    }
-    private boolean isTarFile(byte[] data) {
-        return data.length >= 265
-                && data[257] == 'u'  // 'u'
-                && data[258] == 's'  // 's'
-                && data[259] == 't'  // 't'
-                && data[260] == 'a'  // 'a'
-                && data[261] == 'r'; // 'r'
     }
 }
