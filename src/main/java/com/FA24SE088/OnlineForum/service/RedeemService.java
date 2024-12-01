@@ -27,7 +27,7 @@ public class RedeemService {
     UnitOfWork unitOfWork;
     RedeemMapper redeemMapper;
 
-    private Account findAcc(UUID id){
+    private Account findAccountById(UUID id){
         return unitOfWork.getAccountRepository().findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND));
     }
@@ -35,8 +35,11 @@ public class RedeemService {
         return unitOfWork.getRewardRepository().findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.REWARD_NOT_FOUND));
     }
-    public RedeemResponse create_2(RedeemRequest request){
-        Account account = findAcc(request.getAccountId());
+    public RedeemResponse create(RedeemRequest request){
+        Account account = findAccountById(request.getAccountId());
+        if (account.getRole().getName().equals("STAFF") || account.getRole().getName().equals("ADMIN")){
+            throw new AppException(ErrorCode.STAFF_AND_ADMIN_CANNOT_REDEEM);
+        }
         Reward reward = findDocument(request.getRewardId());
         account.getRedeemList().forEach(redeem -> {
             if (redeem.getReward().getRewardId().equals(reward.getRewardId()))
