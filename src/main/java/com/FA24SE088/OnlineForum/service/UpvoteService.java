@@ -43,7 +43,6 @@ public class UpvoteService {
     UnitOfWork unitOfWork;
     UpvoteMapper upvoteMapper;
     SocketIOUtil socketIOUtil;
-    @Autowired
     ObjectMapper objectMapper = new ObjectMapper();
 
     @Async("AsyncTaskExecutor")
