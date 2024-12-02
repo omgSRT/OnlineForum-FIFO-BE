@@ -271,17 +271,16 @@ public class ReportService {
                     .build();
 
             try {
-                String messageJson = objectMapper.writeValueAsString(dataNotification);
-
-                Notification notification = Notification.builder()
-                        .title(title)
-                        .message(messageJson)
-                        .isRead(false)
-                        .account(report.getPost().getAccount())
-                        .createdDate(LocalDateTime.now())
-                        .build();
-
                 if (clientSessionId != null) {
+                    String messageJson = objectMapper.writeValueAsString(dataNotification);
+                    Notification notification = Notification.builder()
+                            .title(title)
+                            .message(messageJson)
+                            .isRead(false)
+                            .account(report.getPost().getAccount())
+                            .createdDate(LocalDateTime.now())
+                            .build();
+
                     unitOfWork.getNotificationRepository().save(notification);
                     socketIOUtil.sendEventToOneClientInAServer(clientSessionId, WebsocketEventName.NOTIFICATION.name(), notification);
                 }
@@ -300,17 +299,16 @@ public class ReportService {
                     .build();
 
             try {
-                String messageJson = objectMapper.writeValueAsString(dataNotification);
-
-                Notification notification = Notification.builder()
-                        .title(title)
-                        .message(messageJson)
-                        .isRead(false)
-                        .account(report.getAccount())
-                        .createdDate(LocalDateTime.now())
-                        .build();
-
                 if (clientSessionId != null) {
+                    String messageJson = objectMapper.writeValueAsString(dataNotification);
+                    Notification notification = Notification.builder()
+                            .title(title)
+                            .message(messageJson)
+                            .isRead(false)
+                            .account(report.getAccount())
+                            .createdDate(LocalDateTime.now())
+                            .build();
+
                     unitOfWork.getNotificationRepository().save(notification);
                     socketIOUtil.sendEventToOneClientInAServer(clientSessionId, WebsocketEventName.NOTIFICATION.name(), notification);
                 }
@@ -330,17 +328,17 @@ public class ReportService {
                     .build();
 
             try {
-                String messageJson = objectMapper.writeValueAsString(dataNotification);
-
-                Notification notification = Notification.builder()
-                        .title(title)
-                        .message(messageJson)
-                        .isRead(false)
-                        .account(account)
-                        .createdDate(LocalDateTime.now())
-                        .build();
-
                 if (clientSessionId != null) {
+                    String messageJson = objectMapper.writeValueAsString(dataNotification);
+
+                    Notification notification = Notification.builder()
+                            .title(title)
+                            .message(messageJson)
+                            .isRead(false)
+                            .account(account)
+                            .createdDate(LocalDateTime.now())
+                            .build();
+
                     unitOfWork.getNotificationRepository().save(notification);
                     socketIOUtil.sendEventToOneClientInAServer(clientSessionId, WebsocketEventName.NOTIFICATION.name(), notification);
                 }

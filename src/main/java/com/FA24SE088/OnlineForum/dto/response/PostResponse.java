@@ -35,7 +35,4 @@ public class PostResponse {
     @JsonIgnoreProperties(value = { "post" })
     List<PostFile> postFileList;
 
-    @JsonIgnoreProperties(value = { "account"})
-    Notification notification;
-
 }
