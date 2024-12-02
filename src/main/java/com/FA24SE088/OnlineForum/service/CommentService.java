@@ -46,7 +46,6 @@ public class CommentService {
     PaginationUtils paginationUtils;
     SocketIOUtil socketIOUtil;
     ContentFilterUtil contentFilterUtil;
-    @Autowired
     ObjectMapper objectMapper = new ObjectMapper();
 
     @Async("AsyncTaskExecutor")

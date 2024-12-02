@@ -145,6 +145,18 @@ public class DetectProgrammingLanguageUtil {
             Map.entry("m", "Objective-C"),
             Map.entry("mm", "Objective-C"),
 
+            //Assembly
+            Map.entry("asm", "Assembly"),
+            Map.entry("masm", "Assembly"),
+            Map.entry("nasm", "Assembly"),
+            Map.entry("tasm", "Assembly"),
+            Map.entry("gas", "Assembly"),
+            Map.entry("a", "Assembly"),
+            Map.entry("s", "Assembly"),
+            Map.entry("inc", "Assembly"),
+            Map.entry("lst", "Assembly"),
+            Map.entry("o", "Assembly"),
+            Map.entry("obj", "Assembly"),
 
             // Configuration Files
             Map.entry("gitignore", "Configuration"),
@@ -202,6 +214,7 @@ public class DetectProgrammingLanguageUtil {
             Map.entry("Svelte", "Programming"),
             Map.entry("React", "Programming"),
             Map.entry("TS", "Programming"),
+            Map.entry("Assembly", "Programming"),
             Map.entry("HTML", "Programming"),
             Map.entry("CSS", "Programming"),
             Map.entry("XML", "Programming"),
