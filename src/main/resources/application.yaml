@@ -48,6 +48,11 @@ openai:
   api:
     key: ${OPENAI_API_KEY}
 
+akismet:
+  api:
+    key: a42ac0268c5a
+    url: https://rest.akismet.com/1.1/comment-check
+
 #  setup cache for project
 #    cache:
 #      type: redis

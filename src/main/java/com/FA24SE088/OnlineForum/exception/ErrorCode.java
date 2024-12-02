@@ -139,12 +139,14 @@ public enum ErrorCode {
     POINT_EARNED_PER_DOWNLOAD_LESS_THAN_ONE(10121, "Point earned per download must be greater than or equal to 1", HttpStatus.BAD_REQUEST),
     INVALID_START_DATE(10122, "Start date cannot be after end date.", HttpStatus.BAD_REQUEST),
     INVALID_END_DATE(10123, "The end date must be after the current date", HttpStatus.BAD_REQUEST),
-    INAPPROPRIATE_COMMENT(10024, "Inappropriate Content", HttpStatus.BAD_REQUEST),
-    TITLE_AND_CONTENT_NOT_RELATED_TO_TOPIC(10024, "Title And Content Do Not Related To Topic", HttpStatus.BAD_REQUEST),
-    CONTENT_NOT_RELATED_TO_TITLE(10025, "Content Do Not Related To Title", HttpStatus.BAD_REQUEST),
-    ERROR_CHECK_RELATED(10026, "Error While Checking Related Content", HttpStatus.INTERNAL_SERVER_ERROR),
-    STAFF_AND_ADMIN_CANNOT_REDEEM(10027, "Staff and admin cannot redeem reward", HttpStatus.INTERNAL_SERVER_ERROR),
-    SOURCE_CODE_DOES_NOT_MATCH_CURRENT_TOPIC(10028, "Source Code Doesn't Match Current Selected Topic", HttpStatus.BAD_REQUEST)
+    INAPPROPRIATE_COMMENT(10124, "Inappropriate Content", HttpStatus.BAD_REQUEST),
+    TITLE_NOT_RELATED_TO_TOPIC(10125, "Title Do Not Related To Topic", HttpStatus.BAD_REQUEST),
+    CONTENT_NOT_RELATED_TO_TOPIC(10126, "Content Do Not Related To Topic", HttpStatus.BAD_REQUEST),
+    ERROR_CHECK_RELATED(10127, "Error While Checking Related Content", HttpStatus.INTERNAL_SERVER_ERROR),
+    STAFF_AND_ADMIN_CANNOT_REDEEM(10128, "Staff and admin cannot redeem reward", HttpStatus.INTERNAL_SERVER_ERROR),
+    SOURCE_CODE_DOES_NOT_MATCH_CURRENT_TOPIC(10129, "Source Code Doesn't Match Current Selected Topic", HttpStatus.BAD_REQUEST),
+    POST_MUST_HAVE_AT_LEAST_ONE_SOURCE_CODE(10130, "Source Code Post Must Have At Least One Source Code", HttpStatus.BAD_REQUEST),
+    CONTENT_NOT_RELATED_TO_TITLE(10130, "Content Do Not Related To Title", HttpStatus.BAD_REQUEST),
     ;
 
     private int code;

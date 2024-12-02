@@ -153,10 +153,13 @@ public class DetectProgrammingLanguageUtil {
             Map.entry("gas", "Assembly"),
             Map.entry("a", "Assembly"),
             Map.entry("s", "Assembly"),
+            Map.entry("i", "Assembly"),
             Map.entry("inc", "Assembly"),
             Map.entry("lst", "Assembly"),
             Map.entry("o", "Assembly"),
             Map.entry("obj", "Assembly"),
+            Map.entry("tpl", "Assembly"),
+            Map.entry("def", "Assembly"),
 
             // Configuration Files
             Map.entry("gitignore", "Configuration"),
