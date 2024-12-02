@@ -49,6 +49,13 @@ public class AuthenticationController {
                 .build();
     }
 
+    @GetMapping("/login-Google")
+    public ApiResponse<String> loginGG(){
+        return ApiResponse.<String>builder()
+                .entity("https://accounts.google.com/o/oauth2/v2/auth/oauthchooseaccount?response_type=code&client_id=765797941898-1j31g2v6eoa94ktultp59putq41ivksk.apps.googleusercontent.com&scope=email%20profile&state=c-r0rpiAmWP12lY8B6MjWCkpRA6xoCaWCf3R3SmWRcQ%3D&redirect_uri=http%3A%2F%2Flocalhost%3A8080%2Flogin%2Foauth2%2Fcode%2Fgoogle&service=lso&o2v=2&ddm=1&flowName=GeneralOAuthFlow")
+                .build();
+    }
+
     @GetMapping("/callback")
     public ApiResponse<AccountResponse> callbackLoginGoogle(@AuthenticationPrincipal OAuth2User oAuth2User, HttpServletRequest request) {
         AccountResponse response = accountService.callbackLoginGoogle(oAuth2User);
