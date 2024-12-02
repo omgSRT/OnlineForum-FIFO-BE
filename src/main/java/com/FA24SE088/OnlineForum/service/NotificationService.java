@@ -80,14 +80,16 @@ public class NotificationService {
         Account account = unitOfWork.getAccountRepository().findById(accountId).orElseThrow(
                 () -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND)
         );
-        List<Notification> notifications = unitOfWork.getNotificationRepository().findByAccount(account);
+        List<Notification> notifications = unitOfWork.getNotificationRepository()
+                .findByAccountOrderByCreatedDateDesc(account);
         return notifications.stream().map(notificationMapper::toResponse)
                 .toList();
     }
 
     public List<NotificationResponse> getAllNotificationsOfThisAccount() {
         Account account = getCurrentUser();
-        List<Notification> notifications = unitOfWork.getNotificationRepository().findByAccount(account);
+        List<Notification> notifications = unitOfWork.getNotificationRepository()
+                .findByAccountOrderByCreatedDateDesc(account);
         return notifications.stream()
                 .map(notification -> {
                     NotificationResponse response = notificationMapper.toResponse(notification);
@@ -98,7 +100,7 @@ public class NotificationService {
     }
 
     public List<NotificationResponse> getAllNotifications() {
-        List<Notification> notifications = unitOfWork.getNotificationRepository().findAll();
+        List<Notification> notifications = unitOfWork.getNotificationRepository().findAllByOrderByCreatedDateDesc();
         return notifications.stream()
                 .map(notificationMapper::toResponse)
                 .toList();

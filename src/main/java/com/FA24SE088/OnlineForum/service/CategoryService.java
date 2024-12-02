@@ -117,6 +117,23 @@ public class CategoryService {
         return accountFuture.thenCompose(account -> {
             var categories = unitOfWork.getCategoryRepository().findAll();
 
+            List<String> customOrder = List.of("KNOWLEDGE SHARING", "SOURCE CODE");
+
+            categories.sort((c1, c2) -> {
+                int index1 = customOrder.indexOf(c1.getName());
+                int index2 = customOrder.indexOf(c2.getName());
+
+                // If both categories are in the custom order, compare by their indices
+                if (index1 != -1 && index2 != -1) {
+                    return Integer.compare(index1, index2);
+                }
+                // If one is in the custom order, it comes before the other
+                if (index1 != -1) return -1;
+                if (index2 != -1) return 1;
+                // If neither is in the custom order, sort alphabetically by name
+                return c1.getName().compareTo(c2.getName());
+            });
+
             List<CompletableFuture<CategoryGetAllResponse>> responseFutures = categories.stream()
                     .filter(category -> account == null || (category.getAccount() != null && category.getAccount().equals(account)))
                     .map(category -> {
@@ -160,6 +177,23 @@ public class CategoryService {
             var categoryListFuture = unitOfWork.getCategoryRepository().findByAccount(account);
 
             return categoryListFuture.thenCompose(categoryList -> {
+                List<String> customOrder = List.of("KNOWLEDGE SHARING", "SOURCE CODE");
+
+                categoryList.sort((c1, c2) -> {
+                    int index1 = customOrder.indexOf(c1.getName());
+                    int index2 = customOrder.indexOf(c2.getName());
+
+                    // If both categories are in the custom order, compare by their indices
+                    if (index1 != -1 && index2 != -1) {
+                        return Integer.compare(index1, index2);
+                    }
+                    // If one is in the custom order, it comes before the other
+                    if (index1 != -1) return -1;
+                    if (index2 != -1) return 1;
+                    // If neither is in the custom order, sort alphabetically by name
+                    return c1.getName().compareTo(c2.getName());
+                });
+
                 List<CompletableFuture<CategoryGetAllResponse>> responseFutures = categoryList.stream()
                         .map(category -> {
                             CompletableFuture<Integer> upvoteCountFuture = unitOfWork.getUpvoteRepository()
