@@ -86,6 +86,10 @@ public class PostService {
                     var topic = topicFuture.join();
                     var tag = tagFuture.join();
 
+                    if(topic.getCategory().getName().equalsIgnoreCase("SOURCE CODE")
+                            && (request.getPostFileUrlRequest() == null || request.getPostFileUrlRequest().isEmpty())){
+                        throw new AppException(ErrorCode.POST_MUST_HAVE_AT_LEAST_ONE_SOURCE_CODE);
+                    }
                     var imageUrlList = request.getImageUrlList() == null || request.getImageUrlList().isEmpty()
                             ? null
                             : request.getImageUrlList().stream()
@@ -554,6 +558,10 @@ public class PostService {
             CompletableFuture<List<PostFile>> finalCreatePostFileFuture = createPostFileFuture;
             return CompletableFuture.allOf(deleteImageListFuture, createImageFuture, finalCreateImageFuture,
                     deletePostFileFuture, createPostFileFuture, finalCreatePostFileFuture).thenCompose(voidData -> {
+                if(post.getTopic().getCategory().getName().equalsIgnoreCase("SOURCE CODE")
+                        && (request.getPostFileUrlRequest() == null || request.getPostFileUrlRequest().isEmpty())){
+                    throw new AppException(ErrorCode.POST_MUST_HAVE_AT_LEAST_ONE_SOURCE_CODE);
+                }
                 var imageUrlList = request.getImageUrlList() == null || request.getImageUrlList().isEmpty()
                         ? null
                         : request.getImageUrlList().stream()
@@ -563,7 +571,6 @@ public class PostService {
                 if (!checkContentSafe) {
                     throw new AppException(ErrorCode.TITLE_OR_CONTENT_OR_IMAGES_CONTAIN_INAPPROPRIATE_CONTENT);
                 }
-
                 var checkContentRelated = openAIUtil.isRelated(request.getTitle(), request.getContent(),
                         post.getTopic().getName());
                 if (!checkContentRelated) {
@@ -987,6 +994,10 @@ public class PostService {
             }
             if (post.getTag() == null || post.getTopic() == null) {
                 throw new AppException(ErrorCode.TYPE_OR_TOPIC_NOT_FOUND);
+            }
+            if(post.getTopic().getCategory().getName().equalsIgnoreCase("SOURCE CODE")
+                    && (post.getPostFileList() == null || post.getPostFileList().isEmpty())){
+                throw new AppException(ErrorCode.POST_MUST_HAVE_AT_LEAST_ONE_SOURCE_CODE);
             }
             var imageUrlList = post.getImageList() == null || post.getImageList().isEmpty()
                     ? null
