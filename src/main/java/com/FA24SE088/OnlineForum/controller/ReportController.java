@@ -30,7 +30,7 @@ public class ReportController {
     @Operation(summary = "Create New Post Report")
     @PostMapping("/create")
     public ApiResponse<ReportResponse> createReport(@RequestBody @Valid ReportRequest request,
-                                                    @RequestParam ReportPostReason reportReason){
+                                                    @RequestParam ReportPostReason reportReason) {
         return reportService.createReport(request, reportReason).thenApply(reportResponse ->
                 ApiResponse.<ReportResponse>builder()
                         .message(SuccessReturnMessage.CREATE_SUCCESS.getMessage())
@@ -41,22 +41,22 @@ public class ReportController {
 
     @Operation(summary = "Delete Report", description = "Delete Post Report By ID")
     @DeleteMapping(path = "/delete/{reportId}")
-    public ApiResponse<ReportResponse> deleteReportById(@PathVariable UUID reportId){
+    public ApiResponse<ReportResponse> deleteReportById(@PathVariable UUID reportId) {
         return reportService.deleteReportById(reportId).thenApply(reportResponse ->
                 ApiResponse.<ReportResponse>builder()
                         .message(SuccessReturnMessage.DELETE_SUCCESS.getMessage())
                         .entity(reportResponse)
                         .build()
-                ).join();
+        ).join();
     }
 
     @Operation(summary = "Get All Post Reports")
     @GetMapping(path = "/getall")
     public ApiResponse<List<ReportResponse>> getAllReports(@RequestParam(defaultValue = "1") int page,
-                                                             @RequestParam(defaultValue = "10") int perPage,
-                                                             @RequestParam(required = false) UUID postId,
-                                                             @RequestParam(required = false, defaultValue = "PENDING") List<ReportPostStatus> reportPostStatusList,
-                                                             @RequestParam(required = false) String username){
+                                                           @RequestParam(defaultValue = "10") int perPage,
+                                                           @RequestParam(required = false) UUID postId,
+                                                           @RequestParam(required = false, defaultValue = "PENDING") List<ReportPostStatus> reportPostStatusList,
+                                                           @RequestParam(required = false) String username) {
         return reportService.getAllReports(page, perPage, postId, reportPostStatusList, username).thenApply(reportResponses ->
                 ApiResponse.<List<ReportResponse>>builder()
                         .entity(reportResponses)
@@ -67,9 +67,9 @@ public class ReportController {
     @Operation(summary = "Get All Post Reports For Staff")
     @GetMapping(path = "/getall/for-staff")
     public ApiResponse<List<ReportResponse>> getAllReportsForStaff(@RequestParam(defaultValue = "1") int page,
-                                                           @RequestParam(defaultValue = "10") int perPage,
-                                                           @RequestParam(required = false, defaultValue = "PENDING") List<ReportPostStatus> reportPostStatusList,
-                                                           @RequestParam(required = false) String username){
+                                                                   @RequestParam(defaultValue = "10") int perPage,
+                                                                   @RequestParam(required = false, defaultValue = "PENDING") List<ReportPostStatus> reportPostStatusList,
+                                                                   @RequestParam(required = false) String username) {
         return reportService.getAllReportsForStaff(page, perPage, reportPostStatusList, username).thenApply(reportResponses ->
                 ApiResponse.<List<ReportResponse>>builder()
                         .entity(reportResponses)
@@ -79,7 +79,7 @@ public class ReportController {
 
     @Operation(summary = "Get Post Report", description = "Get Post Report By ID")
     @GetMapping(path = "/get/{reportId}")
-    public ApiResponse<ReportResponse> getReportById(@PathVariable UUID reportId){
+    public ApiResponse<ReportResponse> getReportById(@PathVariable UUID reportId) {
         return reportService.getReportById(reportId).thenApply(reportResponse ->
                 ApiResponse.<ReportResponse>builder()
                         .entity(reportResponse)
@@ -90,8 +90,9 @@ public class ReportController {
     @Operation(summary = "Update Post Report", description = "Update Post Report By ID")
     @PutMapping(path = "/update/{reportId}")
     public ApiResponse<ReportResponse> updateReportById(@PathVariable UUID reportId,
-                                                        @RequestParam ReportPostUpdateStatus status){
-        return reportService.updateReportStatus(reportId, status).thenApply(reportResponse ->
+                                                        @RequestParam ReportPostUpdateStatus status,
+                                                        @RequestParam(required = false) UUID clientSessionId) {
+        return reportService.updateReportStatus(clientSessionId,reportId, status).thenApply(reportResponse ->
                 ApiResponse.<ReportResponse>builder()
                         .message(SuccessReturnMessage.UPDATE_SUCCESS.getMessage())
                         .entity(reportResponse)

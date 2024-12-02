@@ -176,7 +176,7 @@ public class ReportService {
 
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
     @Async("AsyncTaskExecutor")
-    public CompletableFuture<ReportResponse> updateReportStatus(UUID reportId, ReportPostUpdateStatus status) {
+    public CompletableFuture<ReportResponse> updateReportStatus(UUID clientSessionId,UUID reportId, ReportPostUpdateStatus status) {
         long maxReportPost = 5;
         var reportFuture = findReportById(reportId);
         var username = getUsernameFromJwt();
@@ -185,7 +185,7 @@ public class ReportService {
 
         return CompletableFuture.allOf(reportFuture, accountFuture, pointFuture).thenCompose(v -> {
                     var report = reportFuture.join();
-                    var account = accountFuture.join();
+
 
                     if (!report.getStatus().equals(ReportPostStatus.PENDING.name())) {
                         throw new AppException(ErrorCode.REPORT_POST_NOT_PENDING);
@@ -215,6 +215,7 @@ public class ReportService {
                         .countByPostAndStatus(report.getPost(), ReportPostStatus.APPROVED.name())
                         .thenCompose(count -> {
                             var pointList = pointFuture.join();
+                            var account = accountFuture.join();
                             if (pointList.isEmpty()) {
                                 throw new AppException(ErrorCode.POINT_NOT_FOUND);
                             }
@@ -230,42 +231,125 @@ public class ReportService {
                                         walletPostOwner.setBalance(pointDeduction);
                                         var post = report.getPost();
                                         post.setStatus(PostStatus.HIDDEN.name());
+                                        //==========================================================
+//                                        realtimeNotificationForReported(report,"Report","Report post notification",clientSessionId);
+//                                        realtimeNotificationForReporter(report,"Report","Report post notification",clientSessionId);
+//                                        realtimeNotificationForStaff(report,account,"Report","Report post notification",clientSessionId);
+                                        CompletableFuture<Void> reportedNotification =
+                                                realtimeNotificationForReported(report, "Report", "Report post notification", clientSessionId);
 
-                                        unitOfWork.getWalletRepository().save(walletPostOwner);
-                                        unitOfWork.getPostRepository().save(post);
-                                        return CompletableFuture.completedFuture(null);
+                                        CompletableFuture<Void> reporterNotification =
+                                                realtimeNotificationForReporter(report, "Report", "Report post notification", clientSessionId);
+
+                                        CompletableFuture<Void> staffNotification =
+                                                realtimeNotificationForStaff(report, account, "Report", "Report post notification", clientSessionId);
+                                        return CompletableFuture.allOf(reportedNotification, reporterNotification, staffNotification)
+                                                .thenRun(() -> {
+                                                    unitOfWork.getWalletRepository().save(walletPostOwner);
+                                                    unitOfWork.getPostRepository().save(post);
+                                                });
+                                        //==========================================================
+
+//                                        unitOfWork.getWalletRepository().save(walletPostOwner);
+//                                        unitOfWork.getPostRepository().save(post);
+//                                        return CompletableFuture.completedFuture(null);
                                     } else {
                                         return CompletableFuture.completedFuture(null);
                                     }
                                 });
                             }
-                            //==========================================================
-                            DataNotification dataNotification = DataNotification.builder()
-                                    .id(report.getReportId())
-                                    .entity("Report")
-                                    .build();
-                            String messageJson = null;
-                            try {
-                                messageJson = objectMapper.writeValueAsString(dataNotification);
-                                Notification notification = Notification.builder()
-                                        .title("Daily point Noitfication ")
-                                        .message(messageJson)
-                                        .isRead(false)
-                                        .account(report.getAccount())
-                                        .createdDate(LocalDateTime.now())
-                                        .build();
-                                unitOfWork.getNotificationRepository().save(notification);
-                                socketIOUtil.sendEventToAllClientInAServer(WebsocketEventName.NOTIFICATION.name(), notification);
-
-                            } catch (JsonProcessingException e) {
-                                throw new RuntimeException(e);
-                            }
-                            //==========================================================
                             return CompletableFuture.completedFuture(report);
                         }))
                 .thenApply(reportMapper::toReportResponse);
     }
 
+    @Async("AsyncTaskExecutor")
+    public CompletableFuture<Void> realtimeNotificationForReported(Report report, String entity, String title, UUID clientSessionId) {
+        return CompletableFuture.runAsync(() -> {
+            DataNotification dataNotification = DataNotification.builder()
+                    .id(report.getReportId())
+                    .entity(entity)
+                    .build();
+
+            try {
+                String messageJson = objectMapper.writeValueAsString(dataNotification);
+
+                Notification notification = Notification.builder()
+                        .title(title)
+                        .message(messageJson)
+                        .isRead(false)
+                        .account(report.getPost().getAccount())
+                        .createdDate(LocalDateTime.now())
+                        .build();
+
+                if (clientSessionId != null) {
+                    unitOfWork.getNotificationRepository().save(notification);
+                    socketIOUtil.sendEventToOneClientInAServer(clientSessionId, WebsocketEventName.NOTIFICATION.name(), notification);
+                }
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException(e);
+            }
+        });
+    }
+
+    @Async("AsyncTaskExecutor")
+    public CompletableFuture<Void> realtimeNotificationForReporter(Report report, String title, String entity, UUID clientSessionId) {
+        return CompletableFuture.runAsync(() -> {
+            DataNotification dataNotification = DataNotification.builder()
+                    .id(report.getReportId())
+                    .entity(entity)
+                    .build();
+
+            try {
+                String messageJson = objectMapper.writeValueAsString(dataNotification);
+
+                Notification notification = Notification.builder()
+                        .title(title)
+                        .message(messageJson)
+                        .isRead(false)
+                        .account(report.getAccount())
+                        .createdDate(LocalDateTime.now())
+                        .build();
+
+                if (clientSessionId != null) {
+                    unitOfWork.getNotificationRepository().save(notification);
+                    socketIOUtil.sendEventToOneClientInAServer(clientSessionId, WebsocketEventName.NOTIFICATION.name(), notification);
+                }
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException(e);
+            }
+        });
+    }
+
+
+    @Async("AsyncTaskExecutor")
+    public CompletableFuture<Void> realtimeNotificationForStaff(Report report, Account account, String title, String entity, UUID clientSessionId) {
+        return CompletableFuture.runAsync(() -> {
+            DataNotification dataNotification = DataNotification.builder()
+                    .id(report.getReportId())
+                    .entity(entity)
+                    .build();
+
+            try {
+                String messageJson = objectMapper.writeValueAsString(dataNotification);
+
+                Notification notification = Notification.builder()
+                        .title(title)
+                        .message(messageJson)
+                        .isRead(false)
+                        .account(account)
+                        .createdDate(LocalDateTime.now())
+                        .build();
+
+                if (clientSessionId != null) {
+                    unitOfWork.getNotificationRepository().save(notification);
+                    socketIOUtil.sendEventToOneClientInAServer(clientSessionId, WebsocketEventName.NOTIFICATION.name(), notification);
+                }
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException(e);
+            }
+        });
+    }
 
     @Async("AsyncTaskExecutor")
     public CompletableFuture<Post> deleteByChangingPostStatusById(UUID postId, Account account) {
