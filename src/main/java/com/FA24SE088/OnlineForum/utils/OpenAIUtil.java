@@ -56,12 +56,12 @@ public class OpenAIUtil {
 
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
 
-            ResponseEntity<String> response = restTemplate.exchange(
-                    OPENAI_API_URL,
-                    HttpMethod.POST,
-                    entity,
-                    String.class
-            );
+        ResponseEntity<String> response = restTemplate.exchange(
+                OPENAI_API_URL,
+                HttpMethod.POST,
+                entity,
+                String.class
+        );
 
         OpenAIResponse openAIResponse = null;
         try {

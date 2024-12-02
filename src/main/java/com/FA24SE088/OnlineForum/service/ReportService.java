@@ -40,7 +40,6 @@ public class ReportService {
     UnitOfWork unitOfWork;
     ReportMapper reportMapper;
     PaginationUtils paginationUtils;
-    @Autowired
     ObjectMapper objectMapper = new ObjectMapper();
     SocketIOUtil socketIOUtil;
 
