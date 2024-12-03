@@ -1,5 +1,6 @@
 package com.FA24SE088.OnlineForum.utils;
 
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -27,9 +28,12 @@ public class AkismetUtil {
     @Value("${akismet.api.url}")
     private String apiUrl;
 
-    public boolean isCommentSpam(String userIP, String userAgent,
-                                 String username, String content){
+    public boolean isCommentSpam(HttpServletRequest httpRequest,
+                                 String username, String email, String content){
         RestTemplate restTemplate = new RestTemplate();
+
+        String userIP = getUserIP(httpRequest);
+        String userAgent = httpRequest.getHeader("User-Agent");
 
         String blogUrl;
         if(protocolMethod.equalsIgnoreCase("https")){
@@ -45,6 +49,7 @@ public class AkismetUtil {
         formData.add("user_ip", userIP);
         formData.add("user_agent", userAgent);
         formData.add("comment_author", username);
+        formData.add("comment_author_email", email);
         formData.add("comment_content", content);
 
         System.out.println(formData);
@@ -67,5 +72,13 @@ public class AkismetUtil {
         System.out.println(response.getBody());
 
         return "true".equalsIgnoreCase((String) response.getBody());
+    }
+
+    private String getUserIP(HttpServletRequest request) {
+        String ipAddress = request.getHeader("X-Forwarded-For");
+        if (ipAddress == null || ipAddress.isEmpty() || "unknown".equalsIgnoreCase(ipAddress)) {
+            ipAddress = request.getRemoteAddr();
+        }
+        return ipAddress;
     }
 }

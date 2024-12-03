@@ -10,7 +10,6 @@ import com.FA24SE088.OnlineForum.dto.response.RecommendAccountResponse;
 import com.FA24SE088.OnlineForum.entity.*;
 import com.FA24SE088.OnlineForum.enums.AccountStatus;
 
-import com.FA24SE088.OnlineForum.enums.OrderPointStatus;
 import com.FA24SE088.OnlineForum.enums.RoleAccount;
 import com.FA24SE088.OnlineForum.exception.AppException;
 import com.FA24SE088.OnlineForum.exception.ErrorCode;
@@ -18,7 +17,6 @@ import com.FA24SE088.OnlineForum.mapper.AccountMapper;
 
 import com.FA24SE088.OnlineForum.repository.UnitOfWork.UnitOfWork;
 import com.FA24SE088.OnlineForum.utils.PaginationUtils;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -29,6 +27,7 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.core.user.OAuth2User;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -316,13 +315,78 @@ public class AccountService {
         Date last48hours = calendar.getTime();
         var recommendedAccountsFuture = unitOfWork.getAccountRepository().findRecommendedAccounts(last48hours);
 
-        return recommendedAccountsFuture.thenCompose(recommendedAccounts -> {
+        var currentFolloweesFuture = getFolloweeList();
+        var username = getUsernameFromJwt();
+        var blockedListFuture = getBlockedAccountListByUsername(username);
+        var blockerListFuture = getBlockerAccountListByUsername(username);
+
+        return CompletableFuture.allOf(recommendedAccountsFuture, currentFolloweesFuture, blockedListFuture,
+                blockerListFuture).thenCompose(v -> {
+            var recommendedAccounts = recommendedAccountsFuture.join();
+            var currentFollowees = currentFolloweesFuture.join();
+            var blockedList = blockedListFuture.join();
+            var blockerList = blockerListFuture.join();
+
             var list = recommendedAccounts.stream()
                     .filter(response -> response.getAccount().getStatus().equalsIgnoreCase(AccountStatus.ACTIVE.name()))
+                    .filter(response -> !currentFollowees.contains(response.getAccount()))
+                    .filter(response -> !blockedList.contains(response.getAccount())
+                            && !blockerList.contains(response.getAccount()))
                     .sorted((response1, response2) -> Long.compare(response2.getTrendScore(), response1.getTrendScore()))
                     .toList();
 
             return CompletableFuture.completedFuture(paginationUtils.convertListToPage(page, perPage, list));
+        });
+    }
+
+    @Async("AsyncTaskExecutor")
+    private CompletableFuture<Account> findAccountByUsername(String username) {
+        return CompletableFuture.supplyAsync(() ->
+                unitOfWork.getAccountRepository().findByUsername(username)
+                        .orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND))
+        );
+    }
+    private String getUsernameFromJwt() {
+        var authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && authentication.getPrincipal() instanceof Jwt jwt) {
+            return jwt.getClaim("username");
+        }
+        return null;
+    }
+    @Async("AsyncTaskExecutor")
+    private CompletableFuture<List<Account>> getFolloweeList() {
+        var username = getUsernameFromJwt();
+        var accountFuture = findAccountByUsername(username);
+        return accountFuture.thenCompose(account -> {
+            var followeeList = unitOfWork.getFollowRepository().findByFollower(account).stream()
+                    .map(Follow::getFollowee)
+                    .toList();
+
+            return CompletableFuture.completedFuture(followeeList);
+        });
+    }
+    @Async("AsyncTaskExecutor")
+    private CompletableFuture<List<Account>> getBlockedAccountListByUsername(String username) {
+        var accountFuture = findAccountByUsername(username);
+
+        return accountFuture.thenApply(account -> {
+            var blockedAccountEntityList = unitOfWork.getBlockedAccountRepository().findByBlocker(account);
+
+            return blockedAccountEntityList.stream()
+                    .map(BlockedAccount::getBlocked)
+                    .toList();
+        });
+    }
+    @Async("AsyncTaskExecutor")
+    private CompletableFuture<List<Account>> getBlockerAccountListByUsername(String username) {
+        var accountFuture = findAccountByUsername(username);
+
+        return accountFuture.thenApply(account -> {
+            var blockedAccountEntityList = unitOfWork.getBlockedAccountRepository().findByBlocked(account);
+
+            return blockedAccountEntityList.stream()
+                    .map(BlockedAccount::getBlocker)
+                    .toList();
         });
     }
 }
