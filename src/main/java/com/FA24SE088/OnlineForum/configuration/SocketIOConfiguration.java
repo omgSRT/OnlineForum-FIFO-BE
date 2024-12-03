@@ -34,8 +34,9 @@ public class SocketIOConfiguration {
         System.out.println("Socket.IO server stopped");
     }
 
-    //link -> ws://localhost:16234/socket.io/?EIO=4&transport=websocket
-    //link -> wss://fifoforumonline.click:16234/socket.io/?EIO=4&transport=websocket
+    //link -> ws://localhost:16234/socket.io/?EIO=4&transport=websocket&accountId=c3ac537f-2b53-c39b-4d3b-c28ac3a460c3
+    //link -> wss://fifoforumonline.click:16234/socket.io/?EIO=4&transport=websocket&accountId=c3ac537f-2b53-c39b-4d3b-c28ac3a460c3
+    //kêu tụi nó truyền thêm param accountId id vào để gửi thông báo chính xác
     @Bean
     public SocketIOServer socketIOServer(SocketIOEventHandler socketIOEventHandler, CustomExceptionListener customExceptionListener) {
         com.corundumstudio.socketio.Configuration config = new com.corundumstudio.socketio.Configuration();

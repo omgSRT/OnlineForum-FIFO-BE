@@ -193,10 +193,9 @@ public class PostService {
                                                             .build();
                                                     unitOfWork.getNotificationRepository().save(notification);
                                                     response.setNotification(notification);
-                                                    socketIOUtil.sendEventToOneClientInAServer(clientSessionId, WebsocketEventName.NOTIFICATION.name(), notification);
+//                                                    socketIOUtil.sendEventToOneClientInAServer(clientSessionId, WebsocketEventName.NOTIFICATION.name(), notification);
+//                                                    socketIOUtil.sendEventToOneClient(account.getAccountId().toString(), WebsocketEventName.NOTIFICATION.name(), notification);
                                                 }
-//                                                socketIOUtil.sendEventToAllClientInAServer(WebsocketEventName.NOTIFICATION.name(), notification);
-
                                             } catch (JsonProcessingException e) {
                                                 throw new RuntimeException(e);
                                             }
@@ -1865,7 +1864,8 @@ public class PostService {
                                 .createdDate(LocalDateTime.now())
                                 .build();
                         unitOfWork.getNotificationRepository().save(notification);
-                        socketIOUtil.sendEventToOneClientInAServer(clientSessionId, WebsocketEventName.NOTIFICATION.name(), notification);
+//                        socketIOUtil.sendEventToOneClientInAServer(clientSessionId, WebsocketEventName.NOTIFICATION.name(), notification);
+//                        socketIOUtil.sendEventToOneClient(accountOwner.getAccountId().toString(),WebsocketEventName.NOTIFICATION.name(), notification);
                     }
                 } catch (JsonProcessingException e) {
                     throw new RuntimeException(e);

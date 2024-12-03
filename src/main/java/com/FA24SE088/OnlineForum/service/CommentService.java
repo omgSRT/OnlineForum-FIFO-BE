@@ -127,7 +127,7 @@ public class CommentService {
                     .createdDate(LocalDateTime.now())
                     .build();
             unitOfWork.getNotificationRepository().save(notification);
-            socketIOUtil.sendEventToAllClientInAServer(WebsocketEventName.NOTIFICATION.name(), notification);
+            socketIOUtil.sendEventToOneClientInAServer(account.getAccountId(),WebsocketEventName.NOTIFICATION.name(), notification);
             socketIOUtil.sendEventToAllClientInAServer(WebsocketEventName.REFRESH.toString(), comment);
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
