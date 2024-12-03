@@ -189,17 +189,17 @@ public class PostService {
                                                 if(clientSessionId != null){
                                                     messageJson = objectMapper.writeValueAsString(dataNotification);
                                                     Notification notification = Notification.builder()
-                                                            .title("Daily point Noitfication " + savedPost.getCreatedDate())
+                                                            .title("Daily point Noitfication ")
                                                             .message(messageJson)
                                                             .isRead(false)
                                                             .account(account)
                                                             .createdDate(LocalDateTime.now())
                                                             .build();
                                                     unitOfWork.getNotificationRepository().save(notification);
-                                                    socketIOUtil.sendEventToOneClientInAServer(clientSessionId, WebsocketEventName.NOTIFICATION.name(), notification);
+                                                    response.setNotification(notification);
+//                                                    socketIOUtil.sendEventToOneClientInAServer(clientSessionId, WebsocketEventName.NOTIFICATION.name(), notification);
+//                                                    socketIOUtil.sendEventToOneClient(account.getAccountId().toString(), WebsocketEventName.NOTIFICATION.name(), notification);
                                                 }
-//                                                socketIOUtil.sendEventToAllClientInAServer(WebsocketEventName.NOTIFICATION.name(), notification);
-
                                             } catch (JsonProcessingException e) {
                                                 throw new RuntimeException(e);
                                             }
@@ -1861,7 +1861,7 @@ public class PostService {
                 DataNotification dataNotification = null;
                 dataNotification = DataNotification.builder()
                         .id(dailyPoint.getDailyPointId())
-                        .entity("Daily Point")
+                        .entity("DailyPoint")
                         .build();
                 String messageJson = null;
                 try {
@@ -1875,7 +1875,8 @@ public class PostService {
                                 .createdDate(LocalDateTime.now())
                                 .build();
                         unitOfWork.getNotificationRepository().save(notification);
-                        socketIOUtil.sendEventToOneClientInAServer(clientSessionId, WebsocketEventName.NOTIFICATION.name(), notification);
+//                        socketIOUtil.sendEventToOneClientInAServer(clientSessionId, WebsocketEventName.NOTIFICATION.name(), notification);
+//                        socketIOUtil.sendEventToOneClient(accountOwner.getAccountId().toString(),WebsocketEventName.NOTIFICATION.name(), notification);
                     }
                 } catch (JsonProcessingException e) {
                     throw new RuntimeException(e);

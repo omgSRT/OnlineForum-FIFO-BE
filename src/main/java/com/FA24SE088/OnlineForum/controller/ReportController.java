@@ -90,9 +90,9 @@ public class ReportController {
     @Operation(summary = "Update Post Report", description = "Update Post Report By ID")
     @PutMapping(path = "/update/{reportId}")
     public ApiResponse<ReportResponse> updateReportById(@PathVariable UUID reportId,
-                                                        @RequestParam ReportPostUpdateStatus status,
-                                                        @RequestParam(required = false) UUID clientSessionId) {
-        return reportService.updateReportStatus(clientSessionId,reportId, status).thenApply(reportResponse ->
+                                                        @RequestParam ReportPostUpdateStatus status
+    ) {
+        return reportService.updateReportStatus(reportId, status).thenApply(reportResponse ->
                 ApiResponse.<ReportResponse>builder()
                         .message(SuccessReturnMessage.UPDATE_SUCCESS.getMessage())
                         .entity(reportResponse)

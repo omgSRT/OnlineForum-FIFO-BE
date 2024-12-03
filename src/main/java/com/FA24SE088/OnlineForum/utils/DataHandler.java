@@ -77,7 +77,6 @@ public class DataHandler extends TextWebSocketHandler {
 
             Account account = unitOfWork.getAccountRepository().findById(accountId).orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND));
             String messageJson = objectMapper.writeValueAsString(messageObject); // Convert object to JSON string
-            LOG.info("================" + messageJson);
             WebSocketSession session = sessions.get(account.getEmail());
             if (session != null) {
                 try {
@@ -111,25 +110,25 @@ public class DataHandler extends TextWebSocketHandler {
 //        }
 //    }
 
-//    @Override
-//    public void afterConnectionEstablished(WebSocketSession session) throws Exception {
-//        String userId = getUserIdFromSession(session);
-//        if (userId != null) {
-//            sessions.put(userId, session); // Add session to the map
-//            userSessions.put(session, userId); // Track userId by session
-//        }
-//        LOG.info("Connection established: " + session.getId() + " for user: " + userId);
-//    }
-
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
-        String email = getUserIdFromSession(session);
-        if (email != null) {
-            sessions.put(email, session); // Add session to the map
-            userSessions.put(session, email); // Track userId by session
+        String userId = getUserIdFromSession(session);
+        if (userId != null) {
+            sessions.put(userId, session); // Add session to the map
+            userSessions.put(session, userId); // Track userId by session
         }
-        LOG.info("Connection established: " + session.getId() + " for user: " + email);
+        LOG.info("Connection established: " + session.getId() + " for user: " + userId);
     }
+
+//    @Override
+//    public void afterConnectionEstablished(WebSocketSession session) throws Exception {
+//        String email = getUserIdFromSession(session);
+//        if (email != null) {
+//            sessions.put(email, session); // Add session to the map
+//            userSessions.put(session, email); // Track userId by session
+//        }
+//        LOG.info("Connection established: " + session.getId() + " for user: " + email);
+//    }
 
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
@@ -147,20 +146,24 @@ public class DataHandler extends TextWebSocketHandler {
 //        LOG.error(query);
 //        return query != null ? query.split("userid=")[1] : null;
 //    }
+
     private String getUserIdFromSession(WebSocketSession session) {
-        // Extract email from the WebSocketSession (query parameters)
+        // Lấy query từ URI của WebSocketSession
         String query = session.getUri().getQuery();
-        if (query != null && query.contains("email=")) {
+        if (query != null && query.contains("accountId=")) {
+            // Tách các cặp key=value trong query string
             String[] pairs = query.split("&");
             for (String pair : pairs) {
-                String[] keyValue = pair.split("=");
-                if (keyValue.length == 2 && "email".equals(keyValue[0])) {
-                    return keyValue[1]; // Return email instead of userId
+                String[] keyValue = pair.split("=", 2); // Sử dụng "2" để đảm bảo chỉ tách thành 2 phần
+                if (keyValue.length == 2 && "accountId".equals(keyValue[0])) {
+                    return keyValue[1]; // Trả về accountId
                 }
             }
         }
-        LOG.error("No email found in the query: " + query);
+        // Ghi log nếu không tìm thấy accountId
+        LOG.error("No accountId found in the query: " + query);
         return null;
     }
+
 
 }
