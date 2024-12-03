@@ -317,17 +317,20 @@ public class AccountService {
 
         var currentFolloweesFuture = getFolloweeList();
         var username = getUsernameFromJwt();
+        var currentAccountFuture = findAccountByUsername(username);
         var blockedListFuture = getBlockedAccountListByUsername(username);
         var blockerListFuture = getBlockerAccountListByUsername(username);
 
         return CompletableFuture.allOf(recommendedAccountsFuture, currentFolloweesFuture, blockedListFuture,
                 blockerListFuture).thenCompose(v -> {
             var recommendedAccounts = recommendedAccountsFuture.join();
+            var currentAccount = currentAccountFuture.join();
             var currentFollowees = currentFolloweesFuture.join();
             var blockedList = blockedListFuture.join();
             var blockerList = blockerListFuture.join();
 
             var list = recommendedAccounts.stream()
+                    .filter(response -> !response.getAccount().equals(currentAccount))
                     .filter(response -> response.getAccount().getStatus().equalsIgnoreCase(AccountStatus.ACTIVE.name()))
                     .filter(response -> !currentFollowees.contains(response.getAccount()))
                     .filter(response -> !blockedList.contains(response.getAccount())
