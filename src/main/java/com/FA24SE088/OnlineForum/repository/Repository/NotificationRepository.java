@@ -11,4 +11,8 @@ import java.util.UUID;
 @Repository
 public interface NotificationRepository extends JpaRepository<Notification, UUID> {
     List<Notification> findByAccount(Account account);
+
+    List<Notification> findByAccountOrderByCreatedDateDesc(Account account);
+
+    List<Notification> findAllByOrderByCreatedDateDesc();
 }

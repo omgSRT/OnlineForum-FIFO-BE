@@ -4,7 +4,6 @@ import com.FA24SE088.OnlineForum.dto.response.OpenAIResponse;
 import com.FA24SE088.OnlineForum.exception.AppException;
 import com.FA24SE088.OnlineForum.exception.ErrorCode;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -35,13 +34,15 @@ public class OpenAIUtil {
         headers.set("Content-Type", "application/json");
 
         String prompt = String.format(
-                "Given the title: \"%s\" and the content: \"%s\", please answer two questions:" +
-                        "\n1. Is the title and content related to the topic \"%s\"? Respond ONLY with \"true\" or \"false\"." +
-                        "\n2. Is the content related to the title? Respond ONLY with \"true\" or \"false\"." +
+                "Given the title: \"%s\", content: \"%s\", and topic: \"%s\", please answer the following questions:" +
+                        "\n1. Does the title reflect the general idea or subject related to \"%s\"? Respond ONLY with \"true\" or \"false\"." +
+                        "\n2. Does the content stay true to the essence or main subject related to \"%s\"? Respond ONLY with \"true\" or \"false\"." +
+                        "\n3. Does the title accurately match or describe the content? Respond ONLY with \"true\" or \"false\"." +
                         "\nRespond as follows:\n" +
                         "Title and Topic Related: [true/false]\n" +
-                        "Content and Title Related: [true/false]",
-                title, content, topicName
+                        "Content and Topic Related: [true/false]\n" +
+                        "Title and Content Related: [true/false]",
+                title, content, topicName, topicName, topicName
         );
 
         Map<String, Object> requestBody = Map.of(
@@ -73,19 +74,27 @@ public class OpenAIUtil {
         if (openAIResponse.getChoices() != null && !openAIResponse.getChoices().isEmpty()) {
                 String result = openAIResponse.getChoices().get(0).getMessage().getContent().trim().toLowerCase();
 
+                System.out.println(result);
+
                 boolean titleTopicRelated = false;
+                boolean contentTopicRelated = false;
                 boolean contentTitleRelated = false;
 
                 for (String line : result.split("\n")) {
                     if (line.startsWith("title and topic related:")) {
                         titleTopicRelated = Boolean.parseBoolean(line.split(":")[1].trim());
-                    } else if (line.startsWith("content and title related:")) {
+                    } else if (line.startsWith("content and topic related:")) {
+                        contentTopicRelated = Boolean.parseBoolean(line.split(":")[1].trim());
+                    } else if (line.startsWith("title and content related:")){
                         contentTitleRelated = Boolean.parseBoolean(line.split(":")[1].trim());
                     }
                 }
 
                 if(!titleTopicRelated){
-                    throw new AppException(ErrorCode.TITLE_AND_CONTENT_NOT_RELATED_TO_TOPIC);
+                    throw new AppException(ErrorCode.TITLE_NOT_RELATED_TO_TOPIC);
+                }
+                if(!contentTopicRelated){
+                    throw new AppException(ErrorCode.CONTENT_NOT_RELATED_TO_TOPIC);
                 }
                 if(!contentTitleRelated){
                     throw new AppException(ErrorCode.CONTENT_NOT_RELATED_TO_TITLE);
