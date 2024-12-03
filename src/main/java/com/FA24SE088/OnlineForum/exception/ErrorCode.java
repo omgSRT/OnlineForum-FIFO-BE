@@ -146,7 +146,8 @@ public enum ErrorCode {
     STAFF_AND_ADMIN_CANNOT_REDEEM(10128, "Staff and admin cannot redeem reward", HttpStatus.INTERNAL_SERVER_ERROR),
     SOURCE_CODE_DOES_NOT_MATCH_CURRENT_TOPIC(10129, "Source Code Doesn't Match Current Selected Topic", HttpStatus.BAD_REQUEST),
     POST_MUST_HAVE_AT_LEAST_ONE_SOURCE_CODE(10130, "Source Code Post Must Have At Least One Source Code", HttpStatus.BAD_REQUEST),
-    CONTENT_NOT_RELATED_TO_TITLE(10130, "Content Do Not Related To Title", HttpStatus.BAD_REQUEST),
+    CONTENT_NOT_RELATED_TO_TITLE(10131, "Content Do Not Related To Title", HttpStatus.BAD_REQUEST),
+    SPAM_COMMENT(10132, "This Type Of Comment Is Considered Spamming. Please Do Not Do That Again", HttpStatus.BAD_REQUEST),
     ;
 
     private int code;
