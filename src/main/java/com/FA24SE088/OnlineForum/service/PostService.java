@@ -535,8 +535,11 @@ public class PostService {
             if (!account.equals(post.getAccount())) {
                 throw new AppException(ErrorCode.ACCOUNT_NOT_THE_AUTHOR_OF_POST);
             }
-            if(post.getStatus().equalsIgnoreCase(PostStatus.DRAFT.name())){
-                throw new AppException(ErrorCode.NOT_A_POST);
+            if (post.getStatus().equals(PostStatus.DRAFT.name())) {
+                throw new AppException(ErrorCode.DRAFT_POST_CANNOT_CHANGE_STATUS);
+            }
+            if (post.getStatus().equals(PostStatus.HIDDEN.name())) {
+                throw new AppException(ErrorCode.POST_ALREADY_HIDDEN);
             }
 
             if(request.getPostFileUrlRequest() != null && !request.getPostFileUrlRequest().isEmpty()){
@@ -681,6 +684,9 @@ public class PostService {
             return unitOfWork.getCategoryRepository().findByAccount(account).thenCompose(categoryList -> {
                 if (post.getStatus().equals(PostStatus.DRAFT.name())) {
                     throw new AppException(ErrorCode.DRAFT_POST_CANNOT_CHANGE_STATUS);
+                }
+                if (post.getStatus().equals(PostStatus.HIDDEN.name())) {
+                    throw new AppException(ErrorCode.POST_ALREADY_HIDDEN);
                 }
 
                 if (account.getRole().getName().equals("USER") &&
