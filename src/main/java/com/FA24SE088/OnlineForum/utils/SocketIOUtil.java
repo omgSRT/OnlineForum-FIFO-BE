@@ -55,8 +55,6 @@ public class SocketIOUtil {
             } else {
                 throw new IllegalArgumentException("Client with session ID '" + sessionId + "' not found");
             }
-        } else {
-            throw new IllegalArgumentException("Account ID '" + accountId + "' not found in session map");
         }
     }
 }

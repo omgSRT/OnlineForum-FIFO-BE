@@ -16,14 +16,12 @@ import com.FA24SE088.OnlineForum.repository.UnitOfWork.UnitOfWork;
 import com.FA24SE088.OnlineForum.utils.ContentFilterUtil;
 import com.FA24SE088.OnlineForum.utils.PaginationUtils;
 import com.FA24SE088.OnlineForum.utils.SocketIOUtil;
-import com.corundumstudio.socketio.SocketIOServer;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -34,7 +32,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
@@ -83,8 +80,8 @@ public class CommentService {
                                                     newComment.setReplies(new ArrayList<>());
 
                                                     var savedComment = unitOfWork.getCommentRepository().save(newComment);
-//                                                    socketIOUtil.sendEventToAllClientInAServer(WebsocketEventName.REFRESH.toString(), newComment);
-                                                    realtime(newComment,account,"Comment","Comment notification");
+                                                    realtimeComment(newComment,"Comment","Comment notification");
+                                                    realtimeNotification(dailyPoint,"DailyPoint","Daily point notification");
                                                     return CompletableFuture.completedFuture(savedComment);
                                                 });
                                     } else {
@@ -100,7 +97,7 @@ public class CommentService {
                                         newComment.setReplies(new ArrayList<>());
 
                                         var savedComment = unitOfWork.getCommentRepository().save(newComment);
-                                        realtime(newComment,account,"Comment","Comment notification");
+                                        realtimeComment(newComment,"Comment","Comment notification");
                                         return CompletableFuture.completedFuture(savedComment);
                                     }
                                 });
@@ -109,8 +106,7 @@ public class CommentService {
                 .thenApply(commentMapper::toCommentResponse);
     }
 
-    public void realtime(Comment comment,Account account, String entity, String titleNotification){
-        //==========================================================
+    public void realtimeComment(Comment comment, String entity, String titleNotification){
         DataNotification dataNotification = null;
         dataNotification = DataNotification.builder()
                 .id(comment.getCommentId())
@@ -123,16 +119,38 @@ public class CommentService {
                     .title(titleNotification)
                     .message(messageJson)
                     .isRead(false)
-                    .account(account)
+                    .account(comment.getPost().getAccount())
                     .createdDate(LocalDateTime.now())
                     .build();
             unitOfWork.getNotificationRepository().save(notification);
-            socketIOUtil.sendEventToOneClientInAServer(account.getAccountId(),WebsocketEventName.NOTIFICATION.name(), notification);
+            socketIOUtil.sendEventToOneClientInAServer(comment.getPost().getAccount().getAccountId(),WebsocketEventName.NOTIFICATION.name(), notification);
             socketIOUtil.sendEventToAllClientInAServer(WebsocketEventName.REFRESH.toString(), comment);
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
-        //==========================================================
+    }
+
+    public void realtimeNotification(DailyPoint dailyPoint, String entity, String titleNotification){
+        DataNotification dataNotification = null;
+        dataNotification = DataNotification.builder()
+                .id(dailyPoint.getDailyPointId())
+                .entity(entity)
+                .build();
+        String messageJson = null;
+        try {
+            messageJson = objectMapper.writeValueAsString(dataNotification);
+            Notification notification = Notification.builder()
+                    .title(titleNotification)
+                    .message(messageJson)
+                    .isRead(false)
+                    .account(dailyPoint.getAccount())
+                    .createdDate(LocalDateTime.now())
+                    .build();
+            unitOfWork.getNotificationRepository().save(notification);
+            socketIOUtil.sendEventToOneClientInAServer(dailyPoint.getAccount().getAccountId(),WebsocketEventName.NOTIFICATION.name(), notification);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
     }
     @Transactional
     @Async("AsyncTaskExecutor")
@@ -169,9 +187,10 @@ public class CommentService {
                                                     newReply.setPost(post);
                                                     newReply.setParentComment(parentComment);
                                                     newReply.setReplies(new ArrayList<>());
-//                                                    socketIOUtil.sendEventToAllClientInAServer(WebsocketEventName.NOTIFICATION.toString(), newReply);
-                                                    realtime(newReply,account,"Comment","Reply notification");
-                                                    return CompletableFuture.completedFuture(unitOfWork.getCommentRepository().save(newReply));
+                                                    var saveNewReply = unitOfWork.getCommentRepository().save(newReply);
+                                                    realtimeNotification(dailyPoint, "DailyPoint", "Daily point notification");
+                                                    realtimeComment(newReply,"Comment","Reply notification");
+                                                    return CompletableFuture.completedFuture(saveNewReply);
                                                 });
                                     } else {
                                         var check = checkCommentContentSafe(request.getContent());
@@ -184,9 +203,9 @@ public class CommentService {
                                         newReply.setPost(post);
                                         newReply.setParentComment(parentComment);
                                         newReply.setReplies(new ArrayList<>());
-//                                        socketIOUtil.sendEventToAllClientInAServer(WebsocketEventName.NOTIFICATION.toString(), newReply);
-                                        realtime(newReply,account,"Comment","Reply notification");
-                                        return CompletableFuture.completedFuture(unitOfWork.getCommentRepository().save(newReply));
+                                        var saveNewReply = unitOfWork.getCommentRepository().save(newReply);
+                                        realtimeComment(newReply,"Comment","Reply notification");
+                                        return CompletableFuture.completedFuture(saveNewReply);
                                     }
                                 });
                     });
