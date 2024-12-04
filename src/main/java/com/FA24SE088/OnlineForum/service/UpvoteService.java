@@ -75,11 +75,12 @@ public class UpvoteService {
                                                             Upvote newUpvote = new Upvote();
                                                             newUpvote.setAccount(account);
                                                             newUpvote.setPost(post);
+                                                            var saveNewUpvote= unitOfWork.getUpvoteRepository().save(newUpvote);
                                                             realtime_upvote(newUpvote,post.getAccount(),"Upvote","Upvote notification");
                                                             if(existingDailyPoint!=null){
                                                                 realtime_dailyPoint(existingDailyPoint,post.getAccount(),"Daily Point","Daily Point notification");
                                                             }
-                                                            var upvoteResponse = upvoteMapper.toUpvoteCreateDeleteResponse(unitOfWork.getUpvoteRepository().save(newUpvote));
+                                                            var upvoteResponse = upvoteMapper.toUpvoteCreateDeleteResponse(saveNewUpvote);
                                                             upvoteResponse.setMessage(SuccessReturnMessage.CREATE_SUCCESS.getMessage());
                                                             return CompletableFuture.completedFuture(upvoteResponse);
                                                         });
@@ -87,8 +88,9 @@ public class UpvoteService {
                                                 Upvote newUpvote = new Upvote();
                                                 newUpvote.setAccount(account);
                                                 newUpvote.setPost(post);
-                                                realtime_upvote(newUpvote,account,"Upvote","Upvote notification");
-                                                var upvoteResponse = upvoteMapper.toUpvoteCreateDeleteResponse(unitOfWork.getUpvoteRepository().save(newUpvote));
+                                                var saveNewUpvote= unitOfWork.getUpvoteRepository().save(newUpvote);
+                                                var upvoteResponse = upvoteMapper.toUpvoteCreateDeleteResponse(saveNewUpvote);
+                                                realtime_upvote(newUpvote,post.getAccount(),"Upvote","Upvote notification");
                                                 upvoteResponse.setMessage(SuccessReturnMessage.CREATE_SUCCESS.getMessage());
                                                 return CompletableFuture.completedFuture(upvoteResponse);
                                             }

@@ -74,7 +74,7 @@ public class PostService {
     //region CRUD Completed Post
     @Async("AsyncTaskExecutor")
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
-    public CompletableFuture<PostResponse> createPost(UUID clientSessionId, PostCreateRequest request) {
+    public CompletableFuture<PostResponse> createPost( PostCreateRequest request) {
         var username = getUsernameFromJwt();
         var accountFuture = findAccountByUsername(username);
         var topicFuture = findTopicById(request.getTopicId());
@@ -186,7 +186,7 @@ public class PostService {
                                             }
                                             String messageJson = null;
                                             try {
-                                                if(clientSessionId != null){
+
                                                     messageJson = objectMapper.writeValueAsString(dataNotification);
                                                     Notification notification = Notification.builder()
                                                             .title("Daily point Noitfication ")
@@ -198,8 +198,8 @@ public class PostService {
                                                     unitOfWork.getNotificationRepository().save(notification);
                                                     response.setNotification(notification);
 //                                                    socketIOUtil.sendEventToOneClientInAServer(clientSessionId, WebsocketEventName.NOTIFICATION.name(), notification);
-//                                                    socketIOUtil.sendEventToOneClient(account.getAccountId().toString(), WebsocketEventName.NOTIFICATION.name(), notification);
-                                                }
+                                                    socketIOUtil.sendEventToOneClientInAServer(account.getAccountId(), WebsocketEventName.NOTIFICATION.name(), notification);
+
                                             } catch (JsonProcessingException e) {
                                                 throw new RuntimeException(e);
                                             }

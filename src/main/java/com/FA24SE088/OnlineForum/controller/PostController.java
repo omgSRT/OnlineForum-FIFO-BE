@@ -50,8 +50,8 @@ public class PostController {
 //    }
     @Operation(summary = "Create New Post")
     @PostMapping(path = "/create")
-    public ApiResponse<PostResponse> createPost(@RequestParam(required = false) UUID clientSessionId, @RequestBody @Valid PostCreateRequest request) {
-        return postService.createPost(clientSessionId, request).thenApply(postResponse ->
+    public ApiResponse<PostResponse> createPost( @RequestBody @Valid PostCreateRequest request) {
+        return postService.createPost(request).thenApply(postResponse ->
                 ApiResponse.<PostResponse>builder()
                         .message(SuccessReturnMessage.CREATE_SUCCESS.getMessage())
                         .entity(postResponse)
