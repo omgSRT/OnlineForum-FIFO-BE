@@ -148,6 +148,7 @@ public enum ErrorCode {
     POST_MUST_HAVE_AT_LEAST_ONE_SOURCE_CODE(10130, "Source Code Post Must Have At Least One Source Code", HttpStatus.BAD_REQUEST),
     CONTENT_NOT_RELATED_TO_TITLE(10131, "Content Do Not Related To Title", HttpStatus.BAD_REQUEST),
     SPAM_COMMENT(10132, "This Type Of Comment Is Considered Spamming. Please Do Not Do That Again", HttpStatus.BAD_REQUEST),
+    NOT_A_POST(10133, "This Is Not A Completed Post", HttpStatus.BAD_REQUEST),
     ;
 
     private int code;

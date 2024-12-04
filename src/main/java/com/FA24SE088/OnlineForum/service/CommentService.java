@@ -266,11 +266,20 @@ public class CommentService {
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
     public CompletableFuture<List<CommentNoPostResponse>> getAllCommentsByPost(int page, int perPage, UUID postId) {
         var postFuture = findPostById(postId);
+        var username = getUsernameFromJwt();
+        var blockedListFuture = getBlockedAccountListByUsername(username);
+        var blockerListFuture = getBlockerAccountListByUsername(username);
 
-        return postFuture.thenApply(post -> {
+        return CompletableFuture.allOf(postFuture, blockerListFuture, blockedListFuture).thenApply(v -> {
+            var post = postFuture.join();
+            var blockedList = blockedListFuture.join();
+            var blockerList = blockerListFuture.join();
+
             var commentList = unitOfWork.getCommentRepository().findAllByPostWithReplies(post);
 
             var list = commentList.stream()
+                    .filter(comment -> !blockedList.contains(comment.getAccount())
+                    || !blockerList.contains(comment.getAccount()))
                     .map(commentMapper::toCommentNoPostResponseWithReplies)
                     .toList();
             return paginationUtils.convertListToPage(page, perPage, list);
@@ -497,5 +506,18 @@ public class CommentService {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
+
+    @Async("AsyncTaskExecutor")
+    private CompletableFuture<List<Account>> getBlockerAccountListByUsername(String username) {
+        var accountFuture = findAccountByUsername(username);
+
+        return accountFuture.thenApply(account -> {
+            var blockedAccountEntityList = unitOfWork.getBlockedAccountRepository().findByBlocked(account);
+
+            return blockedAccountEntityList.stream()
+                    .map(BlockedAccount::getBlocker)
+                    .toList();
+        });
     }
 }

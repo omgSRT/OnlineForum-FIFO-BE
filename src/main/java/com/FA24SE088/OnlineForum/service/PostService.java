@@ -310,7 +310,7 @@ public class PostService {
 
         var postListFuture = findAllPostsOrderByCreatedDateDesc();
         var username = getUsernameFromJwt();
-        var accountFuture = findAccountByUsername(username);
+        var currentAccountFuture = findAccountByUsername(username);
         var categoryFuture = categoryId != null
                 ? findCategoryById(categoryId)
                 : CompletableFuture.completedFuture(null);
@@ -322,14 +322,15 @@ public class PostService {
                 : CompletableFuture.completedFuture(null);
         var followerListFuture = getFolloweeList();
 
-        return CompletableFuture.allOf(postListFuture, accountFuture, topicFuture, tagFuture, followerListFuture).thenCompose(v -> {
+        return CompletableFuture.allOf(postListFuture, currentAccountFuture, topicFuture,
+                tagFuture, followerListFuture).thenCompose(v -> {
             var postList = postListFuture.join();
-            var account = accountFuture.join();
+            var currentAccount = currentAccountFuture.join();
             var category = categoryFuture.join();
             var topic = topicFuture.join();
             var tag = tagFuture.join();
             List<Account> followerAccountList = followerListFuture.join();
-            var manageCategoryListFuture = unitOfWork.getCategoryRepository().findByAccount(account);
+            var manageCategoryListFuture = unitOfWork.getCategoryRepository().findByAccount(currentAccount);
 
             return manageCategoryListFuture.thenCompose(manageCategoryList -> {
                 var manageTopicList = getAllTopicsFromCategoryList(manageCategoryList);
@@ -339,9 +340,11 @@ public class PostService {
                             if (IsFolloweeIncluded == null) {
                                 return true;
                             } else if (IsFolloweeIncluded) {
-                                return followerAccountList.contains(post.getAccount());
+                                return followerAccountList.contains(post.getAccount())
+                                        || post.getAccount().equals(currentAccount);
                             } else {
-                                return !followerAccountList.contains(post.getAccount());
+                                return !followerAccountList.contains(post.getAccount())
+                                        && !post.getAccount().equals(currentAccount);
                             }
                         })
                         .filter(post -> {
@@ -531,6 +534,9 @@ public class PostService {
 
             if (!account.equals(post.getAccount())) {
                 throw new AppException(ErrorCode.ACCOUNT_NOT_THE_AUTHOR_OF_POST);
+            }
+            if(post.getStatus().equalsIgnoreCase(PostStatus.DRAFT.name())){
+                throw new AppException(ErrorCode.NOT_A_POST);
             }
 
             if(request.getPostFileUrlRequest() != null && !request.getPostFileUrlRequest().isEmpty()){
@@ -819,18 +825,25 @@ public class PostService {
     @Async("AsyncTaskExecutor")
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
     public CompletableFuture<List<PostResponse>> getAllDrafts(int page, int perPage,
+                                                              UUID categoryId,
                                                               UUID accountId) {
         var postListFuture = findAllPostsOrderByCreatedDateDesc();
         var accountFuture = accountId != null
                 ? findAccountById(accountId)
                 : CompletableFuture.completedFuture(null);
+        var categoryFuture = categoryId != null
+                ? findCategoryById(categoryId)
+                : CompletableFuture.completedFuture(null);
 
         return CompletableFuture.allOf(postListFuture, accountFuture).thenCompose(v -> {
             var postList = postListFuture.join();
+            var category = categoryFuture.join();
             var account = accountFuture.join();
 
             var responseFutures = new ArrayList<>(postList.stream()
                     .filter(post -> account == null || post.getAccount().equals(account))
+                    .filter(post -> category == null
+                            || (post.getTopic() != null && post.getTopic().getCategory().equals(category)))
                     .filter(post -> post.getStatus().equals(PostStatus.DRAFT.name()))
                     .map(post -> {
                         CompletableFuture<Integer> upvoteCountFuture = unitOfWork.getUpvoteRepository()
@@ -862,17 +875,23 @@ public class PostService {
 
     @Async("AsyncTaskExecutor")
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
-    public CompletableFuture<List<PostResponse>> getAllDraftsForCurrentUser(int page, int perPage) {
+    public CompletableFuture<List<PostResponse>> getAllDraftsForCurrentUser(int page, int perPage, UUID categoryId) {
         var postListFuture = findAllPostsOrderByCreatedDateDesc();
         var username = getUsernameFromJwt();
         var accountFuture = findAccountByUsername(username);
+        var categoryFuture = categoryId != null
+                ? findCategoryById(categoryId)
+                : CompletableFuture.completedFuture(null);
 
-        return CompletableFuture.allOf(postListFuture, accountFuture).thenCompose(v -> {
+        return CompletableFuture.allOf(postListFuture, accountFuture, categoryFuture).thenCompose(v -> {
             var postList = postListFuture.join();
             var account = accountFuture.join();
+            var category = categoryFuture.join();
 
             var responseFutures = new ArrayList<>(postList.stream()
                     .filter(post -> post.getAccount().equals(account))
+                    .filter(post -> category == null
+                            || (post.getTopic() != null && post.getTopic().getCategory().equals(category)))
                     .filter(post -> post.getStatus().equals(PostStatus.DRAFT.name()))
                     .map(post -> {
                         CompletableFuture<Integer> upvoteCountFuture = unitOfWork.getUpvoteRepository()
@@ -937,7 +956,8 @@ public class PostService {
             var deletePostFileFuture = deletePostFilesByPost(post);
             var createPostFileFuture = createPostFiles(request, post);
 
-            return CompletableFuture.allOf(deleteImageListFuture, createImageFuture, deletePostFileFuture, createPostFileFuture).thenCompose(voidData -> {
+            return CompletableFuture.allOf(deleteImageListFuture, createImageFuture,
+                    deletePostFileFuture, createPostFileFuture).thenCompose(voidData -> {
                 postMapper.updateDraft(post, request);
                 post.setTopic(topic != null ? (Topic) topic : null);
                 post.setTag(tag != null ? (Tag) tag : null);

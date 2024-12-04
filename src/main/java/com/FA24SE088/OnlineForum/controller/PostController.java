@@ -174,8 +174,9 @@ public class PostController {
     @GetMapping(path = "/getall/draft")
     public ApiResponse<List<PostResponse>> getAllDrafts(@RequestParam(defaultValue = "1") int page,
                                                         @RequestParam(defaultValue = "10") int perPage,
+                                                        @RequestParam(required = false) UUID categoryId,
                                                         @RequestParam(required = false) UUID accountId) {
-        return postService.getAllDrafts(page, perPage, accountId).thenApply(postResponses ->
+        return postService.getAllDrafts(page, perPage, categoryId, accountId).thenApply(postResponses ->
                 ApiResponse.<List<PostResponse>>builder()
                         .entity(postResponses)
                         .build()
@@ -185,8 +186,9 @@ public class PostController {
     @Operation(summary = "Get All Drafts", description = "Get All Drafts For Current User")
     @GetMapping(path = "/getall/draft/by-current-user")
     public ApiResponse<List<PostResponse>> getAllDraftsForCurrentUser(@RequestParam(defaultValue = "1") int page,
-                                                                      @RequestParam(defaultValue = "10") int perPage) {
-        return postService.getAllDraftsForCurrentUser(page, perPage).thenApply(postResponses ->
+                                                                      @RequestParam(defaultValue = "10") int perPage,
+                                                                      @RequestParam(required = false) UUID categoryId) {
+        return postService.getAllDraftsForCurrentUser(page, perPage, categoryId).thenApply(postResponses ->
                 ApiResponse.<List<PostResponse>>builder()
                         .entity(postResponses)
                         .build()
