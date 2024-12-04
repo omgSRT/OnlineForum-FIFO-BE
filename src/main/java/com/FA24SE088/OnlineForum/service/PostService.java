@@ -875,17 +875,23 @@ public class PostService {
 
     @Async("AsyncTaskExecutor")
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
-    public CompletableFuture<List<PostResponse>> getAllDraftsForCurrentUser(int page, int perPage) {
+    public CompletableFuture<List<PostResponse>> getAllDraftsForCurrentUser(int page, int perPage, UUID categoryId) {
         var postListFuture = findAllPostsOrderByCreatedDateDesc();
         var username = getUsernameFromJwt();
         var accountFuture = findAccountByUsername(username);
+        var categoryFuture = categoryId != null
+                ? findCategoryById(categoryId)
+                : CompletableFuture.completedFuture(null);
 
-        return CompletableFuture.allOf(postListFuture, accountFuture).thenCompose(v -> {
+        return CompletableFuture.allOf(postListFuture, accountFuture, categoryFuture).thenCompose(v -> {
             var postList = postListFuture.join();
             var account = accountFuture.join();
+            var category = categoryFuture.join();
 
             var responseFutures = new ArrayList<>(postList.stream()
                     .filter(post -> post.getAccount().equals(account))
+                    .filter(post -> category == null
+                            || (post.getTopic() != null && post.getTopic().getCategory().equals(category)))
                     .filter(post -> post.getStatus().equals(PostStatus.DRAFT.name()))
                     .map(post -> {
                         CompletableFuture<Integer> upvoteCountFuture = unitOfWork.getUpvoteRepository()
