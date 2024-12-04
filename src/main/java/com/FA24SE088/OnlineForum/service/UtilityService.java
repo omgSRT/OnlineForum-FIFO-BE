@@ -2,6 +2,7 @@ package com.FA24SE088.OnlineForum.service;
 
 import com.FA24SE088.OnlineForum.dto.response.*;
 import com.FA24SE088.OnlineForum.entity.*;
+import com.FA24SE088.OnlineForum.enums.PostStatus;
 import com.FA24SE088.OnlineForum.exception.AppException;
 import com.FA24SE088.OnlineForum.exception.ErrorCode;
 import com.FA24SE088.OnlineForum.mapper.DailyPointMapper;
@@ -15,6 +16,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -98,12 +100,50 @@ public class UtilityService {
 
     @Async("AsyncTaskExecutor")
     private CompletableFuture<List<Account>> findAllAccountsByUsernameContainingIgnoreCase(String username) {
-        return unitOfWork.getAccountRepository().findByUsernameContainingIgnoreCase(username);
+        var currentUsername = getUsernameFromJwt();
+        var blockedListFuture = getBlockedAccountListByUsername(currentUsername);
+        var blockerListFuture = getBlockerAccountListByUsername(currentUsername);
+
+        return CompletableFuture.allOf(blockedListFuture, blockerListFuture).thenCompose(v ->
+                    unitOfWork.getAccountRepository().findByUsernameContainingIgnoreCase(username)
+                            .thenApply(accountList -> {
+                                var blockedList = blockedListFuture.join();
+                                var blockerList = blockerListFuture.join();
+
+                                accountList = accountList.stream()
+                                        .filter(account -> !account.getUsername().equals(currentUsername))
+                                        .filter(account -> account.getStatus() != null && account.getStatus().equals("ACTIVE"))
+                                        .filter(account -> !blockerList.contains(account)
+                                                && !blockedList.contains(account))
+                                        .toList();
+
+                                return accountList;
+                            })
+                );
     }
 
     @Async("AsyncTaskExecutor")
     private CompletableFuture<List<Account>> findAllAccountsByEmailContainingIgnoreCase(String email) {
-        return unitOfWork.getAccountRepository().findByEmailContainingIgnoreCase(email);
+        var currentUsername = getUsernameFromJwt();
+        var blockedListFuture = getBlockedAccountListByUsername(currentUsername);
+        var blockerListFuture = getBlockerAccountListByUsername(currentUsername);
+
+        return CompletableFuture.allOf(blockedListFuture, blockerListFuture).thenCompose(v ->
+                unitOfWork.getAccountRepository().findByEmailContainingIgnoreCase(email)
+                        .thenApply(accountList -> {
+                            var blockedList = blockedListFuture.join();
+                            var blockerList = blockerListFuture.join();
+
+                            accountList = accountList.stream()
+                                    .filter(account -> !account.getUsername().equals(currentUsername))
+                                    .filter(account -> account.getStatus() != null && account.getStatus().equals("ACTIVE"))
+                                    .filter(account -> !blockerList.contains(account)
+                                            && !blockedList.contains(account))
+                                    .toList();
+
+                            return accountList;
+                        })
+        );
     }
 
     @Async("AsyncTaskExecutor")
@@ -118,12 +158,54 @@ public class UtilityService {
 
     @Async("AsyncTaskExecutor")
     private CompletableFuture<List<Post>> findAllPostsByTitleContainingIgnoreCase(String title) {
-        return unitOfWork.getPostRepository().findByTitleContainingIgnoreCaseOrderByCreatedDateDesc(title);
+        var username = getUsernameFromJwt();
+        var blockedListFuture = getBlockedAccountListByUsername(username);
+        var blockerListFuture = getBlockerAccountListByUsername(username);
+
+        return CompletableFuture.allOf(blockedListFuture, blockerListFuture).thenCompose(v ->
+                unitOfWork.getPostRepository().findByTitleContainingIgnoreCaseOrderByCreatedDateDesc(title)
+                        .thenApply(postList -> {
+                            var blockedList = blockedListFuture.join();
+                            var blockerList = blockerListFuture.join();
+
+                            postList = postList.stream()
+                                    .filter(post -> !post.getAccount().getUsername().equals(username))
+                                    .filter(post -> post.getAccount().getStatus() != null
+                                            && post.getAccount().getStatus().equals("ACTIVE"))
+                                    .filter(post -> post.getStatus().equalsIgnoreCase(PostStatus.PUBLIC.name()))
+                                    .filter(post -> !blockerList.contains(post.getAccount())
+                                            && !blockedList.contains(post.getAccount()))
+                                    .toList();
+
+                            return postList;
+                        })
+        );
     }
 
     @Async("AsyncTaskExecutor")
     private CompletableFuture<List<Post>> findAllPostsByContentContainingIgnoreCase(String content) {
-        return unitOfWork.getPostRepository().findByContentContainingIgnoreCaseOrderByCreatedDateDesc(content);
+        var username = getUsernameFromJwt();
+        var blockedListFuture = getBlockedAccountListByUsername(username);
+        var blockerListFuture = getBlockerAccountListByUsername(username);
+
+        return CompletableFuture.allOf(blockedListFuture, blockerListFuture).thenCompose(v ->
+                unitOfWork.getPostRepository().findByContentContainingIgnoreCaseOrderByCreatedDateDesc(content)
+                        .thenApply(postList -> {
+                            var blockedList = blockedListFuture.join();
+                            var blockerList = blockerListFuture.join();
+
+                            postList = postList.stream()
+                                    .filter(post -> !post.getAccount().getUsername().equals(username))
+                                    .filter(post -> post.getAccount().getStatus() != null
+                                            && post.getAccount().getStatus().equals("ACTIVE"))
+                                    .filter(post -> post.getStatus().equalsIgnoreCase(PostStatus.PUBLIC.name()))
+                                    .filter(post -> !blockerList.contains(post.getAccount())
+                                            && !blockedList.contains(post.getAccount()))
+                                    .toList();
+
+                            return postList;
+                        })
+                );
     }
 
     private Account getCurrentUser() {
@@ -282,5 +364,42 @@ public class UtilityService {
         return CompletableFuture.completedFuture(Collections.emptyList());
     }
 
+    private String getUsernameFromJwt() {
+        var authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && authentication.getPrincipal() instanceof Jwt jwt) {
+            return jwt.getClaim("username");
+        }
+        return null;
+    }
+    @Async("AsyncTaskExecutor")
+    private CompletableFuture<Account> findAccountByUsername(String username) {
+        return CompletableFuture.supplyAsync(() ->
+                unitOfWork.getAccountRepository().findByUsername(username)
+                        .orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND))
+        );
+    }
+    @Async("AsyncTaskExecutor")
+    private CompletableFuture<List<Account>> getBlockedAccountListByUsername(String username) {
+        var accountFuture = findAccountByUsername(username);
 
+        return accountFuture.thenApply(account -> {
+            var blockedAccountEntityList = unitOfWork.getBlockedAccountRepository().findByBlocker(account);
+
+            return blockedAccountEntityList.stream()
+                    .map(BlockedAccount::getBlocked)
+                    .toList();
+        });
+    }
+    @Async("AsyncTaskExecutor")
+    private CompletableFuture<List<Account>> getBlockerAccountListByUsername(String username) {
+        var accountFuture = findAccountByUsername(username);
+
+        return accountFuture.thenApply(account -> {
+            var blockedAccountEntityList = unitOfWork.getBlockedAccountRepository().findByBlocked(account);
+
+            return blockedAccountEntityList.stream()
+                    .map(BlockedAccount::getBlocker)
+                    .toList();
+        });
+    }
 }
