@@ -535,6 +535,9 @@ public class PostService {
             if (!account.equals(post.getAccount())) {
                 throw new AppException(ErrorCode.ACCOUNT_NOT_THE_AUTHOR_OF_POST);
             }
+            if(post.getStatus().equalsIgnoreCase(PostStatus.DRAFT.name())){
+                throw new AppException(ErrorCode.NOT_A_POST);
+            }
 
             if(request.getPostFileUrlRequest() != null && !request.getPostFileUrlRequest().isEmpty()){
                 var programmingLanguage = determineProgrammingLanguage(request.getPostFileUrlRequest());
@@ -940,7 +943,8 @@ public class PostService {
             var deletePostFileFuture = deletePostFilesByPost(post);
             var createPostFileFuture = createPostFiles(request, post);
 
-            return CompletableFuture.allOf(deleteImageListFuture, createImageFuture, deletePostFileFuture, createPostFileFuture).thenCompose(voidData -> {
+            return CompletableFuture.allOf(deleteImageListFuture, createImageFuture,
+                    deletePostFileFuture, createPostFileFuture).thenCompose(voidData -> {
                 postMapper.updateDraft(post, request);
                 post.setTopic(topic != null ? (Topic) topic : null);
                 post.setTag(tag != null ? (Tag) tag : null);
