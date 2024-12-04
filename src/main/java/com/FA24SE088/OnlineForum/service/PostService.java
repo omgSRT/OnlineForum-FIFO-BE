@@ -236,7 +236,7 @@ public class PostService {
         var tagFuture = tagId != null
                 ? findTagById(tagId)
                 : CompletableFuture.completedFuture(null);
-        var followerListFuture = getFollowerList();
+        var followerListFuture = getFolloweeList();
 
         return CompletableFuture.allOf(postListFuture, accountFuture, topicFuture,
                 tagFuture, followerListFuture, blockedListFuture).thenCompose(v -> {
@@ -320,7 +320,7 @@ public class PostService {
         var tagFuture = tagId != null
                 ? findTagById(tagId)
                 : CompletableFuture.completedFuture(null);
-        var followerListFuture = getFollowerList();
+        var followerListFuture = getFolloweeList();
 
         return CompletableFuture.allOf(postListFuture, accountFuture, topicFuture, tagFuture, followerListFuture).thenCompose(v -> {
             var postList = postListFuture.join();
@@ -1525,7 +1525,7 @@ public class PostService {
     }
 
     @Async("AsyncTaskExecutor")
-    private CompletableFuture<List<Account>> getFollowerList() {
+    private CompletableFuture<List<Account>> getFolloweeList() {
         var username = getUsernameFromJwt();
         var accountFuture = findAccountByUsername(username);
         return accountFuture.thenCompose(account -> {

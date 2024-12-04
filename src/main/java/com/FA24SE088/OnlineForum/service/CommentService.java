@@ -493,7 +493,7 @@ public class CommentService {
 
     private boolean checkCommentContentSafe(String content) {
         try {
-            return contentFilterUtil.isTextSafe(content);
+            return contentFilterUtil.isCommentContentSafe(content);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
