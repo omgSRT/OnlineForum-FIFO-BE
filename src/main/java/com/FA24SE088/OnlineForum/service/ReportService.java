@@ -232,7 +232,7 @@ public class ReportService {
                                         post.setStatus(PostStatus.HIDDEN.name());
                                         realtimeNotificationForReported(report, "Report", "Your post has been violated and deleted");
                                         realtimeNotificationForReporter(report, "Report", "The staff has processing the post you have reported");
-                                        realtimeNotificationForStaff(report, account, "Report", "This is the 5th Approve and the post was deleted");
+                                        realtimeNotificationForStaff(report, account, "This is the 5th Approve and the post was deleted", "Report");
                                         unitOfWork.getWalletRepository().save(walletPostOwner);
                                         unitOfWork.getPostRepository().save(post);
                                         return CompletableFuture.completedFuture(null);
