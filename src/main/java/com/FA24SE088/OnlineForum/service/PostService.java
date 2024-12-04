@@ -310,7 +310,7 @@ public class PostService {
 
         var postListFuture = findAllPostsOrderByCreatedDateDesc();
         var username = getUsernameFromJwt();
-        var accountFuture = findAccountByUsername(username);
+        var currentAccountFuture = findAccountByUsername(username);
         var categoryFuture = categoryId != null
                 ? findCategoryById(categoryId)
                 : CompletableFuture.completedFuture(null);
@@ -322,14 +322,15 @@ public class PostService {
                 : CompletableFuture.completedFuture(null);
         var followerListFuture = getFolloweeList();
 
-        return CompletableFuture.allOf(postListFuture, accountFuture, topicFuture, tagFuture, followerListFuture).thenCompose(v -> {
+        return CompletableFuture.allOf(postListFuture, currentAccountFuture, topicFuture,
+                tagFuture, followerListFuture).thenCompose(v -> {
             var postList = postListFuture.join();
-            var account = accountFuture.join();
+            var currentAccount = currentAccountFuture.join();
             var category = categoryFuture.join();
             var topic = topicFuture.join();
             var tag = tagFuture.join();
             List<Account> followerAccountList = followerListFuture.join();
-            var manageCategoryListFuture = unitOfWork.getCategoryRepository().findByAccount(account);
+            var manageCategoryListFuture = unitOfWork.getCategoryRepository().findByAccount(currentAccount);
 
             return manageCategoryListFuture.thenCompose(manageCategoryList -> {
                 var manageTopicList = getAllTopicsFromCategoryList(manageCategoryList);
@@ -339,9 +340,11 @@ public class PostService {
                             if (IsFolloweeIncluded == null) {
                                 return true;
                             } else if (IsFolloweeIncluded) {
-                                return followerAccountList.contains(post.getAccount());
+                                return followerAccountList.contains(post.getAccount())
+                                        || post.getAccount().equals(currentAccount);
                             } else {
-                                return !followerAccountList.contains(post.getAccount());
+                                return !followerAccountList.contains(post.getAccount())
+                                        && !post.getAccount().equals(currentAccount);
                             }
                         })
                         .filter(post -> {
