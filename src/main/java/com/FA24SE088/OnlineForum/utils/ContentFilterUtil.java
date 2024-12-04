@@ -89,6 +89,19 @@ public class ContentFilterUtil {
         }
     }
 
+    public boolean isCommentContentSafe(String text) throws Exception {
+        try (LanguageServiceClient language = getLanguageServiceClient()) {
+            Document doc = Document.newBuilder()
+                    .setContent(text)
+                    .setType(Document.Type.PLAIN_TEXT)
+                    .build();
+
+            Sentiment sentiment = language.analyzeSentiment(doc).getDocumentSentiment();
+            float score = sentiment.getScore();
+
+            return !(score < -0.8);
+        }
+    }
 
     public boolean areContentsSafe(List<String> imageUrls, String title, String description) throws Exception {
         boolean areImagesSafe = true;
