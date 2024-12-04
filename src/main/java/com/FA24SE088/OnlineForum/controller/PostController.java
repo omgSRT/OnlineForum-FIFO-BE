@@ -174,8 +174,9 @@ public class PostController {
     @GetMapping(path = "/getall/draft")
     public ApiResponse<List<PostResponse>> getAllDrafts(@RequestParam(defaultValue = "1") int page,
                                                         @RequestParam(defaultValue = "10") int perPage,
+                                                        @RequestParam(required = false) UUID categoryId,
                                                         @RequestParam(required = false) UUID accountId) {
-        return postService.getAllDrafts(page, perPage, accountId).thenApply(postResponses ->
+        return postService.getAllDrafts(page, perPage, categoryId, accountId).thenApply(postResponses ->
                 ApiResponse.<List<PostResponse>>builder()
                         .entity(postResponses)
                         .build()
