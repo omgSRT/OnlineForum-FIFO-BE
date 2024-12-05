@@ -1,21 +1,20 @@
 package com.FA24SE088.OnlineForum.service;
 
 import com.FA24SE088.OnlineForum.dto.request.UnfollowRequest;
-import com.FA24SE088.OnlineForum.dto.response.AccountFollowResponse;
-import com.FA24SE088.OnlineForum.dto.response.AccountResponse;
-import com.FA24SE088.OnlineForum.dto.response.Follow2Response;
-import com.FA24SE088.OnlineForum.dto.response.FollowResponse;
-import com.FA24SE088.OnlineForum.entity.Account;
-import com.FA24SE088.OnlineForum.entity.BlockedAccount;
-import com.FA24SE088.OnlineForum.entity.Follow;
+import com.FA24SE088.OnlineForum.dto.response.*;
+import com.FA24SE088.OnlineForum.entity.*;
 import com.FA24SE088.OnlineForum.enums.FollowStatus;
 import com.FA24SE088.OnlineForum.enums.SuccessReturnMessage;
+import com.FA24SE088.OnlineForum.enums.WebsocketEventName;
 import com.FA24SE088.OnlineForum.exception.AppException;
 import com.FA24SE088.OnlineForum.exception.ErrorCode;
 import com.FA24SE088.OnlineForum.mapper.AccountMapper;
 import com.FA24SE088.OnlineForum.mapper.FollowMapper;
 import com.FA24SE088.OnlineForum.repository.UnitOfWork.UnitOfWork;
 import com.FA24SE088.OnlineForum.utils.PaginationUtils;
+import com.FA24SE088.OnlineForum.utils.SocketIOUtil;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -25,6 +24,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.logging.SocketHandler;
 
@@ -36,6 +36,8 @@ public class FollowService {
     AccountMapper accountMapper;
     UnitOfWork unitOfWork;
     PaginationUtils paginationUtils;
+    ObjectMapper objectMapper = new ObjectMapper();
+    SocketIOUtil socketIOUtil;
 
     FollowMapper followMapper;
 
@@ -170,11 +172,36 @@ public class FollowService {
                     .status(FollowStatus.FOLLOWING.name())
                     .build();
             unitOfWork.getFollowRepository().save(follow);
+            response = followMapper.toResponse2(follow);
             response.setMessage(SuccessReturnMessage.CREATE_SUCCESS.getMessage());
             response.setFollowee(followee);
             response.setFollower(account);
+            realtime_follow(follow,"Follow","Follow notification");
         }
         return response;
+    }
+
+    public void realtime_follow(Follow follow, String entity, String titleNotification){
+        DataNotification dataNotification = DataNotification.builder()
+                .id(follow.getFollowId())
+                .entity(entity)
+                .build();
+        String messageJson = null;
+        try {
+            messageJson = objectMapper.writeValueAsString(dataNotification);
+            Notification notification = Notification.builder()
+                    .title(titleNotification)
+                    .message(messageJson)
+                    .isRead(false)
+                    .account(follow.getFollowee())
+                    .createdDate(LocalDateTime.now())
+                    .build();
+            unitOfWork.getNotificationRepository().save(notification);
+            socketIOUtil.sendEventToOneClientInAServer(follow.getFollowee().getAccountId(), WebsocketEventName.NOTIFICATION.name(), notification);
+
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
     }
 
 
