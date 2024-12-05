@@ -723,7 +723,7 @@ public class PostService {
 
     @Async("AsyncTaskExecutor")
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
-    public CompletableFuture<byte[]> downloadFiles(UUID clientSessionId,UUID postId) {
+    public CompletableFuture<byte[]> downloadFiles(UUID postId) {
         var username = getUsernameFromJwt();
         var accountFuture = findAccountByUsername(username);
         var postFuture = findPostById(postId);
@@ -745,7 +745,7 @@ public class PostService {
                 return processDownload(post, byteArrayOutputStream, isZipEmpty);
             } else {
                 return processUserDownload(accountDownloader, post, pointList,
-                        byteArrayOutputStream, isZipEmpty, accountOwner,clientSessionId);
+                        byteArrayOutputStream, isZipEmpty, accountOwner);
             }
         });
     }
@@ -1853,7 +1853,7 @@ public class PostService {
     @Async("AsyncTaskExecutor")
     private CompletableFuture<byte[]> processUserDownload(Account accountDownloader, Post post, List<Point> pointList,
                                                           ByteArrayOutputStream byteArrayOutputStream, AtomicBoolean isZipEmpty,
-                                                          Account accountOwner,UUID clientSessionId) {
+                                                          Account accountOwner) {
         //get wallets of both downloader and owner of the src code
         var walletDownloader = accountDownloader.getWallet();
         var walletOwner = accountOwner.getWallet();
@@ -1891,7 +1891,7 @@ public class PostService {
                         .build();
                 String messageJson = null;
                 try {
-                    if(clientSessionId != null) {
+
                         messageJson = objectMapper.writeValueAsString(dataNotification);
                         Notification notification = Notification.builder()
                                 .title("Daily point Noitfication ")
@@ -1901,9 +1901,7 @@ public class PostService {
                                 .createdDate(LocalDateTime.now())
                                 .build();
                         unitOfWork.getNotificationRepository().save(notification);
-//                        socketIOUtil.sendEventToOneClientInAServer(clientSessionId, WebsocketEventName.NOTIFICATION.name(), notification);
-//                        socketIOUtil.sendEventToOneClient(accountOwner.getAccountId().toString(),WebsocketEventName.NOTIFICATION.name(), notification);
-                    }
+                        socketIOUtil.sendEventToOneClientInAServer(accountOwner.getAccountId(),WebsocketEventName.NOTIFICATION.name(), notification);
                 } catch (JsonProcessingException e) {
                     throw new RuntimeException(e);
                 }
