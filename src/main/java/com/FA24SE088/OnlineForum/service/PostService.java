@@ -226,6 +226,7 @@ public class PostService {
                 ? findAccountById(accountId)
                 : CompletableFuture.completedFuture(null);
         var username = getUsernameFromJwt();
+        var currentAccountFuture = findAccountByUsername(username);
         var blockedListFuture = getBlockedAccountListByUsername(username);
         var categoryFuture = categoryId != null
                 ? findCategoryById(categoryId)
@@ -247,6 +248,7 @@ public class PostService {
             var tag = tagFuture.join();
             List<Account> followerAccountList = followerListFuture.join();
             List<Account> blockedAccountList = blockedListFuture.join();
+            var currentAccount = currentAccountFuture.join();
 
             if (topic != null && category != null && !topic.getCategory().equals(category)) {
                 throw new AppException(ErrorCode.TOPIC_NOT_BELONG_TO_CATEGORY);
@@ -257,9 +259,11 @@ public class PostService {
                         if (IsFolloweeIncluded == null) {
                             return true;
                         } else if (IsFolloweeIncluded) {
-                            return followerAccountList.contains(post.getAccount());
+                            return post.getAccount().equals(currentAccount) ||
+                                    followerAccountList.contains(post.getAccount());
                         } else {
-                            return !followerAccountList.contains(post.getAccount());
+                            return !followerAccountList.contains(post.getAccount())
+                                    && !post.getAccount().equals(currentAccount);
                         }
                     })
                     .filter(post -> !blockedAccountList.contains(post.getAccount()))
@@ -1021,7 +1025,7 @@ public class PostService {
             if (post.getTag() == null || post.getTopic() == null) {
                 throw new AppException(ErrorCode.TYPE_OR_TOPIC_NOT_FOUND);
             }
-            if(post.getTopic().getCategory().getName().equalsIgnoreCase("SOURCE CODE")
+            if (post.getTopic().getCategory().getName().equalsIgnoreCase("SOURCE CODE")
                     && (post.getPostFileList() == null || post.getPostFileList().isEmpty())){
                 throw new AppException(ErrorCode.POST_MUST_HAVE_AT_LEAST_ONE_SOURCE_CODE);
             }
@@ -1878,7 +1882,6 @@ public class PostService {
 
         return CompletableFuture.allOf(dailyPointFuture, postFileListFuture, transactionFuture).thenCompose(voidData -> {
             var dailyPoint = dailyPointFuture.join();
-            var transaction = transactionFuture.join();
             var postFileList = postFileListFuture.join();
 
             if (dailyPoint != null) {
@@ -1908,8 +1911,6 @@ public class PostService {
                 //==========================================================
             }
 
-
-            unitOfWork.getTransactionRepository().save(transaction);
             unitOfWork.getWalletRepository().save(walletDownloader);
             if(checkShouldUpdateWalletOwner(accountOwner)){
                 unitOfWork.getWalletRepository().save(walletOwner);
