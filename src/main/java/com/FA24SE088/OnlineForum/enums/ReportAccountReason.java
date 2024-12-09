@@ -18,7 +18,7 @@ public enum ReportAccountReason {
 
     private String message;
 
-    ReportAccountReason(String message){
+    ReportAccountReason(String message) {
         this.message = message;
     }
 }

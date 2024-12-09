@@ -2,19 +2,16 @@ package com.FA24SE088.OnlineForum.service;
 
 import com.FA24SE088.OnlineForum.dto.response.DoDResponse;
 import com.FA24SE088.OnlineForum.entity.OrderPoint;
-import com.FA24SE088.OnlineForum.mapper.*;
-import com.FA24SE088.OnlineForum.repository.UnitOfWork.UnitOfWork;
+import com.FA24SE088.OnlineForum.repository.*;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.annotation.Async;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
-import java.text.DecimalFormat;
 import java.time.Duration;
 import java.util.concurrent.CompletableFuture;
 
@@ -23,12 +20,17 @@ import java.util.concurrent.CompletableFuture;
 @Slf4j
 @Service
 public class StatisticService {
-    UnitOfWork unitOfWork;
+    AccountRepository accountRepository;
+    PostRepository postRepository;
+    PostViewRepository postViewRepository;
+    CommentRepository commentRepository;
+    UpvoteRepository upvoteRepository;
+    OrderPointRepository orderPointRepository;
     RedisTemplate<String, Long> redisTemplate;
 
     @Async("AsyncTaskExecutor")
     @PreAuthorize("hasRole('ADMIN')")
-    public CompletableFuture<DoDResponse> getDodStatistic(){
+    public CompletableFuture<DoDResponse> getDodStatistic() {
         var countAccountFuture = countAllAccounts();
         var countPostFuture = countAllPosts();
         var countUpvoteFuture = countAllUpvotes();
@@ -96,35 +98,40 @@ public class StatisticService {
     }
 
     @Async("AsyncTaskExecutor")
-    private CompletableFuture<Long> countAllAccounts(){
-        return CompletableFuture.supplyAsync(() -> unitOfWork.getAccountRepository().count());
+    private CompletableFuture<Long> countAllAccounts() {
+        return CompletableFuture.supplyAsync(accountRepository::count);
     }
+
     @Async("AsyncTaskExecutor")
-    private CompletableFuture<Long> countAllPosts(){
-        return CompletableFuture.supplyAsync(() -> unitOfWork.getPostRepository().count());
+    private CompletableFuture<Long> countAllPosts() {
+        return CompletableFuture.supplyAsync(postRepository::count);
     }
+
     @Async("AsyncTaskExecutor")
-    private CompletableFuture<Long> countAllUpvotes(){
-        return CompletableFuture.supplyAsync(() -> unitOfWork.getUpvoteRepository().count());
+    private CompletableFuture<Long> countAllUpvotes() {
+        return CompletableFuture.supplyAsync(upvoteRepository::count);
     }
+
     @Async("AsyncTaskExecutor")
-    private CompletableFuture<Long> countAllComments(){
-        return CompletableFuture.supplyAsync(() -> unitOfWork.getCommentRepository().count());
+    private CompletableFuture<Long> countAllComments() {
+        return CompletableFuture.supplyAsync(commentRepository::count);
     }
+
     @Async("AsyncTaskExecutor")
-    private CompletableFuture<Long> countAllPostViews(){
-        return CompletableFuture.supplyAsync(() -> unitOfWork.getPostViewRepository().count());
+    private CompletableFuture<Long> countAllPostViews() {
+        return CompletableFuture.supplyAsync(postViewRepository::count);
     }
+
     @Async("AsyncTaskExecutor")
-    private CompletableFuture<Long> countAllMoneyInOrderPoints(){
+    private CompletableFuture<Long> countAllMoneyInOrderPoints() {
         return CompletableFuture.supplyAsync(() -> {
             long amount = 0L;
-            var orderPointList = unitOfWork.getOrderPointRepository().findAll();
-            if(orderPointList.isEmpty()){
+            var orderPointList = orderPointRepository.findAll();
+            if (orderPointList.isEmpty()) {
                 return amount;
             }
 
-            for(OrderPoint orderPoint : orderPointList){
+            for (OrderPoint orderPoint : orderPointList) {
                 var moneyAmount = orderPoint.getAmount();
                 amount += (long) moneyAmount;
             }
@@ -132,6 +139,7 @@ public class StatisticService {
             return amount;
         });
     }
+
     private double formatToTwoDecimalPlaces(double value) {
         return Math.round(value * 100.0) / 100.0;
     }

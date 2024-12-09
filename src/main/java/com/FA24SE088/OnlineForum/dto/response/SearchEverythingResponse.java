@@ -16,11 +16,11 @@ import java.util.List;
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class SearchEverythingResponse {
-    @JsonIgnoreProperties(value = { "password", "email", "bio", "gender", "address", "createdDate", "status", "role" })
+    @JsonIgnoreProperties(value = {"password", "email", "bio", "gender", "address", "createdDate", "status", "role"})
     List<Account> accountList;
-    @JsonIgnoreProperties(value = { "account" })
+    @JsonIgnoreProperties(value = {"account"})
     List<Category> categoryList;
     List<Topic> topicList;
-    @JsonIgnoreProperties(value = { "account", "topic", "tag" })
+    @JsonIgnoreProperties(value = {"account", "topic", "tag"})
     List<Post> postList;
 }

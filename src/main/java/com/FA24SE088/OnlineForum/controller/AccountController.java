@@ -49,7 +49,6 @@ public class AccountController {
     AccountService accountService;
 
 
-
     @Operation(summary = "Find Account", description = "Find By Username")
     @GetMapping(path = "/find/by-username")
     public ApiResponse<Account> findByUsername(@NotNull String username) {
@@ -58,7 +57,7 @@ public class AccountController {
                 .entity(accountService.findByUsername(username))
                 .build();
     }
-   
+
     @Operation(summary = "Find Account", description = "Find By Username Contain Any Letter")
     @GetMapping(path = "/list/find/by-username")
     public ApiResponse<List<Account>> findByUsernameContainingAsync(@NotNull String username) {

@@ -20,6 +20,6 @@ public class PopularTopicResponse {
     int upvoteAmount;
     int commentAmount;
     int viewAmount;
-    @JsonIgnoreProperties(value = { "account" })
+    @JsonIgnoreProperties(value = {"account"})
     Category category;
 }

@@ -39,6 +39,7 @@ public class CustomExceptionListener extends ExceptionListenerAdapter {
 
         System.err.println(errorMsg);
     }
+
     @Override
     public void onDisconnectException(Exception e, SocketIOClient client) {
         StringBuilder errorMsg = new StringBuilder();
@@ -59,6 +60,7 @@ public class CustomExceptionListener extends ExceptionListenerAdapter {
 
         System.err.println(errorMsg);
     }
+
     @Override
     public void onConnectException(Exception e, SocketIOClient client) {
         StringBuilder errorMsg = new StringBuilder();
@@ -77,6 +79,7 @@ public class CustomExceptionListener extends ExceptionListenerAdapter {
 
         System.err.println(errorMsg.toString());
     }
+
     @Override
     public void onPingException(Exception e, SocketIOClient client) {
         StringBuilder errorMsg = new StringBuilder();
@@ -95,6 +98,7 @@ public class CustomExceptionListener extends ExceptionListenerAdapter {
 
         System.err.println(errorMsg);
     }
+
     @Override
     public boolean exceptionCaught(ChannelHandlerContext ctx, Throwable e) throws Exception {
         StringBuilder errorMsg = new StringBuilder();

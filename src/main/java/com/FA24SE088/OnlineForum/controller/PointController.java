@@ -25,18 +25,18 @@ public class PointController {
 
     @Operation(summary = "Create New Point Data")
     @PostMapping(path = "/create")
-    public ApiResponse<PointResponse> createPoint(@RequestBody @Valid PointRequest request){
+    public ApiResponse<PointResponse> createPoint(@RequestBody @Valid PointRequest request) {
         return pointService.createPoint(request).thenApply(pointResponse ->
-            ApiResponse.<PointResponse>builder()
-                    .message(SuccessReturnMessage.CREATE_SUCCESS.getMessage())
-                    .entity(pointResponse)
-                    .build()
+                ApiResponse.<PointResponse>builder()
+                        .message(SuccessReturnMessage.CREATE_SUCCESS.getMessage())
+                        .entity(pointResponse)
+                        .build()
         ).join();
     }
 
     @Operation(summary = "Get All Point Data")
     @GetMapping(path = "/getall")
-    public ApiResponse<List<PointResponse>> getAllPoint(){
+    public ApiResponse<List<PointResponse>> getAllPoint() {
         return pointService.getAllPoints().thenApply(pointResponses ->
                 ApiResponse.<List<PointResponse>>builder()
                         .entity(pointResponses)
@@ -46,18 +46,18 @@ public class PointController {
 
     @Operation(summary = "Update Point Data")
     @PutMapping(path = "/update")
-    public ApiResponse<PointResponse> updatePoint(@RequestBody @Valid PointRequest request){
+    public ApiResponse<PointResponse> updatePoint(@RequestBody @Valid PointRequest request) {
         return pointService.updatePoint(request).thenApply(pointResponse ->
-            ApiResponse.<PointResponse>builder()
-                    .message(SuccessReturnMessage.UPDATE_SUCCESS.getMessage())
-                    .entity(pointResponse)
-                    .build()
+                ApiResponse.<PointResponse>builder()
+                        .message(SuccessReturnMessage.UPDATE_SUCCESS.getMessage())
+                        .entity(pointResponse)
+                        .build()
         ).join();
     }
 
     @Operation(summary = "Delete Point Data")
     @DeleteMapping(path = "/delete")
-    public ApiResponse<PointResponse> deletePoint(){
+    public ApiResponse<PointResponse> deletePoint() {
         return pointService.deletePoint().thenApply(pointResponse ->
                 ApiResponse.<PointResponse>builder()
                         .message(SuccessReturnMessage.DELETE_SUCCESS.getMessage())

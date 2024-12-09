@@ -10,10 +10,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.util.UriComponentsBuilder;
-
-import java.util.HashMap;
-import java.util.Map;
 
 @Component
 @RequiredArgsConstructor
@@ -29,17 +25,16 @@ public class AkismetUtil {
     private String apiUrl;
 
     public boolean isCommentSpam(HttpServletRequest httpRequest,
-                                 String username, String email, String content){
+                                 String username, String email, String content) {
         RestTemplate restTemplate = new RestTemplate();
 
         String userIP = getUserIP(httpRequest);
         String userAgent = httpRequest.getHeader("User-Agent");
 
         String blogUrl;
-        if(protocolMethod.equalsIgnoreCase("https")){
+        if (protocolMethod.equalsIgnoreCase("https")) {
             blogUrl = "https://fifoforumonline.click";
-        }
-        else{
+        } else {
             blogUrl = "http://localhost:8080";
         }
 

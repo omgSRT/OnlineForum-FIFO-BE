@@ -1,6 +1,5 @@
 package com.FA24SE088.OnlineForum.dto.response;
 
-import com.FA24SE088.OnlineForum.dto.request.MediaRequest;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 

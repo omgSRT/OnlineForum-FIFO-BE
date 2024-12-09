@@ -4,9 +4,9 @@ import lombok.AccessLevel;
 import lombok.experimental.FieldDefaults;
 import org.apache.tika.Tika;
 import org.apache.tika.langdetect.optimaize.OptimaizeLangDetector;
+import org.apache.tika.language.detect.LanguageDetector;
 import org.apache.tika.language.detect.LanguageResult;
 import org.springframework.stereotype.Component;
-import org.apache.tika.language.detect.LanguageDetector;
 
 import java.io.IOException;
 
@@ -20,7 +20,8 @@ public class TikaUtil {
         LanguageResult result = detector.detect(text);
         return result.getLanguage();
     }
-    public String detectMimeType(byte[] fileBytes) throws IOException{
+
+    public String detectMimeType(byte[] fileBytes) throws IOException {
         return tika.detect(fileBytes);
     }
 }

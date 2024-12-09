@@ -7,7 +7,9 @@ import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.List;
+import java.util.UUID;
+
 @Getter
 @Setter
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
@@ -41,7 +43,7 @@ public class Account {
     Role role;
 
     @JsonIgnore
-    @JsonIgnoreProperties(value = { "account" }, allowSetters = true)
+    @JsonIgnoreProperties(value = {"account"}, allowSetters = true)
     @OneToMany(mappedBy = "account", cascade = CascadeType.ALL, orphanRemoval = true)
     List<Notification> notificationList;
 
@@ -51,12 +53,12 @@ public class Account {
     Wallet wallet;
 
     @JsonIgnore
-    @JsonIgnoreProperties(value = { "followee" }, allowSetters = true)
+    @JsonIgnoreProperties(value = {"followee"}, allowSetters = true)
     @OneToMany(mappedBy = "followee", cascade = CascadeType.ALL, orphanRemoval = true)
     List<Follow> followeeList;
 
     @JsonIgnore
-    @JsonIgnoreProperties(value = { "follower" }, allowSetters = true)
+    @JsonIgnoreProperties(value = {"follower"}, allowSetters = true)
     @OneToMany(mappedBy = "follower", cascade = CascadeType.ALL, orphanRemoval = true)
     List<Follow> followerList;
 
@@ -71,17 +73,17 @@ public class Account {
     List<DailyPoint> dailyPointList;
 
     @JsonIgnore
-    @JsonIgnoreProperties(value = { "account" }, allowSetters = true)
+    @JsonIgnoreProperties(value = {"account"}, allowSetters = true)
     @OneToMany(mappedBy = "account", cascade = CascadeType.ALL, orphanRemoval = true)
     List<Post> postList;
 
     @JsonIgnore
-    @JsonIgnoreProperties(value = { "account" }, allowSetters = true)
+    @JsonIgnoreProperties(value = {"account"}, allowSetters = true)
     @OneToMany(mappedBy = "account", cascade = CascadeType.ALL, orphanRemoval = true)
     List<Upvote> upvoteList;
 
     @JsonIgnore
-    @JsonIgnoreProperties(value = { "account" }, allowSetters = true)
+    @JsonIgnoreProperties(value = {"account"}, allowSetters = true)
     @OneToMany(mappedBy = "account", cascade = CascadeType.ALL, orphanRemoval = true)
     List<Comment> commentList;
 

@@ -33,6 +33,7 @@ public class NotificationController {
                         .orElseThrow(() -> new AppException(ErrorCode.NOTIFICATION_NOT_FOUND)))
                 .build();
     }
+
     @PostMapping("create")
     public ApiResponse<NotificationResponse> create(@RequestBody NotificationRequest request) {
         return ApiResponse.<NotificationResponse>builder()
@@ -46,6 +47,7 @@ public class NotificationController {
                 .entity(notificationService.getAllNotifications())
                 .build();
     }
+
     @GetMapping("/get-all-by-account/{accountId}")
     public ApiResponse<List<NotificationResponse>> getAllNotificationsByAccount(@PathVariable UUID accountId) {
         return ApiResponse.<List<NotificationResponse>>builder()
@@ -53,8 +55,8 @@ public class NotificationController {
                 .build();
     }
 
-//    @GetMapping("/get-my-notifications")
-@GetMapping("/get-all-of-current-user")
+    //    @GetMapping("/get-my-notifications")
+    @GetMapping("/get-all-of-current-user")
     public ApiResponse<List<NotificationResponse>> getMyNotifications() {
         return ApiResponse.<List<NotificationResponse>>builder()
                 .entity(notificationService.getAllNotificationsOfThisAccount())

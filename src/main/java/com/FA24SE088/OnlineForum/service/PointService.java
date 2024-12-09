@@ -1,15 +1,14 @@
 package com.FA24SE088.OnlineForum.service;
 
 import com.FA24SE088.OnlineForum.dto.request.PointRequest;
-import com.FA24SE088.OnlineForum.dto.request.TagRequest;
-import com.FA24SE088.OnlineForum.dto.response.CategoryNoAccountResponse;
 import com.FA24SE088.OnlineForum.dto.response.PointResponse;
-import com.FA24SE088.OnlineForum.dto.response.TagResponse;
 import com.FA24SE088.OnlineForum.entity.*;
 import com.FA24SE088.OnlineForum.exception.AppException;
 import com.FA24SE088.OnlineForum.exception.ErrorCode;
 import com.FA24SE088.OnlineForum.mapper.PointMapper;
-import com.FA24SE088.OnlineForum.repository.UnitOfWork.UnitOfWork;
+import com.FA24SE088.OnlineForum.repository.AccountRepository;
+import com.FA24SE088.OnlineForum.repository.PointRepository;
+import com.FA24SE088.OnlineForum.repository.PostRepository;
 import com.FA24SE088.OnlineForum.utils.PaginationUtils;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -21,7 +20,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 
-import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -31,29 +29,29 @@ import java.util.concurrent.CompletableFuture;
 @Slf4j
 @Service
 public class PointService {
-    UnitOfWork unitOfWork;
+    PointRepository pointRepository;
+    AccountRepository accountRepository;
+    PostRepository postRepository;
     PointMapper pointMapper;
     PaginationUtils paginationUtils;
 
     @Async("AsyncTaskExecutor")
     @PreAuthorize("hasRole('ADMIN')")
-    public CompletableFuture<PointResponse> createPoint(PointRequest request){
-        var countPointDataExistFuture = CompletableFuture.supplyAsync(() ->
-            unitOfWork.getPointRepository().count()
-        );
+    public CompletableFuture<PointResponse> createPoint(PointRequest request) {
+        var countPointDataExistFuture = CompletableFuture.supplyAsync(pointRepository::count);
 
         return countPointDataExistFuture.thenApply(count -> {
-            if(count > 0){
+            if (count > 0) {
                 throw new AppException(ErrorCode.POINT_DATA_EXIST);
             }
 
-            if(request.getMaxPoint() < request.getPointPerPost()){
+            if (request.getMaxPoint() < request.getPointPerPost()) {
                 throw new AppException(ErrorCode.MAX_POINT_LOWER_THAN_INDIVIDUAL_POINT);
             }
 
             var newPoint = pointMapper.toPoint(request);
 
-            return pointMapper.toPointResponse(unitOfWork.getPointRepository().save(newPoint));
+            return pointMapper.toPointResponse(pointRepository.save(newPoint));
         });
     }
 
@@ -61,52 +59,46 @@ public class PointService {
     @PreAuthorize("hasRole('ADMIN')")
     public CompletableFuture<List<PointResponse>> getAllPoints() {
         return CompletableFuture.supplyAsync(() ->
-                unitOfWork.getPointRepository().findAll().stream()
-                    .map(pointMapper::toPointResponse)
-                    .toList());
+                pointRepository.findAll().stream()
+                        .map(pointMapper::toPointResponse)
+                        .toList());
     }
 
     @Async("AsyncTaskExecutor")
     @PreAuthorize("hasRole('ADMIN')")
-    public CompletableFuture<PointResponse> updatePoint(PointRequest request){
-        var listPointDataFuture = CompletableFuture.supplyAsync(() ->
-                unitOfWork.getPointRepository().findAll()
-        );
+    public CompletableFuture<PointResponse> updatePoint(PointRequest request) {
+        var listPointDataFuture = CompletableFuture.supplyAsync(pointRepository::findAll);
 
         return listPointDataFuture.thenApply(listPointData -> {
             Point existPoint = new Point();
 
-            if(!listPointData.isEmpty()){
+            if (!listPointData.isEmpty()) {
                 existPoint = listPointData.get(0);
-            }
-            else{
+            } else {
                 throw new AppException(ErrorCode.POINT_NOT_FOUND);
             }
 
             pointMapper.updatePoint(existPoint, request);
 
-            return pointMapper.toPointResponse(unitOfWork.getPointRepository().save(existPoint));
+            return pointMapper.toPointResponse(pointRepository.save(existPoint));
         });
     }
 
     @Async("AsyncTaskExecutor")
     @PreAuthorize("hasRole('ADMIN')")
-    public CompletableFuture<PointResponse> deletePoint(){
-        var listPointDataFuture = CompletableFuture.supplyAsync(() ->
-                unitOfWork.getPointRepository().findAll()
-        );
+    public CompletableFuture<PointResponse> deletePoint() {
+        var listPointDataFuture = CompletableFuture.supplyAsync(pointRepository::findAll);
 
         return listPointDataFuture.thenApply(listPointData -> {
             Point existPoint = new Point();
 
-            if(!listPointData.isEmpty()){
+            if (!listPointData.isEmpty()) {
                 existPoint = listPointData.get(0);
-            }
-            else{
+            } else {
                 throw new AppException(ErrorCode.POINT_NOT_FOUND);
             }
 
-            unitOfWork.getPointRepository().delete(existPoint);
+            pointRepository.delete(existPoint);
 
             return pointMapper.toPointResponse(existPoint);
         });
@@ -119,31 +111,35 @@ public class PointService {
         }
         return null;
     }
+
     @Async("AsyncTaskExecutor")
     private CompletableFuture<Account> findAccountByUsername(String username) {
         return CompletableFuture.supplyAsync(() ->
-                unitOfWork.getAccountRepository().findByUsername(username)
+                accountRepository.findByUsername(username)
                         .orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND))
         );
     }
+
     @Async("AsyncTaskExecutor")
     private CompletableFuture<Post> findPostById(UUID postId) {
         return CompletableFuture.supplyAsync(() ->
-                unitOfWork.getPostRepository().findById(postId)
+                postRepository.findById(postId)
                         .orElseThrow(() -> new AppException(ErrorCode.POST_NOT_FOUND))
         );
     }
+
     @Async("AsyncTaskExecutor")
     private CompletableFuture<Account> findAccountById(UUID accountId) {
         return CompletableFuture.supplyAsync(() ->
-                unitOfWork.getAccountRepository().findById(accountId)
+                accountRepository.findById(accountId)
                         .orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND))
         );
     }
+
     @Async("AsyncTaskExecutor")
     private CompletableFuture<List<Point>> getPoint() {
         return CompletableFuture.supplyAsync(() ->
-                unitOfWork.getPointRepository().findAll().stream()
+                pointRepository.findAll().stream()
                         .toList());
     }
 }

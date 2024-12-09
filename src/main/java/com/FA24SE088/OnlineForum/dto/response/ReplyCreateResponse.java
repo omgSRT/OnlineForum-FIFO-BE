@@ -17,10 +17,10 @@ import java.util.UUID;
 public class ReplyCreateResponse {
     UUID commentId;
     String content;
-    @JsonIgnoreProperties(value = { "password", "email", "bio", "coverImage", "gender", "address", "createdDate", "status", "role" })
+    @JsonIgnoreProperties(value = {"password", "email", "bio", "coverImage", "gender", "address", "createdDate", "status", "role"})
     Account account;
-    @JsonIgnoreProperties(value = { "account", "topic", "tag" })
+    @JsonIgnoreProperties(value = {"account", "topic", "tag"})
     Post post;
-    @JsonIgnoreProperties({ "parentComment", "post", "account" })
+    @JsonIgnoreProperties({"parentComment", "post", "account"})
     Comment parentComment;
 }

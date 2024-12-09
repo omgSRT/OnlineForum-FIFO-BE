@@ -93,10 +93,10 @@ public enum ErrorCode {
     YOU_HAVE_REPORTED_THIS_ACCOUNT(10076, "You have reported this account", HttpStatus.BAD_REQUEST),
     CANNOT_REPORT_YOURSELF(10077, "Can't report yourself", HttpStatus.BAD_REQUEST),
     INVALID_PARAMETER(10078, "Invalid Parameter", HttpStatus.BAD_REQUEST),
-    NOT_FOUND(10079, "Not Found",HttpStatus.NOT_FOUND),
+    NOT_FOUND(10079, "Not Found", HttpStatus.NOT_FOUND),
     INTERNAL_SERVER_ERROR(10080, "Internal Server Error", HttpStatus.BAD_REQUEST),
     DUPLICATE_CATEGORY(10081, "Duplicate Category", HttpStatus.BAD_REQUEST),
-    PRODUCT_NOT_FOUND(10082, "Product not found",HttpStatus.NOT_FOUND),
+    PRODUCT_NOT_FOUND(10082, "Product not found", HttpStatus.NOT_FOUND),
     INVALID_REQUEST_BODY(10083, "Invalid Request Body", HttpStatus.BAD_REQUEST),
     CREATE_PAYMENT_FAILED(10084, "Create payment failed", HttpStatus.BAD_REQUEST),
     REPORT_POST_REASON_NOT_FOUND(10085, "Report Post Reason Cannot Be Null", HttpStatus.BAD_REQUEST),
@@ -126,7 +126,7 @@ public enum ErrorCode {
     BALANCE_NOT_SUFFICIENT_TO_DOWNLOAD(10108, "Balance Is Not Sufficient To Download", HttpStatus.PAYMENT_REQUIRED),
     INVALID_REFRESH_TOKEN(10109, "Invalid refresh token", HttpStatus.BAD_REQUEST),
     TRANSACTION_AMOUNT_LESS_THAN_ZERO(10110, "Amount transaction must be greater than or equal to 0", HttpStatus.BAD_REQUEST),
-    FILE_NOT_FOUND(10111, "File Not Found",HttpStatus.NOT_FOUND),
+    FILE_NOT_FOUND(10111, "File Not Found", HttpStatus.NOT_FOUND),
     POST_FILE_NOT_FOUND(10112, "Post File Not Found", HttpStatus.NOT_FOUND),
     CANNOT_REPORT_ADMIN_POST(10113, "Cannot Report Admin Post", HttpStatus.BAD_REQUEST),
     REWARD_INVALID_NAME(10114, "Name of Reward is required to have a name and name that is not duplicate", HttpStatus.NOT_FOUND),
@@ -155,7 +155,7 @@ public enum ErrorCode {
     private String message;
     private HttpStatusCode statusCode;
 
-    ErrorCode(int code, String message, HttpStatusCode statusCode){
+    ErrorCode(int code, String message, HttpStatusCode statusCode) {
         this.code = code;
         this.message = message;
         this.statusCode = statusCode;

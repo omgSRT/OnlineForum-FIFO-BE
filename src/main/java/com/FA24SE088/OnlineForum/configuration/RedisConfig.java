@@ -38,6 +38,7 @@ public class RedisConfig {
         redisTemplate.setValueSerializer(new StringRedisSerializer());
         return redisTemplate;
     }
+
     @Bean
     public RedisTemplate<String, Long> redisTemplateForLong(RedisConnectionFactory redisConnectionFactory) {
         RedisTemplate<String, Long> redisTemplate = new RedisTemplate<>();
@@ -60,6 +61,7 @@ public class RedisConfig {
 
         return redisTemplate;
     }
+
     @Bean
     public <T> RedisTemplate<String, T> redisTemplateWithObject(RedisConnectionFactory redisConnectionFactory) {
         RedisTemplate<String, T> redisTemplate = new RedisTemplate<>();

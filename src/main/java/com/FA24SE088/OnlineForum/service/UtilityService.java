@@ -8,7 +8,7 @@ import com.FA24SE088.OnlineForum.exception.ErrorCode;
 import com.FA24SE088.OnlineForum.mapper.DailyPointMapper;
 import com.FA24SE088.OnlineForum.mapper.OrderPointMapper;
 import com.FA24SE088.OnlineForum.mapper.TransactionMapper;
-import com.FA24SE088.OnlineForum.repository.UnitOfWork.UnitOfWork;
+import com.FA24SE088.OnlineForum.repository.*;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -35,7 +35,14 @@ public class UtilityService {
     TransactionMapper transactionMapper;
     DailyPointMapper dailyPointMapper;
     OrderPointMapper orderPointMapper;
-    UnitOfWork unitOfWork;
+    AccountRepository accountRepository;
+    CategoryRepository categoryRepository;
+    TopicRepository topicRepository;
+    PostRepository postRepository;
+    TransactionRepository transactionRepository;
+    DailyPointRepository dailyPointRepository;
+    OrderPointRepository orderPointRepository;
+    BlockedAccountRepository blockedAccountRepository;
 
     @Async("AsyncTaskExecutor")
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
@@ -105,21 +112,21 @@ public class UtilityService {
         var blockerListFuture = getBlockerAccountListByUsername(currentUsername);
 
         return CompletableFuture.allOf(blockedListFuture, blockerListFuture).thenCompose(v ->
-                    unitOfWork.getAccountRepository().findByUsernameContainingIgnoreCase(username)
-                            .thenApply(accountList -> {
-                                var blockedList = blockedListFuture.join();
-                                var blockerList = blockerListFuture.join();
+                accountRepository.findByUsernameContainingIgnoreCase(username)
+                        .thenApply(accountList -> {
+                            var blockedList = blockedListFuture.join();
+                            var blockerList = blockerListFuture.join();
 
-                                accountList = accountList.stream()
-                                        .filter(account -> !account.getUsername().equals(currentUsername))
-                                        .filter(account -> account.getStatus() != null && account.getStatus().equals("ACTIVE"))
-                                        .filter(account -> !blockerList.contains(account)
-                                                && !blockedList.contains(account))
-                                        .toList();
+                            accountList = accountList.stream()
+                                    .filter(account -> !account.getUsername().equals(currentUsername))
+                                    .filter(account -> account.getStatus() != null && account.getStatus().equals("ACTIVE"))
+                                    .filter(account -> !blockerList.contains(account)
+                                            && !blockedList.contains(account))
+                                    .toList();
 
-                                return accountList;
-                            })
-                );
+                            return accountList;
+                        })
+        );
     }
 
     @Async("AsyncTaskExecutor")
@@ -129,7 +136,7 @@ public class UtilityService {
         var blockerListFuture = getBlockerAccountListByUsername(currentUsername);
 
         return CompletableFuture.allOf(blockedListFuture, blockerListFuture).thenCompose(v ->
-                unitOfWork.getAccountRepository().findByEmailContainingIgnoreCase(email)
+                accountRepository.findByEmailContainingIgnoreCase(email)
                         .thenApply(accountList -> {
                             var blockedList = blockedListFuture.join();
                             var blockerList = blockerListFuture.join();
@@ -148,12 +155,12 @@ public class UtilityService {
 
     @Async("AsyncTaskExecutor")
     private CompletableFuture<List<Category>> findAllCategoriesByNameContainingIgnoreCase(String name) {
-        return unitOfWork.getCategoryRepository().findByNameContainingIgnoreCase(name);
+        return categoryRepository.findByNameContainingIgnoreCase(name);
     }
 
     @Async("AsyncTaskExecutor")
     private CompletableFuture<List<Topic>> findAllTopicsByNameContainingIgnoreCase(String name) {
-        return unitOfWork.getTopicRepository().findByNameContainingIgnoreCase(name);
+        return topicRepository.findByNameContainingIgnoreCase(name);
     }
 
     @Async("AsyncTaskExecutor")
@@ -163,7 +170,7 @@ public class UtilityService {
         var blockerListFuture = getBlockerAccountListByUsername(username);
 
         return CompletableFuture.allOf(blockedListFuture, blockerListFuture).thenCompose(v ->
-                unitOfWork.getPostRepository().findByTitleContainingIgnoreCaseOrderByCreatedDateDesc(title)
+                postRepository.findByTitleContainingIgnoreCaseOrderByCreatedDateDesc(title)
                         .thenApply(postList -> {
                             var blockedList = blockedListFuture.join();
                             var blockerList = blockerListFuture.join();
@@ -189,7 +196,7 @@ public class UtilityService {
         var blockerListFuture = getBlockerAccountListByUsername(username);
 
         return CompletableFuture.allOf(blockedListFuture, blockerListFuture).thenCompose(v ->
-                unitOfWork.getPostRepository().findByContentContainingIgnoreCaseOrderByCreatedDateDesc(content)
+                postRepository.findByContentContainingIgnoreCaseOrderByCreatedDateDesc(content)
                         .thenApply(postList -> {
                             var blockedList = blockedListFuture.join();
                             var blockerList = blockerListFuture.join();
@@ -205,12 +212,12 @@ public class UtilityService {
 
                             return postList;
                         })
-                );
+        );
     }
 
     private Account getCurrentUser() {
         var context = SecurityContextHolder.getContext();
-        return unitOfWork.getAccountRepository().findByUsername(context.getAuthentication().getName()).orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND));
+        return accountRepository.findByUsername(context.getAuthentication().getName()).orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND));
     }
 
     @Async("AsyncTaskExecutor")
@@ -300,13 +307,13 @@ public class UtilityService {
     private CompletableFuture<List<TransactionResponse>> getTransactionFuture(boolean viewTransaction, boolean includeAll, Account currentUser, Date startDate, Date endDate) {
         if (viewTransaction || includeAll) {
             if (startDate != null && endDate != null) {
-                return unitOfWork.getTransactionRepository()
+                return transactionRepository
                         .findByWallet_AccountAndCreatedDateBetweenOrderByCreatedDateDesc(currentUser, startDate, endDate)
                         .thenApply(transactions -> transactions.stream()
                                 .map(transactionMapper::toTransactionResponse)
                                 .collect(Collectors.toList()));
             } else {
-                return unitOfWork.getTransactionRepository()
+                return transactionRepository
                         .findByWallet_AccountOrderByCreatedDateDesc(currentUser)
                         .thenApply(transactions -> transactions.stream()
                                 .map(transactionMapper::toTransactionResponse)
@@ -320,11 +327,11 @@ public class UtilityService {
     private CompletableFuture<List<DailyPoint2Response>> getDailyPointFuture(boolean dailyPoint, boolean includeAll, Account currentUser, Date startDate, Date endDate) {
         if (dailyPoint || includeAll) {
             if (startDate != null && endDate != null) {
-                return unitOfWork.getDailyPointRepository()
+                return dailyPointRepository
                         .findByAccountAndTypeBonusIsNullAndCreatedDateBetweenOrderByCreatedDateDesc(currentUser, startDate, endDate)
                         .thenApply(dailyPointMapper::toListResponse);
             } else {
-                return unitOfWork.getDailyPointRepository()
+                return dailyPointRepository
                         .findByAccountAndTypeBonusIsNullOrderByCreatedDateDesc(currentUser)
                         .thenApply(dailyPointMapper::toListResponse);
             }
@@ -336,11 +343,11 @@ public class UtilityService {
     private CompletableFuture<List<DailyPoint2Response>> getBonusPointFuture(boolean bonusPoint, boolean includeAll, Account currentUser, Date startDate, Date endDate) {
         if (bonusPoint || includeAll) {
             if (startDate != null && endDate != null) {
-                return unitOfWork.getDailyPointRepository()
+                return dailyPointRepository
                         .findByAccountAndTypeBonusIsNotNullAndCreatedDateBetweenOrderByCreatedDateDesc(currentUser, startDate, endDate)
                         .thenApply(dailyPointMapper::toListResponse);
             } else {
-                return unitOfWork.getDailyPointRepository()
+                return dailyPointRepository
                         .findByAccountAndTypeBonusIsNotNullOrderByCreatedDateDesc(currentUser)
                         .thenApply(dailyPointMapper::toListResponse);
             }
@@ -352,11 +359,11 @@ public class UtilityService {
     private CompletableFuture<List<OrderPointResponse>> getOrderPointFuture(boolean orderPoint, boolean includeAll, Account currentUser, Date startDate, Date endDate) {
         if (orderPoint || includeAll) {
             if (startDate != null && endDate != null) {
-                return unitOfWork.getOrderPointRepository()
+                return orderPointRepository
                         .findByWallet_AccountAndOrderDateBetweenOrderByOrderDateDesc(currentUser, startDate, endDate)
                         .thenApply(orderPointMapper::toOderPointResponseList);
             } else {
-                return unitOfWork.getOrderPointRepository()
+                return orderPointRepository
                         .findByWallet_AccountOrderByOrderDateDesc(currentUser)
                         .thenApply(orderPointMapper::toOderPointResponseList);
             }
@@ -371,31 +378,34 @@ public class UtilityService {
         }
         return null;
     }
+
     @Async("AsyncTaskExecutor")
     private CompletableFuture<Account> findAccountByUsername(String username) {
         return CompletableFuture.supplyAsync(() ->
-                unitOfWork.getAccountRepository().findByUsername(username)
+                accountRepository.findByUsername(username)
                         .orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND))
         );
     }
+
     @Async("AsyncTaskExecutor")
     private CompletableFuture<List<Account>> getBlockedAccountListByUsername(String username) {
         var accountFuture = findAccountByUsername(username);
 
         return accountFuture.thenApply(account -> {
-            var blockedAccountEntityList = unitOfWork.getBlockedAccountRepository().findByBlocker(account);
+            var blockedAccountEntityList = blockedAccountRepository.findByBlocker(account);
 
             return blockedAccountEntityList.stream()
                     .map(BlockedAccount::getBlocked)
                     .toList();
         });
     }
+
     @Async("AsyncTaskExecutor")
     private CompletableFuture<List<Account>> getBlockerAccountListByUsername(String username) {
         var accountFuture = findAccountByUsername(username);
 
         return accountFuture.thenApply(account -> {
-            var blockedAccountEntityList = unitOfWork.getBlockedAccountRepository().findByBlocked(account);
+            var blockedAccountEntityList = blockedAccountRepository.findByBlocked(account);
 
             return blockedAccountEntityList.stream()
                     .map(BlockedAccount::getBlocker)

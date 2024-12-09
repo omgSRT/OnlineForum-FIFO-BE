@@ -51,7 +51,7 @@ public class SocketIOConfiguration {
         //set socket.io to accept Date-related data
         config.setJsonSupport(new CustomJsonSupportHandler());
 
-        if(protocolMethod.equalsIgnoreCase("https")){
+        if (protocolMethod.equalsIgnoreCase("https")) {
             config.setHostname("fifoforumonline.click");
             InputStream keystoreStream = getClass().getClassLoader().getResourceAsStream("keystore.p12");
             if (keystoreStream == null) {
@@ -60,8 +60,7 @@ public class SocketIOConfiguration {
             config.setKeyStore(keystoreStream);
             config.setKeyStoreFormat("PKCS12");
             config.setKeyStorePassword("password");
-        }
-        else{
+        } else {
             config.setHostname(null);
         }
 

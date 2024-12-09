@@ -29,7 +29,7 @@ public class CategoryController {
 
     @Operation(summary = "Create New Category")
     @PostMapping(path = "/create")
-    public ApiResponse<CategoryResponse> createCategory(@RequestBody @Valid CategoryRequest request){
+    public ApiResponse<CategoryResponse> createCategory(@RequestBody @Valid CategoryRequest request) {
         return categoryService.createCategory(request).thenApply(categoryResponse ->
                 ApiResponse.<CategoryResponse>builder()
                         .message(SuccessReturnMessage.CREATE_SUCCESS.getMessage())
@@ -40,7 +40,7 @@ public class CategoryController {
 
     @Operation(summary = "Create New Category No Account Assigning")
     @PostMapping(path = "/create/no-account")
-    public ApiResponse<CategoryResponse> createCategoryNoAccount(@RequestBody @Valid CategoryNoAccountRequest request){
+    public ApiResponse<CategoryResponse> createCategoryNoAccount(@RequestBody @Valid CategoryNoAccountRequest request) {
         return categoryService.createCategoryNoAccount(request).thenApply(categoryResponse ->
                 ApiResponse.<CategoryResponse>builder()
                         .message(SuccessReturnMessage.CREATE_SUCCESS.getMessage())
@@ -53,7 +53,7 @@ public class CategoryController {
     @GetMapping(path = "/getall")
     public ApiResponse<List<CategoryGetAllResponse>> getAllCategories(@RequestParam(defaultValue = "1") int page,
                                                                       @RequestParam(defaultValue = "10") int perPage,
-                                                                      @RequestParam(required = false) UUID accountId){
+                                                                      @RequestParam(required = false) UUID accountId) {
         return categoryService.getAllCategories(page, perPage, accountId).thenApply(categoryGetAllResponses ->
                 ApiResponse.<List<CategoryGetAllResponse>>builder()
                         .entity(categoryGetAllResponses)
@@ -64,7 +64,7 @@ public class CategoryController {
     @Operation(summary = "Get All Categories For Managing Staff")
     @GetMapping(path = "/getall/for-staff")
     public ApiResponse<List<CategoryGetAllResponse>> getAllCategoriesForStaff(@RequestParam(defaultValue = "1") int page,
-                                                                         @RequestParam(defaultValue = "10") int perPage){
+                                                                              @RequestParam(defaultValue = "10") int perPage) {
         return categoryService.getAllCategoriesForStaff(page, perPage).thenApply(categoryGetAllResponses ->
                 ApiResponse.<List<CategoryGetAllResponse>>builder()
                         .entity(categoryGetAllResponses)
@@ -74,7 +74,7 @@ public class CategoryController {
 
     @Operation(summary = "Get A Category", description = "Get A Category By ID")
     @GetMapping(path = "/get/{categoryId}")
-    public ApiResponse<CategoryResponse> getCategoryById(@PathVariable UUID categoryId){
+    public ApiResponse<CategoryResponse> getCategoryById(@PathVariable UUID categoryId) {
         return categoryService.getCategoryById(categoryId).thenApply(categoryResponse ->
                 ApiResponse.<CategoryResponse>builder()
                         .message(SuccessReturnMessage.SEARCH_SUCCESS.getMessage())
@@ -85,7 +85,7 @@ public class CategoryController {
 
     @Operation(summary = "Delete A Category", description = "Delete A Category By ID")
     @DeleteMapping(path = "/delete/{categoryId}")
-    public ApiResponse<CategoryResponse> deleteCategoryById(@PathVariable UUID categoryId){
+    public ApiResponse<CategoryResponse> deleteCategoryById(@PathVariable UUID categoryId) {
         return categoryService.deleteCategoryById(categoryId).thenApply(categoryResponse ->
                 ApiResponse.<CategoryResponse>builder()
                         .message(SuccessReturnMessage.DELETE_SUCCESS.getMessage())
@@ -97,7 +97,7 @@ public class CategoryController {
     @Operation(summary = "Update A Category", description = "Update A Category By ID")
     @PutMapping(path = "/update/{categoryId}")
     public ApiResponse<CategoryResponse> updateCategoryById(@PathVariable UUID categoryId,
-                                                            @RequestBody @Valid CategoryUpdateRequest request){
+                                                            @RequestBody @Valid CategoryUpdateRequest request) {
         return categoryService.updateCategoryById(categoryId, request).thenApply(categoryResponse ->
                 ApiResponse.<CategoryResponse>builder()
                         .message(SuccessReturnMessage.UPDATE_SUCCESS.getMessage())
@@ -109,7 +109,7 @@ public class CategoryController {
     @Operation(summary = "Update A Category", description = "Update A Managing Account For Category By ID")
     @PutMapping(path = "/update/{categoryId}/account")
     public ApiResponse<CategoryResponse> updateCategoryAccountById(@PathVariable UUID categoryId,
-                                                                @RequestBody @Valid CategoryUpdateAccountRequest request){
+                                                                   @RequestBody @Valid CategoryUpdateAccountRequest request) {
         return categoryService.assignCategoryToAccountById(categoryId, request).thenApply(categoryResponse ->
                 ApiResponse.<CategoryResponse>builder()
                         .message(SuccessReturnMessage.UPDATE_SUCCESS.getMessage())

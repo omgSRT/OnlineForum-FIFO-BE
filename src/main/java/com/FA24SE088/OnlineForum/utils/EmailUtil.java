@@ -121,6 +121,7 @@ public class EmailUtil {
             return null;
         });
     }
+
     @Async("AsyncTaskExecutor")
     public CompletableFuture<Void> sendToAnEmailWithHTMLEnabled(
             String toEmail,
@@ -158,6 +159,7 @@ public class EmailUtil {
             return null;
         });
     }
+
     public void sendSimpleEmail(String toEmail, String body, String subject) {
         SimpleMailMessage message = new SimpleMailMessage();
         message.setTo(toEmail);

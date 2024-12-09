@@ -11,6 +11,7 @@ import org.mapstruct.Mapping;
 public interface MonkeyCoinPackMapper {
 
     MonkeyCoinPack toPricing(PricingRequest request);
-    @Mapping(target = "imgUrl",source = "imgUrl")
+
+    @Mapping(target = "imgUrl", source = "imgUrl")
     PricingResponse toResponse(MonkeyCoinPack monkeyCoinPack);
 }

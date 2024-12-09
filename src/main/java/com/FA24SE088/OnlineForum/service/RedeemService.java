@@ -8,7 +8,7 @@ import com.FA24SE088.OnlineForum.enums.TransactionType;
 import com.FA24SE088.OnlineForum.exception.AppException;
 import com.FA24SE088.OnlineForum.exception.ErrorCode;
 import com.FA24SE088.OnlineForum.mapper.RedeemMapper;
-import com.FA24SE088.OnlineForum.repository.UnitOfWork.UnitOfWork;
+import com.FA24SE088.OnlineForum.repository.*;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -25,20 +25,26 @@ import java.util.UUID;
 @Slf4j
 @Service
 public class RedeemService {
-    UnitOfWork unitOfWork;
+    RedeemRepository redeemRepository;
+    AccountRepository accountRepository;
+    RewardRepository rewardRepository;
+    WalletRepository walletRepository;
+    TransactionRepository transactionRepository;
     RedeemMapper redeemMapper;
 
-    private Account findAccountById(UUID id){
-        return unitOfWork.getAccountRepository().findById(id)
+    private Account findAccountById(UUID id) {
+        return accountRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND));
     }
-    private Reward findDocument(UUID id){
-        return unitOfWork.getRewardRepository().findById(id)
+
+    private Reward findDocument(UUID id) {
+        return rewardRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.REWARD_NOT_FOUND));
     }
-    public RedeemResponse create(RedeemRequest request){
+
+    public RedeemResponse create(RedeemRequest request) {
         Account account = findAccountById(request.getAccountId());
-        if (account.getRole().getName().equals("STAFF") || account.getRole().getName().equals("ADMIN")){
+        if (account.getRole().getName().equals("STAFF") || account.getRole().getName().equals("ADMIN")) {
             throw new AppException(ErrorCode.STAFF_AND_ADMIN_CANNOT_REDEEM);
         }
         Reward reward = findDocument(request.getRewardId());
@@ -48,10 +54,10 @@ public class RedeemService {
         });
 
         double result = account.getWallet().getBalance() - reward.getPrice();
-        if(result >= 0){
+        if (result >= 0) {
             Wallet wallet = account.getWallet();
             wallet.setBalance(result);
-            unitOfWork.getWalletRepository().save(wallet);
+            walletRepository.save(wallet);
 
             var amount = reward.getPrice();
             amount = -amount;
@@ -63,25 +69,24 @@ public class RedeemService {
                     .transactionType(TransactionType.REDEEM_REWARD.name())
                     .reward(reward)
                     .build();
-            unitOfWork.getTransactionRepository().save(transaction);
-        }else {
+            transactionRepository.save(transaction);
+        } else {
             throw new AppException(ErrorCode.YOU_DO_NOT_HAVE_ENOUGH_POINT);
         }
         Redeem redeem = new Redeem();
         redeem.setAccount(account);
         redeem.setReward(reward);
         redeem.setCreatedDate(new Date());
-        unitOfWork.getRedeemRepository().save(redeem);
+        redeemRepository.save(redeem);
 
         return redeemMapper.toResponse(redeem);
     }
 
 
-
     public RedeemDocumentResponse getMyRewarded() {
         Account account = getCurrentUser();
 
-        List<Redeem> ofAccount = unitOfWork.getRedeemRepository()
+        List<Redeem> ofAccount = redeemRepository
                 .findByAccount_AccountId(account.getAccountId());
 
         List<Reward> rewards = ofAccount.stream()
@@ -94,12 +99,12 @@ public class RedeemService {
     }
 
 
-
-    private Account getCurrentUser(){
+    private Account getCurrentUser() {
         var context = SecurityContextHolder.getContext();
-        return unitOfWork.getAccountRepository().findByUsername(context.getAuthentication().getName()).orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND));
+        return accountRepository.findByUsername(context.getAuthentication().getName()).orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND));
     }
-    public List<Redeem> getAll(){
+
+    public List<Redeem> getAll() {
         Account account = getCurrentUser();
         return account.getRedeemList();
     }

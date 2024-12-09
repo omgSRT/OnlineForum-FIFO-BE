@@ -32,7 +32,7 @@ public class Topic {
     Category category;
 
     @JsonIgnore
-    @JsonIgnoreProperties(value = { "topic" }, allowSetters = true)
+    @JsonIgnoreProperties(value = {"topic"}, allowSetters = true)
     @OneToMany(mappedBy = "topic", cascade = CascadeType.ALL, orphanRemoval = true)
     List<Post> postList;
 }

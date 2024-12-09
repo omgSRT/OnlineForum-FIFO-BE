@@ -19,9 +19,9 @@ public class ReportAccountResponse {
     String reason;
     Date reportTime;
     String status;
-    @JsonIgnoreProperties(value = { "password","followerList","redeemList","dailyPointList","postList","upvoteList","commentList","categoryList","eventList","blockedAccounts","feedbackList","reportList","reportsReceived","bookMarkList","followeeList", "address", "createdDate", "status", "role" })
+    @JsonIgnoreProperties(value = {"password", "followerList", "redeemList", "dailyPointList", "postList", "upvoteList", "commentList", "categoryList", "eventList", "blockedAccounts", "feedbackList", "reportList", "reportsReceived", "bookMarkList", "followeeList", "address", "createdDate", "status", "role"})
     Account reporter;//người đi report
-    @JsonIgnoreProperties(value = { "password","followerList","redeemList","dailyPointList","postList","upvoteList","commentList","categoryList","eventList","blockedAccounts","feedbackList","reportList","reportsReceived","bookMarkList","followeeList", "address", "createdDate", "status", "role" })
+    @JsonIgnoreProperties(value = {"password", "followerList", "redeemList", "dailyPointList", "postList", "upvoteList", "commentList", "categoryList", "eventList", "blockedAccounts", "feedbackList", "reportList", "reportsReceived", "bookMarkList", "followeeList", "address", "createdDate", "status", "role"})
     Account reported;//người bị report
 }
 

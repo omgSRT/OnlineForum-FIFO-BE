@@ -14,11 +14,11 @@ public enum ReportPostReason {
     SENSITIVE_OR_DISTURBING_MEDIA("Graphic Content, Gratuitous Gore, Adult Nudity & Sexual Behavior, Violent Sexual Conduct, Bestiality & Necrophilia, Media depicting a deceased individual"),
     IMPERSONATION("Pretending to be someone else, including non-compliant parody/fan accounts"),
     VIOLENT_AND_HATEFUL_ENTITIES("Violent extremism and terrorism, hate groups & networks"),
-            ;
+    ;
 
     private String message;
 
-    ReportPostReason(String message){
+    ReportPostReason(String message) {
         this.message = message;
     }
 }

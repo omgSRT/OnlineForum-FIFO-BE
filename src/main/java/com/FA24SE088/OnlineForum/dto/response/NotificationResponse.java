@@ -1,17 +1,11 @@
 package com.FA24SE088.OnlineForum.dto.response;
 
 import com.FA24SE088.OnlineForum.entity.Account;
-import com.FA24SE088.OnlineForum.entity.Category;
-import com.FA24SE088.OnlineForum.entity.Role;
-import com.FA24SE088.OnlineForum.entity.Wallet;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 import java.util.Date;
-import java.util.List;
 import java.util.UUID;
 
 @Data
@@ -25,6 +19,6 @@ public class NotificationResponse {
     String message;
     boolean isRead;
     Date createdDate;
-    @JsonIgnoreProperties(value = { "password","followerList","redeemList","dailyPointList","postList","upvoteList","commentList","categoryList","eventList","blockedAccounts","feedbackList","reportList","reportsReceived","bookMarkList","followeeList", "address", "createdDate", "status"})
+    @JsonIgnoreProperties(value = {"password", "followerList", "redeemList", "dailyPointList", "postList", "upvoteList", "commentList", "categoryList", "eventList", "blockedAccounts", "feedbackList", "reportList", "reportsReceived", "bookMarkList", "followeeList", "address", "createdDate", "status"})
     Account account;
 }

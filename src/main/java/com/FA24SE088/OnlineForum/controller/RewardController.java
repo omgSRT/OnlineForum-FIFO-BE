@@ -42,47 +42,49 @@ public class RewardController {
     }
 
     @GetMapping("/getAll")
-    public ApiResponse<List<RewardResponse>> getAll(){
+    public ApiResponse<List<RewardResponse>> getAll() {
         return ApiResponse.<List<RewardResponse>>builder()
                 .entity(rewardService.getUnredeemedRewardsForCurrentUser())
                 .build();
     }
-//    @GetMapping("/{rewardId}/download")
+
+    //    @GetMapping("/{rewardId}/download")
 //    public ApiResponse<byte[]> downloadFileSourceCode(@PathVariable UUID rewardId) {
 //        return ApiResponse.<byte[]>builder()
 //                .entity(rewardService.downloadFileSourceCode(rewardId))
 //                .build();
 //    }
-@GetMapping("/{rewardId}/download")
-@Operation(summary = "Download Source Code for Reward")
-public ApiResponse<String> downloadFileSourceCode(@PathVariable UUID rewardId) {
-    byte[] fileBytes = rewardService.downloadFileSourceCode(rewardId);
+    @GetMapping("/{rewardId}/download")
+    @Operation(summary = "Download Source Code for Reward")
+    public ApiResponse<String> downloadFileSourceCode(@PathVariable UUID rewardId) {
+        byte[] fileBytes = rewardService.downloadFileSourceCode(rewardId);
 
-    if (fileBytes == null || fileBytes.length == 0) {
-        throw new AppException(ErrorCode.NO_FILES_TO_DOWNLOAD);
+        if (fileBytes == null || fileBytes.length == 0) {
+            throw new AppException(ErrorCode.NO_FILES_TO_DOWNLOAD);
+        }
+        String byteRepresentation = Arrays.toString(fileBytes);
+
+        return ApiResponse.<String>builder()
+                .entity(byteRepresentation)
+                .build();
     }
-    String byteRepresentation = Arrays.toString(fileBytes);
-
-    return ApiResponse.<String>builder()
-            .entity(byteRepresentation)
-            .build();
-}
 
     @GetMapping("/getAll/admin")
-    public ApiResponse<List<RewardResponse>> getAllAdmin(){
+    public ApiResponse<List<RewardResponse>> getAllAdmin() {
         return ApiResponse.<List<RewardResponse>>builder()
                 .entity(rewardService.getAll())
                 .build();
     }
+
     @GetMapping("/get/{rewardId}")
-    public ApiResponse<RewardResponse> getById(@PathVariable UUID rewardId){
+    public ApiResponse<RewardResponse> getById(@PathVariable UUID rewardId) {
         return ApiResponse.<RewardResponse>builder()
                 .entity(rewardService.getById(rewardId))
                 .build();
     }
 
     @GetMapping("/get-all/for-current-user")
-    public ApiResponse<List<RewardResponse>> getAllByCurrentUser(){
+    public ApiResponse<List<RewardResponse>> getAllByCurrentUser() {
         return ApiResponse.<List<RewardResponse>>builder()
                 .entity(rewardService.getAllRewardOfCurrentUser())
                 .build();

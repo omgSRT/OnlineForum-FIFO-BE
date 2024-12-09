@@ -3,12 +3,14 @@ package com.FA24SE088.OnlineForum.service;
 import com.FA24SE088.OnlineForum.dto.request.TransactionRequest;
 import com.FA24SE088.OnlineForum.dto.response.TransactionResponse;
 import com.FA24SE088.OnlineForum.entity.*;
-import com.FA24SE088.OnlineForum.enums.PostStatus;
 import com.FA24SE088.OnlineForum.enums.TransactionType;
 import com.FA24SE088.OnlineForum.exception.AppException;
 import com.FA24SE088.OnlineForum.exception.ErrorCode;
 import com.FA24SE088.OnlineForum.mapper.TransactionMapper;
-import com.FA24SE088.OnlineForum.repository.UnitOfWork.UnitOfWork;
+import com.FA24SE088.OnlineForum.repository.AccountRepository;
+import com.FA24SE088.OnlineForum.repository.RewardRepository;
+import com.FA24SE088.OnlineForum.repository.TransactionRepository;
+import com.FA24SE088.OnlineForum.repository.WalletRepository;
 import com.FA24SE088.OnlineForum.utils.PaginationUtils;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -29,7 +31,10 @@ import java.util.concurrent.CompletableFuture;
 @Slf4j
 @Service
 public class TransactionService {
-    UnitOfWork unitOfWork;
+    TransactionRepository transactionRepository;
+    AccountRepository accountRepository;
+    RewardRepository rewardRepository;
+    WalletRepository walletRepository;
     PaginationUtils paginationUtils;
     TransactionMapper transactionMapper;
 
@@ -40,11 +45,11 @@ public class TransactionService {
         return CompletableFuture.allOf(accountFuture).thenCompose(v -> {
                     var account = accountFuture.join();
 
-                    if(request.getTransactionType().equals(TransactionType.REDEEM_REWARD)){
+                    if (request.getTransactionType().equals(TransactionType.REDEEM_REWARD)) {
                         return findRewardById(request.getRewardId()).thenCompose(reward -> {
                             var checkFuture = checkTransactionExistByWalletAndReward(account.getWallet(), reward);
                             return checkFuture.thenCompose(check -> {
-                                if(check){
+                                if (check) {
                                     throw new AppException(ErrorCode.REWARD_HAS_BEEN_TAKEN);
                                 }
                                 return CompletableFuture.completedFuture(createAndSaveTransaction(request, account, reward));
@@ -59,12 +64,12 @@ public class TransactionService {
 
     private Account getCurrentUser() {
         var context = SecurityContextHolder.getContext();
-        return unitOfWork.getAccountRepository().findByUsername(context.getAuthentication().getName()).orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND));
+        return accountRepository.findByUsername(context.getAuthentication().getName()).orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND));
     }
 
     public List<TransactionResponse> getListByAccountId() {
         Account account = getCurrentUser();
-        return unitOfWork.getTransactionRepository().findByWallet(account.getWallet()).stream()
+        return transactionRepository.findByWallet(account.getWallet()).stream()
                 .map(transactionMapper::toTransactionResponse).toList();
     }
 
@@ -96,7 +101,7 @@ public class TransactionService {
             }
             Date finalParseDate = parseDate;
 
-            var transactionListFuture = unitOfWork.getTransactionRepository().findAllByOrderByCreatedDateDesc();
+            var transactionListFuture = transactionRepository.findAllByOrderByCreatedDateDesc();
 
             return transactionListFuture.thenCompose(list -> {
                 var filterList = list.stream()
@@ -135,8 +140,8 @@ public class TransactionService {
 
     @Async("AsyncTaskExecutor")
     public CompletableFuture<List<TransactionResponse>> getAllTransactionForCurrentUser(int page, int perPage,
-                                                                          String givenDate,
-                                                                          boolean isListAscendingByCreatedDate) {
+                                                                                        String givenDate,
+                                                                                        boolean isListAscendingByCreatedDate) {
         var username = getUsernameFromJwt();
         var accountFuture = findAccountByUsername(username);
 
@@ -197,7 +202,7 @@ public class TransactionService {
         var transactionFuture = findTransactionById(transactionId);
 
         return transactionFuture.thenCompose(transaction -> {
-            unitOfWork.getTransactionRepository().delete(transaction);
+            transactionRepository.delete(transaction);
 
             return CompletableFuture.completedFuture(transactionMapper.toTransactionResponse(transaction));
         });
@@ -206,44 +211,49 @@ public class TransactionService {
     @Async("AsyncTaskExecutor")
     private CompletableFuture<Account> findAccountById(UUID accountId) {
         return CompletableFuture.supplyAsync(() ->
-                unitOfWork.getAccountRepository().findById(accountId)
+                accountRepository.findById(accountId)
                         .orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND))
         );
     }
+
     @Async("AsyncTaskExecutor")
     private CompletableFuture<Reward> findRewardById(UUID rewardId) {
         return CompletableFuture.supplyAsync(() ->
-                unitOfWork.getRewardRepository().findById(rewardId)
+                rewardRepository.findById(rewardId)
                         .orElseThrow(() -> new AppException(ErrorCode.REWARD_NOT_FOUND))
         );
     }
+
     @Async("AsyncTaskExecutor")
-    private CompletableFuture<Boolean> checkTransactionExistByWalletAndReward(Wallet wallet, Reward reward){
-        return unitOfWork.getTransactionRepository().existsByWalletAndReward(wallet, reward);
+    private CompletableFuture<Boolean> checkTransactionExistByWalletAndReward(Wallet wallet, Reward reward) {
+        return transactionRepository.existsByWalletAndReward(wallet, reward);
     }
+
     @Async("AsyncTaskExecutor")
     private CompletableFuture<Transaction> findTransactionById(UUID transactionId) {
         return CompletableFuture.supplyAsync(() ->
-                unitOfWork.getTransactionRepository().findById(transactionId)
+                transactionRepository.findById(transactionId)
                         .orElseThrow(() -> new AppException(ErrorCode.TRANSACTION_NOT_FOUND))
         );
     }
+
     @Async("AsyncTaskExecutor")
-    private CompletableFuture<List<Transaction>> findTransactionListByIsListAscendingByCreatedDate(boolean isListAscendingByCreatedDate){
-        if(!isListAscendingByCreatedDate){
-            return unitOfWork.getTransactionRepository().findAllByOrderByCreatedDateDesc();
-        }
-        else{
-            return unitOfWork.getTransactionRepository().findAllByOrderByCreatedDateAsc();
+    private CompletableFuture<List<Transaction>> findTransactionListByIsListAscendingByCreatedDate(boolean isListAscendingByCreatedDate) {
+        if (!isListAscendingByCreatedDate) {
+            return transactionRepository.findAllByOrderByCreatedDateDesc();
+        } else {
+            return transactionRepository.findAllByOrderByCreatedDateAsc();
         }
     }
+
     @Async("AsyncTaskExecutor")
     private CompletableFuture<Account> findAccountByUsername(String username) {
         return CompletableFuture.supplyAsync(() ->
-                unitOfWork.getAccountRepository().findByUsername(username)
+                accountRepository.findByUsername(username)
                         .orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND))
         );
     }
+
     private String getUsernameFromJwt() {
         var authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null && authentication.getPrincipal() instanceof Jwt jwt) {
@@ -251,6 +261,7 @@ public class TransactionService {
         }
         return null;
     }
+
     private Transaction createAndSaveTransaction(TransactionRequest request, Account account, Reward reward) {
         Transaction newTransaction = transactionMapper.toTransaction(request);
         var amount = -request.getAmount();
@@ -260,10 +271,11 @@ public class TransactionService {
         newTransaction.setReward(reward);
         newTransaction.setTransactionType(request.getTransactionType().name());
 
-        unitOfWork.getWalletRepository().save(account.getWallet());
+        walletRepository.save(account.getWallet());
 
-        return unitOfWork.getTransactionRepository().save(newTransaction);
+        return transactionRepository.save(newTransaction);
     }
+
     private TransactionType safeValueOf(String type) {
         try {
             return TransactionType.valueOf(type);

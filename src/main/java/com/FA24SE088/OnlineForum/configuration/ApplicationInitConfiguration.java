@@ -3,8 +3,8 @@ package com.FA24SE088.OnlineForum.configuration;
 import com.FA24SE088.OnlineForum.entity.Account;
 import com.FA24SE088.OnlineForum.entity.Role;
 import com.FA24SE088.OnlineForum.enums.AccountStatus;
-import com.FA24SE088.OnlineForum.repository.Repository.AccountRepository;
-import com.FA24SE088.OnlineForum.repository.Repository.RoleRepository;
+import com.FA24SE088.OnlineForum.repository.AccountRepository;
+import com.FA24SE088.OnlineForum.repository.RoleRepository;
 
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -40,7 +40,7 @@ public class ApplicationInitConfiguration {
         // Đảm bảo dữ liệu được lưu ngay lập tức
     ApplicationRunner createAutoRole() {
         return args -> {
-            if(!checkRole()){
+            if (!checkRole()) {
                 Role admin = new Role();
                 admin.setName("ADMIN");
                 roleRepository.save(admin);

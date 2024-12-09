@@ -13,6 +13,6 @@ import java.util.List;
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class RedeemDocumentResponse {
-    @JsonIgnoreProperties(value = {"redeemList","transactionList"}, allowSetters = true)
+    @JsonIgnoreProperties(value = {"redeemList", "transactionList"}, allowSetters = true)
     List<Reward> reward;
 }

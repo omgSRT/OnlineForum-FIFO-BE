@@ -4,16 +4,12 @@ import com.FA24SE088.OnlineForum.dto.request.DraftCreateRequest;
 import com.FA24SE088.OnlineForum.dto.request.DraftUpdateRequest;
 import com.FA24SE088.OnlineForum.dto.request.PostCreateRequest;
 import com.FA24SE088.OnlineForum.dto.request.PostUpdateRequest;
-import com.FA24SE088.OnlineForum.dto.response.ImageResponse;
 import com.FA24SE088.OnlineForum.dto.response.PostGetByIdResponse;
 import com.FA24SE088.OnlineForum.dto.response.PostResponse;
-import com.FA24SE088.OnlineForum.entity.Image;
 import com.FA24SE088.OnlineForum.entity.Post;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
-
-import java.util.List;
 
 @Mapper(componentModel = "spring", uses = {ImageMapper.class, PostFileMapper.class})
 public interface PostMapper {

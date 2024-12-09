@@ -19,7 +19,8 @@ public enum SuccessReturnMessage {
     ;
 
     private String message;
-    SuccessReturnMessage(String message){
+
+    SuccessReturnMessage(String message) {
         this.message = message;
     }
 }

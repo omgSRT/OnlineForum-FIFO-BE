@@ -22,10 +22,10 @@ import java.util.TimeZone;
 @EnableScheduling
 public class OnlineForumApplication {
 
-	public static void main(String[] args) {
-		TimeZone.setDefault(TimeZone.getTimeZone("Asia/Ho_Chi_Minh"));
-		SpringApplication.run(OnlineForumApplication.class, args);
-	}
+    public static void main(String[] args) {
+        TimeZone.setDefault(TimeZone.getTimeZone("Asia/Ho_Chi_Minh"));
+        SpringApplication.run(OnlineForumApplication.class, args);
+    }
 
 //	@Bean
 //	public CommandLineRunner openSwaggerUI() {

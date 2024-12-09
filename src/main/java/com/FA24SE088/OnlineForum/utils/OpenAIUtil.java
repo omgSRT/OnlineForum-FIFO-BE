@@ -80,40 +80,40 @@ public class OpenAIUtil {
         }
 
         if (openAIResponse.getChoices() != null && !openAIResponse.getChoices().isEmpty()) {
-                String result = openAIResponse.getChoices().get(0).getMessage().getContent().trim().toLowerCase();
+            String result = openAIResponse.getChoices().get(0).getMessage().getContent().trim().toLowerCase();
 
-                System.out.println(result);
+            System.out.println(result);
 
-                boolean titleTopicRelated = false;
-                boolean contentTopicRelated = false;
-                boolean contentTitleRelated = false;
+            boolean titleTopicRelated = false;
+            boolean contentTopicRelated = false;
+            boolean contentTitleRelated = false;
 
-                for (String line : result.split("\n")) {
-                    if (line.startsWith("title and topic related:")) {
-                        titleTopicRelated = Boolean.parseBoolean(line.split(":")[1].trim());
-                    } else if (line.startsWith("content and topic related:")) {
-                        contentTopicRelated = Boolean.parseBoolean(line.split(":")[1].trim());
-                    } else if (line.startsWith("title and content related:")){
-                        contentTitleRelated = Boolean.parseBoolean(line.split(":")[1].trim());
-                    }
+            for (String line : result.split("\n")) {
+                if (line.startsWith("title and topic related:")) {
+                    titleTopicRelated = Boolean.parseBoolean(line.split(":")[1].trim());
+                } else if (line.startsWith("content and topic related:")) {
+                    contentTopicRelated = Boolean.parseBoolean(line.split(":")[1].trim());
+                } else if (line.startsWith("title and content related:")) {
+                    contentTitleRelated = Boolean.parseBoolean(line.split(":")[1].trim());
                 }
+            }
 
-                if(!titleTopicRelated){
-                    throw new AppException(ErrorCode.TITLE_NOT_RELATED_TO_TOPIC);
-                }
-                if(!contentTopicRelated){
+            if (!titleTopicRelated) {
+                throw new AppException(ErrorCode.TITLE_NOT_RELATED_TO_TOPIC);
+            }
+            if (!contentTopicRelated) {
 //                    if (content.toLowerCase().contains(topicName.toLowerCase())) {
 //                        contentTopicRelated = true;
 //                    }
-                    throw new AppException(ErrorCode.CONTENT_NOT_RELATED_TO_TOPIC);
-                }
-                if(!contentTitleRelated){
-                    throw new AppException(ErrorCode.CONTENT_NOT_RELATED_TO_TITLE);
-                }
-
-                return true;
+                throw new AppException(ErrorCode.CONTENT_NOT_RELATED_TO_TOPIC);
             }
-            return false;
+            if (!contentTitleRelated) {
+                throw new AppException(ErrorCode.CONTENT_NOT_RELATED_TO_TITLE);
+            }
+
+            return true;
+        }
+        return false;
     }
 
     public boolean isRelatedUsingVector(String title, String content, String topicName) {
@@ -139,6 +139,7 @@ public class OpenAIUtil {
 
         return true;
     }
+
     //formula: (A * B)/(|A| * |B|)
     private double cosineSimilarity(Double[] vectorA, Double[] vectorB) {
         double dotProduct = 0.0;
@@ -158,6 +159,7 @@ public class OpenAIUtil {
 
         return dotProduct / denominator;
     }
+
     private Double[] getEmbeddings(String text) {
         RestTemplate restTemplate = new RestTemplate();
         HttpHeaders headers = new HttpHeaders();
@@ -182,7 +184,8 @@ public class OpenAIUtil {
         ObjectMapper objectMapper = new ObjectMapper();
         try {
             // Use TypeReference to deserialize the response into a specific type
-            Map<String, Object> responseMap = objectMapper.readValue(response.getBody(), new TypeReference<>() {});
+            Map<String, Object> responseMap = objectMapper.readValue(response.getBody(), new TypeReference<>() {
+            });
 
             // Extract the 'data' field as a List of Maps
             List<Map<String, Object>> data = (List<Map<String, Object>>) responseMap.get("data");

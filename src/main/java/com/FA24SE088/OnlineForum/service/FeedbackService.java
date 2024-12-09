@@ -1,8 +1,6 @@
 package com.FA24SE088.OnlineForum.service;
 
-
 import com.FA24SE088.OnlineForum.dto.request.*;
-import com.FA24SE088.OnlineForum.dto.response.DataNotification;
 import com.FA24SE088.OnlineForum.dto.response.FeedbackResponse;
 import com.FA24SE088.OnlineForum.entity.*;
 import com.FA24SE088.OnlineForum.enums.FeedbackStatus;
@@ -10,17 +8,13 @@ import com.FA24SE088.OnlineForum.enums.FeedbackUpdateStatus;
 import com.FA24SE088.OnlineForum.exception.AppException;
 import com.FA24SE088.OnlineForum.exception.ErrorCode;
 import com.FA24SE088.OnlineForum.mapper.FeedbackMapper;
-import com.FA24SE088.OnlineForum.repository.UnitOfWork.UnitOfWork;
-//import com.FA24SE088.OnlineForum.utils.DataHandler;
-import com.FA24SE088.OnlineForum.utils.SocketIOUtil;
-import com.corundumstudio.socketio.SocketIOServer;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.FA24SE088.OnlineForum.repository.AccountRepository;
+import com.FA24SE088.OnlineForum.repository.FeedbackRepository;
+import com.FA24SE088.OnlineForum.repository.NotificationRepository;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
@@ -31,17 +25,16 @@ import java.util.*;
 @Slf4j
 @Service
 public class FeedbackService {
-    @Autowired
-    UnitOfWork unitOfWork;
+    AccountRepository accountRepository;
+    FeedbackRepository feedbackRepository;
+    NotificationRepository notificationRepository;
     FeedbackMapper feedbackMapper;
-    SocketIOServer socketIOServer;
-    @Autowired
-    ObjectMapper objectMapper = new ObjectMapper();
-    SocketIOUtil socketIOUtil;
 
     private Account getCurrentUser() {
         var context = SecurityContextHolder.getContext();
-        return unitOfWork.getAccountRepository().findByUsername(context.getAuthentication().getName()).orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND));
+        return accountRepository
+                .findByUsername(context.getAuthentication().getName()).orElseThrow(()
+                        -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND));
     }
 
     public FeedbackResponse createFeedback(FeedbackRequest feedbackRequest) {
@@ -52,21 +45,20 @@ public class FeedbackService {
         Feedback feedback = feedbackMapper.toFeedback(feedbackRequest);
         feedback.setAccount(account);
         feedback.setStatus(FeedbackStatus.PENDING.name());
-        Feedback savedFeedback = unitOfWork.getFeedbackRepository().save(feedback);
-        FeedbackResponse response = feedbackMapper.toResponse(savedFeedback);
-        return response;
+        Feedback savedFeedback = feedbackRepository.save(feedback);
+        return feedbackMapper.toResponse(savedFeedback);
     }
 
 
     public Optional<FeedbackResponse> updateFeedback(UUID feedbackId, FeedbackUpdateStatus status) {
-        Optional<Feedback> feedbackOptional = unitOfWork.getFeedbackRepository().findById(feedbackId);
+        Optional<Feedback> feedbackOptional = feedbackRepository.findById(feedbackId);
         if (feedbackOptional.isPresent()) {
             Feedback feedback = feedbackOptional.get();
             if (!feedback.getStatus().equalsIgnoreCase(FeedbackStatus.PENDING.name())) {
                 throw new AppException(ErrorCode.WRONG_STATUS);
             }
             feedback.setStatus(status.name());
-            Feedback updatedFeedback = unitOfWork.getFeedbackRepository().save(feedback);
+            Feedback updatedFeedback = feedbackRepository.save(feedback);
 
             Notification notification = Notification.builder()
                     .title("Feedback Noitfication")
@@ -75,7 +67,7 @@ public class FeedbackService {
                     .account(feedback.getAccount())
                     .createdDate(feedback.getCreatedDate())
                     .build();
-            unitOfWork.getNotificationRepository().save(notification);
+            notificationRepository.save(notification);
 
             return Optional.of(feedbackMapper.toResponse(updatedFeedback));
         }
@@ -83,19 +75,19 @@ public class FeedbackService {
     }
 
     public Optional<FeedbackResponse> getFeedbackById(UUID feedbackId) {
-        Optional<Feedback> feedbackOptional = unitOfWork.getFeedbackRepository().findById(feedbackId);
+        Optional<Feedback> feedbackOptional = feedbackRepository.findById(feedbackId);
         return feedbackOptional.map(feedbackMapper::toResponse);
     }
 
     public List<FeedbackResponse> getAllFeedbacks() {
-        List<Feedback> feedbacks = unitOfWork.getFeedbackRepository().findAll();
+        List<Feedback> feedbacks = feedbackRepository.findAll();
         return feedbacks.stream()
                 .map(feedbackMapper::toResponse)
                 .toList();
     }
 
     public List<FeedbackResponse> filter(UUID id, String username, FeedbackStatus status, boolean ascending) {
-        List<FeedbackResponse> list = new ArrayList<>(unitOfWork.getFeedbackRepository().findAll().stream()
+        List<FeedbackResponse> list = new ArrayList<>(feedbackRepository.findAll().stream()
                 .filter(feedback -> (id == null || (feedback.getAccount() != null && feedback.getAccount().getAccountId() != null && feedback.getAccount().getAccountId().equals(id))))
                 .filter(feedback -> (username == null ||
                         (feedback.getAccount().getUsername() != null && feedback.getAccount().getUsername().contains(username))))
@@ -114,8 +106,8 @@ public class FeedbackService {
     }
 
     public void deleteFeedback(UUID feedbackId) {
-        if (unitOfWork.getFeedbackRepository().existsById(feedbackId)) {
-            unitOfWork.getFeedbackRepository().deleteById(feedbackId);
+        if (feedbackRepository.existsById(feedbackId)) {
+            feedbackRepository.deleteById(feedbackId);
         } else {
             throw new AppException(ErrorCode.FEEDBACK_NOT_FOUND);
         }

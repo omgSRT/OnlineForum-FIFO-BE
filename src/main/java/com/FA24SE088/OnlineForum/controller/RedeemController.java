@@ -23,7 +23,7 @@ public class RedeemController {
 
     @Operation(summary = "Đây là Api đổi thưởng", description = "Đây là Api đổi thưởng")
     @PostMapping("/create")
-    public ApiResponse<RedeemResponse> create(@RequestBody RedeemRequest request){
+    public ApiResponse<RedeemResponse> create(@RequestBody RedeemRequest request) {
         return ApiResponse.<RedeemResponse>builder()
                 .entity(redeemService.create(request))
                 .build();
@@ -31,13 +31,11 @@ public class RedeemController {
 
     @Operation(summary = "Xem phần thưởng đã đổi của tk đang đăng nhập", description = "Xem phần thưởng đã đổi của tk đang đăng nhập")
     @GetMapping("/my-reward")
-    public ApiResponse<RedeemDocumentResponse> getMyDocument(){
+    public ApiResponse<RedeemDocumentResponse> getMyDocument() {
         return ApiResponse.<RedeemDocumentResponse>builder()
                 .entity(redeemService.getMyRewarded())
                 .build();
     }
-
-
 
 
 }

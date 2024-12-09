@@ -34,7 +34,7 @@ public class FeedbackController {
 
     @Operation(summary = "Create feedback", description = "Status: APPROVED,REJECTED")
     @PostMapping("/create")
-    public ApiResponse<FeedbackResponse> createFeedback(@RequestBody @Validated FeedbackRequest feedbackRequest){
+    public ApiResponse<FeedbackResponse> createFeedback(@RequestBody @Validated FeedbackRequest feedbackRequest) {
         return ApiResponse.<FeedbackResponse>builder()
                 .entity(feedbackService.createFeedback(feedbackRequest))
                 .build();
@@ -57,7 +57,7 @@ public class FeedbackController {
             @RequestParam(required = false, defaultValue = "PENDING") FeedbackStatus status,
             @RequestParam(defaultValue = "true") boolean acsending) {
         return ApiResponse.<List<FeedbackResponse>>builder()
-                .entity(feedbackService.filter(accountId,username, status, acsending))
+                .entity(feedbackService.filter(accountId, username, status, acsending))
                 .build();
     }
 
