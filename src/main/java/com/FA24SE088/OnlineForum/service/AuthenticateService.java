@@ -3,13 +3,11 @@ package com.FA24SE088.OnlineForum.service;
 import com.FA24SE088.OnlineForum.dto.request.AccountChangePasswordRequest;
 import com.FA24SE088.OnlineForum.dto.request.AuthenticationRequest;
 import com.FA24SE088.OnlineForum.dto.request.IntrospectRequest;
-import com.FA24SE088.OnlineForum.dto.request.LogoutRequest;
 import com.FA24SE088.OnlineForum.dto.response.AccountResponse;
 import com.FA24SE088.OnlineForum.dto.response.AuthenticationResponse;
 import com.FA24SE088.OnlineForum.dto.response.IntrospectResponse;
 import com.FA24SE088.OnlineForum.dto.response.RefreshAccessTokenResponse;
 import com.FA24SE088.OnlineForum.entity.Account;
-import com.FA24SE088.OnlineForum.entity.InvalidatedToken;
 import com.FA24SE088.OnlineForum.enums.AccountStatus;
 import com.FA24SE088.OnlineForum.exception.AppException;
 import com.FA24SE088.OnlineForum.exception.ErrorCode;
@@ -33,9 +31,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.text.ParseException;
-import java.time.Duration;
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.StringJoiner;
@@ -73,15 +69,12 @@ public class AuthenticateService {
         PasswordEncoder passwordEncoder = new BCryptPasswordEncoder(10);
         var account = unitOfWork.getAccountRepository().findByUsername(request.getUsername()).orElseThrow(
                 () -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND)
+                //
         );
         boolean authenticated = passwordEncoder.matches(request.getPassword(), account.getPassword());
         if (!authenticated){
             throw new AppException(ErrorCode.UNAUTHENTICATED);
         }
-//        if(account.getStatus().equals(AccountStatus.BANED.name())){
-//            long daysRemaining = ChronoUnit.DAYS.between(LocalDateTime.now(), account.getBannedUntil()) + 1;
-//            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Your account is also banned in " + daysRemaining + " days.");
-//        }
         if(account.getStatus().equals(AccountStatus.PENDING_APPROVAL.name())){
             throw new AppException(ErrorCode.ACCOUNT_HAS_NOT_BEEN_AUTHENTICATED);
         }
@@ -167,18 +160,18 @@ public class AuthenticateService {
                 .build();
     }
 
-    public void logout(LogoutRequest request) throws ParseException, JOSEException {
-        var signToken = verifyToken(request.getToken());
-
-        String jti = signToken.getJWTClaimsSet().getJWTID();
-        Date expTime = signToken.getJWTClaimsSet().getExpirationTime();
-        InvalidatedToken invalidatedToken = InvalidatedToken.builder()
-                .id(jti)
-                .expiryTime(expTime)
-                .build();
-
-        unitOfWork.getInvalidateTokenRepository().save(invalidatedToken);
-    }
+//    public void logout(LogoutRequest request) throws ParseException, JOSEException {
+//        var signToken = verifyToken(request.getToken());
+//
+//        String jti = signToken.getJWTClaimsSet().getJWTID();
+//        Date expTime = signToken.getJWTClaimsSet().getExpirationTime();
+//        InvalidatedToken invalidatedToken = InvalidatedToken.builder()
+//                .id(jti)
+//                .expiryTime(expTime)
+//                .build();
+//
+//        unitOfWork.getInvalidateTokenRepository().save(invalidatedToken);
+//    }
 
     public CompletableFuture<Void> forgetPassword(String email){
         var foundAccountFuture = unitOfWork.getAccountRepository().findByEmailIgnoreCase(email)
@@ -243,9 +236,9 @@ public class AuthenticateService {
         if (!(verified && expiredDate.after(new Date()))) {
             throw new RuntimeException("String.valueOf(ErrorCode.UNAUTHENTICATED)");
         }
-        if(unitOfWork.getInvalidateTokenRepository().existsById(signedJWT.getJWTClaimsSet().getJWTID())){
-            throw new RuntimeException("unauthenticated");
-        }
+//        if(unitOfWork.getInvalidateTokenRepository().existsById(signedJWT.getJWTClaimsSet().getJWTID())){
+//            throw new RuntimeException("unauthenticated");
+//        }
 
         return signedJWT;
     }

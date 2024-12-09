@@ -174,7 +174,6 @@ public class PostService {
                                             response.setUpvoteCount(upvoteCountFuture.join());
                                             response.setCommentCount(commentCountFuture.join());
                                             response.setViewCount(viewCountFuture.join());
-                                            //==========================================================
                                             DataNotification dataNotification = null;
                                             try {
                                                 dataNotification = DataNotification.builder()
@@ -197,13 +196,11 @@ public class PostService {
                                                             .build();
                                                     unitOfWork.getNotificationRepository().save(notification);
                                                     response.setNotification(notification);
-//                                                    socketIOUtil.sendEventToOneClientInAServer(clientSessionId, WebsocketEventName.NOTIFICATION.name(), notification);
                                                     socketIOUtil.sendEventToOneClientInAServer(account.getAccountId(), WebsocketEventName.NOTIFICATION.name(), notification);
 
                                             } catch (JsonProcessingException e) {
                                                 throw new RuntimeException(e);
                                             }
-                                            //==========================================================
                                             return response;
                                         });
                             });

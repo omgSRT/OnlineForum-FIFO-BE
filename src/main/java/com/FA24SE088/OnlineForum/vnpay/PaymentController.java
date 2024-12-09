@@ -18,10 +18,10 @@ import java.util.UUID;
 public class PaymentController {
     private final PaymentService paymentService;
 
-    @GetMapping("/vn-pay")
-    public ResponseObject<PaymentDTO.VNPayResponse> pay(HttpServletRequest request) {
-        return new ResponseObject<>(HttpStatus.OK, "Success", paymentService.createVnPayPayment(request));
-    }
+//    @GetMapping("/vn-pay")
+//    public ResponseObject<PaymentDTO.VNPayResponse> pay(HttpServletRequest request) {
+//        return new ResponseObject<>(HttpStatus.OK, "Success", paymentService.createVnPayPayment(request));
+//    }
 //    @GetMapping("/vn-pay-callback")
 //    public ResponseObject<PaymentDTO.VNPayResponse> payCallbackHandler(HttpServletRequest request) {
 //        String status = request.getParameter("vnp_ResponseCode");

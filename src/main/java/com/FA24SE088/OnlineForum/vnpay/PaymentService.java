@@ -4,15 +4,11 @@ package com.FA24SE088.OnlineForum.vnpay;
 import com.FA24SE088.OnlineForum.configuration.VNPAYConfig;
 import com.FA24SE088.OnlineForum.entity.*;
 import com.FA24SE088.OnlineForum.enums.OrderPointStatus;
-import com.FA24SE088.OnlineForum.enums.WebsocketEventName;
 import com.FA24SE088.OnlineForum.exception.AppException;
 import com.FA24SE088.OnlineForum.exception.ErrorCode;
-import com.FA24SE088.OnlineForum.mapper.OrderPointMapper;
 import com.FA24SE088.OnlineForum.repository.UnitOfWork.UnitOfWork;
 import com.FA24SE088.OnlineForum.utils.VNPayUtil;
-import com.corundumstudio.socketio.SocketIOServer;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,11 +24,6 @@ public class PaymentService {
     private final VNPAYConfig vnPayConfig;
     @Autowired
     UnitOfWork unitOfWork;
-    @Autowired
-    OrderPointMapper orderPointMapper;
-    SocketIOServer socketIOServer;
-    @Autowired
-    ObjectMapper objectMapper;
 
     public PaymentDTO.VNPayResponse createVnPayPayment(HttpServletRequest request) {
         long amount = 1000000L;
@@ -118,14 +109,6 @@ public class PaymentService {
             wallet.setBalance(wallet.getBalance() + orderPoint.getMonkeyCoinPack().getPoint());
             unitOfWork.getWalletRepository().save(wallet);
 
-//            String messageJson = objectMapper.writeValueAsString(orderPoint);
-//            Notification notification = Notification.builder()
-//                    .title("Load money into the wallet successfully")
-//                    .message(messageJson)
-//                    .isRead(false)
-//                    .build();
-//            unitOfWork.getNotificationRepository().save(notification);
-//            socketIOServer.getBroadcastOperations().sendEvent(WebsocketEventName.NOTIFICATION.name(), notification);
             redirectUrl = returnUrl;
         } else {
             orderPoint.setStatus(OrderPointStatus.FAILED.name());

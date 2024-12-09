@@ -13,7 +13,6 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class UnitOfWork {
     final AccountRepository accountRepository;
-    final InvalidateTokenRepository invalidateTokenRepository;
     final RoleRepository roleRepository;
     final CategoryRepository categoryRepository;
     final CommentRepository commentRepository;
@@ -26,9 +25,6 @@ public class UnitOfWork {
     final PostRepository postRepository;
     final RedeemRepository redeemRepository;
     final RewardRepository rewardRepository;
-    final ImageSectionRepository imageSectionRepository;
-    final VideoSectionRepository videoSectionRepository;
-    final SectionRepository sectionRepository;
     final TagRepository tagRepository;
     final TopicRepository topicRepository;
     final TransactionRepository transactionRepository;
@@ -39,8 +35,6 @@ public class UnitOfWork {
     final ReportRepository reportRepository;
     final BookMarkRepository bookMarkRepository;
     final OtpRepository otpRepository;
-    final ContentSectionRepository contentSectionRepository;
-    final MediaRepository mediaRepository;
     final TypeBonusRepository typeBonusRepository;
     final MonkeyCoinPackRepository monkeyCoinPackRepository;
     final OrderPointRepository orderPointRepository;
