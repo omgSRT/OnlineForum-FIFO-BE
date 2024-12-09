@@ -17,8 +17,8 @@ import java.util.UUID;
 public class PostViewResponse {
     UUID postViewId;
     Date viewedDate;
-    @JsonIgnoreProperties(value = { "password", "email", "bio", "gender", "address", "createdDate", "status", "role" })
+    @JsonIgnoreProperties(value = {"password", "email", "bio", "gender", "address", "createdDate", "status", "role"})
     Account account;
-    @JsonIgnoreProperties(value = { "account", "tag", "status", "topic" })
+    @JsonIgnoreProperties(value = {"account", "tag", "status", "topic"})
     Post post;
 }

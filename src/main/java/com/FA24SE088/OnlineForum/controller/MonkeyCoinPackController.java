@@ -32,12 +32,14 @@ public class MonkeyCoinPackController {
                 .entity(monkeyCoinPackService.createPricing(pricingRequest))
                 .build();
     }
-    @PutMapping ("/update/{pricingId}")
+
+    @PutMapping("/update/{pricingId}")
     public ApiResponse<PricingResponse> update(@PathVariable UUID pricingId, @RequestBody PricingRequest pricingRequest) {
         return ApiResponse.<PricingResponse>builder()
-                .entity(monkeyCoinPackService.updatePricing(pricingId,pricingRequest))
+                .entity(monkeyCoinPackService.updatePricing(pricingId, pricingRequest))
                 .build();
     }
+
     @GetMapping("/get-by-id/{id}")
     public ApiResponse<PricingResponse> getPricing(@PathVariable UUID id) {
         return ApiResponse.<PricingResponse>builder()

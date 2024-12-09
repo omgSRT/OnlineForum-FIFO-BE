@@ -16,8 +16,8 @@ import java.util.UUID;
 public class UpvoteCreateDeleteResponse {
     String message;
     UUID upvoteId;
-    @JsonIgnoreProperties(value = { "password", "email", "bio", "gender", "address", "createdDate", "status", "role" })
+    @JsonIgnoreProperties(value = {"password", "email", "bio", "gender", "address", "createdDate", "status", "role"})
     Account account;
-    @JsonIgnoreProperties(value = { "account", "topic", "tag" })
+    @JsonIgnoreProperties(value = {"account", "topic", "tag"})
     Post post;
 }

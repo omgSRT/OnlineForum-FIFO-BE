@@ -27,17 +27,17 @@ public class UpvoteController {
 
     @Operation(summary = "Add Or Remove Upvote From A Post")
     @PostMapping(path = "/add-or-delete")
-    public ApiResponse<UpvoteCreateDeleteResponse> createOrDeleteUpvote(@RequestBody @Valid UpvoteRequest request){
+    public ApiResponse<UpvoteCreateDeleteResponse> createOrDeleteUpvote(@RequestBody @Valid UpvoteRequest request) {
         return upvoteService.addOrDeleteUpvote(request).thenApply(upvoteCreateDeleteResponse ->
                 ApiResponse.<UpvoteCreateDeleteResponse>builder()
                         .entity(upvoteCreateDeleteResponse)
                         .build()
-                ).join();
+        ).join();
     }
 
     @Operation(summary = "Get All Upvotes")
     @GetMapping(path = "/getall")
-    public ApiResponse<List<UpvoteResponse>> getAllUpvotes(){
+    public ApiResponse<List<UpvoteResponse>> getAllUpvotes() {
         return upvoteService.getAllUpvotes().thenApply(allUpvotes ->
                 ApiResponse.<List<UpvoteResponse>>builder()
                         .entity(allUpvotes)

@@ -17,13 +17,14 @@ public interface AccountMapper {
     @Mapping(target = "categoryList", ignore = true)
     Account toAccount(AccountRequest request);
 
-    @Mapping(target = "accountId",source = "accountId")
+    @Mapping(target = "accountId", source = "accountId")
     @Mapping(target = "bio", source = "bio")
     AccountResponse toResponse(Account account);
 
     void updateAccount(@MappingTarget Account account, AccountUpdateRequest request);
 
     List<AccountResponse> toListResponse(List<Account> list);
+
     AccountFollowResponse toCountFollower(Account account);
 
     List<AccountFollowResponse> toCountFollowerList(List<Account> list);

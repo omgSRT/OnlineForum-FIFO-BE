@@ -15,7 +15,8 @@ import com.FA24SE088.OnlineForum.exception.AppException;
 import com.FA24SE088.OnlineForum.exception.ErrorCode;
 
 import com.FA24SE088.OnlineForum.mapper.AccountMapper;
-import com.FA24SE088.OnlineForum.repository.UnitOfWork.UnitOfWork;
+import com.FA24SE088.OnlineForum.repository.AccountRepository;
+import com.FA24SE088.OnlineForum.repository.InvalidateTokenRepository;
 import com.FA24SE088.OnlineForum.utils.EmailUtil;
 import com.FA24SE088.OnlineForum.utils.OtpUtil;
 import com.nimbusds.jose.*;
@@ -33,9 +34,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.text.ParseException;
-import java.time.Duration;
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.StringJoiner;
@@ -47,7 +46,8 @@ import java.util.concurrent.CompletableFuture;
 @Slf4j
 @Service
 public class AuthenticateService {
-    final UnitOfWork unitOfWork;
+    final AccountRepository accountRepository;
+    final InvalidateTokenRepository invalidateTokenRepository;
     final EmailUtil emailUtil;
     final AccountMapper accountMapper;
     final OtpUtil otpUtil;
@@ -56,10 +56,10 @@ public class AuthenticateService {
 
     public IntrospectResponse introspectJWT(IntrospectRequest request) throws JOSEException, ParseException {
         String token = request.getToken();
-        boolean invalid =true;
+        boolean invalid = true;
         try {
             verifyToken(token);
-        }catch (RuntimeException e){
+        } catch (RuntimeException e) {
             invalid = false;
         }
         //Check And Return Bool If  And JWT Expired
@@ -69,23 +69,23 @@ public class AuthenticateService {
                 .build();
     }
 
-    public AuthenticationResponse authenticated(AuthenticationRequest request){
+    public AuthenticationResponse authenticated(AuthenticationRequest request) {
         PasswordEncoder passwordEncoder = new BCryptPasswordEncoder(10);
-        var account = unitOfWork.getAccountRepository().findByUsername(request.getUsername()).orElseThrow(
+        var account = accountRepository.findByUsername(request.getUsername()).orElseThrow(
                 () -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND)
         );
         boolean authenticated = passwordEncoder.matches(request.getPassword(), account.getPassword());
-        if (!authenticated){
+        if (!authenticated) {
             throw new AppException(ErrorCode.UNAUTHENTICATED);
         }
 //        if(account.getStatus().equals(AccountStatus.BANED.name())){
 //            long daysRemaining = ChronoUnit.DAYS.between(LocalDateTime.now(), account.getBannedUntil()) + 1;
 //            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Your account is also banned in " + daysRemaining + " days.");
 //        }
-        if(account.getStatus().equals(AccountStatus.PENDING_APPROVAL.name())){
+        if (account.getStatus().equals(AccountStatus.PENDING_APPROVAL.name())) {
             throw new AppException(ErrorCode.ACCOUNT_HAS_NOT_BEEN_AUTHENTICATED);
         }
-        if(account.getStatus().equals(AccountStatus.INACTIVE.name())){
+        if (account.getStatus().equals(AccountStatus.INACTIVE.name())) {
             throw new AppException(ErrorCode.ACCOUNT_INACTIVE);
         }
         var token = generateToken(account, 1);
@@ -153,7 +153,7 @@ public class AuthenticateService {
     }
 
     public RefreshAccessTokenResponse generateNewAccessTokenFromRefreshToken(String refreshToken, String username) {
-        Account account = unitOfWork.getAccountRepository().findByUsername(username)
+        Account account = accountRepository.findByUsername(username)
                 .orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND));
 
         if (!verifyRefreshToken(refreshToken, account)) {
@@ -177,11 +177,11 @@ public class AuthenticateService {
                 .expiryTime(expTime)
                 .build();
 
-        unitOfWork.getInvalidateTokenRepository().save(invalidatedToken);
+        invalidateTokenRepository.save(invalidatedToken);
     }
 
-    public CompletableFuture<Void> forgetPassword(String email){
-        var foundAccountFuture = unitOfWork.getAccountRepository().findByEmailIgnoreCase(email)
+    public CompletableFuture<Void> forgetPassword(String email) {
+        var foundAccountFuture = accountRepository.findByEmailIgnoreCase(email)
                 .thenApply(optionalAccount -> optionalAccount.orElseThrow(() ->
                         new AppException(ErrorCode.ACCOUNT_NOT_FOUND)));
 
@@ -202,7 +202,7 @@ public class AuthenticateService {
                     + "<body>"
                     + "<p><strong>FIFO Password Reset</strong></p>"
                     + "<p>We heard that you lost your FIFO password. Sorry about that!</p>"
-                    + "<p>Don't worry! Enter This OTP To Reset Your Password: " +otpUtil.generateOtp(account.getEmail()).getOtpEmail()+ " </p>"
+                    + "<p>Don't worry! Enter This OTP To Reset Your Password: " + otpUtil.generateOtp(account.getEmail()).getOtpEmail() + " </p>"
                     + "</body>"
                     + "</html>";
 
@@ -213,22 +213,23 @@ public class AuthenticateService {
             return CompletableFuture.completedFuture(null);
         });
     }
-    public CompletableFuture<AccountResponse> changePassword(String email, AccountChangePasswordRequest request){
+
+    public CompletableFuture<AccountResponse> changePassword(String email, AccountChangePasswordRequest request) {
         PasswordEncoder passwordEncoder = new BCryptPasswordEncoder(10);
 
-        var foundAccountFuture = unitOfWork.getAccountRepository().findByEmailIgnoreCase(email)
+        var foundAccountFuture = accountRepository.findByEmailIgnoreCase(email)
                 .thenApply(optionalAccount -> optionalAccount.orElseThrow(() ->
                         new AppException(ErrorCode.ACCOUNT_NOT_FOUND)));
 
         return foundAccountFuture.thenCompose(account -> {
-            if(!request.getPassword().equals(request.getConfirmPassword())){
-                throw new AppException(ErrorCode.PASSWORD_NOT_MATCH);
-            }
+                    if (!request.getPassword().equals(request.getConfirmPassword())) {
+                        throw new AppException(ErrorCode.PASSWORD_NOT_MATCH);
+                    }
 
-            account.setPassword(passwordEncoder.encode(request.getPassword()));
+                    account.setPassword(passwordEncoder.encode(request.getPassword()));
 
-            return CompletableFuture.completedFuture(unitOfWork.getAccountRepository().save(account));
-        })
+                    return CompletableFuture.completedFuture(accountRepository.save(account));
+                })
                 .thenApply(accountMapper::toResponse);
     }
 
@@ -243,7 +244,7 @@ public class AuthenticateService {
         if (!(verified && expiredDate.after(new Date()))) {
             throw new RuntimeException("String.valueOf(ErrorCode.UNAUTHENTICATED)");
         }
-        if(unitOfWork.getInvalidateTokenRepository().existsById(signedJWT.getJWTClaimsSet().getJWTID())){
+        if (invalidateTokenRepository.existsById(signedJWT.getJWTClaimsSet().getJWTID())) {
             throw new RuntimeException("unauthenticated");
         }
 

@@ -29,7 +29,7 @@ public class DailyPointController {
     @Operation(summary = "Create New Daily Point Log",
             description = "TypeBonusId Can Be Null To Use Default Point System Instead of Bonus Point")
     @PostMapping(path = "/create")
-    public ApiResponse<DailyPointResponse> createDailyPoint(@RequestBody @Valid DailyPointRequest request){
+    public ApiResponse<DailyPointResponse> createDailyPoint(@RequestBody @Valid DailyPointRequest request) {
         return dailyPointService.createDailyPoint(request).thenApply(dailyPointResponse ->
                 ApiResponse.<DailyPointResponse>builder()
                         .message(SuccessReturnMessage.CREATE_SUCCESS.getMessage())
@@ -40,7 +40,7 @@ public class DailyPointController {
 
     @Operation(summary = "Get Daily Point", description = "Get Daily Point By ID")
     @GetMapping(path = "/get/{dailyPointId}")
-    public ApiResponse<DailyPointResponse> getAllDailyPoints(@PathVariable UUID dailyPointId){
+    public ApiResponse<DailyPointResponse> getAllDailyPoints(@PathVariable UUID dailyPointId) {
         return dailyPointService.getDailyPointById(dailyPointId).thenApply(dailyPointResponse ->
                 ApiResponse.<DailyPointResponse>builder()
                         .entity(dailyPointResponse)
@@ -55,7 +55,7 @@ public class DailyPointController {
                                                                    @RequestParam(required = false) UUID accountId,
                                                                    @RequestParam(required = false) UUID postId,
                                                                    @Parameter(description = "Filter by date in yyyy-MM-dd format", example = "2023-10-01")
-                                                                       @RequestParam(required = false) String givenDate){
+                                                                   @RequestParam(required = false) String givenDate) {
         return dailyPointService.getAllDailyPoints(page, perPage, accountId, postId, givenDate).thenApply(dailyPointResponses ->
                 ApiResponse.<List<DailyPointResponse>>builder()
                         .entity(dailyPointResponses)
@@ -65,12 +65,12 @@ public class DailyPointController {
 
     @Operation(summary = "Delete Daily Point Log", description = "Delete By Daily Point ID")
     @DeleteMapping(path = "/delete/{dailyPointId}")
-    public ApiResponse<DailyPointResponse> deleteDailyPointById(@PathVariable UUID dailyPointId){
+    public ApiResponse<DailyPointResponse> deleteDailyPointById(@PathVariable UUID dailyPointId) {
         return dailyPointService.deleteDailyPointPoint(dailyPointId).thenApply(dailyPointResponse ->
                 ApiResponse.<DailyPointResponse>builder()
                         .message(SuccessReturnMessage.DELETE_SUCCESS.getMessage())
                         .entity(dailyPointResponse)
                         .build()
-                ).join();
+        ).join();
     }
 }

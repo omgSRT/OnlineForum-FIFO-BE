@@ -27,7 +27,7 @@ public class TopicController {
 
     @Operation(summary = "Create New Topic")
     @PostMapping(path = "/create")
-    public ApiResponse<TopicResponse> createTopic(@RequestBody @Valid TopicRequest request){
+    public ApiResponse<TopicResponse> createTopic(@RequestBody @Valid TopicRequest request) {
         return topicService.createTopic(request).thenApply(topicResponse ->
                 ApiResponse.<TopicResponse>builder()
                         .message(SuccessReturnMessage.CREATE_SUCCESS.getMessage())
@@ -40,7 +40,7 @@ public class TopicController {
     @GetMapping(path = "/getall")
     public ApiResponse<List<TopicResponse>> getAllTopics(@RequestParam(defaultValue = "1") int page,
                                                          @RequestParam(defaultValue = "10") int perPage,
-                                                         @RequestParam(required = false) UUID categoryId){
+                                                         @RequestParam(required = false) UUID categoryId) {
         return topicService.getAllTopics(page, perPage, categoryId).thenApply(topicResponses ->
                 ApiResponse.<List<TopicResponse>>builder()
                         .entity(topicResponses)
@@ -52,7 +52,7 @@ public class TopicController {
     @GetMapping(path = "/popular")
     public ApiResponse<List<PopularTopicResponse>> getAllPopularTopics(@RequestParam(defaultValue = "1") int page,
                                                                        @RequestParam(defaultValue = "5") int perPage,
-                                                                       @RequestParam(required = false, defaultValue = "DESCENDING") SortOption sortOption){
+                                                                       @RequestParam(required = false, defaultValue = "DESCENDING") SortOption sortOption) {
         return topicService.getAllPopularTopics(page, perPage, sortOption).thenApply(popularTopicResponses ->
                 ApiResponse.<List<PopularTopicResponse>>builder()
                         .entity(popularTopicResponses)
@@ -62,7 +62,7 @@ public class TopicController {
 
     @Operation(summary = "Get A Topic", description = "Get A Topic By ID")
     @GetMapping(path = "/get/{topicId}")
-    public ApiResponse<TopicResponse> getTopicById(@PathVariable UUID topicId){
+    public ApiResponse<TopicResponse> getTopicById(@PathVariable UUID topicId) {
         return topicService.getTopicById(topicId).thenApply(topicResponse ->
                 ApiResponse.<TopicResponse>builder()
                         .message(SuccessReturnMessage.SEARCH_SUCCESS.getMessage())
@@ -73,7 +73,7 @@ public class TopicController {
 
     @Operation(summary = "Delete A Topic", description = "Delete A Topic By ID")
     @DeleteMapping(path = "/delete/{topicId}")
-    public ApiResponse<TopicResponse> deleteTopicById(@PathVariable UUID topicId){
+    public ApiResponse<TopicResponse> deleteTopicById(@PathVariable UUID topicId) {
         return topicService.deleteTopicById(topicId).thenApply(topicResponse ->
                 ApiResponse.<TopicResponse>builder()
                         .message(SuccessReturnMessage.DELETE_SUCCESS.getMessage())
@@ -85,7 +85,7 @@ public class TopicController {
     @Operation(summary = "Update A Topic", description = "Update A Topic By ID")
     @PutMapping(path = "/update/{topicId}")
     public ApiResponse<TopicResponse> updateTopicById(@PathVariable UUID topicId,
-                                                            @RequestBody @Valid TopicUpdateRequest request){
+                                                      @RequestBody @Valid TopicUpdateRequest request) {
         return topicService.updateTopicById(topicId, request).thenApply(topicResponse ->
                 ApiResponse.<TopicResponse>builder()
                         .message(SuccessReturnMessage.UPDATE_SUCCESS.getMessage())

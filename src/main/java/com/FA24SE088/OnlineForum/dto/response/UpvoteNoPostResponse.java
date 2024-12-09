@@ -14,6 +14,6 @@ import java.util.UUID;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class UpvoteNoPostResponse {
     UUID upvoteId;
-    @JsonIgnoreProperties(value = { "password", "email", "bio", "gender", "address", "createdDate", "status", "role" })
+    @JsonIgnoreProperties(value = {"password", "email", "bio", "gender", "address", "createdDate", "status", "role"})
     Account account;
 }

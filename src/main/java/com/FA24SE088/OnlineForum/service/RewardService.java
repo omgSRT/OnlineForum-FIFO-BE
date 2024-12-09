@@ -1,24 +1,11 @@
 package com.FA24SE088.OnlineForum.service;
 
 import com.FA24SE088.OnlineForum.dto.request.*;
-import org.springframework.core.io.Resource;
-import org.springframework.core.io.UrlResource;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
-import org.springframework.core.io.ByteArrayResource;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
-import java.util.concurrent.atomic.AtomicBoolean;
+import com.FA24SE088.OnlineForum.repository.AccountRepository;
+import com.FA24SE088.OnlineForum.repository.RedeemRepository;
+import com.FA24SE088.OnlineForum.repository.RewardRepository;
 import org.springframework.stereotype.Service;
+
 import java.util.List;
 import java.util.UUID;
 
@@ -29,7 +16,6 @@ import com.FA24SE088.OnlineForum.exception.AppException;
 import com.FA24SE088.OnlineForum.exception.ErrorCode;
 import com.FA24SE088.OnlineForum.mapper.RewardMapper;
 import com.FA24SE088.OnlineForum.mapper.SectionMapper;
-import com.FA24SE088.OnlineForum.repository.UnitOfWork.UnitOfWork;
 import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.Bucket;
 import com.google.firebase.cloud.StorageClient;
@@ -41,12 +27,8 @@ import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.net.MalformedURLException;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 
 
@@ -55,23 +37,26 @@ import java.util.*;
 @Slf4j
 @Service
 public class RewardService {
-    UnitOfWork unitOfWork;
+    RewardRepository rewardRepository;
+    AccountRepository accountRepository;
+    RedeemRepository redeemRepository;
     RewardMapper rewardMapper;
     SectionMapper sectionMapper;
 
     @Transactional
     public void deleteReward(UUID rewardId) {
-        Reward reward = unitOfWork.getRewardRepository()
+        Reward reward = rewardRepository
                 .findById(rewardId)
                 .orElseThrow(() -> new AppException(ErrorCode.REWARD_NOT_FOUND));
         reward.getRedeemList().forEach(redeem -> {
             if (redeem.getReward().getRewardId().equals(rewardId))
                 throw new AppException(ErrorCode.DOCUMENT_HAS_BEEN_USED);
         });
-        unitOfWork.getRewardRepository().delete(reward);
+        rewardRepository.delete(reward);
     }
+
     public RewardResponse getById(UUID id) {
-        return unitOfWork.getRewardRepository().findById(id).map(rewardMapper::toResponse).orElseThrow(() -> new AppException(ErrorCode.REWARD_NOT_FOUND));
+        return rewardRepository.findById(id).map(rewardMapper::toResponse).orElseThrow(() -> new AppException(ErrorCode.REWARD_NOT_FOUND));
     }
 
     public RewardResponse create(RewardRequest rewardRequest) {
@@ -86,13 +71,13 @@ public class RewardService {
         reward.setStatus(RewardStatus.ACTIVE.name());
         reward.setCreatedDate(new Date());
 
-        unitOfWork.getRewardRepository().save(reward);
+        rewardRepository.save(reward);
 
         return rewardMapper.toResponse(reward);
     }
 
     public RewardResponse update(UUID rewardId, RewardUpdateRequest rewardRequest) {
-        Reward reward = unitOfWork.getRewardRepository().findById(rewardId).orElseThrow(() -> new AppException(ErrorCode.REWARD_NOT_FOUND));
+        Reward reward = rewardRepository.findById(rewardId).orElseThrow(() -> new AppException(ErrorCode.REWARD_NOT_FOUND));
         if (rewardRequest.getName() != null && !rewardRequest.getName().isEmpty()) {
             reward.setName(reward.getName());
         }
@@ -109,19 +94,19 @@ public class RewardService {
         if (rewardRequest.getLinkSourceCode() != null && !rewardRequest.getLinkSourceCode().isEmpty()) {
             reward.setLinkSourceCode(rewardRequest.getLinkSourceCode());
         }
-        unitOfWork.getRewardRepository().save(reward);
+        rewardRepository.save(reward);
         return rewardMapper.toResponse(reward);
     }
 
 
     private Account getCurrentUser() {
         var context = SecurityContextHolder.getContext();
-        return unitOfWork.getAccountRepository().findByUsername(context.getAuthentication().getName()).orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND));
+        return accountRepository.findByUsername(context.getAuthentication().getName()).orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND));
     }
 
     public List<RewardResponse> getAllRewardOfCurrentUser() {
         Account currentUser = getCurrentUser();
-        return unitOfWork.getRedeemRepository().findAllByAccount(currentUser)
+        return redeemRepository.findAllByAccount(currentUser)
                 .stream()
                 .map(Redeem::getReward)
                 .sorted(Comparator.comparing(Reward::getCreatedDate).reversed()) // Sắp xếp theo ngày mới nhất giảm dần
@@ -131,17 +116,17 @@ public class RewardService {
     }
 
     public List<RewardResponse> getAll() {
-        return unitOfWork.getRewardRepository().findAll().stream().map(rewardMapper::toResponse)
+        return rewardRepository.findAll().stream().map(rewardMapper::toResponse)
                 .toList();
     }
 
     public List<RewardResponse> getUnredeemedRewardsForCurrentUser() {
         Account currentUser = getCurrentUser();
-        List<UUID> redeemedRewardIds = unitOfWork.getRedeemRepository()
+        List<UUID> redeemedRewardIds = redeemRepository
                 .findAllByAccount(currentUser).stream()
                 .map(redeem -> redeem.getReward().getRewardId())
                 .toList();
-        return unitOfWork.getRewardRepository().findAll().stream()
+        return rewardRepository.findAll().stream()
                 .filter(reward -> !redeemedRewardIds.contains(reward.getRewardId()))
                 .sorted(Comparator.comparing(Reward::getCreatedDate).reversed())
                 .map(rewardMapper::toResponse)
@@ -153,7 +138,7 @@ public class RewardService {
         Account currentUser = getCurrentUser();
 
         // Tìm Reward theo rewardId
-        Reward reward = unitOfWork.getRewardRepository().findById(rewardId)
+        Reward reward = rewardRepository.findById(rewardId)
                 .orElseThrow(() -> new AppException(ErrorCode.REWARD_NOT_FOUND));
 
         if (!RewardStatus.ACTIVE.name().equalsIgnoreCase(reward.getStatus())) {
@@ -182,7 +167,6 @@ public class RewardService {
 
         return blob.getContent();
     }
-
 
 
 }

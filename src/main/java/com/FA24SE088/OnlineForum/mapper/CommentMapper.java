@@ -26,11 +26,13 @@ public interface CommentMapper {
     ReplyCreateResponse toReplyCreateResponse(Comment reply);
 
     CommentNoPostResponse toCommentNoPostResponse(Comment comment);
+
     default List<CommentNoPostResponse> toCommentNoPostResponseList(List<Comment> comments) {
         return comments.stream()
                 .map(this::toCommentNoPostResponse)
                 .toList();
     }
+
     default CommentNoPostResponse toCommentNoPostResponseWithReplies(Comment comment) {
         CommentNoPostResponse response = new CommentNoPostResponse();
         response.setCommentId(comment.getCommentId());

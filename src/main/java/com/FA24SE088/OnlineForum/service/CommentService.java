@@ -12,7 +12,7 @@ import com.FA24SE088.OnlineForum.enums.WebsocketEventName;
 import com.FA24SE088.OnlineForum.exception.AppException;
 import com.FA24SE088.OnlineForum.exception.ErrorCode;
 import com.FA24SE088.OnlineForum.mapper.CommentMapper;
-import com.FA24SE088.OnlineForum.repository.UnitOfWork.UnitOfWork;
+import com.FA24SE088.OnlineForum.repository.*;
 import com.FA24SE088.OnlineForum.utils.ContentFilterUtil;
 import com.FA24SE088.OnlineForum.utils.PaginationUtils;
 import com.FA24SE088.OnlineForum.utils.SocketIOUtil;
@@ -38,7 +38,15 @@ import java.util.concurrent.CompletableFuture;
 @Slf4j
 @Service
 public class CommentService {
-    UnitOfWork unitOfWork;
+    CommentRepository commentRepository;
+    TypeBonusRepository typeBonusRepository;
+    NotificationRepository notificationRepository;
+    BlockedAccountRepository blockedAccountRepository;
+    PostRepository postRepository;
+    AccountRepository accountRepository;
+    FollowRepository followRepository;
+    DailyPointRepository dailyPointRepository;
+    WalletRepository walletRepository;
     CommentMapper commentMapper;
     PaginationUtils paginationUtils;
     SocketIOUtil socketIOUtil;
@@ -60,10 +68,10 @@ public class CommentService {
                         throw new AppException(ErrorCode.CANNOT_COMMENT_ON_DRAFT);
                     }
 
-                    return unitOfWork.getCommentRepository().countByPost(post).thenCompose(commentCount -> {
+                    return commentRepository.countByPost(post).thenCompose(commentCount -> {
                         long amount = commentCount + 1;
 
-                        return unitOfWork.getTypeBonusRepository().findByNameAndQuantity(TypeBonusNameEnum.COMMENT.name(), amount)
+                        return typeBonusRepository.findByNameAndQuantity(TypeBonusNameEnum.COMMENT.name(), amount)
                                 .thenCompose(typeBonus -> {
                                     if (typeBonus != null) {
                                         return createDailyPointLog(post.getAccount(), post, typeBonus)
@@ -79,9 +87,9 @@ public class CommentService {
                                                     newComment.setParentComment(null);
                                                     newComment.setReplies(new ArrayList<>());
 
-                                                    var savedComment = unitOfWork.getCommentRepository().save(newComment);
-                                                    realtimeComment(newComment,"Comment","Comment notification");
-                                                    realtimeNotification(dailyPoint,"DailyPoint","Daily point notification");
+                                                    var savedComment = commentRepository.save(newComment);
+                                                    realtimeComment(newComment, "Comment", "Comment notification");
+                                                    realtimeNotification(dailyPoint, "DailyPoint", "Daily point notification");
                                                     return CompletableFuture.completedFuture(savedComment);
                                                 });
                                     } else {
@@ -96,8 +104,8 @@ public class CommentService {
                                         newComment.setParentComment(null);
                                         newComment.setReplies(new ArrayList<>());
 
-                                        var savedComment = unitOfWork.getCommentRepository().save(newComment);
-                                        realtimeComment(newComment,"Comment","Comment notification");
+                                        var savedComment = commentRepository.save(newComment);
+                                        realtimeComment(newComment, "Comment", "Comment notification");
                                         return CompletableFuture.completedFuture(savedComment);
                                     }
                                 });
@@ -106,7 +114,7 @@ public class CommentService {
                 .thenApply(commentMapper::toCommentResponse);
     }
 
-    public void realtimeComment(Comment comment, String entity, String titleNotification){
+    public void realtimeComment(Comment comment, String entity, String titleNotification) {
         DataNotification dataNotification = null;
         dataNotification = DataNotification.builder()
                 .id(comment.getCommentId())
@@ -122,15 +130,15 @@ public class CommentService {
                     .account(comment.getPost().getAccount())
                     .createdDate(LocalDateTime.now())
                     .build();
-            unitOfWork.getNotificationRepository().save(notification);
-            socketIOUtil.sendEventToOneClientInAServer(comment.getPost().getAccount().getAccountId(),WebsocketEventName.NOTIFICATION.name(), notification);
+            notificationRepository.save(notification);
+            socketIOUtil.sendEventToOneClientInAServer(comment.getPost().getAccount().getAccountId(), WebsocketEventName.NOTIFICATION.name(), notification);
             socketIOUtil.sendEventToAllClientInAServer(WebsocketEventName.REFRESH.toString(), comment);
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
     }
 
-    public void realtimeNotification(DailyPoint dailyPoint, String entity, String titleNotification){
+    public void realtimeNotification(DailyPoint dailyPoint, String entity, String titleNotification) {
         DataNotification dataNotification = null;
         dataNotification = DataNotification.builder()
                 .id(dailyPoint.getDailyPointId())
@@ -146,12 +154,13 @@ public class CommentService {
                     .account(dailyPoint.getAccount())
                     .createdDate(LocalDateTime.now())
                     .build();
-            unitOfWork.getNotificationRepository().save(notification);
-            socketIOUtil.sendEventToOneClientInAServer(dailyPoint.getAccount().getAccountId(),WebsocketEventName.NOTIFICATION.name(), notification);
+            notificationRepository.save(notification);
+            socketIOUtil.sendEventToOneClientInAServer(dailyPoint.getAccount().getAccountId(), WebsocketEventName.NOTIFICATION.name(), notification);
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
     }
+
     @Transactional
     @Async("AsyncTaskExecutor")
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
@@ -169,10 +178,10 @@ public class CommentService {
                         throw new AppException(ErrorCode.CANNOT_COMMENT_ON_DRAFT);
                     }
 
-                    return unitOfWork.getCommentRepository().countByPost(post).thenCompose(commentCount -> {
+                    return commentRepository.countByPost(post).thenCompose(commentCount -> {
                         long amount = commentCount + 1;
 
-                        return unitOfWork.getTypeBonusRepository().findByNameAndQuantity(TypeBonusNameEnum.COMMENT.name(), amount)
+                        return typeBonusRepository.findByNameAndQuantity(TypeBonusNameEnum.COMMENT.name(), amount)
                                 .thenCompose(typeBonus -> {
                                     if (typeBonus != null) {
                                         return createDailyPointLog(post.getAccount(), post, typeBonus)
@@ -187,9 +196,9 @@ public class CommentService {
                                                     newReply.setPost(post);
                                                     newReply.setParentComment(parentComment);
                                                     newReply.setReplies(new ArrayList<>());
-                                                    var saveNewReply = unitOfWork.getCommentRepository().save(newReply);
+                                                    var saveNewReply = commentRepository.save(newReply);
                                                     realtimeNotification(dailyPoint, "DailyPoint", "Daily point notification");
-                                                    realtimeComment(newReply,"Comment","Reply notification");
+                                                    realtimeComment(newReply, "Comment", "Reply notification");
                                                     return CompletableFuture.completedFuture(saveNewReply);
                                                 });
                                     } else {
@@ -203,8 +212,8 @@ public class CommentService {
                                         newReply.setPost(post);
                                         newReply.setParentComment(parentComment);
                                         newReply.setReplies(new ArrayList<>());
-                                        var saveNewReply = unitOfWork.getCommentRepository().save(newReply);
-                                        realtimeComment(newReply,"Comment","Reply notification");
+                                        var saveNewReply = commentRepository.save(newReply);
+                                        realtimeComment(newReply, "Comment", "Reply notification");
                                         return CompletableFuture.completedFuture(saveNewReply);
                                     }
                                 });
@@ -217,7 +226,7 @@ public class CommentService {
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
     public CompletableFuture<List<CommentGetAllResponse>> getAllComments(int page, int perPage) {
         return CompletableFuture.supplyAsync(() -> {
-            var list = unitOfWork.getCommentRepository().findAll().stream()
+            var list = commentRepository.findAll().stream()
                     .map(commentMapper::toCommentGetAllResponse)
                     .toList();
             return paginationUtils.convertListToPage(page, perPage, list);
@@ -241,7 +250,7 @@ public class CommentService {
                     var blockedAccountList = blockedListFuture.join();
 
                     boolean isBlockedByCurrent = blockedAccountList.contains(otherAccount);
-                    boolean isBlockedByOther = unitOfWork.getBlockedAccountRepository()
+                    boolean isBlockedByOther = blockedAccountRepository
                             .findByBlockerAndBlocked(otherAccount, currentAccount).isPresent();
                     boolean isFollowing = isFollowing(currentAccount, otherAccount);
                     boolean isAuthor = currentAccount.equals(otherAccount);
@@ -275,11 +284,11 @@ public class CommentService {
             var blockedList = blockedListFuture.join();
             var blockerList = blockerListFuture.join();
 
-            var commentList = unitOfWork.getCommentRepository().findAllByPostWithReplies(post);
+            var commentList = commentRepository.findAllByPostWithReplies(post);
 
             var list = commentList.stream()
                     .filter(comment -> !blockedList.contains(comment.getAccount())
-                    || !blockerList.contains(comment.getAccount()))
+                            || !blockerList.contains(comment.getAccount()))
                     .map(commentMapper::toCommentNoPostResponseWithReplies)
                     .toList();
             return paginationUtils.convertListToPage(page, perPage, list);
@@ -292,7 +301,7 @@ public class CommentService {
         var accountFuture = findAccountById(accountId);
 
         return accountFuture.thenCompose(account ->
-                unitOfWork.getCommentRepository().findByAccount(account).thenCompose(list -> {
+                commentRepository.findByAccount(account).thenCompose(list -> {
                     var responseList = list.stream()
                             .map(commentMapper::toCommentResponse)
                             .toList();
@@ -320,7 +329,7 @@ public class CommentService {
 
                     commentMapper.updateComment(comment, request);
 
-                    return CompletableFuture.completedFuture(unitOfWork.getCommentRepository().save(comment));
+                    return CompletableFuture.completedFuture(commentRepository.save(comment));
                 })
                 .thenApply(commentMapper::toCommentResponse);
     }
@@ -344,7 +353,7 @@ public class CommentService {
                     if (comment.getParentComment() != null) {
                         comment.getParentComment().getReplies().remove(comment);
                     }
-                    unitOfWork.getCommentRepository().delete(comment);
+                    commentRepository.delete(comment);
 
                     return CompletableFuture.completedFuture(comment);
                 })
@@ -363,7 +372,7 @@ public class CommentService {
                     if (comment.getParentComment() != null) {
                         comment.getParentComment().getReplies().remove(comment);
                     }
-                    unitOfWork.getCommentRepository().delete(comment);
+                    commentRepository.delete(comment);
 
                     return CompletableFuture.completedFuture(comment);
                 })
@@ -373,7 +382,7 @@ public class CommentService {
     @Async("AsyncTaskExecutor")
     private CompletableFuture<Post> findPostById(UUID postId) {
         return CompletableFuture.supplyAsync(() ->
-                unitOfWork.getPostRepository().findById(postId)
+                postRepository.findById(postId)
                         .orElseThrow(() -> new AppException(ErrorCode.POST_NOT_FOUND))
         );
     }
@@ -381,7 +390,7 @@ public class CommentService {
     @Async("AsyncTaskExecutor")
     private CompletableFuture<Account> findAccountByUsername(String username) {
         return CompletableFuture.supplyAsync(() ->
-                unitOfWork.getAccountRepository().findByUsername(username)
+                accountRepository.findByUsername(username)
                         .orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND))
         );
     }
@@ -389,7 +398,7 @@ public class CommentService {
     @Async("AsyncTaskExecutor")
     private CompletableFuture<Account> findAccountById(UUID accountId) {
         return CompletableFuture.supplyAsync(() ->
-                unitOfWork.getAccountRepository().findById(accountId)
+                accountRepository.findById(accountId)
                         .orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND))
         );
     }
@@ -397,7 +406,7 @@ public class CommentService {
     @Async("AsyncTaskExecutor")
     private CompletableFuture<Comment> findCommentById(UUID commentId) {
         return CompletableFuture.supplyAsync(() ->
-                unitOfWork.getCommentRepository().findById(commentId)
+                commentRepository.findById(commentId)
                         .orElseThrow(() -> new AppException(ErrorCode.COMMENT_NOT_FOUND))
         );
     }
@@ -415,7 +424,7 @@ public class CommentService {
         var accountFuture = findAccountByUsername(username);
 
         return accountFuture.thenApply(account -> {
-            var blockedAccountEntityList = unitOfWork.getBlockedAccountRepository().findByBlocker(account);
+            var blockedAccountEntityList = blockedAccountRepository.findByBlocker(account);
 
             return blockedAccountEntityList.stream()
                     .map(BlockedAccount::getBlocked)
@@ -426,7 +435,7 @@ public class CommentService {
     @Async("AsyncTaskExecutor")
     private CompletableFuture<List<Comment>> getAllComments() {
         return CompletableFuture.supplyAsync(() ->
-                unitOfWork.getCommentRepository().findAll().stream()
+                commentRepository.findAll().stream()
                         .toList());
     }
 
@@ -436,7 +445,7 @@ public class CommentService {
         if (replies != null && !replies.isEmpty()) {
             for (Comment reply : replies) {
                 deleteRepliesRecursively(reply);
-                unitOfWork.getCommentRepository().delete(reply);
+                commentRepository.delete(reply);
             }
             replies.clear();
         }
@@ -446,7 +455,7 @@ public class CommentService {
         if (postOwner == null) {
             return false;
         }
-        return unitOfWork.getFollowRepository()
+        return followRepository
                 .findByFollowerAndFollowee(currentAccount, postOwner)
                 .isPresent();
     }
@@ -457,7 +466,7 @@ public class CommentService {
 
     @Async("AsyncTaskExecutor")
     private CompletableFuture<DailyPoint> createDailyPointLog(Account account, Post post, TypeBonus typeBonus) {
-        return unitOfWork.getDailyPointRepository()
+        return dailyPointRepository
                 .findByPostAndTypeBonus(post, typeBonus)
                 .thenCompose(dailyPoint -> {
                     if (dailyPoint != null || account.getWallet() == null) {
@@ -478,14 +487,14 @@ public class CommentService {
                             System.out.println("This Account Doesn't Have Wallet. Continuing without adding points");
                         }
 
-                        return unitOfWork.getDailyPointRepository().save(newDailyPoint);
+                        return dailyPointRepository.save(newDailyPoint);
                     });
                 });
     }
 
     @Async("AsyncTaskExecutor")
     private CompletableFuture<Wallet> addPointToWallet(Account account, TypeBonus typeBonus) {
-        var walletFuture = unitOfWork.getWalletRepository().findByAccount(account);
+        var walletFuture = walletRepository.findByAccount(account);
 
         return walletFuture.thenCompose(wallet -> {
             if (wallet == null) {
@@ -496,7 +505,7 @@ public class CommentService {
             balance = balance + typeBonus.getPointBonus();
             wallet.setBalance(balance);
 
-            return CompletableFuture.completedFuture(unitOfWork.getWalletRepository().save(wallet));
+            return CompletableFuture.completedFuture(walletRepository.save(wallet));
         });
     }
 
@@ -513,7 +522,7 @@ public class CommentService {
         var accountFuture = findAccountByUsername(username);
 
         return accountFuture.thenApply(account -> {
-            var blockedAccountEntityList = unitOfWork.getBlockedAccountRepository().findByBlocked(account);
+            var blockedAccountEntityList = blockedAccountRepository.findByBlocked(account);
 
             return blockedAccountEntityList.stream()
                     .map(BlockedAccount::getBlocker)

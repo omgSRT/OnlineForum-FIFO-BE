@@ -50,7 +50,7 @@ public class UtilityController {
             @Parameter(description = "Filter by date in yyyy-MM-dd format", example = "2023-10-01")
             @RequestParam(required = false) String endDate) {
 
-        return utilityService.filter(viewTransaction, dailyPoint, bonusPoint,orderPoint, startDate, endDate)
+        return utilityService.filter(viewTransaction, dailyPoint, bonusPoint, orderPoint, startDate, endDate)
                 .thenApply(filterTransactionResponse -> ApiResponse.<FilterTransactionResponse>builder()
                         .entity(filterTransactionResponse)
                         .build());

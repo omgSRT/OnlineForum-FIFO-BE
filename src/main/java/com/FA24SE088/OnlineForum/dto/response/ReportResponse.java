@@ -25,6 +25,6 @@ public class ReportResponse {
     Date postCreatedDate;
     Date postLastModifiedDate;
     String postStatus;
-    @JsonIgnoreProperties(value = { "password", "email", "bio", "gender", "address", "createdDate", "status", "role" })
+    @JsonIgnoreProperties(value = {"password", "email", "bio", "gender", "address", "createdDate", "status", "role"})
     Account account;
 }

@@ -30,7 +30,7 @@ public class Tag {
     String textColorHex;
 
     @JsonIgnore
-    @JsonIgnoreProperties(value = { "tag" }, allowSetters = true)
+    @JsonIgnoreProperties(value = {"tag"}, allowSetters = true)
     @OneToMany(mappedBy = "tag", cascade = CascadeType.ALL, orphanRemoval = true)
     List<Post> postList;
 }

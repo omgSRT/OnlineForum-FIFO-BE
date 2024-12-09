@@ -27,7 +27,7 @@ public class PostFileController {
 
     @Operation(summary = "Create New Post File")
     @PostMapping(path = "/create")
-    public ApiResponse<PostFileResponse> createPostFile(@RequestBody @Valid PostFileCreateRequest request){
+    public ApiResponse<PostFileResponse> createPostFile(@RequestBody @Valid PostFileCreateRequest request) {
         return postFileService.createPostFile(request).thenApply(postFileResponse ->
                 ApiResponse.<PostFileResponse>builder()
                         .message(SuccessReturnMessage.CREATE_SUCCESS.getMessage())
@@ -38,7 +38,7 @@ public class PostFileController {
 
     @Operation(summary = "Delete Post File By ID")
     @DeleteMapping(path = "/delete/{postFileId}")
-    public ApiResponse<PostFileResponse> deletePostFileById(@PathVariable UUID postFileId){
+    public ApiResponse<PostFileResponse> deletePostFileById(@PathVariable UUID postFileId) {
         return postFileService.deletePostFile(postFileId).thenApply(postFileResponse ->
                 ApiResponse.<PostFileResponse>builder()
                         .message(SuccessReturnMessage.DELETE_SUCCESS.getMessage())
@@ -50,7 +50,7 @@ public class PostFileController {
     @Operation(summary = "Update Post File By ID")
     @PutMapping(path = "/update/{postFileId}")
     public ApiResponse<PostFileResponse> updatePostFileById(@PathVariable UUID postFileId,
-                                                            @RequestBody @Valid PostFileUpdateRequest request){
+                                                            @RequestBody @Valid PostFileUpdateRequest request) {
         return postFileService.updatePostFile(postFileId, request).thenApply(postFileResponse ->
                 ApiResponse.<PostFileResponse>builder()
                         .message(SuccessReturnMessage.UPDATE_SUCCESS.getMessage())
@@ -63,7 +63,7 @@ public class PostFileController {
     @GetMapping(path = "/getall")
     public ApiResponse<List<PostFileResponse>> getAllPostFiles(@RequestParam(defaultValue = "1") int page,
                                                                @RequestParam(defaultValue = "10") int perPage,
-                                                               @RequestParam(required = false) UUID postId){
+                                                               @RequestParam(required = false) UUID postId) {
         return postFileService.getAllPostLists(page, perPage, postId).thenApply(postFileResponses ->
                 ApiResponse.<List<PostFileResponse>>builder()
                         .entity(postFileResponses)
@@ -73,7 +73,7 @@ public class PostFileController {
 
     @Operation(summary = "Get Post File By ID")
     @GetMapping(path = "/get/{postFileId}")
-    public ApiResponse<PostFileResponse> getPostFileById(@PathVariable UUID postFileId){
+    public ApiResponse<PostFileResponse> getPostFileById(@PathVariable UUID postFileId) {
         return postFileService.getPostFileById(postFileId).thenApply(postFileResponse ->
                 ApiResponse.<PostFileResponse>builder()
                         .entity(postFileResponse)

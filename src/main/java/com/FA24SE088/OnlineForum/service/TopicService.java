@@ -1,17 +1,15 @@
 package com.FA24SE088.OnlineForum.service;
 
-import com.FA24SE088.OnlineForum.dto.request.CategoryUpdateRequest;
 import com.FA24SE088.OnlineForum.dto.request.TopicRequest;
 import com.FA24SE088.OnlineForum.dto.request.TopicUpdateRequest;
 import com.FA24SE088.OnlineForum.dto.response.*;
-import com.FA24SE088.OnlineForum.entity.Account;
 import com.FA24SE088.OnlineForum.entity.Category;
 import com.FA24SE088.OnlineForum.entity.Topic;
 import com.FA24SE088.OnlineForum.enums.SortOption;
 import com.FA24SE088.OnlineForum.exception.AppException;
 import com.FA24SE088.OnlineForum.exception.ErrorCode;
 import com.FA24SE088.OnlineForum.mapper.TopicMapper;
-import com.FA24SE088.OnlineForum.repository.UnitOfWork.UnitOfWork;
+import com.FA24SE088.OnlineForum.repository.*;
 import com.FA24SE088.OnlineForum.utils.PaginationUtils;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -33,16 +31,21 @@ import java.util.concurrent.CompletableFuture;
 @Slf4j
 @Service
 public class TopicService {
-    UnitOfWork unitOfWork;
+    TopicRepository topicRepository;
+    PostRepository postRepository;
+    UpvoteRepository upvoteRepository;
+    CommentRepository commentRepository;
+    PostViewRepository postViewRepository;
+    CategoryRepository categoryRepository;
     PaginationUtils paginationUtils;
     TopicMapper topicMapper;
 
     @PreAuthorize("hasRole('ADMIN')")
-    public CompletableFuture<TopicResponse> createTopic(TopicRequest request){
+    public CompletableFuture<TopicResponse> createTopic(TopicRequest request) {
         var categoryFuture = findCategoryById(request.getCategoryId());
 
         return categoryFuture.thenCompose(category ->
-                unitOfWork.getTopicRepository().existsByNameAndCategory(request.getName(), category)
+                topicRepository.existsByNameAndCategory(request.getName(), category)
                         .thenCompose(exists -> {
                             if (exists) {
                                 throw new AppException(ErrorCode.NAME_EXIST);
@@ -53,7 +56,7 @@ public class TopicService {
                             newTopic.setPostList(new ArrayList<>());
 
                             return CompletableFuture.completedFuture(
-                                    topicMapper.toTopicResponse(unitOfWork.getTopicRepository().save(newTopic))
+                                    topicMapper.toTopicResponse(topicRepository.save(newTopic))
                             );
                         }));
     }
@@ -66,7 +69,7 @@ public class TopicService {
                 : CompletableFuture.completedFuture(null);
 
         return categoryFuture.thenCompose(category -> {
-            var list = unitOfWork.getTopicRepository().findAll().stream()
+            var list = topicRepository.findAll().stream()
                     .filter(topic -> category == null || topic.getCategory().equals(category))
                     .map(topicMapper::toTopicResponse)
                     .toList();
@@ -82,44 +85,43 @@ public class TopicService {
     @Transactional(readOnly = true)
     public CompletableFuture<List<PopularTopicResponse>> getAllPopularTopics(int page, int perPage, SortOption sortOption) {
         return CompletableFuture.supplyAsync(() -> {
-            List<CompletableFuture<PopularTopicResponse>> responseFutures = unitOfWork.getTopicRepository().findAll().stream()
-                    .map(topic -> {
-                        CompletableFuture<Integer> postCountFuture = unitOfWork.getPostRepository().countByTopic(topic);
-                        CompletableFuture<Integer> upvoteCountFuture = unitOfWork.getUpvoteRepository().countByPostTopic(topic);
-                        CompletableFuture<Integer> commentCountFuture = unitOfWork.getCommentRepository().countByPostTopic(topic);
-                        CompletableFuture<Integer> viewCountFuture = unitOfWork.getPostViewRepository().countByPostTopic(topic);
+                    List<CompletableFuture<PopularTopicResponse>> responseFutures = topicRepository.findAll().stream()
+                            .map(topic -> {
+                                CompletableFuture<Integer> postCountFuture = postRepository.countByTopic(topic);
+                                CompletableFuture<Integer> upvoteCountFuture = upvoteRepository.countByPostTopic(topic);
+                                CompletableFuture<Integer> commentCountFuture = commentRepository.countByPostTopic(topic);
+                                CompletableFuture<Integer> viewCountFuture = postViewRepository.countByPostTopic(topic);
 
-                        return CompletableFuture.allOf(postCountFuture, upvoteCountFuture, commentCountFuture, viewCountFuture)
-                                .thenApply(voidResult -> {
-                                    PopularTopicResponse response = topicMapper.toPopularTopicResponse(topic);
-                                    response.setPostAmount(postCountFuture.join());
-                                    response.setUpvoteAmount(upvoteCountFuture.join());
-                                    response.setCommentAmount(commentCountFuture.join());
-                                    response.setViewAmount(viewCountFuture.join());
-                                    return response;
-                                });
-                    })
-                    .toList();
+                                return CompletableFuture.allOf(postCountFuture, upvoteCountFuture, commentCountFuture, viewCountFuture)
+                                        .thenApply(voidResult -> {
+                                            PopularTopicResponse response = topicMapper.toPopularTopicResponse(topic);
+                                            response.setPostAmount(postCountFuture.join());
+                                            response.setUpvoteAmount(upvoteCountFuture.join());
+                                            response.setCommentAmount(commentCountFuture.join());
+                                            response.setViewAmount(viewCountFuture.join());
+                                            return response;
+                                        });
+                            })
+                            .toList();
 
                     return CompletableFuture.allOf(responseFutures.toArray(new CompletableFuture[0]))
-                            .thenApply(voidResult ->{
-                                if(sortOption.equals(SortOption.DESCENDING)){
+                            .thenApply(voidResult -> {
+                                if (sortOption.equals(SortOption.DESCENDING)) {
                                     return responseFutures.stream()
                                             .map(CompletableFuture::join)
                                             .sorted(Comparator.comparingInt((PopularTopicResponse r) ->
                                                             r.getPostAmount() + r.getUpvoteAmount() + r.getCommentAmount() + r.getViewAmount())
                                                     .reversed())
                                             .toList();
-                                }
-                                else{
+                                } else {
                                     return responseFutures.stream()
                                             .map(CompletableFuture::join)
                                             .sorted(Comparator.comparingInt((PopularTopicResponse r) ->
-                                                            r.getPostAmount() + r.getUpvoteAmount() + r.getCommentAmount() + r.getViewAmount()))
+                                                    r.getPostAmount() + r.getUpvoteAmount() + r.getCommentAmount() + r.getViewAmount()))
                                             .toList();
                                 }
                             });
-        })
+                })
                 .thenApply(list -> paginationUtils.convertListToPage(page, perPage, list.join()));
     }
 
@@ -127,7 +129,7 @@ public class TopicService {
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
     public CompletableFuture<TopicResponse> getTopicById(UUID topicId) {
         return CompletableFuture.supplyAsync(() -> {
-            var topic = unitOfWork.getTopicRepository().findById(topicId)
+            var topic = topicRepository.findById(topicId)
                     .orElseThrow(() -> new AppException(ErrorCode.TOPIC_NOT_FOUND));
 
             return topicMapper.toTopicResponse(topic);
@@ -136,12 +138,12 @@ public class TopicService {
 
     @Async("AsyncTaskExecutor")
     @PreAuthorize("hasRole('ADMIN')")
-    public CompletableFuture<TopicResponse> deleteTopicById(UUID topicId){
+    public CompletableFuture<TopicResponse> deleteTopicById(UUID topicId) {
         return CompletableFuture.supplyAsync(() -> {
-            var topic = unitOfWork.getTopicRepository().findById(topicId)
+            var topic = topicRepository.findById(topicId)
                     .orElseThrow(() -> new AppException(ErrorCode.TOPIC_NOT_FOUND));
 
-            unitOfWork.getTopicRepository().delete(topic);
+            topicRepository.delete(topic);
 
             return topicMapper.toTopicResponse(topic);
         });
@@ -150,7 +152,7 @@ public class TopicService {
     @Async("AsyncTaskExecutor")
     @PreAuthorize("hasRole('ADMIN')")
     public CompletableFuture<TopicResponse> updateTopicById(UUID topicId, TopicUpdateRequest request) {
-        return unitOfWork.getTopicRepository().existsByName(request.getName())
+        return topicRepository.existsByName(request.getName())
                 .thenCompose(exists -> {
                     if (exists) {
                         throw new AppException(ErrorCode.NAME_EXIST);
@@ -158,7 +160,7 @@ public class TopicService {
                     }
 
                     return CompletableFuture.supplyAsync(() -> {
-                        var topic = unitOfWork.getTopicRepository().findById(topicId)
+                        var topic = topicRepository.findById(topicId)
                                 .orElseThrow(() -> new AppException(ErrorCode.TOPIC_NOT_FOUND));
 
                         request.setName(request.getName() == null || request.getName().isEmpty()
@@ -168,7 +170,7 @@ public class TopicService {
                                 ? topic.getImageUrl()
                                 : request.getImageUrl());
                         topicMapper.updateTopic(topic, request);
-                        return unitOfWork.getTopicRepository().save(topic);
+                        return topicRepository.save(topic);
                     }).thenApply(topicMapper::toTopicResponse);
                 });
     }
@@ -176,7 +178,7 @@ public class TopicService {
     @Async("AsyncTaskExecutor")
     private CompletableFuture<Category> findCategoryById(UUID categoryId) {
         return CompletableFuture.supplyAsync(() ->
-                unitOfWork.getCategoryRepository().findById(categoryId)
+                categoryRepository.findById(categoryId)
                         .orElseThrow(() -> new AppException(ErrorCode.CATEGORY_NOT_FOUND))
         );
     }

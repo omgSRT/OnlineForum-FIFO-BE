@@ -7,7 +7,7 @@ import com.FA24SE088.OnlineForum.entity.TypeBonus;
 import com.FA24SE088.OnlineForum.exception.AppException;
 import com.FA24SE088.OnlineForum.exception.ErrorCode;
 import com.FA24SE088.OnlineForum.mapper.TypeBonusMapper;
-import com.FA24SE088.OnlineForum.repository.UnitOfWork.UnitOfWork;
+import com.FA24SE088.OnlineForum.repository.TypeBonusRepository;
 import com.FA24SE088.OnlineForum.utils.PaginationUtils;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -27,31 +27,32 @@ import java.util.concurrent.CompletableFuture;
 @Slf4j
 @Service
 public class TypeBonusService {
-    UnitOfWork unitOfWork;
+    TypeBonusRepository typeBonusRepository;
     TypeBonusMapper typeBonusMapper;
     PaginationUtils paginationUtils;
 
     @Async("AsyncTaskExecutor")
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
-    public CompletableFuture<TypeBonusResponse> createTypeBonus(TypeBonusRequest request){
+    public CompletableFuture<TypeBonusResponse> createTypeBonus(TypeBonusRequest request) {
         var foundTypeBonusFuture = findByNameAndQuantity(request.getName().name(), request.getQuantity());
 
         return foundTypeBonusFuture.thenApply(foundTypeBonus -> {
-            if(foundTypeBonus != null){
+            if (foundTypeBonus != null) {
                 throw new AppException(ErrorCode.TYPE_BONUS_ALREADY_EXIST);
             }
 
             TypeBonus newTypeBonus = typeBonusMapper.toTypeBonus(request);
             newTypeBonus.setDailyPointList(new ArrayList<>());
 
-            return typeBonusMapper.toTypeBonusResponse(unitOfWork.getTypeBonusRepository().save(newTypeBonus));
+            return typeBonusMapper.toTypeBonusResponse(typeBonusRepository.save(newTypeBonus));
         });
     }
+
     @Async("AsyncTaskExecutor")
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
-    public CompletableFuture<List<TypeBonusResponse>> getAllTypeBonuses(int page, int perPage, String name){
+    public CompletableFuture<List<TypeBonusResponse>> getAllTypeBonuses(int page, int perPage, String name) {
         return CompletableFuture.supplyAsync(() -> {
-            var list = unitOfWork.getTypeBonusRepository().findAll().stream()
+            var list = typeBonusRepository.findAll().stream()
                     .filter(typeBonus -> name == null || typeBonus.getName().contains(name))
                     .map(typeBonusMapper::toTypeBonusResponse)
                     .toList();
@@ -59,54 +60,58 @@ public class TypeBonusService {
             return paginationUtils.convertListToPage(page, perPage, list);
         });
     }
+
     @Async("AsyncTaskExecutor")
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
-    public CompletableFuture<TypeBonusResponse> getTypeBonusById(UUID typeBonusId){
+    public CompletableFuture<TypeBonusResponse> getTypeBonusById(UUID typeBonusId) {
         var typeBonusFuture = findTypeBonusByID(typeBonusId);
 
         return typeBonusFuture.thenApply(typeBonusMapper::toTypeBonusResponse);
     }
+
     @Async("AsyncTaskExecutor")
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
-    public CompletableFuture<TypeBonusResponse> updateTypeBonusById(UUID typeBonusId, TypeBonusUpdateRequest request){
+    public CompletableFuture<TypeBonusResponse> updateTypeBonusById(UUID typeBonusId, TypeBonusUpdateRequest request) {
         var typeBonusFuture = findTypeBonusByID(typeBonusId);
 
         return typeBonusFuture.thenCompose(updateTypeBonus -> {
-            if(updateTypeBonus.getQuantity() != request.getQuantity()){
-                var foundTypeBonus = unitOfWork.getTypeBonusRepository().findAll().stream()
+            if (updateTypeBonus.getQuantity() != request.getQuantity()) {
+                var foundTypeBonus = typeBonusRepository.findAll().stream()
                         .filter(typeBonus -> typeBonus.getName().equalsIgnoreCase(updateTypeBonus.getName()))
                         .filter(typeBonus -> typeBonus.getQuantity() == request.getQuantity())
                         .findFirst();
-                if(foundTypeBonus.isPresent()){
+                if (foundTypeBonus.isPresent()) {
                     throw new AppException(ErrorCode.TYPE_BONUS_ALREADY_EXIST);
                 }
             }
             typeBonusMapper.updateTypeBonus(updateTypeBonus, request);
 
             return CompletableFuture
-                    .completedFuture(typeBonusMapper.toTypeBonusResponse(unitOfWork.getTypeBonusRepository().save(updateTypeBonus)));
+                    .completedFuture(typeBonusMapper.toTypeBonusResponse(typeBonusRepository.save(updateTypeBonus)));
         });
     }
+
     @Async("AsyncTaskExecutor")
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
-    public CompletableFuture<TypeBonusResponse> deleteTypeBonus(UUID typeBonusId){
+    public CompletableFuture<TypeBonusResponse> deleteTypeBonus(UUID typeBonusId) {
         var typeBonusFuture = findTypeBonusByID(typeBonusId);
 
         return typeBonusFuture.thenApply(typeBonus -> {
-            unitOfWork.getTypeBonusRepository().delete(typeBonus);
+            typeBonusRepository.delete(typeBonus);
 
             return typeBonusMapper.toTypeBonusResponse(typeBonus);
         });
     }
 
     @Async("AsyncTaskExecutor")
-    private CompletableFuture<TypeBonus> findByNameAndQuantity(String name, long quantity){
-        return unitOfWork.getTypeBonusRepository().findByNameAndQuantity(name, quantity);
+    private CompletableFuture<TypeBonus> findByNameAndQuantity(String name, long quantity) {
+        return typeBonusRepository.findByNameAndQuantity(name, quantity);
     }
+
     @Async("AsyncTaskExecutor")
-    private CompletableFuture<TypeBonus> findTypeBonusByID(UUID typeBonusId){
+    private CompletableFuture<TypeBonus> findTypeBonusByID(UUID typeBonusId) {
         return CompletableFuture.supplyAsync(() ->
-                unitOfWork.getTypeBonusRepository().findById(typeBonusId)
+                typeBonusRepository.findById(typeBonusId)
                         .orElseThrow(() -> new AppException(ErrorCode.TYPE_BONUS_NOT_FOUND)));
     }
 }

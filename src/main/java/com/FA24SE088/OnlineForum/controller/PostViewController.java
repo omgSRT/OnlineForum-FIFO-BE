@@ -26,7 +26,7 @@ public class PostViewController {
 
     @Operation(summary = "Create A New View For Post", description = "Admin, Staff, And Author Won't Be Able To Create View")
     @PostMapping(path = "/create")
-    public ApiResponse<PostViewResponse> createPostView(@RequestBody @Valid PostViewRequest request){
+    public ApiResponse<PostViewResponse> createPostView(@RequestBody @Valid PostViewRequest request) {
         return postViewService.createPostView(request).thenApply(postViewResponse ->
                 ApiResponse.<PostViewResponse>builder()
                         .message(SuccessReturnMessage.CREATE_SUCCESS.getMessage())
@@ -40,7 +40,7 @@ public class PostViewController {
     public ApiResponse<List<PostViewResponse>> getAllPostViews(@RequestParam(defaultValue = "1") int page,
                                                                @RequestParam(defaultValue = "10") int perPage,
                                                                @RequestParam(required = false) UUID accountId,
-                                                               @RequestParam(required = false) UUID postId){
+                                                               @RequestParam(required = false) UUID postId) {
         return postViewService.getAllPostView(page, perPage, accountId, postId).thenApply(postViewResponses ->
                 ApiResponse.<List<PostViewResponse>>builder()
                         .entity(postViewResponses)
@@ -50,7 +50,7 @@ public class PostViewController {
 
     @Operation(summary = "Get Post View By ID")
     @GetMapping(path = "/get/{postViewId}")
-    public ApiResponse<PostViewResponse> getPostViewById(@PathVariable UUID postViewId){
+    public ApiResponse<PostViewResponse> getPostViewById(@PathVariable UUID postViewId) {
         return postViewService.getPostViewById(postViewId).thenApply(postViewResponse ->
                 ApiResponse.<PostViewResponse>builder()
                         .entity(postViewResponse)
@@ -60,7 +60,7 @@ public class PostViewController {
 
     @Operation(summary = "Delete Post View By ID")
     @DeleteMapping(path = "/delete/{postViewId}")
-    public ApiResponse<PostViewResponse> deletePostViewById(@PathVariable UUID postViewId){
+    public ApiResponse<PostViewResponse> deletePostViewById(@PathVariable UUID postViewId) {
         return postViewService.deletePostViewById(postViewId).thenApply(postViewResponse ->
                 ApiResponse.<PostViewResponse>builder()
                         .message(SuccessReturnMessage.DELETE_SUCCESS.getMessage())

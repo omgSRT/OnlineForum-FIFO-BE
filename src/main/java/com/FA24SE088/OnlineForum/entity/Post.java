@@ -34,7 +34,7 @@ public class Post {
     String status;
 
     @JsonIgnore
-    @JsonIgnoreProperties(value = { "post" }, allowSetters = true)
+    @JsonIgnoreProperties(value = {"post"}, allowSetters = true)
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     @Column(columnDefinition = "MEDIUMTEXT")
     List<Image> imageList;
@@ -49,12 +49,12 @@ public class Post {
     Account account;
 
     @JsonIgnore
-    @JsonIgnoreProperties(value = { "post" }, allowSetters = true)
+    @JsonIgnoreProperties(value = {"post"}, allowSetters = true)
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
     List<Upvote> upvoteList;
 
     @JsonIgnore
-    @JsonIgnoreProperties(value = { "post" }, allowSetters = true)
+    @JsonIgnoreProperties(value = {"post"}, allowSetters = true)
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
     List<Comment> commentList;
 
@@ -67,7 +67,7 @@ public class Post {
     Tag tag;
 
     @JsonIgnore
-    @JsonIgnoreProperties(value = { "post" }, allowSetters = true)
+    @JsonIgnoreProperties(value = {"post"}, allowSetters = true)
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
     List<Report> reportList;
 
@@ -82,7 +82,7 @@ public class Post {
     List<PostView> postViewList;
 
     @JsonIgnore
-    @JsonIgnoreProperties(value = { "post" }, allowSetters = true)
+    @JsonIgnoreProperties(value = {"post"}, allowSetters = true)
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     @Column(columnDefinition = "MEDIUMTEXT")
     List<PostFile> postFileList;

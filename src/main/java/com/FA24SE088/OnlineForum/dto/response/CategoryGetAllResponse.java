@@ -18,7 +18,7 @@ public class CategoryGetAllResponse {
     String name;
     String description;
     String image;
-    @JsonIgnoreProperties(value = { "category", "postList" })
+    @JsonIgnoreProperties(value = {"category", "postList"})
     List<Topic> topicListByCategory;
     int upvoteCount;
     int commentCount;

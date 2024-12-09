@@ -16,8 +16,8 @@ public class Follow2Response {
     UUID followId;
     String message;
     String status;
-    @JsonIgnoreProperties(value = { "password", "email", "coverImage", "createdDate", "status", "role" })
+    @JsonIgnoreProperties(value = {"password", "email", "coverImage", "createdDate", "status", "role"})
     Account followee;
-    @JsonIgnoreProperties(value = { "password", "email", "coverImage", "createdDate", "status", "role" })
+    @JsonIgnoreProperties(value = {"password", "email", "coverImage", "createdDate", "status", "role"})
     Account follower;
 }

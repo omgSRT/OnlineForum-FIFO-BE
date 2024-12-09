@@ -25,7 +25,7 @@ public class TypeBonus {
     double pointBonus;
 
     @JsonIgnore
-    @JsonIgnoreProperties(value = { "point", "typeBonus" }, allowSetters = true)
+    @JsonIgnoreProperties(value = {"point", "typeBonus"}, allowSetters = true)
     @OneToMany(mappedBy = "typeBonus", cascade = CascadeType.ALL, orphanRemoval = true)
     List<DailyPoint> dailyPointList;
 }

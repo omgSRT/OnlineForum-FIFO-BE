@@ -25,17 +25,17 @@ public class PostResponse {
     int upvoteCount;
     int commentCount;
     int viewCount;
-    @JsonIgnoreProperties(value = { "password", "email", "bio", "gender", "address", "createdDate", "status", "role" })
+    @JsonIgnoreProperties(value = {"password", "email", "bio", "gender", "address", "createdDate", "status", "role"})
     Account account;
-    @JsonIgnoreProperties(value = { "category.account" })
+    @JsonIgnoreProperties(value = {"category.account"})
     Topic topic;
     Tag tag;
-    @JsonIgnoreProperties(value = { "post" })
+    @JsonIgnoreProperties(value = {"post"})
     List<ImageResponse> imageList;
-    @JsonIgnoreProperties(value = { "post" })
+    @JsonIgnoreProperties(value = {"post"})
     List<PostFile> postFileList;
 
-    @JsonIgnoreProperties(value = { "account"})
+    @JsonIgnoreProperties(value = {"account"})
     Notification notification;
 
 }

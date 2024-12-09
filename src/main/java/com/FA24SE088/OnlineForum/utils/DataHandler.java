@@ -3,9 +3,10 @@ package com.FA24SE088.OnlineForum.utils;
 import com.FA24SE088.OnlineForum.entity.Account;
 import com.FA24SE088.OnlineForum.exception.AppException;
 import com.FA24SE088.OnlineForum.exception.ErrorCode;
-import com.FA24SE088.OnlineForum.repository.UnitOfWork.UnitOfWork;
+import com.FA24SE088.OnlineForum.repository.AccountRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,6 +20,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
+@RequiredArgsConstructor
 public class DataHandler extends TextWebSocketHandler {
     private final Logger LOG = LoggerFactory.getLogger(DataHandler.class);
 
@@ -30,8 +32,7 @@ public class DataHandler extends TextWebSocketHandler {
 
     private final ObjectMapper objectMapper = new ObjectMapper(); // Jackson ObjectMapper
 
-    @Autowired
-    UnitOfWork unitOfWork;
+    private final AccountRepository accountRepository;
 
     @Override
     public void handleMessage(WebSocketSession session, WebSocketMessage<?> message) throws Exception {
@@ -75,7 +76,7 @@ public class DataHandler extends TextWebSocketHandler {
     public void sendToUser(UUID accountId, Object messageObject) {
         try {
 
-            Account account = unitOfWork.getAccountRepository().findById(accountId).orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND));
+            Account account = accountRepository.findById(accountId).orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND));
             String messageJson = objectMapper.writeValueAsString(messageObject); // Convert object to JSON string
             WebSocketSession session = sessions.get(account.getEmail());
             if (session != null) {

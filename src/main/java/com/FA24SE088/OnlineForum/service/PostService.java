@@ -13,7 +13,7 @@ import com.FA24SE088.OnlineForum.exception.ErrorCode;
 import com.FA24SE088.OnlineForum.mapper.ImageMapper;
 import com.FA24SE088.OnlineForum.mapper.PostFileMapper;
 import com.FA24SE088.OnlineForum.mapper.PostMapper;
-import com.FA24SE088.OnlineForum.repository.UnitOfWork.UnitOfWork;
+import com.FA24SE088.OnlineForum.repository.*;
 import com.FA24SE088.OnlineForum.utils.ContentFilterUtil;
 import com.FA24SE088.OnlineForum.utils.DetectProgrammingLanguageUtil;
 import com.FA24SE088.OnlineForum.utils.OpenAIUtil;
@@ -54,7 +54,23 @@ import java.util.zip.ZipOutputStream;
 @Slf4j
 @Service
 public class PostService {
-    UnitOfWork unitOfWork;
+    UpvoteRepository upvoteRepository;
+    CommentRepository commentRepository;
+    PostViewRepository postViewRepository;
+    PostRepository postRepository;
+    AccountRepository accountRepository;
+    NotificationRepository notificationRepository;
+    CategoryRepository categoryRepository;
+    TopicRepository topicRepository;
+    BlockedAccountRepository blockedAccountRepository;
+    ImageRepository imageRepository;
+    PostFileRepository postFileRepository;
+    WalletRepository walletRepository;
+    TagRepository tagRepository;
+    PointRepository pointRepository;
+    DailyPointRepository dailyPointRepository;
+    FollowRepository followRepository;
+    TransactionRepository transactionRepository;
     PostMapper postMapper;
     ImageMapper imageMapper;
     PostFileMapper postFileMapper;
@@ -74,7 +90,7 @@ public class PostService {
     //region CRUD Completed Post
     @Async("AsyncTaskExecutor")
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
-    public CompletableFuture<PostResponse> createPost( PostCreateRequest request) {
+    public CompletableFuture<PostResponse> createPost(PostCreateRequest request) {
         var username = getUsernameFromJwt();
         var accountFuture = findAccountByUsername(username);
         var topicFuture = findTopicById(request.getTopicId());
@@ -86,8 +102,8 @@ public class PostService {
                     var topic = topicFuture.join();
                     var tag = tagFuture.join();
 
-                    if(topic.getCategory().getName().equalsIgnoreCase("SOURCE CODE")
-                            && (request.getPostFileUrlRequest() == null || request.getPostFileUrlRequest().isEmpty())){
+                    if (topic.getCategory().getName().equalsIgnoreCase("SOURCE CODE")
+                            && (request.getPostFileUrlRequest() == null || request.getPostFileUrlRequest().isEmpty())) {
                         throw new AppException(ErrorCode.POST_MUST_HAVE_AT_LEAST_ONE_SOURCE_CODE);
                     }
                     var imageUrlList = request.getImageUrlList() == null || request.getImageUrlList().isEmpty()
@@ -104,10 +120,10 @@ public class PostService {
                     if (!checkContentRelated) {
                         throw new AppException(ErrorCode.ERROR_CHECK_RELATED);
                     }
-                    if(request.getPostFileUrlRequest() != null && !request.getPostFileUrlRequest().isEmpty()){
+                    if (request.getPostFileUrlRequest() != null && !request.getPostFileUrlRequest().isEmpty()) {
                         var programmingLanguage = determineProgrammingLanguage(request.getPostFileUrlRequest());
                         programmingLanguage = programmingLanguage.toLowerCase();
-                        if(!topic.getName().toLowerCase().contains(programmingLanguage)){
+                        if (!topic.getName().toLowerCase().contains(programmingLanguage)) {
                             throw new AppException(ErrorCode.SOURCE_CODE_DOES_NOT_MATCH_CURRENT_TOPIC);
                         }
                     }
@@ -126,7 +142,7 @@ public class PostService {
                     newPost.setBookMarkList(new ArrayList<>());
                     newPost.setPostViewList(new ArrayList<>());
 
-                    return CompletableFuture.completedFuture(unitOfWork.getPostRepository().save(newPost));
+                    return CompletableFuture.completedFuture(postRepository.save(newPost));
                 })
                 .thenCompose(savedPost -> {
                     var account = accountFuture.join();
@@ -158,14 +174,14 @@ public class PostService {
                                 }
                                 savedPost.setDailyPointList(dailyPointList);
 
-                                return CompletableFuture.completedFuture(unitOfWork.getPostRepository().save(savedPost));
+                                return CompletableFuture.completedFuture(postRepository.save(savedPost));
                             })
                             .thenCompose(post -> {
-                                CompletableFuture<Integer> upvoteCountFuture = unitOfWork.getUpvoteRepository()
+                                CompletableFuture<Integer> upvoteCountFuture = upvoteRepository
                                         .countByPost(post);
-                                CompletableFuture<Integer> commentCountFuture = unitOfWork.getCommentRepository()
+                                CompletableFuture<Integer> commentCountFuture = commentRepository
                                         .countByPost(post);
-                                CompletableFuture<Integer> viewCountFuture = unitOfWork.getPostViewRepository()
+                                CompletableFuture<Integer> viewCountFuture = postViewRepository
                                         .countByPost(post);
 
                                 return CompletableFuture.allOf(upvoteCountFuture, commentCountFuture, viewCountFuture)
@@ -187,18 +203,18 @@ public class PostService {
                                             String messageJson = null;
                                             try {
 
-                                                    messageJson = objectMapper.writeValueAsString(dataNotification);
-                                                    Notification notification = Notification.builder()
-                                                            .title("Daily point Noitfication ")
-                                                            .message(messageJson)
-                                                            .isRead(false)
-                                                            .account(account)
-                                                            .createdDate(LocalDateTime.now())
-                                                            .build();
-                                                    unitOfWork.getNotificationRepository().save(notification);
-                                                    response.setNotification(notification);
+                                                messageJson = objectMapper.writeValueAsString(dataNotification);
+                                                Notification notification = Notification.builder()
+                                                        .title("Daily point Noitfication ")
+                                                        .message(messageJson)
+                                                        .isRead(false)
+                                                        .account(account)
+                                                        .createdDate(LocalDateTime.now())
+                                                        .build();
+                                                notificationRepository.save(notification);
+                                                response.setNotification(notification);
 //                                                    socketIOUtil.sendEventToOneClientInAServer(clientSessionId, WebsocketEventName.NOTIFICATION.name(), notification);
-                                                    socketIOUtil.sendEventToOneClientInAServer(account.getAccountId(), WebsocketEventName.NOTIFICATION.name(), notification);
+                                                socketIOUtil.sendEventToOneClientInAServer(account.getAccountId(), WebsocketEventName.NOTIFICATION.name(), notification);
 
                                             } catch (JsonProcessingException e) {
                                                 throw new RuntimeException(e);
@@ -276,11 +292,11 @@ public class PostService {
                     .filter(post -> statuses == null || statuses.isEmpty() ||
                             (safeValueOf(post.getStatus()) != null && statuses.contains(safeValueOf(post.getStatus()))))
                     .map(post -> {
-                        CompletableFuture<Integer> upvoteCountFuture = unitOfWork.getUpvoteRepository()
+                        CompletableFuture<Integer> upvoteCountFuture = upvoteRepository
                                 .countByPost(post);
-                        CompletableFuture<Integer> commentCountFuture = unitOfWork.getCommentRepository()
+                        CompletableFuture<Integer> commentCountFuture = commentRepository
                                 .countByPost(post);
-                        CompletableFuture<Integer> viewCountFuture = unitOfWork.getPostViewRepository()
+                        CompletableFuture<Integer> viewCountFuture = postViewRepository
                                 .countByPost(post);
 
                         return CompletableFuture.allOf(upvoteCountFuture, commentCountFuture, viewCountFuture)
@@ -334,7 +350,7 @@ public class PostService {
             var topic = topicFuture.join();
             var tag = tagFuture.join();
             List<Account> followerAccountList = followerListFuture.join();
-            var manageCategoryListFuture = unitOfWork.getCategoryRepository().findByAccount(currentAccount);
+            var manageCategoryListFuture = categoryRepository.findByAccount(currentAccount);
 
             return manageCategoryListFuture.thenCompose(manageCategoryList -> {
                 var manageTopicList = getAllTopicsFromCategoryList(manageCategoryList);
@@ -367,11 +383,11 @@ public class PostService {
                         .filter(post -> post.getStatus() != null
                                 && post.getStatus().equals(PostStatus.PUBLIC.name()))
                         .map(post -> {
-                            CompletableFuture<Integer> upvoteCountFuture = unitOfWork.getUpvoteRepository()
+                            CompletableFuture<Integer> upvoteCountFuture = upvoteRepository
                                     .countByPost(post);
-                            CompletableFuture<Integer> commentCountFuture = unitOfWork.getCommentRepository()
+                            CompletableFuture<Integer> commentCountFuture = commentRepository
                                     .countByPost(post);
-                            CompletableFuture<Integer> viewCountFuture = unitOfWork.getPostViewRepository()
+                            CompletableFuture<Integer> viewCountFuture = postViewRepository
                                     .countByPost(post);
 
                             return CompletableFuture.allOf(upvoteCountFuture, commentCountFuture, viewCountFuture)
@@ -411,11 +427,11 @@ public class PostService {
                     .filter(post -> post.getStatus().equals(PostStatus.PUBLIC.name())
                             || post.getStatus().equals(PostStatus.PRIVATE.name()))
                     .map(post -> {
-                        CompletableFuture<Integer> upvoteCountFuture = unitOfWork.getUpvoteRepository()
+                        CompletableFuture<Integer> upvoteCountFuture = upvoteRepository
                                 .countByPost(post);
-                        CompletableFuture<Integer> commentCountFuture = unitOfWork.getCommentRepository()
+                        CompletableFuture<Integer> commentCountFuture = commentRepository
                                 .countByPost(post);
-                        CompletableFuture<Integer> viewCountFuture = unitOfWork.getPostViewRepository()
+                        CompletableFuture<Integer> viewCountFuture = postViewRepository
                                 .countByPost(post);
 
                         return CompletableFuture.allOf(upvoteCountFuture, commentCountFuture, viewCountFuture)
@@ -455,7 +471,7 @@ public class PostService {
                     var blockedAccountList = blockedListFuture.join();
 
                     boolean isBlockedByCurrent = blockedAccountList.contains(otherAccount);
-                    boolean isBlockedByOther = unitOfWork.getBlockedAccountRepository()
+                    boolean isBlockedByOther = blockedAccountRepository
                             .findByBlockerAndBlocked(otherAccount, currentAccount).isPresent();
                     boolean isFollowing = isFollowing(currentAccount, otherAccount);
                     boolean isAuthor = currentAccount.equals(otherAccount);
@@ -468,11 +484,11 @@ public class PostService {
                                     || (post.getStatus().equals(PostStatus.PRIVATE.name()) && isFollowing))
                             .filter(post -> !isBlockedByCurrent && !isBlockedByOther)
                             .map(post -> {
-                                CompletableFuture<Integer> upvoteCountFuture = unitOfWork.getUpvoteRepository()
+                                CompletableFuture<Integer> upvoteCountFuture = upvoteRepository
                                         .countByPost(post);
-                                CompletableFuture<Integer> commentCountFuture = unitOfWork.getCommentRepository()
+                                CompletableFuture<Integer> commentCountFuture = commentRepository
                                         .countByPost(post);
-                                CompletableFuture<Integer> viewCountFuture = unitOfWork.getPostViewRepository()
+                                CompletableFuture<Integer> viewCountFuture = postViewRepository
                                         .countByPost(post);
 
                                 return CompletableFuture.allOf(upvoteCountFuture, commentCountFuture, viewCountFuture)
@@ -506,11 +522,11 @@ public class PostService {
             var account = accountFuture.join();
             var post = postFuture.join();
 
-            CompletableFuture<Integer> upvoteCountFuture = unitOfWork.getUpvoteRepository()
+            CompletableFuture<Integer> upvoteCountFuture = upvoteRepository
                     .countByPost(post);
-            CompletableFuture<Integer> commentCountFuture = unitOfWork.getCommentRepository()
+            CompletableFuture<Integer> commentCountFuture = commentRepository
                     .countByPost(post);
-            CompletableFuture<Integer> viewCountFuture = unitOfWork.getPostViewRepository()
+            CompletableFuture<Integer> viewCountFuture = postViewRepository
                     .countByPost(post);
             CompletableFuture<PostView> newPostViewFuture = createPostView(account, post);
 
@@ -546,10 +562,10 @@ public class PostService {
                 throw new AppException(ErrorCode.POST_ALREADY_HIDDEN);
             }
 
-            if(request.getPostFileUrlRequest() != null && !request.getPostFileUrlRequest().isEmpty()){
+            if (request.getPostFileUrlRequest() != null && !request.getPostFileUrlRequest().isEmpty()) {
                 var programmingLanguage = determineProgrammingLanguage(request.getPostFileUrlRequest());
                 programmingLanguage = programmingLanguage.toLowerCase();
-                if(!post.getTopic().getName().toLowerCase().contains(programmingLanguage)){
+                if (!post.getTopic().getName().toLowerCase().contains(programmingLanguage)) {
                     throw new AppException(ErrorCode.SOURCE_CODE_DOES_NOT_MATCH_CURRENT_TOPIC);
                 }
             }
@@ -571,8 +587,8 @@ public class PostService {
             CompletableFuture<List<PostFile>> finalCreatePostFileFuture = createPostFileFuture;
             return CompletableFuture.allOf(deleteImageListFuture, createImageFuture, finalCreateImageFuture,
                     deletePostFileFuture, createPostFileFuture, finalCreatePostFileFuture).thenCompose(voidData -> {
-                if(post.getTopic().getCategory().getName().equalsIgnoreCase("SOURCE CODE")
-                        && (request.getPostFileUrlRequest() == null || request.getPostFileUrlRequest().isEmpty())){
+                if (post.getTopic().getCategory().getName().equalsIgnoreCase("SOURCE CODE")
+                        && (request.getPostFileUrlRequest() == null || request.getPostFileUrlRequest().isEmpty())) {
                     throw new AppException(ErrorCode.POST_MUST_HAVE_AT_LEAST_ONE_SOURCE_CODE);
                 }
                 var imageUrlList = request.getImageUrlList() == null || request.getImageUrlList().isEmpty()
@@ -599,13 +615,13 @@ public class PostService {
                 }
                 post.setLastModifiedDate(new Date());
 
-                return CompletableFuture.completedFuture(unitOfWork.getPostRepository().save(post));
+                return CompletableFuture.completedFuture(postRepository.save(post));
             }).thenCompose(savedPost -> {
-                CompletableFuture<Integer> upvoteCountFuture = unitOfWork.getUpvoteRepository()
+                CompletableFuture<Integer> upvoteCountFuture = upvoteRepository
                         .countByPost(savedPost);
-                CompletableFuture<Integer> commentCountFuture = unitOfWork.getCommentRepository()
+                CompletableFuture<Integer> commentCountFuture = commentRepository
                         .countByPost(savedPost);
-                CompletableFuture<Integer> viewCountFuture = unitOfWork.getPostViewRepository()
+                CompletableFuture<Integer> viewCountFuture = postViewRepository
                         .countByPost(post);
 
                 return CompletableFuture.allOf(upvoteCountFuture, commentCountFuture, viewCountFuture)
@@ -632,7 +648,7 @@ public class PostService {
             var post = postFuture.join();
             var categoryPost = post.getTopic().getCategory();
 
-            return unitOfWork.getCategoryRepository().findByAccount(account).thenCompose(categoryList -> {
+            return categoryRepository.findByAccount(account).thenCompose(categoryList -> {
                 if (post.getStatus().equals(PostStatus.DRAFT.name())) {
                     throw new AppException(ErrorCode.DRAFT_POST_CANNOT_CHANGE_STATUS);
                 }
@@ -652,14 +668,14 @@ public class PostService {
                 post.setStatus(PostStatus.HIDDEN.name());
                 post.setLastModifiedDate(new Date());
 
-                return CompletableFuture.completedFuture(unitOfWork.getPostRepository().save(post));
+                return CompletableFuture.completedFuture(postRepository.save(post));
             });
         }).thenCompose(post -> {
-            CompletableFuture<Integer> upvoteCountFuture = unitOfWork.getUpvoteRepository()
+            CompletableFuture<Integer> upvoteCountFuture = upvoteRepository
                     .countByPost(post);
-            CompletableFuture<Integer> commentCountFuture = unitOfWork.getCommentRepository()
+            CompletableFuture<Integer> commentCountFuture = commentRepository
                     .countByPost(post);
-            CompletableFuture<Integer> viewCountFuture = unitOfWork.getPostViewRepository()
+            CompletableFuture<Integer> viewCountFuture = postViewRepository
                     .countByPost(post);
 
             return CompletableFuture.allOf(upvoteCountFuture, commentCountFuture, viewCountFuture)
@@ -685,7 +701,7 @@ public class PostService {
             var post = postFuture.join();
             var categoryPost = post.getTopic().getCategory();
 
-            return unitOfWork.getCategoryRepository().findByAccount(account).thenCompose(categoryList -> {
+            return categoryRepository.findByAccount(account).thenCompose(categoryList -> {
                 if (post.getStatus().equals(PostStatus.DRAFT.name())) {
                     throw new AppException(ErrorCode.DRAFT_POST_CANNOT_CHANGE_STATUS);
                 }
@@ -704,14 +720,14 @@ public class PostService {
 
                 post.setStatus(status.name());
                 post.setLastModifiedDate(new Date());
-                return CompletableFuture.completedFuture(unitOfWork.getPostRepository().save(post));
+                return CompletableFuture.completedFuture(postRepository.save(post));
             });
         }).thenCompose(post -> {
-            CompletableFuture<Integer> upvoteCountFuture = unitOfWork.getUpvoteRepository()
+            CompletableFuture<Integer> upvoteCountFuture = upvoteRepository
                     .countByPost(post);
-            CompletableFuture<Integer> commentCountFuture = unitOfWork.getCommentRepository()
+            CompletableFuture<Integer> commentCountFuture = commentRepository
                     .countByPost(post);
-            CompletableFuture<Integer> viewCountFuture = unitOfWork.getPostViewRepository()
+            CompletableFuture<Integer> viewCountFuture = postViewRepository
                     .countByPost(post);
 
             return CompletableFuture.allOf(upvoteCountFuture, commentCountFuture, viewCountFuture)
@@ -793,7 +809,7 @@ public class PostService {
                     newPost.setDailyPointList(new ArrayList<>());
                     newPost.setPostViewList(new ArrayList<>());
 
-                    return CompletableFuture.completedFuture(unitOfWork.getPostRepository().save(newPost));
+                    return CompletableFuture.completedFuture(postRepository.save(newPost));
                 })
                 .thenCompose(savedPost -> {
                     CompletableFuture<List<Image>> imageListFuture = createImages(request, savedPost);
@@ -811,14 +827,14 @@ public class PostService {
                             savedPost.setPostFileList(new ArrayList<>());
                         }
 
-                        return CompletableFuture.completedFuture(unitOfWork.getPostRepository().save(savedPost));
+                        return CompletableFuture.completedFuture(postRepository.save(savedPost));
                     });
                 }).thenCompose(post -> {
-                    CompletableFuture<Integer> upvoteCountFuture = unitOfWork.getUpvoteRepository()
+                    CompletableFuture<Integer> upvoteCountFuture = upvoteRepository
                             .countByPost(post);
-                    CompletableFuture<Integer> commentCountFuture = unitOfWork.getCommentRepository()
+                    CompletableFuture<Integer> commentCountFuture = commentRepository
                             .countByPost(post);
-                    CompletableFuture<Integer> viewCountFuture = unitOfWork.getPostViewRepository()
+                    CompletableFuture<Integer> viewCountFuture = postViewRepository
                             .countByPost(post);
 
                     return CompletableFuture.allOf(upvoteCountFuture, commentCountFuture, viewCountFuture)
@@ -856,11 +872,11 @@ public class PostService {
                             || (post.getTopic() != null && post.getTopic().getCategory().equals(category)))
                     .filter(post -> post.getStatus().equals(PostStatus.DRAFT.name()))
                     .map(post -> {
-                        CompletableFuture<Integer> upvoteCountFuture = unitOfWork.getUpvoteRepository()
+                        CompletableFuture<Integer> upvoteCountFuture = upvoteRepository
                                 .countByPost(post);
-                        CompletableFuture<Integer> commentCountFuture = unitOfWork.getCommentRepository()
+                        CompletableFuture<Integer> commentCountFuture = commentRepository
                                 .countByPost(post);
-                        CompletableFuture<Integer> viewCountFuture = unitOfWork.getPostViewRepository()
+                        CompletableFuture<Integer> viewCountFuture = postViewRepository
                                 .countByPost(post);
 
                         return CompletableFuture.allOf(upvoteCountFuture, commentCountFuture, viewCountFuture)
@@ -904,11 +920,11 @@ public class PostService {
                             || (post.getTopic() != null && post.getTopic().getCategory().equals(category)))
                     .filter(post -> post.getStatus().equals(PostStatus.DRAFT.name()))
                     .map(post -> {
-                        CompletableFuture<Integer> upvoteCountFuture = unitOfWork.getUpvoteRepository()
+                        CompletableFuture<Integer> upvoteCountFuture = upvoteRepository
                                 .countByPost(post);
-                        CompletableFuture<Integer> commentCountFuture = unitOfWork.getCommentRepository()
+                        CompletableFuture<Integer> commentCountFuture = commentRepository
                                 .countByPost(post);
-                        CompletableFuture<Integer> viewCountFuture = unitOfWork.getPostViewRepository()
+                        CompletableFuture<Integer> viewCountFuture = postViewRepository
                                 .countByPost(post);
 
                         return CompletableFuture.allOf(upvoteCountFuture, commentCountFuture, viewCountFuture)
@@ -984,13 +1000,13 @@ public class PostService {
 
                 post.setLastModifiedDate(new Date());
 
-                return CompletableFuture.completedFuture(unitOfWork.getPostRepository().save(post));
+                return CompletableFuture.completedFuture(postRepository.save(post));
             }).thenCompose(savedPost -> {
-                CompletableFuture<Integer> upvoteCountFuture = unitOfWork.getUpvoteRepository()
+                CompletableFuture<Integer> upvoteCountFuture = upvoteRepository
                         .countByPost(savedPost);
-                CompletableFuture<Integer> commentCountFuture = unitOfWork.getCommentRepository()
+                CompletableFuture<Integer> commentCountFuture = commentRepository
                         .countByPost(savedPost);
-                CompletableFuture<Integer> viewCountFuture = unitOfWork.getPostViewRepository()
+                CompletableFuture<Integer> viewCountFuture = postViewRepository
                         .countByPost(post);
 
                 return CompletableFuture.allOf(upvoteCountFuture, commentCountFuture, viewCountFuture)
@@ -1026,7 +1042,7 @@ public class PostService {
                 throw new AppException(ErrorCode.TYPE_OR_TOPIC_NOT_FOUND);
             }
             if (post.getTopic().getCategory().getName().equalsIgnoreCase("SOURCE CODE")
-                    && (post.getPostFileList() == null || post.getPostFileList().isEmpty())){
+                    && (post.getPostFileList() == null || post.getPostFileList().isEmpty())) {
                 throw new AppException(ErrorCode.POST_MUST_HAVE_AT_LEAST_ONE_SOURCE_CODE);
             }
             var imageUrlList = post.getImageList() == null || post.getImageList().isEmpty()
@@ -1043,7 +1059,7 @@ public class PostService {
             if (!checkContentRelated) {
                 throw new AppException(ErrorCode.ERROR_CHECK_RELATED);
             }
-            if(post.getPostFileList() != null && !post.getPostFileList().isEmpty()){
+            if (post.getPostFileList() != null && !post.getPostFileList().isEmpty()) {
                 Set<PostFileRequest> postFileRequestList = post.getPostFileList().stream()
                         .map(PostFile::getUrl)
                         .map(url -> PostFileRequest.builder()
@@ -1052,7 +1068,7 @@ public class PostService {
                         .collect(Collectors.toSet());
                 var programmingLanguage = determineProgrammingLanguage(postFileRequestList);
                 programmingLanguage = programmingLanguage.toLowerCase();
-                if(!post.getTopic().getName().toLowerCase().contains(programmingLanguage)){
+                if (!post.getTopic().getName().toLowerCase().contains(programmingLanguage)) {
                     throw new AppException(ErrorCode.SOURCE_CODE_DOES_NOT_MATCH_CURRENT_TOPIC);
                 }
             }
@@ -1071,13 +1087,13 @@ public class PostService {
                 post.setDailyPointList(dailyPointList);
                 post.setStatus(PostStatus.PUBLIC.name());
                 post.setLastModifiedDate(new Date());
-                return CompletableFuture.completedFuture(unitOfWork.getPostRepository().save(post));
+                return CompletableFuture.completedFuture(postRepository.save(post));
             }).thenCompose(savedPost -> {
-                CompletableFuture<Integer> upvoteCountFuture = unitOfWork.getUpvoteRepository()
+                CompletableFuture<Integer> upvoteCountFuture = upvoteRepository
                         .countByPost(savedPost);
-                CompletableFuture<Integer> commentCountFuture = unitOfWork.getCommentRepository()
+                CompletableFuture<Integer> commentCountFuture = commentRepository
                         .countByPost(savedPost);
-                CompletableFuture<Integer> viewCountFuture = unitOfWork.getPostViewRepository()
+                CompletableFuture<Integer> viewCountFuture = postViewRepository
                         .countByPost(post);
 
                 return CompletableFuture.allOf(upvoteCountFuture, commentCountFuture, viewCountFuture)
@@ -1112,14 +1128,14 @@ public class PostService {
                     .map(CompletableFuture::join)
                     .toList();
 
-            unitOfWork.getPostRepository().deleteAll(draftList);
+            postRepository.deleteAll(draftList);
             var responseFutures = draftList.stream()
                     .map(post -> {
-                        CompletableFuture<Integer> upvoteCountFuture = unitOfWork.getUpvoteRepository()
+                        CompletableFuture<Integer> upvoteCountFuture = upvoteRepository
                                 .countByPost(post);
-                        CompletableFuture<Integer> commentCountFuture = unitOfWork.getCommentRepository()
+                        CompletableFuture<Integer> commentCountFuture = commentRepository
                                 .countByPost(post);
-                        CompletableFuture<Integer> viewCountFuture = unitOfWork.getPostViewRepository()
+                        CompletableFuture<Integer> viewCountFuture = postViewRepository
                                 .countByPost(post);
 
                         return CompletableFuture.allOf(upvoteCountFuture, commentCountFuture, viewCountFuture)
@@ -1161,7 +1177,7 @@ public class PostService {
             Image newImage = imageMapper.toImage(imageRequest);
             newImage.setPost(savedPost);
             imageList.add(newImage);
-            unitOfWork.getImageRepository().save(newImage);
+            imageRepository.save(newImage);
         }
 
         return CompletableFuture.completedFuture(imageList);
@@ -1185,7 +1201,7 @@ public class PostService {
             Image newImage = imageMapper.toImage(imageRequest);
             newImage.setPost(savedPost);
             imageList.add(newImage);
-            unitOfWork.getImageRepository().save(newImage);
+            imageRepository.save(newImage);
         }
 
         return CompletableFuture.completedFuture(imageList);
@@ -1209,7 +1225,7 @@ public class PostService {
             Image newImage = imageMapper.toImage(imageRequest);
             newImage.setPost(savedPost);
             imageList.add(newImage);
-            unitOfWork.getImageRepository().save(newImage);
+            imageRepository.save(newImage);
         }
 
         return CompletableFuture.completedFuture(imageList);
@@ -1233,7 +1249,7 @@ public class PostService {
             Image newImage = imageMapper.toImage(imageRequest);
             newImage.setPost(savedPost);
             imageList.add(newImage);
-            unitOfWork.getImageRepository().save(newImage);
+            imageRepository.save(newImage);
         }
 
         return CompletableFuture.completedFuture(imageList);
@@ -1257,7 +1273,7 @@ public class PostService {
             PostFile newPostFile = postFileMapper.toPostFile(postFileRequest);
             newPostFile.setPost(savedPost);
             postFileList.add(newPostFile);
-            unitOfWork.getPostFileRepository().save(newPostFile);
+            postFileRepository.save(newPostFile);
         }
 
         return CompletableFuture.completedFuture(postFileList);
@@ -1281,7 +1297,7 @@ public class PostService {
             PostFile newPostFile = postFileMapper.toPostFile(postFileRequest);
             newPostFile.setPost(savedPost);
             postFileList.add(newPostFile);
-            unitOfWork.getPostFileRepository().save(newPostFile);
+            postFileRepository.save(newPostFile);
         }
 
         return CompletableFuture.completedFuture(postFileList);
@@ -1305,7 +1321,7 @@ public class PostService {
             PostFile newPostFile = postFileMapper.toPostFile(postFileRequest);
             newPostFile.setPost(savedPost);
             postFileList.add(newPostFile);
-            unitOfWork.getPostFileRepository().save(newPostFile);
+            postFileRepository.save(newPostFile);
         }
 
         return CompletableFuture.completedFuture(postFileList);
@@ -1329,7 +1345,7 @@ public class PostService {
             PostFile newPostFile = postFileMapper.toPostFile(postFileRequest);
             newPostFile.setPost(savedPost);
             postFileList.add(newPostFile);
-            unitOfWork.getPostFileRepository().save(newPostFile);
+            postFileRepository.save(newPostFile);
         }
 
         return CompletableFuture.completedFuture(postFileList);
@@ -1337,7 +1353,7 @@ public class PostService {
 
     @Async("AsyncTaskExecutor")
     private CompletableFuture<List<Image>> deleteImagesByPost(Post savedPost) {
-        var imageListFuture = unitOfWork.getImageRepository().findByPost(savedPost);
+        var imageListFuture = imageRepository.findByPost(savedPost);
         List<Image> deletedImageList = new ArrayList<>();
 
         return imageListFuture.thenCompose(imageList -> {
@@ -1347,7 +1363,7 @@ public class PostService {
 
             for (Image image : imageList) {
                 deletedImageList.add(image);
-                unitOfWork.getImageRepository().delete(image);
+                imageRepository.delete(image);
             }
 
             return CompletableFuture.completedFuture(deletedImageList);
@@ -1356,7 +1372,7 @@ public class PostService {
 
     @Async("AsyncTaskExecutor")
     private CompletableFuture<List<PostFile>> deletePostFilesByPost(Post savedPost) {
-        var postFileListFuture = unitOfWork.getPostFileRepository().findByPost(savedPost);
+        var postFileListFuture = postFileRepository.findByPost(savedPost);
         List<PostFile> deletedPostFileList = new ArrayList<>();
 
         return postFileListFuture.thenCompose(postFileList -> {
@@ -1366,7 +1382,7 @@ public class PostService {
 
             for (PostFile postFile : postFileList) {
                 deletedPostFileList.add(postFile);
-                unitOfWork.getPostFileRepository().delete(postFile);
+                postFileRepository.delete(postFile);
             }
 
             return CompletableFuture.completedFuture(deletedPostFileList);
@@ -1411,7 +1427,7 @@ public class PostService {
                         }
 
                         return CompletableFuture.completedFuture(
-                                unitOfWork.getDailyPointRepository().save(newDailyPoint)
+                                dailyPointRepository.save(newDailyPoint)
                         );
                     });
                 });
@@ -1419,7 +1435,7 @@ public class PostService {
 
     @Async("AsyncTaskExecutor")
     private CompletableFuture<Wallet> addPointToWallet(UUID accountId) {
-        var walletFuture = unitOfWork.getWalletRepository().findByAccountAccountId(accountId);
+        var walletFuture = walletRepository.findByAccountAccountId(accountId);
         var pointFuture = getPoint();
         var totalPointFuture = countUserTotalPointAtAGivenDate(accountId, new Date());
 
@@ -1437,14 +1453,14 @@ public class PostService {
             if (totalPoint + point.getPointPerPost() <= point.getMaxPoint())
                 wallet.setBalance(currentWalletBalance + point.getPointPerPost());
 
-            return CompletableFuture.completedFuture(unitOfWork.getWalletRepository().save(wallet));
+            return CompletableFuture.completedFuture(walletRepository.save(wallet));
         });
     }
 
     @Async("AsyncTaskExecutor")
     private CompletableFuture<Account> findAccountById(UUID accountId) {
         return CompletableFuture.supplyAsync(() ->
-                unitOfWork.getAccountRepository().findById(accountId)
+                accountRepository.findById(accountId)
                         .orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND))
         );
     }
@@ -1452,7 +1468,7 @@ public class PostService {
     @Async("AsyncTaskExecutor")
     private CompletableFuture<Account> findAccountByUsername(String username) {
         return CompletableFuture.supplyAsync(() ->
-                unitOfWork.getAccountRepository().findByUsername(username)
+                accountRepository.findByUsername(username)
                         .orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND))
         );
     }
@@ -1462,7 +1478,7 @@ public class PostService {
         var accountFuture = findAccountByUsername(username);
 
         return accountFuture.thenApply(account -> {
-            var blockedAccountEntityList = unitOfWork.getBlockedAccountRepository().findByBlocker(account);
+            var blockedAccountEntityList = blockedAccountRepository.findByBlocker(account);
 
             return blockedAccountEntityList.stream()
                     .map(BlockedAccount::getBlocked)
@@ -1473,7 +1489,7 @@ public class PostService {
     @Async("AsyncTaskExecutor")
     private CompletableFuture<Topic> findTopicById(UUID topicId) {
         return CompletableFuture.supplyAsync(() ->
-                unitOfWork.getTopicRepository().findById(topicId)
+                topicRepository.findById(topicId)
                         .orElseThrow(() -> new AppException(ErrorCode.TOPIC_NOT_FOUND))
         );
     }
@@ -1481,22 +1497,20 @@ public class PostService {
     @Async("AsyncTaskExecutor")
     private CompletableFuture<Category> findCategoryById(UUID categoryId) {
         return CompletableFuture.supplyAsync(() ->
-                unitOfWork.getCategoryRepository().findById(categoryId)
+                categoryRepository.findById(categoryId)
                         .orElseThrow(() -> new AppException(ErrorCode.CATEGORY_NOT_FOUND))
         );
     }
 
     @Async("AsyncTaskExecutor")
     private CompletableFuture<List<Post>> findAllPostsOrderByCreatedDateDesc() {
-        return CompletableFuture.supplyAsync(() ->
-                unitOfWork.getPostRepository().findAllByOrderByCreatedDateDesc()
-        );
+        return CompletableFuture.supplyAsync(postRepository::findAllByOrderByCreatedDateDesc);
     }
 
     @Async("AsyncTaskExecutor")
     private CompletableFuture<Tag> findTagById(UUID tagId) {
         return CompletableFuture.supplyAsync(() ->
-                unitOfWork.getTagRepository().findById(tagId)
+                tagRepository.findById(tagId)
                         .orElseThrow(() -> new AppException(ErrorCode.TAG_NOT_FOUND))
         );
     }
@@ -1504,7 +1518,7 @@ public class PostService {
     @Async("AsyncTaskExecutor")
     private CompletableFuture<Post> findPostById(UUID postId) {
         return CompletableFuture.supplyAsync(() ->
-                unitOfWork.getPostRepository().findById(postId)
+                postRepository.findById(postId)
                         .orElseThrow(() -> new AppException(ErrorCode.POST_NOT_FOUND))
         );
     }
@@ -1512,7 +1526,7 @@ public class PostService {
     @Async("AsyncTaskExecutor")
     private CompletableFuture<List<Point>> getPoint() {
         return CompletableFuture.supplyAsync(() ->
-                unitOfWork.getPointRepository().findAll().stream()
+                pointRepository.findAll().stream()
                         .toList());
     }
 
@@ -1528,7 +1542,7 @@ public class PostService {
 
         var accountFuture = findAccountById(accountId);
         return accountFuture.thenCompose(account ->
-                unitOfWork.getDailyPointRepository().findByAccount(account) // Adjust repository method as needed
+                dailyPointRepository.findByAccount(account) // Adjust repository method as needed
                         .thenCompose(dailyPoints -> {
                             double totalCount = dailyPoints.stream()
                                     .filter(dailyPoint -> {
@@ -1551,7 +1565,7 @@ public class PostService {
 
     @Async("AsyncTaskExecutor")
     private CompletableFuture<DailyPoint> findDailyPointByAccountAndPost(Account account, Post post) {
-        return unitOfWork.getDailyPointRepository().findByAccountAndPost(account, post);
+        return dailyPointRepository.findByAccountAndPost(account, post);
     }
 
     @Async("AsyncTaskExecutor")
@@ -1559,7 +1573,7 @@ public class PostService {
         var username = getUsernameFromJwt();
         var accountFuture = findAccountByUsername(username);
         return accountFuture.thenCompose(account -> {
-            var followeeList = unitOfWork.getFollowRepository().findByFollower(account).stream()
+            var followeeList = followRepository.findByFollower(account).stream()
                     .map(Follow::getFollowee)
                     .toList();
 
@@ -1612,7 +1626,7 @@ public class PostService {
         }
         List<Topic> topicList = new ArrayList<>();
         for (Category category : categoryList) {
-            List<Topic> categoryTopicList = unitOfWork.getTopicRepository().findByCategory(category);
+            List<Topic> categoryTopicList = topicRepository.findByCategory(category);
             topicList.addAll(categoryTopicList);
         }
 
@@ -1621,7 +1635,7 @@ public class PostService {
 
     @Async("AsyncTaskExecutor")
     public CompletableFuture<PostView> createPostView(Account account, Post post) {
-        CompletableFuture<Boolean> viewExistsFuture = unitOfWork.getPostViewRepository()
+        CompletableFuture<Boolean> viewExistsFuture = postViewRepository
                 .existsByPostAndAccount(post, account);
 
         return viewExistsFuture.thenCompose(viewExists -> {
@@ -1634,7 +1648,7 @@ public class PostService {
             newPostView.setAccount(account);
             newPostView.setViewedDate(new Date());
 
-            return CompletableFuture.supplyAsync(() -> unitOfWork.getPostViewRepository().save(newPostView));
+            return CompletableFuture.supplyAsync(() -> postViewRepository.save(newPostView));
         });
     }
 
@@ -1650,7 +1664,7 @@ public class PostService {
         if (postOwner == null) {
             return false;
         }
-        return unitOfWork.getFollowRepository()
+        return followRepository
                 .findByFollowerAndFollowee(currentAccount, postOwner)
                 .isPresent();
     }
@@ -1661,7 +1675,7 @@ public class PostService {
 
     @Async("AsyncTaskExecutor")
     private CompletableFuture<DailyPoint> createDailyPointLogForSourceOwner(Account account, Post post, Point point) {
-        return unitOfWork.getDailyPointRepository().findByAccountAndPost(account, post)
+        return dailyPointRepository.findByAccountAndPost(account, post)
                 .thenCompose(existingDailyPoint -> {
                     if (account.getRole().getName().equalsIgnoreCase("ADMIN")) {
                         return CompletableFuture.completedFuture(null);
@@ -1678,7 +1692,7 @@ public class PostService {
                     newDailyPoint.setTypeBonus(null);
                     newDailyPoint.setPointEarned(point.getPointEarnedPerDownload());
 
-                    return CompletableFuture.supplyAsync(() -> unitOfWork.getDailyPointRepository().save(newDailyPoint));
+                    return CompletableFuture.supplyAsync(() -> dailyPointRepository.save(newDailyPoint));
                 });
     }
 
@@ -1693,7 +1707,7 @@ public class PostService {
                     .transactionType(TransactionType.DOWNLOAD_SOURCECODE.name())
                     .build();
 
-            return unitOfWork.getTransactionRepository().save(newTransaction);
+            return transactionRepository.save(newTransaction);
         });
     }
 
@@ -1804,6 +1818,7 @@ public class PostService {
 
         return blob.getContent();
     }
+
     private String getContentTypeFromFilePath(String path) {
         Bucket bucket = getBucket();
 
@@ -1815,14 +1830,15 @@ public class PostService {
 
         return blob.getContentType();
     }
-    private Bucket getBucket(){
+
+    private Bucket getBucket() {
         return StorageClient.getInstance().bucket();
     }
 
     @Async("AsyncTaskExecutor")
     private CompletableFuture<byte[]> processDownload(Post post,
                                                       ByteArrayOutputStream byteArrayOutputStream, AtomicBoolean isZipEmpty) {
-        var postFileListFuture = unitOfWork.getPostFileRepository().findByPost(post);
+        var postFileListFuture = postFileRepository.findByPost(post);
 
         return postFileListFuture.thenCompose(postFileList -> {
             var fileNames = extractFileNames(postFileList);
@@ -1872,20 +1888,20 @@ public class PostService {
             throw new AppException(ErrorCode.BALANCE_NOT_SUFFICIENT_TO_DOWNLOAD);
         }
         walletDownloader.setBalance(walletDownloader.getBalance() - point.getPointCostPerDownload());
-        if(checkShouldUpdateWalletOwner(accountOwner)){
+        if (checkShouldUpdateWalletOwner(accountOwner)) {
             walletOwner.setBalance(walletOwner.getBalance() + point.getPointEarnedPerDownload());
         }
 
         var dailyPointFuture = createDailyPointLogForSourceOwner(accountOwner, post, point);
         var transactionFuture = createTransactionForDownloader(walletDownloader, point);
-        var postFileListFuture = unitOfWork.getPostFileRepository().findByPost(post);
+        var postFileListFuture = postFileRepository.findByPost(post);
 
         return CompletableFuture.allOf(dailyPointFuture, postFileListFuture, transactionFuture).thenCompose(voidData -> {
             var dailyPoint = dailyPointFuture.join();
             var postFileList = postFileListFuture.join();
 
             if (dailyPoint != null) {
-                unitOfWork.getDailyPointRepository().save(dailyPoint);
+                dailyPointRepository.save(dailyPoint);
                 //==========================================================
                 DataNotification dataNotification = null;
                 dataNotification = DataNotification.builder()
@@ -1895,25 +1911,25 @@ public class PostService {
                 String messageJson = null;
                 try {
 
-                        messageJson = objectMapper.writeValueAsString(dataNotification);
-                        Notification notification = Notification.builder()
-                                .title("Daily point Noitfication ")
-                                .message(messageJson)
-                                .isRead(false)
-                                .account(accountOwner)
-                                .createdDate(LocalDateTime.now())
-                                .build();
-                        unitOfWork.getNotificationRepository().save(notification);
-                        socketIOUtil.sendEventToOneClientInAServer(accountOwner.getAccountId(),WebsocketEventName.NOTIFICATION.name(), notification);
+                    messageJson = objectMapper.writeValueAsString(dataNotification);
+                    Notification notification = Notification.builder()
+                            .title("Daily point Noitfication ")
+                            .message(messageJson)
+                            .isRead(false)
+                            .account(accountOwner)
+                            .createdDate(LocalDateTime.now())
+                            .build();
+                    notificationRepository.save(notification);
+                    socketIOUtil.sendEventToOneClientInAServer(accountOwner.getAccountId(), WebsocketEventName.NOTIFICATION.name(), notification);
                 } catch (JsonProcessingException e) {
                     throw new RuntimeException(e);
                 }
                 //==========================================================
             }
 
-            unitOfWork.getWalletRepository().save(walletDownloader);
-            if(checkShouldUpdateWalletOwner(accountOwner)){
-                unitOfWork.getWalletRepository().save(walletOwner);
+            walletRepository.save(walletDownloader);
+            if (checkShouldUpdateWalletOwner(accountOwner)) {
+                walletRepository.save(walletOwner);
             }
 
             var fileNames = extractFileNames(postFileList);
@@ -1963,7 +1979,7 @@ public class PostService {
         return accountOwner.getWallet() != null || !accountOwner.getRole().getName().equalsIgnoreCase("ADMIN");
     }
 
-    private String determineProgrammingLanguage(Set<PostFileRequest> postFileRequestList){
+    private String determineProgrammingLanguage(Set<PostFileRequest> postFileRequestList) {
         List<PostFileRequest> validPostFileRequests =
                 extractAndCheckFileNames(new HashSet<>(postFileRequestList));
 
@@ -1974,9 +1990,9 @@ public class PostService {
         Map<String, Integer> countProgrammingLanguage = new HashMap<>();
 
         try {
-            for(PostFileRequest request : validPostFileRequests) {
+            for (PostFileRequest request : validPostFileRequests) {
                 String path = extractFileName(request.getUrl());
-                if(path != null && !path.isEmpty()){
+                if (path != null && !path.isEmpty()) {
                     byte[] bytes = getByteFromFilePath(path);
                     String contentType = getContentTypeFromFilePath(path);
                     var language = detectProgrammingLanguageUtil

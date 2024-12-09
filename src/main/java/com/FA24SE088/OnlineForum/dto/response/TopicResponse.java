@@ -15,7 +15,7 @@ import java.util.UUID;
 public class TopicResponse {
     UUID topicId;
     String name;
-    @JsonIgnoreProperties(value = { "account" })
+    @JsonIgnoreProperties(value = {"account"})
     Category category;
     String imageUrl;
 }

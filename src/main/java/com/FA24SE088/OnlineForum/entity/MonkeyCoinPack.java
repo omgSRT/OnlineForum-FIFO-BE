@@ -23,6 +23,6 @@ public class MonkeyCoinPack {
     long price;
     double point;
 
-    @OneToMany(mappedBy = "monkeyCoinPack",cascade = CascadeType.ALL,orphanRemoval = true)
+    @OneToMany(mappedBy = "monkeyCoinPack", cascade = CascadeType.ALL, orphanRemoval = true)
     List<OrderPoint> orderPointList;
 }
