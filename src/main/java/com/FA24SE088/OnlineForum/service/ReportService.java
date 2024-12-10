@@ -314,7 +314,7 @@ public class ReportService {
     }
 
     @Async("AsyncTaskExecutor")
-    public CompletableFuture<Post> deleteByChangingPostStatusById(UUID postId, Account account) {
+    private CompletableFuture<Post> deleteByChangingPostStatusById(UUID postId, Account account) {
         var postFuture = findPostById(postId);
 
         return CompletableFuture.allOf(postFuture).thenCompose(v -> {
