@@ -180,7 +180,6 @@ public class ReportService {
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
     @Async("AsyncTaskExecutor")
     public CompletableFuture<ReportResponse> updateReportStatus(UUID reportId, ReportPostUpdateStatus status) {
-        long maxReportPost = 1;
         var reportFuture = findReportById(reportId);
         var username = getUsernameFromJwt();
         var accountFuture = findAccountByUsername(username);
@@ -224,7 +223,7 @@ public class ReportService {
                             var postOwner = report.getPost().getAccount();
                             var walletPostOwnerFuture = walletRepository.findByAccount(postOwner);
 
-                            if (count >= maxReportPost) {
+                            if (count >= point.getReportThresholdForAutoDelete()) {
                                 walletPostOwnerFuture.thenCompose(walletPostOwner -> {
                                     if (walletPostOwner != null) {
                                         createTransaction(walletPostOwner, point);

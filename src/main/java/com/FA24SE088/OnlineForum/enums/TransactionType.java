@@ -4,4 +4,5 @@ public enum TransactionType {
     REDEEM_REWARD,
     DOWNLOAD_SOURCECODE,
     POST_VIOLATION,
+    DELETE_POST,
 }
