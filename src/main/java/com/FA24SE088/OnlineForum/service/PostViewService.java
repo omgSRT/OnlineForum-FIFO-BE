@@ -8,7 +8,9 @@ import com.FA24SE088.OnlineForum.entity.PostView;
 import com.FA24SE088.OnlineForum.exception.AppException;
 import com.FA24SE088.OnlineForum.exception.ErrorCode;
 import com.FA24SE088.OnlineForum.mapper.PostViewMapper;
-import com.FA24SE088.OnlineForum.repository.UnitOfWork.UnitOfWork;
+import com.FA24SE088.OnlineForum.repository.AccountRepository;
+import com.FA24SE088.OnlineForum.repository.PostRepository;
+import com.FA24SE088.OnlineForum.repository.PostViewRepository;
 import com.FA24SE088.OnlineForum.utils.PaginationUtils;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -30,13 +32,15 @@ import java.util.concurrent.CompletableFuture;
 @Slf4j
 @Service
 public class PostViewService {
-    UnitOfWork unitOfWork;
+    PostViewRepository postViewRepository;
+    PostRepository postRepository;
+    AccountRepository accountRepository;
     PostViewMapper postViewMapper;
     PaginationUtils paginationUtils;
 
     @Async("AsyncTaskExecutor")
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
-    public CompletableFuture<PostViewResponse> createPostView(PostViewRequest request){
+    public CompletableFuture<PostViewResponse> createPostView(PostViewRequest request) {
         var username = getUsernameFromJwt();
         var accountFuture = findAccountByUsername(username);
         var postFuture = findPostById(request.getPostId());
@@ -45,7 +49,7 @@ public class PostViewService {
             Account account = accountFuture.join();
             Post post = postFuture.join();
 
-            CompletableFuture<Boolean> viewExistsFuture = unitOfWork.getPostViewRepository()
+            CompletableFuture<Boolean> viewExistsFuture = postViewRepository
                     .existsByPostAndAccount(post, account);
 
             return viewExistsFuture.thenCompose(viewExists -> {
@@ -59,17 +63,18 @@ public class PostViewService {
                 newPostView.setViewedDate(new Date());
 
                 return CompletableFuture.supplyAsync(() -> {
-                    PostView savedPostView = unitOfWork.getPostViewRepository().save(newPostView);
+                    PostView savedPostView = postViewRepository.save(newPostView);
                     return postViewMapper.toPostViewResponse(savedPostView);
                 });
             });
         });
     }
+
     @Async("AsyncTaskExecutor")
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
     public CompletableFuture<List<PostViewResponse>> getAllPostView(int page, int perPage,
                                                                     UUID accountId,
-                                                                    UUID postId){
+                                                                    UUID postId) {
         var accountFuture = accountId != null
                 ? findAccountById(accountId)
                 : CompletableFuture.completedFuture(null);
@@ -81,7 +86,7 @@ public class PostViewService {
             var account = accountFuture.join();
             var post = postFuture.join();
 
-            CompletableFuture<List<PostView>> postViewListFuture = unitOfWork.getPostViewRepository()
+            CompletableFuture<List<PostView>> postViewListFuture = postViewRepository
                     .findAllByOrderByViewedDateDesc();
 
             return postViewListFuture.thenCompose(postViews -> {
@@ -95,20 +100,22 @@ public class PostViewService {
             });
         });
     }
+
     @Async("AsyncTaskExecutor")
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
-    public CompletableFuture<PostViewResponse> getPostViewById(UUID postViewId){
+    public CompletableFuture<PostViewResponse> getPostViewById(UUID postViewId) {
         var postViewFuture = findPostViewById(postViewId);
 
         return postViewFuture.thenApply(postViewMapper::toPostViewResponse);
     }
+
     @Async("AsyncTaskExecutor")
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
-    public CompletableFuture<PostViewResponse> deletePostViewById(UUID postViewId){
+    public CompletableFuture<PostViewResponse> deletePostViewById(UUID postViewId) {
         var postViewFuture = findPostViewById(postViewId);
 
         return postViewFuture.thenCompose(postView -> {
-            unitOfWork.getPostViewRepository().delete(postView);
+            postViewRepository.delete(postView);
 
             return CompletableFuture.completedFuture(postViewMapper.toPostViewResponse(postView));
         });
@@ -117,31 +124,35 @@ public class PostViewService {
     @Async("AsyncTaskExecutor")
     private CompletableFuture<Post> findPostById(UUID postId) {
         return CompletableFuture.supplyAsync(() ->
-                unitOfWork.getPostRepository().findById(postId)
+                postRepository.findById(postId)
                         .orElseThrow(() -> new AppException(ErrorCode.POST_NOT_FOUND))
         );
     }
+
     @Async("AsyncTaskExecutor")
     private CompletableFuture<Account> findAccountById(UUID accountId) {
         return CompletableFuture.supplyAsync(() ->
-                unitOfWork.getAccountRepository().findById(accountId)
+                accountRepository.findById(accountId)
                         .orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND))
         );
     }
+
     @Async("AsyncTaskExecutor")
     private CompletableFuture<PostView> findPostViewById(UUID postViewId) {
         return CompletableFuture.supplyAsync(() ->
-                unitOfWork.getPostViewRepository().findById(postViewId)
+                postViewRepository.findById(postViewId)
                         .orElseThrow(() -> new AppException(ErrorCode.POST_VIEW_NOT_FOUND))
         );
     }
+
     @Async("AsyncTaskExecutor")
     private CompletableFuture<Account> findAccountByUsername(String username) {
         return CompletableFuture.supplyAsync(() ->
-                unitOfWork.getAccountRepository().findByUsername(username)
+                accountRepository.findByUsername(username)
                         .orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND))
         );
     }
+
     private boolean isUserNotAllowedToView(Account account, Post post) {
         var role = account.getRole().getName();
         if (role.equalsIgnoreCase("ADMIN") || role.equalsIgnoreCase("STAFF")) {
@@ -153,6 +164,7 @@ public class PostViewService {
 
         return false;
     }
+
     private String getUsernameFromJwt() {
         var authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null && authentication.getPrincipal() instanceof Jwt jwt) {

@@ -20,7 +20,7 @@ import java.util.stream.Collectors;
 @ControllerAdvice
 public class GlobalExceptionHandle {
     @ExceptionHandler(AppException.class)
-    ResponseEntity<ApiResponse> handleAppException(AppException exception){
+    ResponseEntity<ApiResponse> handleAppException(AppException exception) {
         ErrorCode error = exception.getErrorCode();
         ApiResponse apiRespone = new ApiResponse();
 
@@ -31,7 +31,7 @@ public class GlobalExceptionHandle {
     }
 
     @ExceptionHandler(AccessDeniedException.class)
-    ResponseEntity<ApiResponse> handleAccessDeniedException(AccessDeniedException exception){
+    ResponseEntity<ApiResponse> handleAccessDeniedException(AccessDeniedException exception) {
         ErrorCode errorCode = ErrorCode.UNAUTHORIZED;
 
         return ResponseEntity.status(errorCode.getStatusCode()).body(
@@ -43,7 +43,7 @@ public class GlobalExceptionHandle {
     }
 
     @ExceptionHandler(ConstraintViolationException.class)
-    public final ResponseObject<?> handleConstraintViolationException(ConstraintViolationException ex ) {
+    public final ResponseObject<?> handleConstraintViolationException(ConstraintViolationException ex) {
         Map<String, Object> details = ex.getConstraintViolations().stream()
                 .collect(Collectors.toMap(violation ->
                         violation.getPropertyPath().toString(), ConstraintViolation::getMessage));
@@ -53,7 +53,7 @@ public class GlobalExceptionHandle {
     }
 
     @ExceptionHandler(IllegalStateException.class)
-    ResponseEntity<ApiResponse> handleRuntimeException(IllegalStateException exception){
+    ResponseEntity<ApiResponse> handleRuntimeException(IllegalStateException exception) {
         ApiResponse response = new ApiResponse<>();
         response.setCode(ErrorCode.UNDEFINED_EXCEPTION.getCode());
         response.setMessage(ErrorCode.UNDEFINED_EXCEPTION.getMessage());
@@ -62,7 +62,7 @@ public class GlobalExceptionHandle {
     }
 
     @ExceptionHandler(AuthorizationDeniedException.class)
-    ResponseEntity<ApiResponse> handleAuthorizationDeniedException(AuthorizationDeniedException exception){
+    ResponseEntity<ApiResponse> handleAuthorizationDeniedException(AuthorizationDeniedException exception) {
         ApiResponse response = new ApiResponse<>();
         response.setCode(ErrorCode.AUTHORIZATION_DENIED_EXCEPTION.getCode());
         response.setMessage(ErrorCode.AUTHORIZATION_DENIED_EXCEPTION.getMessage());

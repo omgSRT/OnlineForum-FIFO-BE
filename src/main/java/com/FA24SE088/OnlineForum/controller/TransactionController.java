@@ -28,12 +28,12 @@ public class TransactionController {
 
     @Operation(summary = "Create Transaction")
     @PostMapping(path = "/create")
-    public ApiResponse<TransactionResponse> createTransaction(@RequestBody @Valid TransactionRequest request){
+    public ApiResponse<TransactionResponse> createTransaction(@RequestBody @Valid TransactionRequest request) {
         return transactionService.createTransaction(request).thenApply(transactionResponse ->
-            ApiResponse.<TransactionResponse>builder()
-                    .message(SuccessReturnMessage.CREATE_SUCCESS.getMessage())
-                    .entity(transactionResponse)
-                    .build()
+                ApiResponse.<TransactionResponse>builder()
+                        .message(SuccessReturnMessage.CREATE_SUCCESS.getMessage())
+                        .entity(transactionResponse)
+                        .build()
         ).join();
     }
 
@@ -45,7 +45,7 @@ public class TransactionController {
                                                                      @RequestParam(required = false) UUID rewardId,
                                                                      @RequestParam(required = false) TransactionType transactionType,
                                                                      @Parameter(description = "Filter by date in yyyy-MM-dd format", example = "2023-10-01")
-                                                                         @RequestParam(required = false) String givenDate){
+                                                                     @RequestParam(required = false) String givenDate) {
         return transactionService.getAllTransaction(page, perPage, accountId, rewardId, transactionType, givenDate).thenApply(transactionResponses ->
                 ApiResponse.<List<TransactionResponse>>builder()
                         .entity(transactionResponses)
@@ -56,20 +56,20 @@ public class TransactionController {
     @Operation(summary = "Get All Transaction")
     @GetMapping(path = "/getall/by-current-user")
     public ApiResponse<List<TransactionResponse>> getAllTransactionsForCurrentUser(@RequestParam(defaultValue = "1") int page,
-                                                                     @RequestParam(defaultValue = "10") int perPage,
-                                                                     @RequestParam(required = false) String givenDate,
-                                                                     @RequestParam(required = false, defaultValue = "false") boolean isListAscendingByCreatedDate){
+                                                                                   @RequestParam(defaultValue = "10") int perPage,
+                                                                                   @RequestParam(required = false) String givenDate,
+                                                                                   @RequestParam(required = false, defaultValue = "false") boolean isListAscendingByCreatedDate) {
         return transactionService.getAllTransactionForCurrentUser(page, perPage, givenDate, isListAscendingByCreatedDate)
                 .thenApply(transactionResponses ->
-                    ApiResponse.<List<TransactionResponse>>builder()
-                            .entity(transactionResponses)
-                            .build()
-        ).join();
+                        ApiResponse.<List<TransactionResponse>>builder()
+                                .entity(transactionResponses)
+                                .build()
+                ).join();
     }
 
     @Operation(description = "Get Transaction", summary = "Get Transaction By ID")
     @GetMapping(path = "/get/{transactionId}")
-    public ApiResponse<TransactionResponse> getTransactionById(@PathVariable UUID transactionId){
+    public ApiResponse<TransactionResponse> getTransactionById(@PathVariable UUID transactionId) {
         return transactionService.getTransactionById(transactionId).thenApply(transactionResponse ->
                 ApiResponse.<TransactionResponse>builder()
                         .entity(transactionResponse)
@@ -87,7 +87,7 @@ public class TransactionController {
 
     @Operation(description = "Delete Transaction", summary = "Delete Transaction By ID")
     @DeleteMapping(path = "/delete/{transactionId}")
-    public ApiResponse<TransactionResponse> deleteTransactionById(@PathVariable UUID transactionId){
+    public ApiResponse<TransactionResponse> deleteTransactionById(@PathVariable UUID transactionId) {
         return transactionService.deleteTransaction(transactionId).thenApply(transactionResponse ->
                 ApiResponse.<TransactionResponse>builder()
                         .message(SuccessReturnMessage.DELETE_SUCCESS.getMessage())

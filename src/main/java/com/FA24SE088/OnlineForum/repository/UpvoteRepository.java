@@ -1,4 +1,4 @@
-package com.FA24SE088.OnlineForum.repository.Repository;
+package com.FA24SE088.OnlineForum.repository;
 
 import com.FA24SE088.OnlineForum.entity.*;
 import org.springframework.data.jpa.repository.JpaRepository;

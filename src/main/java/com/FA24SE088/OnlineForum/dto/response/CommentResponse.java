@@ -16,8 +16,8 @@ import java.util.UUID;
 public class CommentResponse {
     UUID commentId;
     String content;
-    @JsonIgnoreProperties(value = { "password", "email", "bio", "coverImage", "gender", "address", "createdDate", "status", "role" })
+    @JsonIgnoreProperties(value = {"password", "email", "bio", "coverImage", "gender", "address", "createdDate", "status", "role"})
     Account account;
-    @JsonIgnoreProperties(value = { "account", "topic", "tag" })
+    @JsonIgnoreProperties(value = {"account", "topic", "tag"})
     Post post;
 }

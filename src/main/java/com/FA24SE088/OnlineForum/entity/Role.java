@@ -8,6 +8,7 @@ import lombok.experimental.FieldDefaults;
 
 import java.util.List;
 import java.util.UUID;
+
 @Getter
 @Setter
 @Entity
@@ -22,7 +23,7 @@ public class Role {
     String name;
 
     @JsonIgnore
-    @JsonIgnoreProperties(value = { "role" }, allowSetters = true)
+    @JsonIgnoreProperties(value = {"role"}, allowSetters = true)
     @OneToMany(mappedBy = "role", cascade = CascadeType.ALL, orphanRemoval = true)
     List<Account> accountList;
 }

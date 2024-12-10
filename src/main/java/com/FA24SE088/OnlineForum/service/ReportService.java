@@ -2,14 +2,13 @@ package com.FA24SE088.OnlineForum.service;
 
 import com.FA24SE088.OnlineForum.dto.request.ReportRequest;
 import com.FA24SE088.OnlineForum.dto.response.DataNotification;
-import com.FA24SE088.OnlineForum.dto.response.PostResponse;
 import com.FA24SE088.OnlineForum.dto.response.ReportResponse;
 import com.FA24SE088.OnlineForum.entity.*;
 import com.FA24SE088.OnlineForum.enums.*;
 import com.FA24SE088.OnlineForum.exception.AppException;
 import com.FA24SE088.OnlineForum.exception.ErrorCode;
 import com.FA24SE088.OnlineForum.mapper.ReportMapper;
-import com.FA24SE088.OnlineForum.repository.UnitOfWork.UnitOfWork;
+import com.FA24SE088.OnlineForum.repository.*;
 import com.FA24SE088.OnlineForum.utils.PaginationUtils;
 import com.FA24SE088.OnlineForum.utils.SocketIOUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -18,7 +17,6 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -30,14 +28,20 @@ import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Slf4j
 @Service
 public class ReportService {
-    UnitOfWork unitOfWork;
+    ReportRepository reportRepository;
+    AccountRepository accountRepository;
+    PostRepository postRepository;
+    CategoryRepository categoryRepository;
+    WalletRepository walletRepository;
+    NotificationRepository notificationRepository;
+    TransactionRepository transactionRepository;
+    PointRepository pointRepository;
     ReportMapper reportMapper;
     PaginationUtils paginationUtils;
     ObjectMapper objectMapper = new ObjectMapper();
@@ -75,7 +79,7 @@ public class ReportService {
                     newReport.setReportTime(new Date());
                     newReport.setStatus(ReportPostStatus.PENDING.name());
 
-                    return CompletableFuture.completedFuture(unitOfWork.getReportRepository().save(newReport));
+                    return CompletableFuture.completedFuture(reportRepository.save(newReport));
                 })
                 .thenApply(reportMapper::toReportResponse);
     }
@@ -86,7 +90,7 @@ public class ReportService {
         var reportFuture = findReportById(reportId);
 
         return reportFuture.thenCompose(report -> {
-                    unitOfWork.getReportRepository().delete(report);
+                    reportRepository.delete(report);
 
                     return CompletableFuture.completedFuture(report);
                 })
@@ -104,7 +108,7 @@ public class ReportService {
                 : CompletableFuture.completedFuture(null);
 
         return postFuture.thenCompose(post -> {
-            var list = unitOfWork.getReportRepository().findAllByOrderByReportTimeDesc().stream()
+            var list = reportRepository.findAllByOrderByReportTimeDesc().stream()
                     .filter(report -> post == null || report.getPost().equals(post))
                     .filter(report -> reportPostStatusList == null || reportPostStatusList.isEmpty() ||
                             (safeValueOf(report.getStatus()) != null
@@ -131,8 +135,8 @@ public class ReportService {
             var account = accountFuture.join();
 
             if (account.getRole().getName().equalsIgnoreCase("ADMIN")) {
-                return unitOfWork.getCategoryRepository().findByAccount(account).thenCompose(categoryList -> {
-                    var list = unitOfWork.getReportRepository().findAllByOrderByReportTimeDesc().stream()
+                return categoryRepository.findByAccount(account).thenCompose(categoryList -> {
+                    var list = reportRepository.findAllByOrderByReportTimeDesc().stream()
                             .filter(report -> reportPostStatusList == null || reportPostStatusList.isEmpty() ||
                                     (safeValueOf(report.getStatus()) != null
                                             && reportPostStatusList.contains(safeValueOf(report.getStatus()))))
@@ -147,8 +151,8 @@ public class ReportService {
                 });
             }
 
-            return unitOfWork.getCategoryRepository().findByAccount(account).thenCompose(categoryList -> {
-                var list = unitOfWork.getReportRepository().findAllByOrderByReportTimeDesc().stream()
+            return categoryRepository.findByAccount(account).thenCompose(categoryList -> {
+                var list = reportRepository.findAllByOrderByReportTimeDesc().stream()
                         .filter(report -> categoryList.contains(report.getPost().getTopic().getCategory()))
                         .filter(report -> reportPostStatusList == null || reportPostStatusList.isEmpty() ||
                                 (safeValueOf(report.getStatus()) != null
@@ -184,8 +188,6 @@ public class ReportService {
 
         return CompletableFuture.allOf(reportFuture, accountFuture, pointFuture).thenCompose(v -> {
                     var report = reportFuture.join();
-
-
                     if (!report.getStatus().equals(ReportPostStatus.PENDING.name())) {
                         throw new AppException(ErrorCode.REPORT_POST_NOT_PENDING);
                     }
@@ -196,10 +198,10 @@ public class ReportService {
 //                                createTransaction(walletPostOwner, point);
 //                                var pointDeduction = walletPostOwner.getBalance() - point.getPointPerPost();
 //                                walletPostOwner.setBalance(pointDeduction);
-//                                unitOfWork.getWalletRepository().save(walletPostOwner);
+//                                walletRepository.save(walletPostOwner);
 //
 //                                report.setStatus(status.name());
-//                                return CompletableFuture.completedFuture(unitOfWork.getReportRepository().save(report));
+//                                return CompletableFuture.completedFuture(reportRepository.save(report));
 //                            } else {
 //                                return CompletableFuture.completedFuture(null);
 //                            }
@@ -208,9 +210,9 @@ public class ReportService {
 
                     report.setStatus(status.name());
 
-                    return CompletableFuture.completedFuture(unitOfWork.getReportRepository().save(report));
+                    return CompletableFuture.completedFuture(reportRepository.save(report));
                 })
-                .thenCompose(report -> unitOfWork.getReportRepository()
+                .thenCompose(report -> reportRepository
                         .countByPostAndStatus(report.getPost(), ReportPostStatus.APPROVED.name())
                         .thenCompose(count -> {
                             var pointList = pointFuture.join();
@@ -220,7 +222,7 @@ public class ReportService {
                             }
                             Point point = pointList.get(0);
                             var postOwner = report.getPost().getAccount();
-                            var walletPostOwnerFuture = unitOfWork.getWalletRepository().findByAccount(postOwner);
+                            var walletPostOwnerFuture = walletRepository.findByAccount(postOwner);
 
                             if (count >= maxReportPost) {
                                 walletPostOwnerFuture.thenCompose(walletPostOwner -> {
@@ -233,8 +235,8 @@ public class ReportService {
                                         realtimeNotificationForReported(report, "Report", "Your post has been violated and deleted");
                                         realtimeNotificationForReporter(report, "Report", "The staff has processing the post you have reported");
                                         realtimeNotificationForStaff(report, account, "This is the 5th Approve and the post was deleted", "Report");
-                                        unitOfWork.getWalletRepository().save(walletPostOwner);
-                                        unitOfWork.getPostRepository().save(post);
+                                        walletRepository.save(walletPostOwner);
+                                        postRepository.save(post);
                                         return CompletableFuture.completedFuture(null);
                                     }
                                     return null;
@@ -260,7 +262,7 @@ public class ReportService {
                     .account(report.getPost().getAccount())
                     .createdDate(LocalDateTime.now())
                     .build();
-            unitOfWork.getNotificationRepository().save(notification);
+            notificationRepository.save(notification);
             socketIOUtil.sendEventToOneClientInAServer(report.getPost().getAccount().getAccountId(), WebsocketEventName.NOTIFICATION.name(), notification);
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
@@ -282,7 +284,7 @@ public class ReportService {
                     .account(report.getAccount())
                     .createdDate(LocalDateTime.now())
                     .build();
-            unitOfWork.getNotificationRepository().save(notification);
+            notificationRepository.save(notification);
             socketIOUtil.sendEventToOneClientInAServer(report.getAccount().getAccountId(), WebsocketEventName.NOTIFICATION.name(), notification);
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
@@ -304,7 +306,7 @@ public class ReportService {
                     .account(account)
                     .createdDate(LocalDateTime.now())
                     .build();
-            unitOfWork.getNotificationRepository().save(notification);
+            notificationRepository.save(notification);
             socketIOUtil.sendEventToOneClientInAServer(account.getAccountId(), WebsocketEventName.NOTIFICATION.name(), notification);
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
@@ -319,7 +321,7 @@ public class ReportService {
             var post = postFuture.join();
             var categoryPost = post.getTopic().getCategory();
 
-            return unitOfWork.getCategoryRepository().findByAccount(account).thenCompose(categoryList -> {
+            return categoryRepository.findByAccount(account).thenCompose(categoryList -> {
                 if (post.getStatus().equals(PostStatus.DRAFT.name())) {
                     throw new AppException(ErrorCode.DRAFT_POST_CANNOT_CHANGE_STATUS);
                 }
@@ -335,7 +337,7 @@ public class ReportService {
                 post.setStatus(PostStatus.HIDDEN.name());
                 post.setLastModifiedDate(new Date());
 
-                return CompletableFuture.completedFuture(unitOfWork.getPostRepository().save(post));
+                return CompletableFuture.completedFuture(postRepository.save(post));
             });
         });
     }
@@ -343,7 +345,7 @@ public class ReportService {
     @Async("AsyncTaskExecutor")
     private CompletableFuture<Post> findPostById(UUID postId) {
         return CompletableFuture.supplyAsync(() ->
-                unitOfWork.getPostRepository().findById(postId)
+                postRepository.findById(postId)
                         .orElseThrow(() -> new AppException(ErrorCode.POST_NOT_FOUND))
         );
     }
@@ -351,14 +353,14 @@ public class ReportService {
     @Async("AsyncTaskExecutor")
     private CompletableFuture<Report> findReportById(UUID reportId) {
         return CompletableFuture.supplyAsync(() ->
-                unitOfWork.getReportRepository().findById(reportId)
+                reportRepository.findById(reportId)
                         .orElseThrow(() -> new AppException(ErrorCode.REPORT_POST_NOT_FOUND))
         );
     }
 
     @Async("AsyncTaskExecutor")
     private CompletableFuture<List<Report>> findReportsByAccountUsername(String username) {
-        return unitOfWork.getReportRepository().findByAccountUsernameContainingOrderByReportTimeDesc(username);
+        return reportRepository.findByAccountUsernameContainingOrderByReportTimeDesc(username);
     }
 
     private ReportPostStatus safeValueOf(String status) {
@@ -380,7 +382,7 @@ public class ReportService {
     @Async("AsyncTaskExecutor")
     private CompletableFuture<Account> findAccountByUsername(String username) {
         return CompletableFuture.supplyAsync(() ->
-                unitOfWork.getAccountRepository().findByUsername(username)
+                accountRepository.findByUsername(username)
                         .orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND))
         );
     }
@@ -398,7 +400,7 @@ public class ReportService {
                     .transactionType(TransactionType.POST_VIOLATION.name())
                     .build();
 
-            unitOfWork.getTransactionRepository().save(newTransaction);
+            transactionRepository.save(newTransaction);
 
             return null;
         });
@@ -407,7 +409,7 @@ public class ReportService {
     @Async("AsyncTaskExecutor")
     private CompletableFuture<List<Point>> getPoint() {
         return CompletableFuture.supplyAsync(() ->
-                unitOfWork.getPointRepository().findAll().stream()
+                pointRepository.findAll().stream()
                         .toList());
     }
 }

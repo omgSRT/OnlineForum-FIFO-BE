@@ -15,8 +15,8 @@ import java.util.UUID;
 public class BlockAccountResponse {
     UUID followId;
     String message;
-    @JsonIgnoreProperties(value = { "password", "email", "coverImage", "createdDate", "status", "role" })
+    @JsonIgnoreProperties(value = {"password", "email", "coverImage", "createdDate", "status", "role"})
     Account blocker;
-    @JsonIgnoreProperties(value = { "password", "email", "coverImage", "createdDate", "status", "role" })
+    @JsonIgnoreProperties(value = {"password", "email", "coverImage", "createdDate", "status", "role"})
     Account blocked;
 }

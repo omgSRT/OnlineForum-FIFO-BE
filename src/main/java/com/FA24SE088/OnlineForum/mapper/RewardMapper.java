@@ -12,14 +12,14 @@ import java.util.List;
 @Mapper(componentModel = "spring")
 public interface RewardMapper {
 
-    @Mapping(target = "linkSourceCode",source = "linkSourceCode")
+    @Mapping(target = "linkSourceCode", source = "linkSourceCode")
     Reward toReward(RewardRequest request);
 
-    @Mapping(target = "rewardId",source = "rewardId")
+    @Mapping(target = "rewardId", source = "rewardId")
     @Mapping(target = "createdDate", source = "createdDate")
     RewardResponse toResponse(Reward reward);
-
     void updateRewardFromRequest (@MappingTarget Reward reward, RewardRequest request);
+
 
 
 }

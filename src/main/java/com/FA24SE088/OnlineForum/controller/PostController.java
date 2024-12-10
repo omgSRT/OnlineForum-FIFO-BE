@@ -38,7 +38,7 @@ import java.util.UUID;
 public class PostController {
     PostService postService;
 
-//            @Operation(summary = "Create New Post")
+    //            @Operation(summary = "Create New Post")
 //    @PostMapping(path = "/create")
 //    public ApiResponse<PostResponse> createPost(@RequestBody @Valid PostCreateRequest request){
 //        return postService.createPost(request).thenApply(postResponse ->
@@ -50,7 +50,7 @@ public class PostController {
 //    }
     @Operation(summary = "Create New Post")
     @PostMapping(path = "/create")
-    public ApiResponse<PostResponse> createPost( @RequestBody @Valid PostCreateRequest request) {
+    public ApiResponse<PostResponse> createPost(@RequestBody @Valid PostCreateRequest request) {
         return postService.createPost(request).thenApply(postResponse ->
                 ApiResponse.<PostResponse>builder()
                         .message(SuccessReturnMessage.CREATE_SUCCESS.getMessage())

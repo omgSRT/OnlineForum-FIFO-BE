@@ -30,7 +30,7 @@ public class SecurityConfiguration {
     private final String[] PUBLIC_ENDPOINTS_POST = {"/authenticate/**", "/email/send",
             "/daily-point/create", "/notification/create", "/notification/change/status", "/account/create", "/transaction/create"};
     private final String[] PUBLIC_ENDPOINTS_GET = {"/swagger-ui/**", "/v3/api-docs/**",
-            "/swagger-resources/**","authenticate/**"
+            "/swagger-resources/**", "authenticate/**"
     };
     private final String[] PUBLIC_ENDPOINTS_PUT = {
             "/authenticate/change-password"
@@ -52,7 +52,7 @@ public class SecurityConfiguration {
                                 .requestMatchers(HttpMethod.POST, PUBLIC_ENDPOINTS_POST).permitAll()
                                 .requestMatchers(HttpMethod.PUT, PUBLIC_ENDPOINTS_PUT).permitAll()
                                 .requestMatchers("/ws/**", "/websocket/**", "websocket/app/**", "/socket.io/**",
-                                        "/payment/**","http://localhost:8080/login","https://fifoforumonline.click/login").permitAll()
+                                        "/payment/**", "http://localhost:8080/login", "https://fifoforumonline.click/login").permitAll()
                                 //.requestMatchers("/**").permitAll()
                                 .anyRequest().authenticated())
                 .formLogin(AbstractHttpConfigurer::disable)

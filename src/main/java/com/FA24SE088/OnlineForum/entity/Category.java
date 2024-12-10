@@ -35,7 +35,7 @@ public class Category {
     Account account;
 
     @JsonIgnore
-    @JsonIgnoreProperties(value = { "category" }, allowSetters = true)
+    @JsonIgnoreProperties(value = {"category"}, allowSetters = true)
     @OneToMany(mappedBy = "category", cascade = CascadeType.ALL, orphanRemoval = true)
     List<Topic> topicList;
 }

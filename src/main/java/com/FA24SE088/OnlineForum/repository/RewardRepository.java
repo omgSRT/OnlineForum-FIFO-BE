@@ -1,4 +1,4 @@
-package com.FA24SE088.OnlineForum.repository.Repository;
+package com.FA24SE088.OnlineForum.repository;
 
 import com.FA24SE088.OnlineForum.entity.Reward;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -9,5 +9,5 @@ import java.util.UUID;
 @Repository
 public interface RewardRepository extends JpaRepository<Reward, UUID> {
 
-    boolean findByName (String name);
+    boolean findByName(String name);
 }

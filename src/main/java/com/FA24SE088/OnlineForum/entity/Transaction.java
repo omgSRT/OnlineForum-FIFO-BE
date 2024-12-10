@@ -1,6 +1,5 @@
 package com.FA24SE088.OnlineForum.entity;
 
-import com.FA24SE088.OnlineForum.enums.TransactionType;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
@@ -30,6 +29,6 @@ public class Transaction {
 
     @ManyToOne
     @JoinColumn(name = "rewardId")
-    @JsonIgnoreProperties(value = { "transactionList"}, allowSetters = true)
+    @JsonIgnoreProperties(value = {"transactionList"}, allowSetters = true)
     Reward reward;
 }

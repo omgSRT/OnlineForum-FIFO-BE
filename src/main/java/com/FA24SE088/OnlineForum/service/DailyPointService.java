@@ -6,7 +6,7 @@ import com.FA24SE088.OnlineForum.entity.*;
 import com.FA24SE088.OnlineForum.exception.AppException;
 import com.FA24SE088.OnlineForum.exception.ErrorCode;
 import com.FA24SE088.OnlineForum.mapper.DailyPointMapper;
-import com.FA24SE088.OnlineForum.repository.UnitOfWork.UnitOfWork;
+import com.FA24SE088.OnlineForum.repository.*;
 import com.FA24SE088.OnlineForum.utils.PaginationUtils;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -29,13 +29,17 @@ import java.util.concurrent.CompletableFuture;
 @Slf4j
 @Service
 public class DailyPointService {
-    UnitOfWork unitOfWork;
+    DailyPointRepository dailyPointRepository;
+    AccountRepository accountRepository;
+    PostRepository postRepository;
+    PointRepository pointRepository;
+    TypeBonusRepository typeBonusRepository;
     DailyPointMapper dailyPointMapper;
     PaginationUtils paginationUtils;
 
     @Async("AsyncTaskExecutor")
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
-    public CompletableFuture<DailyPointResponse> createDailyPoint(DailyPointRequest request){
+    public CompletableFuture<DailyPointResponse> createDailyPoint(DailyPointRequest request) {
         var accountFuture = findAccountById(request.getAccountId());
         var postFuture = findPostById(request.getPostId());
         var typeBonusFuture = request.getTypeBonusId() != null
@@ -53,13 +57,12 @@ public class DailyPointService {
                     var typeBonus = typeBonusFuture.join();
 
                     Point point;
-                    if(typeBonus == null){
-                        if(pointList.isEmpty()){
+                    if (typeBonus == null) {
+                        if (pointList.isEmpty()) {
                             throw new AppException(ErrorCode.POINT_NOT_FOUND);
                         }
                         point = pointList.get(0);
-                    }
-                    else{
+                    } else {
                         point = null;
                     }
 
@@ -69,22 +72,21 @@ public class DailyPointService {
                     newDailyPoint.setPost(post);
                     newDailyPoint.setAccount(account);
                     newDailyPoint.setTypeBonus(typeBonus != null ? (TypeBonus) typeBonus : null);
-                    if(point != null && (totalPoint + point.getPointPerPost() > point.getMaxPoint())){
+                    if (point != null && (totalPoint + point.getPointPerPost() > point.getMaxPoint())) {
                         newDailyPoint.setPointEarned(0);
-                    }
-                    else if(point != null && (totalPoint + point.getPointPerPost() <= point.getMaxPoint())){
+                    } else if (point != null && (totalPoint + point.getPointPerPost() <= point.getMaxPoint())) {
                         newDailyPoint.setPointEarned(point.getPointPerPost());
                     }
 
                     var dailyPointFuture = findDailyPointByAccountAndPost(account, post);
 
                     return dailyPointFuture.thenCompose(dailyPoint -> {
-                        if(dailyPoint != null){
+                        if (dailyPoint != null) {
                             throw new AppException(ErrorCode.DAILY_POINT_ALREADY_EXIST);
                         }
 
                         return CompletableFuture.completedFuture(dailyPointMapper.toDailyPointResponse(
-                                unitOfWork.getDailyPointRepository().save(newDailyPoint)
+                                dailyPointRepository.save(newDailyPoint)
                         ));
                     });
                 });
@@ -102,8 +104,8 @@ public class DailyPointService {
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
     public CompletableFuture<List<DailyPointResponse>> getAllDailyPoints(int page, int perPage, UUID accountId, UUID postId, String givenDate) {
         var accountFuture = accountId != null
-                            ? findAccountById(accountId)
-                            : CompletableFuture.completedFuture(null);
+                ? findAccountById(accountId)
+                : CompletableFuture.completedFuture(null);
         var postFuture = postId != null
                 ? findPostById(postId)
                 : CompletableFuture.completedFuture(null);
@@ -116,14 +118,14 @@ public class DailyPointService {
             Date parseDate;
             try {
                 parseDate = givenDate == null
-                    ? null
-                    : simpleDateFormat.parse(givenDate);
+                        ? null
+                        : simpleDateFormat.parse(givenDate);
             } catch (ParseException e) {
                 throw new RuntimeException(e);
             }
             Date finalParseDate = parseDate;
 
-            var list = unitOfWork.getDailyPointRepository().findAllByOrderByCreatedDateDesc().stream()
+            var list = dailyPointRepository.findAllByOrderByCreatedDateDesc().stream()
                     .filter(dailyPoint -> account == null || dailyPoint.getAccount().equals(account))
                     .filter(dailyPoint -> post == null || dailyPoint.getPost().equals(post))
                     .filter(dailyPoint -> {
@@ -134,7 +136,7 @@ public class DailyPointService {
                         createdDateCal.set(Calendar.SECOND, 0);
                         createdDateCal.set(Calendar.MILLISECOND, 0);
 
-                        if(finalParseDate == null){
+                        if (finalParseDate == null) {
                             return true;
                         }
 
@@ -158,14 +160,14 @@ public class DailyPointService {
 
     @Async("AsyncTaskExecutor")
     @PreAuthorize("hasRole('ADMIN')")
-    public CompletableFuture<DailyPointResponse> deleteDailyPointPoint(UUID dailyPointId){
+    public CompletableFuture<DailyPointResponse> deleteDailyPointPoint(UUID dailyPointId) {
         var dailyPointFuture = findDailyPointById(dailyPointId);
 
         return CompletableFuture.allOf(dailyPointFuture)
                 .thenCompose(all -> {
                     var dailyPoint = dailyPointFuture.join();
 
-                    unitOfWork.getDailyPointRepository().delete(dailyPoint);
+                    dailyPointRepository.delete(dailyPoint);
 
                     return CompletableFuture.completedFuture(dailyPoint);
                 })
@@ -173,7 +175,7 @@ public class DailyPointService {
     }
 
     @Async("AsyncTaskExecutor")
-    private CompletableFuture<Double> countUserTotalPointAtAGivenDate(UUID accountId, Date givenDate){
+    private CompletableFuture<Double> countUserTotalPointAtAGivenDate(UUID accountId, Date givenDate) {
         Calendar parsedDateCal = Calendar.getInstance();
         parsedDateCal.setTime(givenDate);
         parsedDateCal.set(Calendar.HOUR_OF_DAY, 0);
@@ -184,7 +186,7 @@ public class DailyPointService {
 
         var accountFuture = findAccountById(accountId);
         return accountFuture.thenCompose(account ->
-                unitOfWork.getDailyPointRepository().findByAccount(account) // Adjust repository method as needed
+                dailyPointRepository.findByAccount(account)
                         .thenCompose(dailyPoints -> {
                             double totalCount = dailyPoints.stream()
                                     .filter(dailyPoint -> {
@@ -204,42 +206,48 @@ public class DailyPointService {
                         })
         );
     }
+
     @Async("AsyncTaskExecutor")
     private CompletableFuture<Account> findAccountById(UUID accountId) {
         return CompletableFuture.supplyAsync(() ->
-                unitOfWork.getAccountRepository().findById(accountId)
+                accountRepository.findById(accountId)
                         .orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND))
         );
     }
+
     @Async("AsyncTaskExecutor")
     private CompletableFuture<Post> findPostById(UUID postId) {
         return CompletableFuture.supplyAsync(() ->
-                unitOfWork.getPostRepository().findById(postId)
+                postRepository.findById(postId)
                         .orElseThrow(() -> new AppException(ErrorCode.POST_NOT_FOUND))
         );
     }
+
     @Async("AsyncTaskExecutor")
     private CompletableFuture<DailyPoint> findDailyPointById(UUID dailyPointId) {
         return CompletableFuture.supplyAsync(() ->
-                unitOfWork.getDailyPointRepository().findById(dailyPointId)
+                dailyPointRepository.findById(dailyPointId)
                         .orElseThrow(() -> new AppException(ErrorCode.DAILY_POINT_NOT_FOUND))
         );
     }
+
     @Async("AsyncTaskExecutor")
     private CompletableFuture<List<Point>> getPoint() {
         return CompletableFuture.supplyAsync(() ->
-                unitOfWork.getPointRepository().findAll().stream()
+                pointRepository.findAll().stream()
                         .toList());
     }
+
     @Async("AsyncTaskExecutor")
-    private CompletableFuture<DailyPoint> findDailyPointByAccountAndPost(Account account, Post post){
-        return unitOfWork.getDailyPointRepository().findByAccountAndPost(account, post);
+    private CompletableFuture<DailyPoint> findDailyPointByAccountAndPost(Account account, Post post) {
+        return dailyPointRepository.findByAccountAndPost(account, post);
     }
+
     @Async("AsyncTaskExecutor")
-    private CompletableFuture<TypeBonus> findTypeBonusById(UUID typeBonusId){
+    private CompletableFuture<TypeBonus> findTypeBonusById(UUID typeBonusId) {
         return CompletableFuture.supplyAsync(() ->
-            unitOfWork.getTypeBonusRepository().findById(typeBonusId)
-                    .orElseThrow(() -> new AppException(ErrorCode.TYPE_BONUS_NOT_FOUND))
+                typeBonusRepository.findById(typeBonusId)
+                        .orElseThrow(() -> new AppException(ErrorCode.TYPE_BONUS_NOT_FOUND))
         );
     }
 }

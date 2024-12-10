@@ -6,10 +6,10 @@ import com.FA24SE088.OnlineForum.entity.*;
 import com.FA24SE088.OnlineForum.enums.SuccessReturnMessage;
 import com.FA24SE088.OnlineForum.exception.AppException;
 import com.FA24SE088.OnlineForum.exception.ErrorCode;
-import com.FA24SE088.OnlineForum.mapper.BookMarkMapper;
 import com.FA24SE088.OnlineForum.mapper.PostMapper;
-import com.FA24SE088.OnlineForum.repository.UnitOfWork.UnitOfWork;
-import com.FA24SE088.OnlineForum.utils.PaginationUtils;
+import com.FA24SE088.OnlineForum.repository.AccountRepository;
+import com.FA24SE088.OnlineForum.repository.BookMarkRepository;
+import com.FA24SE088.OnlineForum.repository.PostRepository;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -26,25 +26,25 @@ import java.util.UUID;
 @Slf4j
 @Service
 public class BookMarkService {
-    UnitOfWork unitOfWork;
-    PaginationUtils paginationUtils;
-    BookMarkMapper bookMarkMapper;
+    AccountRepository accountRepository;
+    BookMarkRepository bookMarkRepository;
+    PostRepository postRepository;
     PostMapper postMapper;
 
     private Account getCurrentUser() {
         var context = SecurityContextHolder.getContext();
-        return unitOfWork.getAccountRepository().findByUsername(context.getAuthentication().getName())
+        return accountRepository.findByUsername(context.getAuthentication().getName())
                 .orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND));
     }
 
     public BookMarkResponse addOrRemove(UUID postId) {
         Account currentUser = getCurrentUser();
-        Optional<BookMark> existingBookmark = unitOfWork.getBookMarkRepository()
+        Optional<BookMark> existingBookmark = bookMarkRepository
                 .findByAccountAndPost_PostId(currentUser, postId);
-        Post post = unitOfWork.getPostRepository().findById(postId).orElseThrow(() -> new AppException(ErrorCode.POST_NOT_FOUND));
+        Post post = postRepository.findById(postId).orElseThrow(() -> new AppException(ErrorCode.POST_NOT_FOUND));
         BookMarkResponse response = new BookMarkResponse();
         if (existingBookmark.isPresent()) {
-            unitOfWork.getBookMarkRepository().delete(existingBookmark.get());
+            bookMarkRepository.delete(existingBookmark.get());
             response.setMessage(SuccessReturnMessage.DELETE_SUCCESS.getMessage());
             response.setAccount(currentUser);
             response.setPost(post);
@@ -53,7 +53,7 @@ public class BookMarkService {
             BookMark bookMark = new BookMark();
             bookMark.setAccount(currentUser);
             bookMark.setPost(post);
-            unitOfWork.getBookMarkRepository().save(bookMark);
+            bookMarkRepository.save(bookMark);
             response.setMessage(SuccessReturnMessage.CREATE_SUCCESS.getMessage());
             response.setAccount(currentUser);
             response.setPost(post);
@@ -65,7 +65,7 @@ public class BookMarkService {
 
     public List<PostResponse> listBookmarks() {
         Account currentUser = getCurrentUser();
-        List<BookMark> bookmarks = unitOfWork.getBookMarkRepository().findByAccount(currentUser);
+        List<BookMark> bookmarks = bookMarkRepository.findByAccount(currentUser);
         return bookmarks.stream()
                 .map(bookMark -> {
                     Post post = bookMark.getPost();

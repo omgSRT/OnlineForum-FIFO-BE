@@ -10,11 +10,14 @@ import com.FA24SE088.OnlineForum.exception.AppException;
 import com.FA24SE088.OnlineForum.exception.ErrorCode;
 import com.FA24SE088.OnlineForum.mapper.AccountMapper;
 import com.FA24SE088.OnlineForum.mapper.FollowMapper;
-import com.FA24SE088.OnlineForum.repository.UnitOfWork.UnitOfWork;
+import com.FA24SE088.OnlineForum.repository.NotificationRepository;
 import com.FA24SE088.OnlineForum.utils.PaginationUtils;
 import com.FA24SE088.OnlineForum.utils.SocketIOUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.FA24SE088.OnlineForum.repository.AccountRepository;
+import com.FA24SE088.OnlineForum.repository.BlockedAccountRepository;
+import com.FA24SE088.OnlineForum.repository.FollowRepository;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -26,7 +29,6 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.logging.SocketHandler;
 
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
@@ -34,21 +36,24 @@ import java.util.logging.SocketHandler;
 @Service
 public class FollowService {
     AccountMapper accountMapper;
-    UnitOfWork unitOfWork;
     PaginationUtils paginationUtils;
     ObjectMapper objectMapper = new ObjectMapper();
     SocketIOUtil socketIOUtil;
+    AccountRepository accountRepository;
+    FollowRepository followRepository;
+    NotificationRepository notificationRepository;
+    BlockedAccountRepository blockedAccountRepository;
 
     FollowMapper followMapper;
 
     private Account getCurrentUser() {
         var context = SecurityContextHolder.getContext();
-        return unitOfWork.getAccountRepository().findByUsername(context.getAuthentication().getName()).orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND));
+        return accountRepository.findByUsername(context.getAuthentication().getName()).orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND));
     }
 
     public FollowResponse create(UUID id) {
         Account account = getCurrentUser();
-        Account account1 = unitOfWork.getAccountRepository().findById(id)
+        Account account1 = accountRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND));
         if (account.getAccountId().equals(account1.getAccountId())) {
             throw new AppException(ErrorCode.CANNOT_FOLLOW_SELF);
@@ -56,45 +61,43 @@ public class FollowService {
         boolean alreadyFollow = account.getFollowerList().stream()
                 .anyMatch(follow -> follow.getFollowee().getAccountId().equals(account1.getAccountId()));
 
-        if(alreadyFollow){
+        if (alreadyFollow) {
             throw new AppException(ErrorCode.ACCOUNT_HAS_BEEN_FOLLOWED);
-        }
-        else {
+        } else {
             Follow follow = Follow.builder()
                     .follower(account)
                     .followee(account1)
                     .status(FollowStatus.FOLLOWING.name())
                     .build();
-            return followMapper.toRespone(unitOfWork.getFollowRepository().save(follow));
+            return followMapper.toRespone(followRepository.save(follow));
         }
     }
 
-
-    public void unfollow(UnfollowRequest request){
+    public void unfollow(UnfollowRequest request) {
         Account account = getCurrentUser();
-        Account follower = unitOfWork.getAccountRepository().findById(request.getAccountID())
+        Account follower = accountRepository.findById(request.getAccountID())
                 .orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND));
         if (account.getAccountId().equals(follower.getAccountId())) {
             throw new AppException(ErrorCode.CANNOT_UNFOLLOW_SELF);
         }
 
-        Follow follow = unitOfWork.getFollowRepository().findByFollowerAndFollowee(account, follower)
+        Follow follow = followRepository.findByFollowerAndFollowee(account, follower)
                 .orElseThrow(() -> new AppException(ErrorCode.FOLLOW_NOT_FOUND));
 
-        unitOfWork.getFollowRepository().delete(follow);
+        followRepository.delete(follow);
     }
 
     public void blockUser(UUID accountIdToBlock) {
         Account currentUser = getCurrentUser();
-        Account accountToBlock = unitOfWork.getAccountRepository().findById(accountIdToBlock)
+        Account accountToBlock = accountRepository.findById(accountIdToBlock)
                 .orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND));
         if (currentUser.getAccountId().equals(accountToBlock.getAccountId())) {
             throw new AppException(ErrorCode.CANNOT_BLOCK_SELF);
         }
         // Kiểm tra nếu currentUser đã follow accountToBlock
-        Optional<Follow> followOptional = unitOfWork.getFollowRepository().findByFollowerAndFollowee(currentUser, accountToBlock);
+        Optional<Follow> followOptional = followRepository.findByFollowerAndFollowee(currentUser, accountToBlock);
 
-        followOptional.ifPresent(follow -> unitOfWork.getFollowRepository().delete(follow));
+        followOptional.ifPresent(followRepository::delete);
 
         boolean alreadyBlocked = currentUser.getBlockedAccounts().stream()
                 .anyMatch(blocked -> blocked.getBlocked().getAccountId().equals(accountToBlock.getAccountId()));
@@ -105,41 +108,41 @@ public class FollowService {
             blockedAccount.setBlocked(accountToBlock);
             blockedAccount.setBlockedDate(new Date());
 
-            unitOfWork.getBlockedAccountRepository().save(blockedAccount);
-        }
-        else{
+            blockedAccountRepository.save(blockedAccount);
+        } else {
             throw new AppException(ErrorCode.ACCOUNT_ALREADY_BLOCKED);
         }
     }
 
     public void unblock(UUID accountIdToUnblock) {
         Account currentUser = getCurrentUser();
-        Account accountToUnblock = unitOfWork.getAccountRepository().findById(accountIdToUnblock)
+        Account accountToUnblock = accountRepository.findById(accountIdToUnblock)
                 .orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND));
         if (currentUser.getAccountId().equals(accountToUnblock.getAccountId())) {
             throw new AppException(ErrorCode.CANNOT_UNBLOCK_SELF);
         }
-        BlockedAccount blockedAccount = unitOfWork.getBlockedAccountRepository()
+        BlockedAccount blockedAccount = blockedAccountRepository
                 .findByBlockerAndBlocked(currentUser, accountToUnblock)
                 .orElseThrow(() -> new AppException(ErrorCode.BLOCK_NOT_FOUND));
 
-        unitOfWork.getBlockedAccountRepository().delete(blockedAccount);
+        blockedAccountRepository.delete(blockedAccount);
     }
 
-//xem danh sách người mình follow
+    //xem danh sách người mình follow
     public List<FollowResponse> getFollows() {
         Account currentUser = getCurrentUser();
 
-        List<Follow> followedAccounts = unitOfWork.getFollowRepository().findByFollower(currentUser);
+        List<Follow> followedAccounts = followRepository.findByFollower(currentUser);
 
         return followedAccounts.stream()
                 .map(followMapper::toRespone)
                 .toList();
     }
-//xem danh sách người follow mình
+
+    //xem danh sách người follow mình
     public List<FollowResponse> getFollowers() {
         Account currentUser = getCurrentUser();
-        List<Follow> followers = unitOfWork.getFollowRepository().findByFollowee(currentUser);
+        List<Follow> followers = followRepository.findByFollowee(currentUser);
 
         return followers.stream()
                 .map(followMapper::toRespone)
@@ -149,19 +152,19 @@ public class FollowService {
     public Follow2Response followOrUnfollow(UUID followeeId) {
         Account account = getCurrentUser();
 
-        Account followee = unitOfWork.getAccountRepository().findById(followeeId)
+        Account followee = accountRepository.findById(followeeId)
                 .orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND));
 
         if (account.getAccountId().equals(followee.getAccountId())) {
             throw new AppException(ErrorCode.CANNOT_FOLLOW_SELF);
         }
 
-        boolean exist = unitOfWork.getFollowRepository().existsByFollowerAndAndFollowee(account, followee);
+        boolean exist = followRepository.existsByFollowerAndAndFollowee(account, followee);
 
         Follow2Response response = new Follow2Response();
         if (exist) {
-            Follow existingFollow = unitOfWork.getFollowRepository().findByFollowerAndFollowee(account, followee).orElseThrow(() -> new AppException(ErrorCode.FOLLOW_NOT_FOUND));
-            unitOfWork.getFollowRepository().delete(existingFollow);
+            Follow existingFollow = followRepository.findByFollowerAndFollowee(account, followee).orElseThrow(() -> new AppException(ErrorCode.FOLLOW_NOT_FOUND));
+            followRepository.delete(existingFollow);
             response.setMessage(SuccessReturnMessage.DELETE_SUCCESS.getMessage());
             response.setFollowee(followee);
             response.setFollower(account);
@@ -171,17 +174,20 @@ public class FollowService {
                     .followee(followee)
                     .status(FollowStatus.FOLLOWING.name())
                     .build();
-            unitOfWork.getFollowRepository().save(follow);
+            followRepository.save(follow);
             response = followMapper.toResponse2(follow);
+
+            followRepository.save(follow);
+
             response.setMessage(SuccessReturnMessage.CREATE_SUCCESS.getMessage());
             response.setFollowee(followee);
             response.setFollower(account);
-            realtime_follow(follow,"Follow","Follow notification");
+            realtime_follow(follow, "Follow", "Follow notification");
         }
         return response;
     }
 
-    public void realtime_follow(Follow follow, String entity, String titleNotification){
+    public void realtime_follow(Follow follow, String entity, String titleNotification) {
         DataNotification dataNotification = DataNotification.builder()
                 .id(follow.getFollowId())
                 .entity(entity)
@@ -196,7 +202,7 @@ public class FollowService {
                     .account(follow.getFollowee())
                     .createdDate(LocalDateTime.now())
                     .build();
-            unitOfWork.getNotificationRepository().save(notification);
+            notificationRepository.save(notification);
             socketIOUtil.sendEventToOneClientInAServer(follow.getFollowee().getAccountId(), WebsocketEventName.NOTIFICATION.name(), notification);
 
         } catch (JsonProcessingException e) {
@@ -205,11 +211,10 @@ public class FollowService {
     }
 
 
-
     public List<AccountResponse> listBlock() {
         Account currentUser = getCurrentUser();
 
-        List<BlockedAccount> blockedAccounts = unitOfWork.getBlockedAccountRepository()
+        List<BlockedAccount> blockedAccounts = blockedAccountRepository
                 .findByBlocker(currentUser);
 
         return blockedAccounts.stream()
@@ -220,7 +225,7 @@ public class FollowService {
 
     public List<AccountFollowResponse> getTop10MostFollowedAccounts() {
         Pageable pageable = PageRequest.of(0, 10);
-        List<Object[]> results = unitOfWork.getFollowRepository().findTop10MostFollowedAccounts(pageable);
+        List<Object[]> results = followRepository.findTop10MostFollowedAccounts(pageable);
         List<AccountFollowResponse> top10Accounts = new ArrayList<>();
 
         for (Object[] result : results) {

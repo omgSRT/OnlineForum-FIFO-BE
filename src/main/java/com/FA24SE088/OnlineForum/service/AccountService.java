@@ -1,6 +1,5 @@
 package com.FA24SE088.OnlineForum.service;
 
-
 import com.FA24SE088.OnlineForum.dto.request.AccountUpdateCategoryRequest;
 import com.FA24SE088.OnlineForum.dto.request.AccountUpdateInfoRequest;
 import com.FA24SE088.OnlineForum.dto.request.AccountUpdateRequest;
@@ -15,7 +14,7 @@ import com.FA24SE088.OnlineForum.exception.AppException;
 import com.FA24SE088.OnlineForum.exception.ErrorCode;
 import com.FA24SE088.OnlineForum.mapper.AccountMapper;
 
-import com.FA24SE088.OnlineForum.repository.UnitOfWork.UnitOfWork;
+import com.FA24SE088.OnlineForum.repository.*;
 import com.FA24SE088.OnlineForum.utils.PaginationUtils;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -42,17 +41,22 @@ import org.springframework.security.access.prepost.PreAuthorize;
 @Slf4j
 @Service
 public class AccountService {
-    UnitOfWork unitOfWork;
+    AccountRepository accountRepository;
+    RoleRepository roleRepository;
+    CategoryRepository categoryRepository;
+    WalletRepository walletRepository;
+    FollowRepository followRepository;
+    BlockedAccountRepository blockedAccountRepository;
     AccountMapper accountMapper;
     PasswordEncoder passwordEncoder;
     PaginationUtils paginationUtils;
 
     public AccountResponse create(AccountRequest request) {
-        if (unitOfWork.getAccountRepository().existsByUsername(request.getUsername()))
+        if (accountRepository.existsByUsername(request.getUsername()))
             throw new AppException(ErrorCode.ACCOUNT_IS_EXISTED);
-        if (unitOfWork.getAccountRepository().existsByEmail(request.getEmail()))
+        if (accountRepository.existsByEmail(request.getEmail()))
             throw new AppException(ErrorCode.EMAIL_IS_EXISTED);
-        if(!request.getPassword().equals(request.getConfirmPassword())){
+        if (!request.getPassword().equals(request.getConfirmPassword())) {
             throw new AppException(ErrorCode.PASSWORD_NOT_MATCH);
         }
         Account account = accountMapper.toAccount(request);
@@ -60,13 +64,13 @@ public class AccountService {
         account.setPassword(passwordEncoder.encode(request.getPassword()));
 
         if (!request.getRole().name().isEmpty() && request.getRole().name().equalsIgnoreCase("STAFF")) {
-            Role role = unitOfWork.getRoleRepository().findByName(request.getRole().name());
+            Role role = roleRepository.findByName(request.getRole().name());
             if (role == null) throw new AppException(ErrorCode.ROLE_NOT_FOUND);
             account.setRole(role);
             if (request.getCategoryList_ForStaff() != null && !request.getCategoryList_ForStaff().isEmpty()) {
                 List<Category> categories = new ArrayList<>();
                 request.getCategoryList_ForStaff().forEach(categoryName -> {
-                    Category categoryEntity = unitOfWork.getCategoryRepository()
+                    Category categoryEntity = categoryRepository
                             .findByName(categoryName)
                             .orElseThrow(() -> new AppException(ErrorCode.CATEGORY_NOT_FOUND));
 
@@ -82,9 +86,8 @@ public class AccountService {
                 });
                 account.setCategoryList(categories);
             }
-        }
-        else {
-            Role role = unitOfWork.getRoleRepository().findByName("USER");
+        } else {
+            Role role = roleRepository.findByName("USER");
             if (role == null) throw new AppException(ErrorCode.ROLE_NOT_FOUND);
             account.setRole(role);
             account.setCategoryList(null);
@@ -97,10 +100,9 @@ public class AccountService {
 
         account.setCreatedDate(LocalDateTime.now());
         account.setStatus(AccountStatus.PENDING_APPROVAL.name());
-//        String handle = String.format("@%s", request.getUsername());
         String handle = String.format(request.getUsername());
         account.setHandle(handle);
-        unitOfWork.getAccountRepository().save(account);
+        accountRepository.save(account);
         AccountResponse response = accountMapper.toResponse(account);
         response.setAccountId(account.getAccountId());
         return response;
@@ -111,9 +113,9 @@ public class AccountService {
         String avatar = oAuth2User.getAttribute("picture");
         String username = email.split("@")[0];
 
-        if (unitOfWork.getAccountRepository().existsByEmail(email)) {
-            Account existingAccount = unitOfWork.getAccountRepository().findByEmail(email);
-            if(existingAccount != null) throw new AppException(ErrorCode.EMAIL_IS_EXISTED);
+        if (accountRepository.existsByEmail(email)) {
+            Account existingAccount = accountRepository.findByEmail(email);
+            if (existingAccount != null) throw new AppException(ErrorCode.EMAIL_IS_EXISTED);
         }
 
         Account newAccount = new Account();
@@ -124,7 +126,7 @@ public class AccountService {
         newAccount.setHandle(String.format("@%s", username));
         newAccount.setCreatedDate(LocalDateTime.now());
 
-        Role role = unitOfWork.getRoleRepository().findByName("USER");
+        Role role = roleRepository.findByName("USER");
         if (role == null) throw new AppException(ErrorCode.ROLE_NOT_FOUND);
         newAccount.setRole(role);
 
@@ -133,8 +135,8 @@ public class AccountService {
         wallet.setAccount(newAccount);
         newAccount.setWallet(wallet);
 
-        unitOfWork.getAccountRepository().save(newAccount);
-        unitOfWork.getWalletRepository().save(wallet);
+        accountRepository.save(newAccount);
+        walletRepository.save(wallet);
 
         return accountMapper.toResponse(newAccount);
     }
@@ -146,7 +148,7 @@ public class AccountService {
             List<Category> currentCategoryList = account.getCategoryList();
             List<Category> newCategoryList = new ArrayList<>();
             request.getCategoryList().forEach(cateName -> {
-                Category category = unitOfWork.getCategoryRepository().findByName(cateName)
+                Category category = categoryRepository.findByName(cateName)
                         .orElseThrow(() -> new AppException(ErrorCode.CATEGORY_NOT_FOUND));
 
                 if (category.getAccount() == null || category.getAccount().getAccountId().equals(account.getAccountId())) {
@@ -161,7 +163,7 @@ public class AccountService {
             for (Category oldCategory : currentCategoryList) {
                 if (!newCategoryList.contains(oldCategory)) {
                     oldCategory.setAccount(null);
-                    unitOfWork.getCategoryRepository().save(oldCategory);
+                    categoryRepository.save(oldCategory);
                 }
             }
             // Xóa các category cũ trong danh sách hiện tại
@@ -170,7 +172,7 @@ public class AccountService {
             // Thêm tất cả category mới vào danh sách hiện tại
             currentCategoryList.addAll(newCategoryList);
 
-            unitOfWork.getAccountRepository().save(account);
+            accountRepository.save(account);
         }
 
         return accountMapper.toResponse(account);
@@ -178,13 +180,13 @@ public class AccountService {
 
     public AccountResponse updateInfo(AccountUpdateInfoRequest request) {
         Account account = getCurrentUser();
-            if(request.getOldPassword() !=null && !request.getOldPassword().isEmpty()){
-                if (!passwordEncoder.matches(request.getOldPassword(), account.getPassword())) {
-                    throw new AppException(ErrorCode.PASSWORD_NOT_MATCH);
-                }
-
+        if (request.getOldPassword() != null && !request.getOldPassword().isEmpty()) {
+            if (!passwordEncoder.matches(request.getOldPassword(), account.getPassword())) {
+                throw new AppException(ErrorCode.PASSWORD_NOT_MATCH);
             }
-        if(request.getNewPass() != null && !request.getNewPass().isEmpty()){
+
+        }
+        if (request.getNewPass() != null && !request.getNewPass().isEmpty()) {
             // Mã hóa mật khẩu mới (encoder là mã hoá 1 chiều)
             account.setPassword(passwordEncoder.encode(request.getNewPass()));
         }
@@ -201,20 +203,20 @@ public class AccountService {
             String handle = String.format("@%s", request.getHandle());
             account.setHandle(handle);
         }
-        unitOfWork.getAccountRepository().save(account);
+        accountRepository.save(account);
         return accountMapper.toResponse(account);
     }
 
-    private Account getCurrentUser(){
+    private Account getCurrentUser() {
         var context = SecurityContextHolder.getContext();
-        return unitOfWork.getAccountRepository().findByUsername(context.getAuthentication().getName()).orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND));
+        return accountRepository.findByUsername(context.getAuthentication().getName()).orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND));
     }
 
     public List<AccountResponse> getAll(int page, int perPage) {
-        var list = unitOfWork.getAccountRepository().findAll().stream()
+        var list = accountRepository.findAll().stream()
                 .map(account -> {
-                    long followerCount = unitOfWork.getFollowRepository().countByFollowee(account);
-                    long followeeCount = unitOfWork.getFollowRepository().countByFollower(account);
+                    long followerCount = followRepository.countByFollowee(account);
+                    long followeeCount = followRepository.countByFollower(account);
 
                     AccountResponse response = accountMapper.toResponse(account);
                     response.setCountFollowee(followeeCount);
@@ -227,10 +229,10 @@ public class AccountService {
     }
 
     public List<AccountResponse> filter(int page, int perPage, String username, String email, AccountStatus status, RoleAccount role) {
-        List<AccountResponse> result = unitOfWork.getAccountRepository().findAll().stream()
+        List<AccountResponse> result = accountRepository.findAll().stream()
                 .map(account -> {
-                    long followerCount = unitOfWork.getFollowRepository().countByFollowee(account);
-                    long followeeCount = unitOfWork.getFollowRepository().countByFollower(account);
+                    long followerCount = followRepository.countByFollowee(account);
+                    long followeeCount = followRepository.countByFollower(account);
 
                     AccountResponse response = accountMapper.toResponse(account);
                     response.setCountFollowee(followeeCount);
@@ -247,23 +249,23 @@ public class AccountService {
     }
 
     private Account findAccount(UUID id) {
-        return unitOfWork.getAccountRepository().findById(id).orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND));
+        return accountRepository.findById(id).orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND));
     }
 
     public AccountResponse update(UUID id, AccountUpdateRequest request) {
         Account account = findAccount(id);
         if (account != null) {
             accountMapper.updateAccount(account, request);
-            unitOfWork.getAccountRepository().save(account);
+            accountRepository.save(account);
         }
         return accountMapper.toResponse(account);
     }
 
-    public AccountResponse findById(UUID id){
-        Account account = unitOfWork.getAccountRepository().findById(id).orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND));
+    public AccountResponse findById(UUID id) {
+        Account account = accountRepository.findById(id).orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND));
 
-        long followerCount = unitOfWork.getFollowRepository().countByFollowee(account);
-        long followeeCount = unitOfWork.getFollowRepository().countByFollower(account);
+        long followerCount = followRepository.countByFollowee(account);
+        long followeeCount = followRepository.countByFollower(account);
 
         AccountResponse response = accountMapper.toResponse(account);
         response.setCountFollowee(followeeCount);
@@ -275,28 +277,24 @@ public class AccountService {
     public CompletableFuture<Account> delete(UUID uuid) {
         return CompletableFuture.supplyAsync(() -> {
             Account foundAccount = findAccount(uuid);
-            unitOfWork.getAccountRepository().delete(foundAccount);
+            accountRepository.delete(foundAccount);
 
             return foundAccount;
         });
     }
 
-    public void activeAccount(Account account) {
-        account.setStatus(AccountStatus.ACTIVE.name());
-    }
-
-    public AccountResponse verifyAccount(String email){
-        Account account = unitOfWork.getAccountRepository().findByEmail(email);
-        if (account != null){
+    public AccountResponse verifyAccount(String email) {
+        Account account = accountRepository.findByEmail(email);
+        if (account != null) {
             account.setStatus(AccountStatus.ACTIVE.name());
-            unitOfWork.getAccountRepository().save(account);
+            accountRepository.save(account);
         }
         return accountMapper.toResponse(account);
     }
 
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
     public Account findByUsername(String username) {
-        return unitOfWork.getAccountRepository().findByUsername(username)
+        return accountRepository.findByUsername(username)
                 .orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND));
     }
 
@@ -304,17 +302,17 @@ public class AccountService {
     @Async("AsyncTaskExecutor")
     public CompletableFuture<List<Account>> findByUsernameContainingAsync(String username) {
         return CompletableFuture.supplyAsync(() ->
-                unitOfWork.getAccountRepository().findByUsernameContaining(username)
+                accountRepository.findByUsernameContaining(username)
         );
     }
 
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
     @Async("AsyncTaskExecutor")
-    public CompletableFuture<List<RecommendAccountResponse>> getRecommendedAccounts(int page, int perPage){
+    public CompletableFuture<List<RecommendAccountResponse>> getRecommendedAccounts(int page, int perPage) {
         Calendar calendar = Calendar.getInstance();
         calendar.add(Calendar.HOUR, -48);
         Date last48hours = calendar.getTime();
-        var recommendedAccountsFuture = unitOfWork.getAccountRepository().findRecommendedAccounts(last48hours);
+        var recommendedAccountsFuture = accountRepository.findRecommendedAccounts(last48hours);
 
         var currentFolloweesFuture = getFolloweeList();
         var username = getUsernameFromJwt();
@@ -346,10 +344,11 @@ public class AccountService {
     @Async("AsyncTaskExecutor")
     private CompletableFuture<Account> findAccountByUsername(String username) {
         return CompletableFuture.supplyAsync(() ->
-                unitOfWork.getAccountRepository().findByUsername(username)
+                accountRepository.findByUsername(username)
                         .orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND))
         );
     }
+
     private String getUsernameFromJwt() {
         var authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null && authentication.getPrincipal() instanceof Jwt jwt) {
@@ -357,36 +356,39 @@ public class AccountService {
         }
         return null;
     }
+
     @Async("AsyncTaskExecutor")
     private CompletableFuture<List<Account>> getFolloweeList() {
         var username = getUsernameFromJwt();
         var accountFuture = findAccountByUsername(username);
         return accountFuture.thenCompose(account -> {
-            var followeeList = unitOfWork.getFollowRepository().findByFollower(account).stream()
+            var followeeList = followRepository.findByFollower(account).stream()
                     .map(Follow::getFollowee)
                     .toList();
 
             return CompletableFuture.completedFuture(followeeList);
         });
     }
+
     @Async("AsyncTaskExecutor")
     private CompletableFuture<List<Account>> getBlockedAccountListByUsername(String username) {
         var accountFuture = findAccountByUsername(username);
 
         return accountFuture.thenApply(account -> {
-            var blockedAccountEntityList = unitOfWork.getBlockedAccountRepository().findByBlocker(account);
+            var blockedAccountEntityList = blockedAccountRepository.findByBlocker(account);
 
             return blockedAccountEntityList.stream()
                     .map(BlockedAccount::getBlocked)
                     .toList();
         });
     }
+
     @Async("AsyncTaskExecutor")
     private CompletableFuture<List<Account>> getBlockerAccountListByUsername(String username) {
         var accountFuture = findAccountByUsername(username);
 
         return accountFuture.thenApply(account -> {
-            var blockedAccountEntityList = unitOfWork.getBlockedAccountRepository().findByBlocked(account);
+            var blockedAccountEntityList = blockedAccountRepository.findByBlocked(account);
 
             return blockedAccountEntityList.stream()
                     .map(BlockedAccount::getBlocker)

@@ -53,6 +53,7 @@ public class VNPayUtil {
 
         return hashData.toString();
     }
+
     public static String getIpAddress(HttpServletRequest request) {
         String ipAdress;
         try {
@@ -65,6 +66,7 @@ public class VNPayUtil {
         }
         return ipAdress;
     }
+
     public static String getRandomNumber(int len) {
         Random rnd = new Random();
         String chars = "0123456789";
@@ -74,6 +76,7 @@ public class VNPayUtil {
         }
         return sb.toString();
     }
+
     public static String getPaymentURL(Map<String, String> paramsMap, boolean encodeKey) {
         return paramsMap.entrySet().stream()
                 .filter(entry -> entry.getValue() != null && !entry.getValue().isEmpty())
@@ -83,7 +86,7 @@ public class VNPayUtil {
                                 StandardCharsets.US_ASCII)
                                 : entry.getKey()) + "=" +
                                 URLEncoder.encode(entry.getValue()
-                                , StandardCharsets.US_ASCII))
+                                        , StandardCharsets.US_ASCII))
                 .collect(Collectors.joining("&"));
     }
 }

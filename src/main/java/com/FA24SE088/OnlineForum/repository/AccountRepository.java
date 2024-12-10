@@ -1,4 +1,4 @@
-package com.FA24SE088.OnlineForum.repository.Repository;
+package com.FA24SE088.OnlineForum.repository;
 
 import com.FA24SE088.OnlineForum.dto.response.RecommendAccountResponse;
 import com.FA24SE088.OnlineForum.entity.Account;
@@ -8,7 +8,6 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Repository;
 
-import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
@@ -17,11 +16,16 @@ import java.util.concurrent.CompletableFuture;
 
 @Repository
 public interface AccountRepository extends JpaRepository<Account, UUID> {
-    Optional<Account> findByUsername (String username);
+    Optional<Account> findByUsername(String username);
+
     Account findByEmail(String email);
+
     boolean existsByUsername(String username);
+
     boolean existsByEmail(String email);
+
     Account findByEmailOrUsername(String email, String username);
+
     List<Account> findByUsernameContaining(String username);
 
     @Async("AsyncTaskExecutor")
@@ -37,21 +41,21 @@ public interface AccountRepository extends JpaRepository<Account, UUID> {
 //    List<Account> findAllByStatusAndBannedUntilBefore(AccountStatus status, LocalDateTime dateTime);
 
     @Query("""
-        SELECT new com.FA24SE088.OnlineForum.dto.response.RecommendAccountResponse(
-               a,
-               SUM(
-                   CASE
-                       WHEN p.status IN ('PUBLIC', 'PRIVATE') AND p.createdDate >= :last48hours
-                       THEN SIZE(p.upvoteList) + SIZE(p.commentList) + SIZE(p.postViewList)
-                       ELSE 0
-                   END
-               ) + SIZE(a.followerList)
-        )
-        FROM Account a
-        LEFT JOIN a.postList p
-        WHERE a.status = 'ACTIVE'
-        GROUP BY a
-    """)
+                SELECT new com.FA24SE088.OnlineForum.dto.response.RecommendAccountResponse(
+                       a,
+                       SUM(
+                           CASE
+                               WHEN p.status IN ('PUBLIC', 'PRIVATE') AND p.createdDate >= :last48hours
+                               THEN SIZE(p.upvoteList) + SIZE(p.commentList) + SIZE(p.postViewList)
+                               ELSE 0
+                           END
+                       ) + SIZE(a.followerList)
+                )
+                FROM Account a
+                LEFT JOIN a.postList p
+                WHERE a.status = 'ACTIVE'
+                GROUP BY a
+            """)
     CompletableFuture<List<RecommendAccountResponse>> findRecommendedAccounts(@Param("last48hours") Date last48hours);
 
 

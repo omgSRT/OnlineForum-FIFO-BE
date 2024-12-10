@@ -17,5 +17,6 @@ public interface DailyPointMapper {
     DailyPointResponse toDailyPointResponse(DailyPoint dailyPoint);
 
     DailyPoint2Response toDailyPointResponse2(DailyPoint dailyPoint);
+
     List<DailyPoint2Response> toListResponse(List<DailyPoint> list);
 }

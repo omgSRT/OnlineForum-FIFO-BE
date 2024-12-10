@@ -30,6 +30,7 @@ import java.util.UUID;
 @Slf4j
 public class WalletController {
     WalletService walletService;
+
     @PostMapping("/create")
     public ApiResponse<Wallet> create(@RequestBody WalletRequest request) {
         return ApiResponse.<Wallet>builder()
@@ -53,7 +54,7 @@ public class WalletController {
     }
 
     @DeleteMapping("/delete/{accountId}")
-    public ApiResponse<Void> delete(@PathVariable UUID accountId){
+    public ApiResponse<Void> delete(@PathVariable UUID accountId) {
         walletService.delete(accountId);
         return ApiResponse.<Void>builder().build();
     }

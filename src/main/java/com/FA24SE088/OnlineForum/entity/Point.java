@@ -24,7 +24,7 @@ public class Point {
     double pointCostPerDownload;
     double pointEarnedPerDownload;
 
-    @JsonIgnoreProperties(value = { "point" }, allowSetters = true)
+    @JsonIgnoreProperties(value = {"point"}, allowSetters = true)
     @OneToMany(mappedBy = "point", cascade = CascadeType.ALL, orphanRemoval = true)
     List<DailyPoint> dailyPointList;
 }

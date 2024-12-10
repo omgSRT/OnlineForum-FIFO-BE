@@ -1,7 +1,5 @@
 package com.FA24SE088.OnlineForum.utils;
 
-import com.FA24SE088.OnlineForum.exception.AppException;
-import com.FA24SE088.OnlineForum.exception.ErrorCode;
 import com.github.junrar.Archive;
 import com.github.junrar.exception.RarException;
 import com.github.junrar.rarfile.FileHeader;
@@ -14,7 +12,10 @@ import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.springframework.stereotype.Component;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -240,7 +241,7 @@ public class DetectProgrammingLanguageUtil {
     );
 
     public String determineProgrammingLanguage(byte[] bytes, String contentType) throws IOException, RarException {
-        if(contentType == null || contentType.isEmpty()){
+        if (contentType == null || contentType.isEmpty()) {
             return "Unknown";
         }
 
@@ -276,6 +277,7 @@ public class DetectProgrammingLanguageUtil {
         }
         return languageCountMap;
     }
+
     private Map<String, Integer> countLanguagesInTar(byte[] tarFileBytes) throws IOException {
         Map<String, Integer> languageCountMap = new HashMap<>();
         try (TarArchiveInputStream tarInputStream = new TarArchiveInputStream(new ByteArrayInputStream(tarFileBytes))) {
@@ -287,6 +289,7 @@ public class DetectProgrammingLanguageUtil {
         }
         return languageCountMap;
     }
+
     public Map<String, Integer> countLanguagesInRar(byte[] rarFileBytes) throws IOException, RarException {
         Map<String, Integer> languageCountMap = new HashMap<>();
         try (Archive archive = new Archive(new ByteArrayInputStream(rarFileBytes))) {
@@ -298,6 +301,7 @@ public class DetectProgrammingLanguageUtil {
         }
         return languageCountMap;
     }
+
     //bug af
     private Map<String, Integer> countLanguagesIn7z(byte[] sevenZBytes) throws IOException {
         Map<String, Integer> languageCountMap = new HashMap<>();
@@ -327,6 +331,7 @@ public class DetectProgrammingLanguageUtil {
 
         return languageCountMap;
     }
+
     private static String getFileExtension(String fileName) {
         int lastDotIndex = fileName.lastIndexOf('.');
         if (lastDotIndex == -1 || lastDotIndex == fileName.length() - 1) {
@@ -334,6 +339,7 @@ public class DetectProgrammingLanguageUtil {
         }
         return fileName.substring(lastDotIndex + 1).toLowerCase();
     }
+
     private static String getLanguageFromFileName(String fileName) {
         fileName = fileName.toLowerCase();
 
@@ -347,6 +353,7 @@ public class DetectProgrammingLanguageUtil {
         String extension = getFileExtension(fileName);
         return EXTENSION_TO_LANGUAGE_MAP.getOrDefault(extension, "Unknown");
     }
+
     private Map<String, Integer> countLanguages(Map<String, Integer> languageCountMap) {
         Map<String, Integer> languagePriorityMap = new HashMap<>();
 
@@ -363,6 +370,7 @@ public class DetectProgrammingLanguageUtil {
 
         return languagePriorityMap;
     }
+
     public String determineDominantLanguage(Map<String, Integer> languageCountMap) {
         Map<String, Integer> languagePriorityMap = countLanguages(languageCountMap);
 

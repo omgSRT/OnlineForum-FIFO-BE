@@ -50,7 +50,7 @@ public class AuthenticationController {
     }
 
     @GetMapping("/login-Google")
-    public ApiResponse<String> loginGG(){
+    public ApiResponse<String> loginGG() {
         return ApiResponse.<String>builder()
                 .entity("https://accounts.google.com/o/oauth2/v2/auth/oauthchooseaccount?response_type=code&client_id=765797941898-1j31g2v6eoa94ktultp59putq41ivksk.apps.googleusercontent.com&scope=email%20profile&state=c-r0rpiAmWP12lY8B6MjWCkpRA6xoCaWCf3R3SmWRcQ%3D&redirect_uri=http%3A%2F%2Flocalhost%3A8080%2Flogin%2Foauth2%2Fcode%2Fgoogle&service=lso&o2v=2&ddm=1&flowName=GeneralOAuthFlow")
                 .build();
@@ -129,7 +129,7 @@ public class AuthenticationController {
     }
 
     @PostMapping("/forget-password")
-    public ApiResponse<Void> forgotPassword(String email){
+    public ApiResponse<Void> forgotPassword(String email) {
         return authenticateService.forgetPassword(email).thenApply(v ->
                 ApiResponse.<Void>builder()
                         .message(SuccessReturnMessage.SEND_SUCCESS.getMessage())
@@ -137,9 +137,10 @@ public class AuthenticationController {
                         .build()
         ).join();
     }
+
     @PutMapping("/change-password")
     public ApiResponse<AccountResponse> changePassword(String email,
-                                                       @RequestBody @Valid AccountChangePasswordRequest request){
+                                                       @RequestBody @Valid AccountChangePasswordRequest request) {
         return authenticateService.changePassword(email, request).thenApply(accountResponse ->
                 ApiResponse.<AccountResponse>builder()
                         .message(SuccessReturnMessage.CHANGE_SUCCESS.getMessage())
@@ -147,6 +148,7 @@ public class AuthenticationController {
                         .build()
         ).join();
     }
+
     @Operation(summary = "Resend OTP Email For Forget Password")
     @PostMapping("/resend-otp/forget-password")
     public ApiResponse<Void> resendOtpForForgetPassword(@RequestParam String email) {
@@ -154,7 +156,7 @@ public class AuthenticationController {
                 + "<body>"
                 + "<p><strong>FIFO Password Reset</strong></p>"
                 + "<p>We heard that you lost your FIFO password. Sorry about that!</p>"
-                + "<p>Don't worry! Enter This OTP To Reset Your Password: " +otpUtil.generateOtp(email).getOtpEmail()+ " </p>"
+                + "<p>Don't worry! Enter This OTP To Reset Your Password: " + otpUtil.generateOtp(email).getOtpEmail() + " </p>"
                 + "</body>"
                 + "</html>";
         emailUtil.sendToAnEmailWithHTMLEnabled(email,
@@ -164,6 +166,7 @@ public class AuthenticationController {
                 .message(SuccessReturnMessage.SEND_SUCCESS.getMessage())
                 .build();
     }
+
     @PostMapping("/verify-otp/forget-password")
     public ApiResponse<AccountResponse> verifyOtpForForgetPassword(@RequestBody OtpRequest request) {
         otpUtil.verifyOTPForForgetPassword(request.getEmail(), request.getOtp());

@@ -7,18 +7,16 @@ import com.FA24SE088.OnlineForum.entity.Notification;
 import com.FA24SE088.OnlineForum.exception.AppException;
 import com.FA24SE088.OnlineForum.exception.ErrorCode;
 import com.FA24SE088.OnlineForum.mapper.NotificationMapper;
-import com.FA24SE088.OnlineForum.repository.UnitOfWork.UnitOfWork;
-import com.FA24SE088.OnlineForum.utils.DataHandler;
+import com.FA24SE088.OnlineForum.repository.AccountRepository;
+import com.FA24SE088.OnlineForum.repository.NotificationRepository;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -28,25 +26,26 @@ import java.util.UUID;
 @Slf4j
 @Service
 public class NotificationService {
-    UnitOfWork unitOfWork;
+    NotificationRepository notificationRepository;
+    AccountRepository accountRepository;
     NotificationMapper notificationMapper;
     //DataHandler dataHandler;
 
-    private Account getCurrentUser(){
+    private Account getCurrentUser() {
         var context = SecurityContextHolder.getContext();
-        return unitOfWork.getAccountRepository().findByUsername(context.getAuthentication().getName())
+        return accountRepository.findByUsername(context.getAuthentication().getName())
                 .orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND));
     }
 
     public NotificationResponse createNotification(NotificationRequest notificationRequest) {
-        Account account = unitOfWork.getAccountRepository().findById(notificationRequest.getAccountId())
+        Account account = accountRepository.findById(notificationRequest.getAccountId())
                 .orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND));
         Notification notification = notificationMapper.toNotification(notificationRequest);
         notification.setAccount(account);
         notification.setRead(false);
         notification.setCreatedDate(LocalDateTime.now());
 
-        Notification savedNotification = unitOfWork.getNotificationRepository().save(notification);
+        Notification savedNotification = notificationRepository.save(notification);
         NotificationResponse response = notificationMapper.toResponse(savedNotification);
         response.setAccount(account);
         return response;
@@ -59,7 +58,7 @@ public class NotificationService {
 
     private Notification saveNotification(NotificationRequest notificationRequest) {
 
-        Account account = unitOfWork.getAccountRepository().findById(notificationRequest.getAccountId()).orElseThrow(
+        Account account = accountRepository.findById(notificationRequest.getAccountId()).orElseThrow(
                 () -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND)
         );
         Notification notification = Notification.builder()
@@ -69,18 +68,19 @@ public class NotificationService {
                 .createdDate(LocalDateTime.now())
                 .account(account)
                 .build();
-        return unitOfWork.getNotificationRepository().save(notification);
+        return notificationRepository.save(notification);
     }
+
     public Optional<NotificationResponse> getNotificationById(UUID notificationId) {
-        Optional<Notification> notificationOptional = unitOfWork.getNotificationRepository().findById(notificationId);
+        Optional<Notification> notificationOptional = notificationRepository.findById(notificationId);
         return notificationOptional.map(notificationMapper::toResponse);
     }
 
     public List<NotificationResponse> getAllNotificationsByAccount(UUID accountId) {
-        Account account = unitOfWork.getAccountRepository().findById(accountId).orElseThrow(
+        Account account = accountRepository.findById(accountId).orElseThrow(
                 () -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND)
         );
-        List<Notification> notifications = unitOfWork.getNotificationRepository()
+        List<Notification> notifications = notificationRepository
                 .findByAccountOrderByCreatedDateDesc(account);
         return notifications.stream().map(notificationMapper::toResponse)
                 .toList();
@@ -88,7 +88,7 @@ public class NotificationService {
 
     public List<NotificationResponse> getAllNotificationsOfThisAccount() {
         Account account = getCurrentUser();
-        List<Notification> notifications = unitOfWork.getNotificationRepository()
+        List<Notification> notifications = notificationRepository
                 .findByAccountOrderByCreatedDateDesc(account);
         return notifications.stream()
                 .map(notification -> {
@@ -100,15 +100,15 @@ public class NotificationService {
     }
 
     public List<NotificationResponse> getAllNotifications() {
-        List<Notification> notifications = unitOfWork.getNotificationRepository().findAllByOrderByCreatedDateDesc();
+        List<Notification> notifications = notificationRepository.findAllByOrderByCreatedDateDesc();
         return notifications.stream()
                 .map(notificationMapper::toResponse)
                 .toList();
     }
 
     public void deleteNotification(UUID notificationId) {
-        if (unitOfWork.getNotificationRepository().existsById(notificationId)) {
-            unitOfWork.getNotificationRepository().deleteById(notificationId);
+        if (notificationRepository.existsById(notificationId)) {
+            notificationRepository.deleteById(notificationId);
         } else {
             throw new AppException(ErrorCode.NOTIFICATION_NOT_FOUND);
         }

@@ -2,6 +2,7 @@ package com.FA24SE088.OnlineForum.dto.request;
 
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+
 import java.util.UUID;
 
 @Data
@@ -10,5 +11,5 @@ import java.util.UUID;
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class BookmarkRequest {
-   UUID postId;
+    UUID postId;
 }

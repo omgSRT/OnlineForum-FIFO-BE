@@ -25,20 +25,20 @@ public class ImageController {
 
     @Operation(summary = "Add New Images To Post")
     @PostMapping(path = "/create")
-    public ApiResponse<List<ImageResponse>> createImages(ImageCreateRequest request){
+    public ApiResponse<List<ImageResponse>> createImages(ImageCreateRequest request) {
         return imageService.createImage(request).thenApply(imageResponses ->
                 ApiResponse.<List<ImageResponse>>builder()
                         .message(SuccessReturnMessage.CREATE_SUCCESS.getMessage())
                         .entity(imageResponses)
                         .build()
-                ).join();
+        ).join();
     }
 
     @Operation(summary = "Get All Images")
     @GetMapping(path = "/getall")
     public ApiResponse<List<ImageResponse>> getImages(@RequestParam(defaultValue = "1") int page,
                                                       @RequestParam(defaultValue = "10") int perPage,
-                                                      @RequestParam(required = false) UUID postId){
+                                                      @RequestParam(required = false) UUID postId) {
         return imageService.getAllImages(page, perPage, postId).thenApply(imageResponses ->
                 ApiResponse.<List<ImageResponse>>builder()
                         .entity(imageResponses)
@@ -49,8 +49,8 @@ public class ImageController {
     @Operation(summary = "Get All Images", description = "Get All Images From Other User By Current User")
     @GetMapping(path = "/getall/other-user/{otherAccountId}")
     public ApiResponse<List<ImageResponse>> getImagesFromOtherUser(@RequestParam(defaultValue = "1") int page,
-                                                      @RequestParam(defaultValue = "10") int perPage,
-                                                      @PathVariable UUID otherAccountId){
+                                                                   @RequestParam(defaultValue = "10") int perPage,
+                                                                   @PathVariable UUID otherAccountId) {
         return imageService.getAllImagesFromOtherUser(page, perPage, otherAccountId).thenApply(imageResponses ->
                 ApiResponse.<List<ImageResponse>>builder()
                         .entity(imageResponses)
@@ -61,7 +61,7 @@ public class ImageController {
     @Operation(summary = "Get All Images")
     @GetMapping(path = "/getall/by-current-account")
     public ApiResponse<List<ImageResponse>> getImagesByAccount(@RequestParam(defaultValue = "1") int page,
-                                                      @RequestParam(defaultValue = "10") int perPage){
+                                                               @RequestParam(defaultValue = "10") int perPage) {
         return imageService.getAllImagesByAccount(page, perPage).thenApply(imageResponses ->
                 ApiResponse.<List<ImageResponse>>builder()
                         .entity(imageResponses)
@@ -71,7 +71,7 @@ public class ImageController {
 
     @Operation(summary = "Get Image", description = "Get Image By ID")
     @GetMapping(path = "/get/{imageId}")
-    public ApiResponse<ImageResponse> getImageById(@PathVariable UUID imageId){
+    public ApiResponse<ImageResponse> getImageById(@PathVariable UUID imageId) {
         return imageService.getImageById(imageId).thenApply(imageResponse ->
                 ApiResponse.<ImageResponse>builder()
                         .entity(imageResponse)
@@ -81,7 +81,7 @@ public class ImageController {
 
     @Operation(summary = "Delete Image", description = "Delete Image By ID")
     @DeleteMapping(path = "/delete/{postId}")
-    public ApiResponse<ImageResponse> deleteImageById(@PathVariable UUID imageId){
+    public ApiResponse<ImageResponse> deleteImageById(@PathVariable UUID imageId) {
         return imageService.deleteImageById(imageId).thenApply(imageResponse ->
                 ApiResponse.<ImageResponse>builder()
                         .message(SuccessReturnMessage.DELETE_SUCCESS.getMessage())

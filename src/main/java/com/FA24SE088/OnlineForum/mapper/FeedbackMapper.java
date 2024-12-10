@@ -15,7 +15,8 @@ import org.mapstruct.MappingTarget;
 public interface FeedbackMapper {
 
     Feedback toFeedback(FeedbackRequest request);
-    @Mapping(target = "feedbackId",source = "feedbackId")
-    @Mapping(target = "createdDate",source = "createdDate")
+
+    @Mapping(target = "feedbackId", source = "feedbackId")
+    @Mapping(target = "createdDate", source = "createdDate")
     FeedbackResponse toResponse(Feedback feedback);
 }

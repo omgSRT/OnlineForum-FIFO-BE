@@ -7,7 +7,7 @@ import com.FA24SE088.OnlineForum.enums.EventStatus;
 import com.FA24SE088.OnlineForum.exception.AppException;
 import com.FA24SE088.OnlineForum.exception.ErrorCode;
 import com.FA24SE088.OnlineForum.mapper.EventMapper;
-import com.FA24SE088.OnlineForum.repository.UnitOfWork.UnitOfWork;
+import com.FA24SE088.OnlineForum.repository.EventRepository;
 import com.FA24SE088.OnlineForum.utils.PaginationUtils;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -24,7 +24,7 @@ import java.util.*;
 @Slf4j
 @Service
 public class EventService {
-    UnitOfWork unitOfWork;
+    EventRepository eventRepository;
     EventMapper eventMapper;
     PaginationUtils paginationUtils;
 
@@ -55,14 +55,13 @@ public class EventService {
         } else {
             event.setStatus(EventStatus.CONCLUDED.name());
         }
-        Event savedEvent = unitOfWork.getEventRepository().save(event);
+        Event savedEvent = eventRepository.save(event);
         return mapToResponse(savedEvent);
     }
 
-
     public List<EventResponse> filterEvents(int page, int perPage, String title, String location, EventStatus eventStatus) {
         List<EventResponse> result;
-        List<EventResponse> allEvents = unitOfWork.getEventRepository().findAll().stream()
+        List<EventResponse> allEvents = eventRepository.findAll().stream()
                 .map(eventMapper::toResponse)
                 .toList();
         String status = eventStatus != null ? eventStatus.name() : null;
@@ -107,7 +106,7 @@ public class EventService {
 
 
     public Optional<EventResponse> updateEvent(UUID eventId, EventRequest eventRequest) {
-        Optional<Event> eventOptional = unitOfWork.getEventRepository().findById(eventId);
+        Optional<Event> eventOptional = eventRepository.findById(eventId);
         validateEventDates(eventRequest.getStartDate(), eventRequest.getEndDate());
         if (eventOptional.isPresent()) {
             Event event = eventOptional.get();
@@ -119,18 +118,18 @@ public class EventService {
             event.setContent(eventRequest.getContent());
             event.setLink(eventRequest.getLink());
 
-            Event updatedEvent = unitOfWork.getEventRepository().save(event);
+            Event updatedEvent = eventRepository.save(event);
             return Optional.of(mapToResponse(updatedEvent));
         }
         return Optional.empty();
     }
 
     public void deleteEvent(UUID eventId) {
-        unitOfWork.getEventRepository().deleteById(eventId);
+        eventRepository.deleteById(eventId);
     }
 
     public List<EventResponse> getAllEvents() {
-        List<Event> events = unitOfWork.getEventRepository().findAll();
+        List<Event> events = eventRepository.findAll();
         LocalDate today = LocalDate.now();
 
         List<Event> sortedEvents = events.stream()
@@ -140,13 +139,13 @@ public class EventService {
 
                     if (startDate.isAfter(today)) {
                         event.setStatus(EventStatus.UPCOMING.name());
-                        unitOfWork.getEventRepository().save(event);
+                        eventRepository.save(event);
                     } else if (!startDate.isAfter(today) && !endDate.isBefore(today)) {
                         event.setStatus(EventStatus.ONGOING.name());
-                        unitOfWork.getEventRepository().save(event);
+                        eventRepository.save(event);
                     } else {
                         event.setStatus(EventStatus.CONCLUDED.name());
-                        unitOfWork.getEventRepository().save(event);
+                        eventRepository.save(event);
                     }
                 })
                 .sorted((e1, e2) -> {
@@ -167,7 +166,7 @@ public class EventService {
 
 
     public Optional<EventResponse> getEventById(UUID eventId) {
-        Optional<Event> event = unitOfWork.getEventRepository().findById(eventId);
+        Optional<Event> event = eventRepository.findById(eventId);
         return event.map(eventMapper::toResponse);
     }
 

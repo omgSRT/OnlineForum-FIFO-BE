@@ -1,4 +1,4 @@
-package com.FA24SE088.OnlineForum.repository.Repository;
+package com.FA24SE088.OnlineForum.repository;
 
 import com.FA24SE088.OnlineForum.entity.Account;
 import com.FA24SE088.OnlineForum.entity.DailyPoint;
@@ -31,12 +31,16 @@ public interface DailyPointRepository extends JpaRepository<DailyPoint, UUID> {
     CompletableFuture<List<DailyPoint>> findByAccount(Account account);
 
     List<DailyPoint> findAllByOrderByCreatedDateDesc();
+
     @Async("AsyncTaskExecutor")
     CompletableFuture<List<DailyPoint>> findByAccountAndTypeBonusIsNullOrderByCreatedDateDesc(Account account);
+
     @Async("AsyncTaskExecutor")
     CompletableFuture<List<DailyPoint>> findByAccountAndTypeBonusIsNotNullOrderByCreatedDateDesc(Account account);
+
     @Async("AsyncTaskExecutor")
     CompletableFuture<List<DailyPoint>> findByAccountAndTypeBonusIsNullAndCreatedDateBetweenOrderByCreatedDateDesc(Account account, Date startDate, Date endDate);
+
     @Async("AsyncTaskExecutor")
     CompletableFuture<List<DailyPoint>> findByAccountAndTypeBonusIsNotNullAndCreatedDateBetweenOrderByCreatedDateDesc(Account account, Date startDate, Date endDate);
 }

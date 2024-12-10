@@ -53,7 +53,7 @@ public class EventController {
     @PutMapping("/update/{eventId}")
     public ApiResponse<Optional<EventResponse>> updateEvent(@PathVariable UUID eventId, @RequestBody EventRequest eventRequest) {
         return ApiResponse.<Optional<EventResponse>>builder()
-                .entity(eventService.updateEvent(eventId,eventRequest))
+                .entity(eventService.updateEvent(eventId, eventRequest))
                 .build();
     }
 
@@ -77,7 +77,7 @@ public class EventController {
                                                    @RequestParam(required = false) String location,
                                                    @RequestParam(required = false) EventStatus status) {
         return ApiResponse.<List<EventResponse>>builder()
-                .entity(eventService.filterEvents(page,perPage,title,location,status))
+                .entity(eventService.filterEvents(page, perPage, title, location, status))
                 .build();
     }
 

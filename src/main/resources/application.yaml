@@ -9,8 +9,8 @@ spring:
   mail:
     host: smtp.gmail.com
     port: 587
-#    username: drawing.system.team@gmail.com
-#    password: hijabwrzrkxyebum
+    #    username: drawing.system.team@gmail.com
+    #    password: hijabwrzrkxyebum
     username: fifo.forum.online@gmail.com
     password: rxfb dxhw hcob qzee
     properties:

@@ -28,7 +28,7 @@ public class StatisticController {
 
     @Operation(summary = "Get DoD Statistic")
     @GetMapping(path = "/get/dod-statistic")
-    public ApiResponse<DoDResponse> getAllReports(){
+    public ApiResponse<DoDResponse> getAllReports() {
         return statisticService.getDodStatistic().thenApply(dodResponse ->
                 ApiResponse.<DoDResponse>builder()
                         .entity(dodResponse)

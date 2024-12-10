@@ -15,14 +15,14 @@ import java.util.List;
 @Slf4j
 @Component
 public class PaginationUtils {
-    public <T> List<T> convertListToPage(int page, int perPage, List<T> list){
-        if(list == null || list.isEmpty()){
+    public <T> List<T> convertListToPage(int page, int perPage, List<T> list) {
+        if (list == null || list.isEmpty()) {
             list = new ArrayList<>();
         }
-        if(page <= 0){
+        if (page <= 0) {
             throw new AppException(ErrorCode.INVALID_PAGE_NUMBER);
         }
-        if(perPage <= 0){
+        if (perPage <= 0) {
             throw new AppException(ErrorCode.INVALID_PER_PAGE_NUMBER);
         }
 

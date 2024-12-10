@@ -26,7 +26,7 @@ public class TagController {
 
     @Operation(summary = "Create New Tag")
     @PostMapping(path = "/create")
-    public ApiResponse<TagResponse> createTag(@RequestBody @Valid TagRequest request){
+    public ApiResponse<TagResponse> createTag(@RequestBody @Valid TagRequest request) {
         return tagService.createTag(request).thenApply(tagResponse ->
                 ApiResponse.<TagResponse>builder()
                         .message(SuccessReturnMessage.CREATE_SUCCESS.getMessage())
@@ -40,7 +40,7 @@ public class TagController {
     public ApiResponse<List<TagResponse>> getAllTopicsBy(@RequestParam(defaultValue = "1") int page,
                                                          @RequestParam(defaultValue = "10") int perPage,
                                                          @RequestParam(required = false) String name,
-                                                         @RequestParam(required = false) String targetColorHex){
+                                                         @RequestParam(required = false) String targetColorHex) {
         return tagService.getAllTagsByFilteringNameAndColor(page, perPage, name, targetColorHex).thenApply(tagResponses -> {
             return ApiResponse.<List<TagResponse>>builder()
                     .entity(tagResponses)
@@ -50,7 +50,7 @@ public class TagController {
 
     @Operation(summary = "Get A Tag", description = "Get A Tag By ID")
     @GetMapping(path = "/get/{tagId}")
-    public ApiResponse<TagResponse> getTagById(@PathVariable UUID tagId){
+    public ApiResponse<TagResponse> getTagById(@PathVariable UUID tagId) {
         return tagService.getTagById(tagId).thenApply(tagResponse ->
                 ApiResponse.<TagResponse>builder()
                         .message(SuccessReturnMessage.SEARCH_SUCCESS.getMessage())
@@ -61,7 +61,7 @@ public class TagController {
 
     @Operation(summary = "Delete A Tag", description = "Delete A Tag By ID")
     @DeleteMapping(path = "/delete/{tagId}")
-    public ApiResponse<TagResponse> deleteTagById(@PathVariable UUID tagId){
+    public ApiResponse<TagResponse> deleteTagById(@PathVariable UUID tagId) {
         return tagService.deleteTagById(tagId).thenApply(tagResponse ->
                 ApiResponse.<TagResponse>builder()
                         .message(SuccessReturnMessage.DELETE_SUCCESS.getMessage())
@@ -73,7 +73,7 @@ public class TagController {
     @Operation(summary = "Update A Tag", description = "Update A Tag By ID")
     @PutMapping(path = "/update/{tagId}")
     public ApiResponse<TagResponse> updateTagById(@PathVariable UUID tagId,
-                                                  @RequestBody @Valid TagRequest request){
+                                                  @RequestBody @Valid TagRequest request) {
         return tagService.updateTagById(tagId, request).thenApply(tagResponse ->
                 ApiResponse.<TagResponse>builder()
                         .message(SuccessReturnMessage.UPDATE_SUCCESS.getMessage())

@@ -5,7 +5,6 @@ import com.FA24SE088.OnlineForum.dto.request.CategoryRequest;
 import com.FA24SE088.OnlineForum.dto.request.CategoryUpdateAccountRequest;
 import com.FA24SE088.OnlineForum.dto.request.CategoryUpdateRequest;
 import com.FA24SE088.OnlineForum.dto.response.CategoryGetAllResponse;
-import com.FA24SE088.OnlineForum.dto.response.CategoryNoAccountResponse;
 import com.FA24SE088.OnlineForum.dto.response.CategoryResponse;
 import com.FA24SE088.OnlineForum.entity.Account;
 import com.FA24SE088.OnlineForum.entity.Category;
@@ -13,7 +12,7 @@ import com.FA24SE088.OnlineForum.entity.Topic;
 import com.FA24SE088.OnlineForum.exception.AppException;
 import com.FA24SE088.OnlineForum.exception.ErrorCode;
 import com.FA24SE088.OnlineForum.mapper.CategoryMapper;
-import com.FA24SE088.OnlineForum.repository.UnitOfWork.UnitOfWork;
+import com.FA24SE088.OnlineForum.repository.*;
 import com.FA24SE088.OnlineForum.utils.PaginationUtils;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -34,7 +33,12 @@ import java.util.concurrent.CompletableFuture;
 @Slf4j
 @Service
 public class CategoryService {
-    UnitOfWork unitOfWork;
+    CategoryRepository categoryRepository;
+    TopicRepository topicRepository;
+    UpvoteRepository upvoteRepository;
+    CommentRepository commentRepository;
+    PostViewRepository postViewRepository;
+    AccountRepository accountRepository;
     PaginationUtils paginationUtils;
     CategoryMapper categoryMapper;
 
@@ -43,41 +47,7 @@ public class CategoryService {
         var accountFuture = findAccountById(request.getAccountId());
 
         return accountFuture.thenCompose(acc ->
-                unitOfWork.getCategoryRepository().existsByNameContaining(request.getName())
-                .thenCompose(exists -> {
-                    if (exists) {
-                        throw new AppException(ErrorCode.NAME_EXIST);
-                    }
-
-                    request.setName(request.getName().toUpperCase());
-
-                    Category newCategory = categoryMapper.toCategory(request);
-                    newCategory.setAccount(acc);
-
-                    var savedCategory = unitOfWork.getCategoryRepository().save(newCategory);
-
-                    CompletableFuture<Integer> upvoteCountFuture = unitOfWork.getUpvoteRepository()
-                            .countByPostTopicCategory(savedCategory);
-                    CompletableFuture<Integer> commentCountFuture = unitOfWork.getCommentRepository()
-                            .countByPostTopicCategory(savedCategory);
-                    CompletableFuture<Integer> viewCountFuture = unitOfWork.getPostViewRepository()
-                            .countByPostTopicCategory(savedCategory);
-
-                    return CompletableFuture.allOf(upvoteCountFuture, commentCountFuture, viewCountFuture)
-                            .thenApply(voidResult -> {
-                                CategoryResponse response = categoryMapper.toCategoryResponse(savedCategory);
-                                response.setUpvoteCount(upvoteCountFuture.join());
-                                response.setCommentCount(commentCountFuture.join());
-                                response.setViewCount(viewCountFuture.join());
-                                return response;
-                            });
-                }));
-    }
-
-    @PreAuthorize("hasRole('ADMIN')")
-    public CompletableFuture<CategoryResponse> createCategoryNoAccount(CategoryNoAccountRequest request) {
-
-        return unitOfWork.getCategoryRepository().existsByNameContaining(request.getName())
+                categoryRepository.existsByNameContaining(request.getName())
                         .thenCompose(exists -> {
                             if (exists) {
                                 throw new AppException(ErrorCode.NAME_EXIST);
@@ -85,15 +55,16 @@ public class CategoryService {
 
                             request.setName(request.getName().toUpperCase());
 
-                            Category newCategory = categoryMapper.toCategoryWithNoAccount(request);
+                            Category newCategory = categoryMapper.toCategory(request);
+                            newCategory.setAccount(acc);
 
-                            var savedCategory = unitOfWork.getCategoryRepository().save(newCategory);
+                            var savedCategory = categoryRepository.save(newCategory);
 
-                            CompletableFuture<Integer> upvoteCountFuture = unitOfWork.getUpvoteRepository()
+                            CompletableFuture<Integer> upvoteCountFuture = upvoteRepository
                                     .countByPostTopicCategory(savedCategory);
-                            CompletableFuture<Integer> commentCountFuture = unitOfWork.getCommentRepository()
+                            CompletableFuture<Integer> commentCountFuture = commentRepository
                                     .countByPostTopicCategory(savedCategory);
-                            CompletableFuture<Integer> viewCountFuture = unitOfWork.getPostViewRepository()
+                            CompletableFuture<Integer> viewCountFuture = postViewRepository
                                     .countByPostTopicCategory(savedCategory);
 
                             return CompletableFuture.allOf(upvoteCountFuture, commentCountFuture, viewCountFuture)
@@ -104,7 +75,40 @@ public class CategoryService {
                                         response.setViewCount(viewCountFuture.join());
                                         return response;
                                     });
-                        });
+                        }));
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    public CompletableFuture<CategoryResponse> createCategoryNoAccount(CategoryNoAccountRequest request) {
+
+        return categoryRepository.existsByNameContaining(request.getName())
+                .thenCompose(exists -> {
+                    if (exists) {
+                        throw new AppException(ErrorCode.NAME_EXIST);
+                    }
+
+                    request.setName(request.getName().toUpperCase());
+
+                    Category newCategory = categoryMapper.toCategoryWithNoAccount(request);
+
+                    var savedCategory = categoryRepository.save(newCategory);
+
+                    CompletableFuture<Integer> upvoteCountFuture = upvoteRepository
+                            .countByPostTopicCategory(savedCategory);
+                    CompletableFuture<Integer> commentCountFuture = commentRepository
+                            .countByPostTopicCategory(savedCategory);
+                    CompletableFuture<Integer> viewCountFuture = postViewRepository
+                            .countByPostTopicCategory(savedCategory);
+
+                    return CompletableFuture.allOf(upvoteCountFuture, commentCountFuture, viewCountFuture)
+                            .thenApply(voidResult -> {
+                                CategoryResponse response = categoryMapper.toCategoryResponse(savedCategory);
+                                response.setUpvoteCount(upvoteCountFuture.join());
+                                response.setCommentCount(commentCountFuture.join());
+                                response.setViewCount(viewCountFuture.join());
+                                return response;
+                            });
+                });
     }
 
     @Async("AsyncTaskExecutor")
@@ -115,7 +119,7 @@ public class CategoryService {
                 : CompletableFuture.completedFuture(null);
 
         return accountFuture.thenCompose(account -> {
-            var categories = unitOfWork.getCategoryRepository().findAll();
+            var categories = categoryRepository.findAll();
 
             List<String> customOrder = List.of("KNOWLEDGE SHARING", "SOURCE CODE");
 
@@ -137,16 +141,16 @@ public class CategoryService {
             List<CompletableFuture<CategoryGetAllResponse>> responseFutures = categories.stream()
                     .filter(category -> account == null || (category.getAccount() != null && category.getAccount().equals(account)))
                     .map(category -> {
-                        CompletableFuture<Integer> upvoteCountFuture = unitOfWork.getUpvoteRepository()
+                        CompletableFuture<Integer> upvoteCountFuture = upvoteRepository
                                 .countByPostTopicCategory(category);
-                        CompletableFuture<Integer> commentCountFuture = unitOfWork.getCommentRepository()
+                        CompletableFuture<Integer> commentCountFuture = commentRepository
                                 .countByPostTopicCategory(category);
-                        CompletableFuture<List<Topic>> topicListByCategoryFuture = unitOfWork.getTopicRepository()
+                        CompletableFuture<List<Topic>> topicListByCategoryFuture = topicRepository
                                 .findByCategoryCategoryId(category.getCategoryId());
-                        CompletableFuture<Integer> viewCountFuture = unitOfWork.getPostViewRepository()
+                        CompletableFuture<Integer> viewCountFuture = postViewRepository
                                 .countByPostTopicCategory(category);
 
-                        return CompletableFuture.allOf(upvoteCountFuture, commentCountFuture, topicListByCategoryFuture,viewCountFuture)
+                        return CompletableFuture.allOf(upvoteCountFuture, commentCountFuture, topicListByCategoryFuture, viewCountFuture)
                                 .thenApply(voidResult -> {
                                     CategoryGetAllResponse response = categoryMapper.toCategoryGetAllResponse(category);
                                     response.setUpvoteCount(upvoteCountFuture.join());
@@ -174,7 +178,7 @@ public class CategoryService {
         var accountFuture = findAccountByUsername(username);
 
         return accountFuture.thenCompose(account -> {
-            var categoryListFuture = unitOfWork.getCategoryRepository().findByAccount(account);
+            var categoryListFuture = categoryRepository.findByAccount(account);
 
             return categoryListFuture.thenCompose(categoryList -> {
                 List<String> customOrder = List.of("KNOWLEDGE SHARING", "SOURCE CODE");
@@ -196,16 +200,16 @@ public class CategoryService {
 
                 List<CompletableFuture<CategoryGetAllResponse>> responseFutures = categoryList.stream()
                         .map(category -> {
-                            CompletableFuture<Integer> upvoteCountFuture = unitOfWork.getUpvoteRepository()
+                            CompletableFuture<Integer> upvoteCountFuture = upvoteRepository
                                     .countByPostTopicCategory(category);
-                            CompletableFuture<Integer> commentCountFuture = unitOfWork.getCommentRepository()
+                            CompletableFuture<Integer> commentCountFuture = commentRepository
                                     .countByPostTopicCategory(category);
-                            CompletableFuture<List<Topic>> topicListByCategoryFuture = unitOfWork.getTopicRepository()
+                            CompletableFuture<List<Topic>> topicListByCategoryFuture = topicRepository
                                     .findByCategoryCategoryId(category.getCategoryId());
-                            CompletableFuture<Integer> viewCountFuture = unitOfWork.getPostViewRepository()
+                            CompletableFuture<Integer> viewCountFuture = postViewRepository
                                     .countByPostTopicCategory(category);
 
-                            return CompletableFuture.allOf(upvoteCountFuture, commentCountFuture, topicListByCategoryFuture,viewCountFuture)
+                            return CompletableFuture.allOf(upvoteCountFuture, commentCountFuture, topicListByCategoryFuture, viewCountFuture)
                                     .thenApply(voidResult -> {
                                         CategoryGetAllResponse response = categoryMapper.toCategoryGetAllResponse(category);
                                         response.setUpvoteCount(upvoteCountFuture.join());
@@ -231,14 +235,14 @@ public class CategoryService {
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
     public CompletableFuture<CategoryResponse> getCategoryById(UUID categoryId) {
         return CompletableFuture.supplyAsync(() ->
-                unitOfWork.getCategoryRepository().findById(categoryId)
+                categoryRepository.findById(categoryId)
                         .orElseThrow(() -> new AppException(ErrorCode.CATEGORY_NOT_FOUND))
         ).thenCompose(category -> {
-            CompletableFuture<Integer> upvoteCountFuture = unitOfWork.getUpvoteRepository()
+            CompletableFuture<Integer> upvoteCountFuture = upvoteRepository
                     .countByPostTopicCategory(category);
-            CompletableFuture<Integer> commentCountFuture = unitOfWork.getCommentRepository()
+            CompletableFuture<Integer> commentCountFuture = commentRepository
                     .countByPostTopicCategory(category);
-            CompletableFuture<Integer> viewCountFuture = unitOfWork.getPostViewRepository()
+            CompletableFuture<Integer> viewCountFuture = postViewRepository
                     .countByPostTopicCategory(category);
 
             return CompletableFuture.allOf(upvoteCountFuture, commentCountFuture, viewCountFuture)
@@ -255,20 +259,20 @@ public class CategoryService {
 
     @Async("AsyncTaskExecutor")
     @PreAuthorize("hasRole('ADMIN')")
-    public CompletableFuture<CategoryResponse> deleteCategoryById(UUID categoryId){
+    public CompletableFuture<CategoryResponse> deleteCategoryById(UUID categoryId) {
         return CompletableFuture.supplyAsync(() -> {
-            var category = unitOfWork.getCategoryRepository().findById(categoryId)
+            var category = categoryRepository.findById(categoryId)
                     .orElseThrow(() -> new AppException(ErrorCode.CATEGORY_NOT_FOUND));
 
-            unitOfWork.getCategoryRepository().delete(category);
+            categoryRepository.delete(category);
 
             return category;
         }).thenCompose(category -> {
-            CompletableFuture<Integer> upvoteCountFuture = unitOfWork.getUpvoteRepository()
+            CompletableFuture<Integer> upvoteCountFuture = upvoteRepository
                     .countByPostTopicCategory(category);
-            CompletableFuture<Integer> commentCountFuture = unitOfWork.getCommentRepository()
+            CompletableFuture<Integer> commentCountFuture = commentRepository
                     .countByPostTopicCategory(category);
-            CompletableFuture<Integer> viewCountFuture = unitOfWork.getPostViewRepository()
+            CompletableFuture<Integer> viewCountFuture = postViewRepository
                     .countByPostTopicCategory(category);
 
             return CompletableFuture.allOf(upvoteCountFuture, commentCountFuture, viewCountFuture)
@@ -286,14 +290,14 @@ public class CategoryService {
     @PreAuthorize("hasRole('ADMIN')")
     public CompletableFuture<CategoryResponse> updateCategoryById(UUID categoryId, CategoryUpdateRequest request) {
         return CompletableFuture.supplyAsync(() -> {
-            var category = unitOfWork.getCategoryRepository().findById(categoryId)
+            var category = categoryRepository.findById(categoryId)
                     .orElseThrow(() -> new AppException(ErrorCode.CATEGORY_NOT_FOUND));
 
             if (category.getName().equalsIgnoreCase(request.getName())) {
                 return category;
             }
 
-            boolean nameExists = unitOfWork.getCategoryRepository().existsByNameContaining(request.getName()).join();
+            boolean nameExists = categoryRepository.existsByNameContaining(request.getName()).join();
             if (nameExists) {
                 throw new AppException(ErrorCode.NAME_EXIST);
             }
@@ -310,11 +314,11 @@ public class CategoryService {
                     : request.getImage());
             categoryMapper.updateCategory(category, request);
 
-            return CompletableFuture.completedFuture(unitOfWork.getCategoryRepository().save(category));
+            return CompletableFuture.completedFuture(categoryRepository.save(category));
         }).thenCompose(updatedCategory -> {
-            CompletableFuture<Integer> upvoteCountFuture = unitOfWork.getUpvoteRepository().countByPostTopicCategory(updatedCategory);
-            CompletableFuture<Integer> commentCountFuture = unitOfWork.getCommentRepository().countByPostTopicCategory(updatedCategory);
-            CompletableFuture<Integer> viewCountFuture = unitOfWork.getPostViewRepository().countByPostTopicCategory(updatedCategory);
+            CompletableFuture<Integer> upvoteCountFuture = upvoteRepository.countByPostTopicCategory(updatedCategory);
+            CompletableFuture<Integer> commentCountFuture = commentRepository.countByPostTopicCategory(updatedCategory);
+            CompletableFuture<Integer> viewCountFuture = postViewRepository.countByPostTopicCategory(updatedCategory);
 
             return CompletableFuture.allOf(upvoteCountFuture, commentCountFuture, viewCountFuture)
                     .thenApply(voidResult -> {
@@ -333,33 +337,33 @@ public class CategoryService {
         var accountFuture = findAccountById(request.getAccountId());
 
         return accountFuture.thenCompose(account ->
-            unitOfWork.getCategoryRepository().findByAccount(account).thenCompose(categoryList -> {
-                var category = unitOfWork.getCategoryRepository().findById(categoryId)
-                        .orElseThrow(() -> new AppException(ErrorCode.CATEGORY_NOT_FOUND));
-                if(categoryList.contains(category)){
-                    throw new AppException(ErrorCode.CATEGORY_HAS_UNDERTAKE);
-                }
+                categoryRepository.findByAccount(account).thenCompose(categoryList -> {
+                    var category = categoryRepository.findById(categoryId)
+                            .orElseThrow(() -> new AppException(ErrorCode.CATEGORY_NOT_FOUND));
+                    if (categoryList.contains(category)) {
+                        throw new AppException(ErrorCode.CATEGORY_HAS_UNDERTAKE);
+                    }
 
-                category.setAccount(account);
+                    category.setAccount(account);
 
-                return CompletableFuture.completedFuture(unitOfWork.getCategoryRepository().save(category));
-            }).thenCompose(category -> {
-                CompletableFuture<Integer> upvoteCountFuture = unitOfWork.getUpvoteRepository()
-                        .countByPostTopicCategory(category);
-                CompletableFuture<Integer> commentCountFuture = unitOfWork.getCommentRepository()
-                        .countByPostTopicCategory(category);
-                CompletableFuture<Integer> viewCountFuture = unitOfWork.getPostViewRepository()
-                        .countByPostTopicCategory(category);
+                    return CompletableFuture.completedFuture(categoryRepository.save(category));
+                }).thenCompose(category -> {
+                    CompletableFuture<Integer> upvoteCountFuture = upvoteRepository
+                            .countByPostTopicCategory(category);
+                    CompletableFuture<Integer> commentCountFuture = commentRepository
+                            .countByPostTopicCategory(category);
+                    CompletableFuture<Integer> viewCountFuture = postViewRepository
+                            .countByPostTopicCategory(category);
 
-                return CompletableFuture.allOf(upvoteCountFuture, commentCountFuture, viewCountFuture)
-                        .thenApply(voidResult -> {
-                            CategoryResponse response = categoryMapper.toCategoryResponse(category);
-                            response.setUpvoteCount(upvoteCountFuture.join());
-                            response.setCommentCount(commentCountFuture.join());
-                            response.setViewCount(viewCountFuture.join());
-                            return response;
-                        });
-            })
+                    return CompletableFuture.allOf(upvoteCountFuture, commentCountFuture, viewCountFuture)
+                            .thenApply(voidResult -> {
+                                CategoryResponse response = categoryMapper.toCategoryResponse(category);
+                                response.setUpvoteCount(upvoteCountFuture.join());
+                                response.setCommentCount(commentCountFuture.join());
+                                response.setViewCount(viewCountFuture.join());
+                                return response;
+                            });
+                })
         );
     }
 
@@ -367,10 +371,11 @@ public class CategoryService {
     @Async("AsyncTaskExecutor")
     private CompletableFuture<Account> findAccountById(UUID accountId) {
         return CompletableFuture.supplyAsync(() ->
-                unitOfWork.getAccountRepository().findById(accountId)
+                accountRepository.findById(accountId)
                         .orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND))
         );
     }
+
     private String getUsernameFromJwt() {
         var authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null && authentication.getPrincipal() instanceof Jwt jwt) {
@@ -378,10 +383,11 @@ public class CategoryService {
         }
         return null;
     }
+
     @Async("AsyncTaskExecutor")
     private CompletableFuture<Account> findAccountByUsername(String username) {
         return CompletableFuture.supplyAsync(() ->
-                unitOfWork.getAccountRepository().findByUsername(username)
+                accountRepository.findByUsername(username)
                         .orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND))
         );
     }

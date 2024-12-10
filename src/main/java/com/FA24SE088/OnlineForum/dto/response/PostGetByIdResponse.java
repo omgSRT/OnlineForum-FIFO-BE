@@ -25,7 +25,7 @@ public class PostGetByIdResponse {
     String status;
     Account account;
     String linkFile;
-    @JsonIgnoreProperties(value = { "category.account" })
+    @JsonIgnoreProperties(value = {"category.account"})
     Topic topic;
     @JsonIgnoreProperties(value = {
             "account.password",
