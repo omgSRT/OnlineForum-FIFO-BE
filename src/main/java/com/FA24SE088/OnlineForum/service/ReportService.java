@@ -188,8 +188,6 @@ public class ReportService {
 
         return CompletableFuture.allOf(reportFuture, accountFuture, pointFuture).thenCompose(v -> {
                     var report = reportFuture.join();
-
-
                     if (!report.getStatus().equals(ReportPostStatus.PENDING.name())) {
                         throw new AppException(ErrorCode.REPORT_POST_NOT_PENDING);
                     }

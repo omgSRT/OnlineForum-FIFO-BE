@@ -1,19 +1,20 @@
 package com.FA24SE088.OnlineForum.service;
 
 import com.FA24SE088.OnlineForum.dto.request.UnfollowRequest;
-import com.FA24SE088.OnlineForum.dto.response.AccountFollowResponse;
-import com.FA24SE088.OnlineForum.dto.response.AccountResponse;
-import com.FA24SE088.OnlineForum.dto.response.Follow2Response;
-import com.FA24SE088.OnlineForum.dto.response.FollowResponse;
-import com.FA24SE088.OnlineForum.entity.Account;
-import com.FA24SE088.OnlineForum.entity.BlockedAccount;
-import com.FA24SE088.OnlineForum.entity.Follow;
+import com.FA24SE088.OnlineForum.dto.response.*;
+import com.FA24SE088.OnlineForum.entity.*;
 import com.FA24SE088.OnlineForum.enums.FollowStatus;
 import com.FA24SE088.OnlineForum.enums.SuccessReturnMessage;
+import com.FA24SE088.OnlineForum.enums.WebsocketEventName;
 import com.FA24SE088.OnlineForum.exception.AppException;
 import com.FA24SE088.OnlineForum.exception.ErrorCode;
 import com.FA24SE088.OnlineForum.mapper.AccountMapper;
 import com.FA24SE088.OnlineForum.mapper.FollowMapper;
+import com.FA24SE088.OnlineForum.repository.NotificationRepository;
+import com.FA24SE088.OnlineForum.utils.PaginationUtils;
+import com.FA24SE088.OnlineForum.utils.SocketIOUtil;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.FA24SE088.OnlineForum.repository.AccountRepository;
 import com.FA24SE088.OnlineForum.repository.BlockedAccountRepository;
 import com.FA24SE088.OnlineForum.repository.FollowRepository;
@@ -26,6 +27,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.*;
 
 @RequiredArgsConstructor
@@ -34,8 +36,12 @@ import java.util.*;
 @Service
 public class FollowService {
     AccountMapper accountMapper;
+    PaginationUtils paginationUtils;
+    ObjectMapper objectMapper = new ObjectMapper();
+    SocketIOUtil socketIOUtil;
     AccountRepository accountRepository;
     FollowRepository followRepository;
+    NotificationRepository notificationRepository;
     BlockedAccountRepository blockedAccountRepository;
 
     FollowMapper followMapper;
@@ -169,11 +175,39 @@ public class FollowService {
                     .status(FollowStatus.FOLLOWING.name())
                     .build();
             followRepository.save(follow);
+            response = followMapper.toResponse2(follow);
+
+            followRepository.save(follow);
+
             response.setMessage(SuccessReturnMessage.CREATE_SUCCESS.getMessage());
             response.setFollowee(followee);
             response.setFollower(account);
+            realtime_follow(follow, "Follow", "Follow notification");
         }
         return response;
+    }
+
+    public void realtime_follow(Follow follow, String entity, String titleNotification) {
+        DataNotification dataNotification = DataNotification.builder()
+                .id(follow.getFollowId())
+                .entity(entity)
+                .build();
+        String messageJson = null;
+        try {
+            messageJson = objectMapper.writeValueAsString(dataNotification);
+            Notification notification = Notification.builder()
+                    .title(titleNotification)
+                    .message(messageJson)
+                    .isRead(false)
+                    .account(follow.getFollowee())
+                    .createdDate(LocalDateTime.now())
+                    .build();
+            notificationRepository.save(notification);
+            socketIOUtil.sendEventToOneClientInAServer(follow.getFollowee().getAccountId(), WebsocketEventName.NOTIFICATION.name(), notification);
+
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
     }
 
 

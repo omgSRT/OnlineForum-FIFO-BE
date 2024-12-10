@@ -1,6 +1,7 @@
 package com.FA24SE088.OnlineForum.service;
 
 import com.FA24SE088.OnlineForum.dto.request.*;
+
 import com.FA24SE088.OnlineForum.repository.AccountRepository;
 import com.FA24SE088.OnlineForum.repository.RedeemRepository;
 import com.FA24SE088.OnlineForum.repository.RewardRepository;
@@ -15,7 +16,6 @@ import com.FA24SE088.OnlineForum.enums.RewardStatus;
 import com.FA24SE088.OnlineForum.exception.AppException;
 import com.FA24SE088.OnlineForum.exception.ErrorCode;
 import com.FA24SE088.OnlineForum.mapper.RewardMapper;
-import com.FA24SE088.OnlineForum.mapper.SectionMapper;
 import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.Bucket;
 import com.google.firebase.cloud.StorageClient;
@@ -41,7 +41,6 @@ public class RewardService {
     AccountRepository accountRepository;
     RedeemRepository redeemRepository;
     RewardMapper rewardMapper;
-    SectionMapper sectionMapper;
 
     @Transactional
     public void deleteReward(UUID rewardId) {

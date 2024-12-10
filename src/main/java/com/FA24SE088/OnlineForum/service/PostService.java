@@ -190,7 +190,6 @@ public class PostService {
                                             response.setUpvoteCount(upvoteCountFuture.join());
                                             response.setCommentCount(commentCountFuture.join());
                                             response.setViewCount(viewCountFuture.join());
-                                            //==========================================================
                                             DataNotification dataNotification = null;
                                             try {
                                                 dataNotification = DataNotification.builder()
@@ -219,7 +218,6 @@ public class PostService {
                                             } catch (JsonProcessingException e) {
                                                 throw new RuntimeException(e);
                                             }
-                                            //==========================================================
                                             return response;
                                         });
                             });
@@ -1910,7 +1908,6 @@ public class PostService {
                         .build();
                 String messageJson = null;
                 try {
-
                     messageJson = objectMapper.writeValueAsString(dataNotification);
                     Notification notification = Notification.builder()
                             .title("Daily point Noitfication ")
@@ -1924,7 +1921,6 @@ public class PostService {
                 } catch (JsonProcessingException e) {
                     throw new RuntimeException(e);
                 }
-                //==========================================================
             }
 
             walletRepository.save(walletDownloader);

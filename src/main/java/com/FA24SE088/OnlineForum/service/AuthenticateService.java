@@ -3,20 +3,17 @@ package com.FA24SE088.OnlineForum.service;
 import com.FA24SE088.OnlineForum.dto.request.AccountChangePasswordRequest;
 import com.FA24SE088.OnlineForum.dto.request.AuthenticationRequest;
 import com.FA24SE088.OnlineForum.dto.request.IntrospectRequest;
-import com.FA24SE088.OnlineForum.dto.request.LogoutRequest;
 import com.FA24SE088.OnlineForum.dto.response.AccountResponse;
 import com.FA24SE088.OnlineForum.dto.response.AuthenticationResponse;
 import com.FA24SE088.OnlineForum.dto.response.IntrospectResponse;
 import com.FA24SE088.OnlineForum.dto.response.RefreshAccessTokenResponse;
 import com.FA24SE088.OnlineForum.entity.Account;
-import com.FA24SE088.OnlineForum.entity.InvalidatedToken;
 import com.FA24SE088.OnlineForum.enums.AccountStatus;
 import com.FA24SE088.OnlineForum.exception.AppException;
 import com.FA24SE088.OnlineForum.exception.ErrorCode;
 
 import com.FA24SE088.OnlineForum.mapper.AccountMapper;
 import com.FA24SE088.OnlineForum.repository.AccountRepository;
-import com.FA24SE088.OnlineForum.repository.InvalidateTokenRepository;
 import com.FA24SE088.OnlineForum.utils.EmailUtil;
 import com.FA24SE088.OnlineForum.utils.OtpUtil;
 import com.nimbusds.jose.*;
@@ -47,7 +44,6 @@ import java.util.concurrent.CompletableFuture;
 @Service
 public class AuthenticateService {
     final AccountRepository accountRepository;
-    final InvalidateTokenRepository invalidateTokenRepository;
     final EmailUtil emailUtil;
     final AccountMapper accountMapper;
     final OtpUtil otpUtil;
@@ -73,16 +69,14 @@ public class AuthenticateService {
         PasswordEncoder passwordEncoder = new BCryptPasswordEncoder(10);
         var account = accountRepository.findByUsername(request.getUsername()).orElseThrow(
                 () -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND)
+                //
         );
         boolean authenticated = passwordEncoder.matches(request.getPassword(), account.getPassword());
         if (!authenticated) {
             throw new AppException(ErrorCode.UNAUTHENTICATED);
         }
-//        if(account.getStatus().equals(AccountStatus.BANED.name())){
-//            long daysRemaining = ChronoUnit.DAYS.between(LocalDateTime.now(), account.getBannedUntil()) + 1;
-//            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Your account is also banned in " + daysRemaining + " days.");
-//        }
-        if (account.getStatus().equals(AccountStatus.PENDING_APPROVAL.name())) {
+        if(account.getStatus().equals(AccountStatus.PENDING_APPROVAL.name())){
+
             throw new AppException(ErrorCode.ACCOUNT_HAS_NOT_BEEN_AUTHENTICATED);
         }
         if (account.getStatus().equals(AccountStatus.INACTIVE.name())) {
@@ -167,18 +161,19 @@ public class AuthenticateService {
                 .build();
     }
 
-    public void logout(LogoutRequest request) throws ParseException, JOSEException {
-        var signToken = verifyToken(request.getToken());
+//    public void logout(LogoutRequest request) throws ParseException, JOSEException {
+//        var signToken = verifyToken(request.getToken());
+//
+//        String jti = signToken.getJWTClaimsSet().getJWTID();
+//        Date expTime = signToken.getJWTClaimsSet().getExpirationTime();
+//        InvalidatedToken invalidatedToken = InvalidatedToken.builder()
+//                .id(jti)
+//                .expiryTime(expTime)
+//                .build();
+//
+//        unitOfWork.getInvalidateTokenRepository().save(invalidatedToken);
+//    }
 
-        String jti = signToken.getJWTClaimsSet().getJWTID();
-        Date expTime = signToken.getJWTClaimsSet().getExpirationTime();
-        InvalidatedToken invalidatedToken = InvalidatedToken.builder()
-                .id(jti)
-                .expiryTime(expTime)
-                .build();
-
-        invalidateTokenRepository.save(invalidatedToken);
-    }
 
     public CompletableFuture<Void> forgetPassword(String email) {
         var foundAccountFuture = accountRepository.findByEmailIgnoreCase(email)
@@ -243,9 +238,6 @@ public class AuthenticateService {
         var verified = signedJWT.verify(verifier);
         if (!(verified && expiredDate.after(new Date()))) {
             throw new RuntimeException("String.valueOf(ErrorCode.UNAUTHENTICATED)");
-        }
-        if (invalidateTokenRepository.existsById(signedJWT.getJWTClaimsSet().getJWTID())) {
-            throw new RuntimeException("unauthenticated");
         }
 
         return signedJWT;

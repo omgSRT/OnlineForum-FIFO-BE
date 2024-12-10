@@ -100,7 +100,6 @@ public class AccountService {
 
         account.setCreatedDate(LocalDateTime.now());
         account.setStatus(AccountStatus.PENDING_APPROVAL.name());
-//        String handle = String.format("@%s", request.getUsername());
         String handle = String.format(request.getUsername());
         account.setHandle(handle);
         accountRepository.save(account);

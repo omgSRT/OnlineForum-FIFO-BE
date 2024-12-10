@@ -120,11 +120,6 @@ public class AuthenticationController {
                 .build();
     }
 
-    @PostMapping("/logout")
-    public ApiResponse<Void> logout(@RequestBody LogoutRequest request) throws ParseException, JOSEException {
-        authenticateService.logout(request);
-        return ApiResponse.<Void>builder().build();
-    }
 
     @PostMapping("/refresh")
     public ApiResponse<RefreshAccessTokenResponse> generateNewAccessToken(String refreshToken, String username) {

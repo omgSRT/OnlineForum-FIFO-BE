@@ -62,12 +62,11 @@ public class PaymentService {
     }
 
     public PaymentDTO.VNPayResponse buyPoints(HttpServletRequest request, UUID monkeyCoinPackId, String redirectUrl) {
+        Account account = getCurrentUser();
         MonkeyCoinPack monkeyCoinPack = monkeyCoinPackRepository.findById(monkeyCoinPackId)
                 .orElseThrow(() -> new AppException(ErrorCode.PRICING_INVALID));
 
         long amount = monkeyCoinPack.getPrice() * 100L;
-
-        Account account = getCurrentUser();
         Wallet wallet = walletRepository.findById(account.getWallet().getWalletId())
                 .orElseThrow(() -> new AppException(ErrorCode.WALLET_NOT_EXIST));
         OrderPoint orderPoint = new OrderPoint();
@@ -118,14 +117,6 @@ public class PaymentService {
             wallet.setBalance(wallet.getBalance() + orderPoint.getMonkeyCoinPack().getPoint());
             walletRepository.save(wallet);
 
-//            String messageJson = objectMapper.writeValueAsString(orderPoint);
-//            Notification notification = Notification.builder()
-//                    .title("Load money into the wallet successfully")
-//                    .message(messageJson)
-//                    .isRead(false)
-//                    .build();
-//            unitOfWork.getNotificationRepository().save(notification);
-//            socketIOServer.getBroadcastOperations().sendEvent(WebsocketEventName.NOTIFICATION.name(), notification);
             redirectUrl = returnUrl;
         } else {
             orderPoint.setStatus(OrderPointStatus.FAILED.name());
