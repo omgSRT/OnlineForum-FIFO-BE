@@ -78,7 +78,6 @@ public class PostService {
     DetectProgrammingLanguageUtil detectProgrammingLanguageUtil;
     OpenAIUtil openAIUtil;
     ContentFilterUtil contentFilterUtil;
-    RedisTemplate<String, List<PostResponse>> redisTemplate;
     ObjectMapper objectMapper = new ObjectMapper();
     SocketIOUtil socketIOUtil;
     Set<String> imageExtensionList = Set.of("ai", "jpg", "jpeg", "png", "gif", "indd", "raw", "avif", "eps", "bmp",
@@ -638,10 +637,11 @@ public class PostService {
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
     public CompletableFuture<PostResponse> deleteByChangingPostStatusById(UUID postId) {
         var postFuture = findPostById(postId);
+        var pointFuture = getPoint();
         var username = getUsernameFromJwt();
         var accountFuture = findAccountByUsername(username);
 
-        return CompletableFuture.allOf(postFuture, accountFuture).thenCompose(v -> {
+        return CompletableFuture.allOf(postFuture, accountFuture, pointFuture).thenCompose(v -> {
             var account = accountFuture.join();
             var post = postFuture.join();
             var categoryPost = post.getTopic().getCategory();
@@ -668,22 +668,43 @@ public class PostService {
 
                 return CompletableFuture.completedFuture(postRepository.save(post));
             });
-        }).thenCompose(post -> {
-            CompletableFuture<Integer> upvoteCountFuture = upvoteRepository
-                    .countByPost(post);
-            CompletableFuture<Integer> commentCountFuture = commentRepository
-                    .countByPost(post);
-            CompletableFuture<Integer> viewCountFuture = postViewRepository
-                    .countByPost(post);
+        })
+                .thenCompose(post -> {
+                    var account = post.getAccount();
+                    var pointList = pointFuture.join();
+                    Point point;
+                    if (pointList.isEmpty()) {
+                        throw new AppException(ErrorCode.POINT_NOT_FOUND);
+                    }
+                    point = pointList.get(0);
+                    if(account.getRole().getName().equalsIgnoreCase("USER")){
+                        createTransactionForDeletePost(account.getWallet(), point).thenApply(transaction -> {
+                            var wallet = account.getWallet();
+                            wallet.setBalance(wallet.getBalance() - point.getPointPerPost());
+                            walletRepository.save(wallet);
 
-            return CompletableFuture.allOf(upvoteCountFuture, commentCountFuture, viewCountFuture)
-                    .thenApply(voidResult -> {
-                        PostResponse response = postMapper.toPostResponse(post);
-                        response.setUpvoteCount(upvoteCountFuture.join());
-                        response.setCommentCount(commentCountFuture.join());
-                        response.setViewCount(viewCountFuture.join());
-                        return response;
-                    });
+                            return CompletableFuture.completedFuture(null);
+                        });
+                    }
+
+                    return CompletableFuture.completedFuture(post);
+                })
+                .thenCompose(post -> {
+                    CompletableFuture<Integer> upvoteCountFuture = upvoteRepository
+                            .countByPost(post);
+                    CompletableFuture<Integer> commentCountFuture = commentRepository
+                            .countByPost(post);
+                    CompletableFuture<Integer> viewCountFuture = postViewRepository
+                            .countByPost(post);
+
+                    return CompletableFuture.allOf(upvoteCountFuture, commentCountFuture, viewCountFuture)
+                            .thenApply(voidResult -> {
+                                PostResponse response = postMapper.toPostResponse(post);
+                                response.setUpvoteCount(upvoteCountFuture.join());
+                                response.setCommentCount(commentCountFuture.join());
+                                response.setViewCount(viewCountFuture.join());
+                                return response;
+                            });
         });
     }
 
@@ -1411,11 +1432,11 @@ public class PostService {
                     newDailyPoint.setPost(savedPost);
                     newDailyPoint.setAccount(account);
                     newDailyPoint.setTypeBonus(null);
-                    if (totalPoint + point.getPointPerPost() > point.getMaxPoint()) {
-                        newDailyPoint.setPointEarned(0);
-                    } else {
-                        newDailyPoint.setPointEarned(point.getPointPerPost());
-                    }
+
+                    var remainingDailyPoint = point.getMaxPoint() - totalPoint < 0
+                            ? 0
+                            : point.getMaxPoint() - totalPoint;
+                    newDailyPoint.setPointEarned(Math.min(remainingDailyPoint, point.getPointPerPost()));
 
                     var dailyPointFuture = findDailyPointByAccountAndPost(account, savedPost);
 
@@ -1439,17 +1460,24 @@ public class PostService {
 
         return CompletableFuture.allOf(walletFuture, pointFuture, totalPointFuture).thenCompose(all -> {
             var wallet = walletFuture.join();
+            var pointList = pointFuture.join();
 
             if (wallet == null) {
                 return CompletableFuture.completedFuture(null);
             }
 
-            var point = pointFuture.join().get(0);
-            var currentWalletBalance = wallet.getBalance();
+            Point point;
+            if (pointList.isEmpty()) {
+                throw new AppException(ErrorCode.POINT_NOT_FOUND);
+            }
+            point = pointList.get(0);
             var totalPoint = totalPointFuture.join();
 
-            if (totalPoint + point.getPointPerPost() <= point.getMaxPoint())
-                wallet.setBalance(currentWalletBalance + point.getPointPerPost());
+            var remainingDailyPoint = point.getMaxPoint() - totalPoint < 0
+                    ? 0
+                    : point.getMaxPoint() - totalPoint;
+            var pointEarned = Math.min(remainingDailyPoint, point.getPointPerPost());
+            wallet.setBalance(wallet.getBalance() + pointEarned);
 
             return CompletableFuture.completedFuture(walletRepository.save(wallet));
         });
@@ -1703,6 +1731,21 @@ public class PostService {
                     .wallet(wallet)
                     .reward(null)
                     .transactionType(TransactionType.DOWNLOAD_SOURCECODE.name())
+                    .build();
+
+            return transactionRepository.save(newTransaction);
+        });
+    }
+
+    @Async("AsyncTaskExecutor")
+    private CompletableFuture<Transaction> createTransactionForDeletePost(Wallet wallet, Point point) {
+        return CompletableFuture.supplyAsync(() -> {
+            Transaction newTransaction = Transaction.builder()
+                    .amount(-point.getPointPerPost())
+                    .createdDate(new Date())
+                    .wallet(wallet)
+                    .reward(null)
+                    .transactionType(TransactionType.DELETE_POST.name())
                     .build();
 
             return transactionRepository.save(newTransaction);
