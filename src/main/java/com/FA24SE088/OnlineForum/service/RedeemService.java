@@ -37,17 +37,17 @@ public class RedeemService {
                 .orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND));
     }
 
-    private Reward findDocument(UUID id) {
+    private Reward findRewardById(UUID id) {
         return rewardRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.REWARD_NOT_FOUND));
     }
 
-    public RedeemResponse create(RedeemRequest request) {
+    public RedeemResponse createRedeem(RedeemRequest request) {
         Account account = findAccountById(request.getAccountId());
         if (account.getRole().getName().equals("STAFF") || account.getRole().getName().equals("ADMIN")) {
             throw new AppException(ErrorCode.STAFF_AND_ADMIN_CANNOT_REDEEM);
         }
-        Reward reward = findDocument(request.getRewardId());
+        Reward reward = findRewardById(request.getRewardId());
         account.getRedeemList().forEach(redeem -> {
             if (redeem.getReward().getRewardId().equals(reward.getRewardId()))
                 throw new AppException(ErrorCode.REWARD_HAS_BEEN_TAKEN);

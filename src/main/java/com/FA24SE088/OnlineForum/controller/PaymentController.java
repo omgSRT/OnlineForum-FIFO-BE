@@ -1,11 +1,11 @@
-package com.FA24SE088.OnlineForum.vnpay;
+package com.FA24SE088.OnlineForum.controller;
 
 import com.FA24SE088.OnlineForum.dto.request.MCRequest;
-import com.FA24SE088.OnlineForum.dto.response.ResponseObject;
+import com.FA24SE088.OnlineForum.dto.response.PaymentResponse;
+import com.FA24SE088.OnlineForum.service.PaymentService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.view.RedirectView;
@@ -33,8 +33,8 @@ public class PaymentController {
 
 
     @PostMapping("/buyPoints")
-    public ResponseEntity<PaymentDTO.VNPayResponse> buyPoints(HttpServletRequest request, @RequestBody MCRequest mcRequest) {
-        PaymentDTO.VNPayResponse response = paymentService.buyPoints(request, mcRequest.getMonkeyCoinPackId(), mcRequest.getRedirectUrl());
+    public ResponseEntity<PaymentResponse.VNPayResponse> buyPoints(HttpServletRequest request, @RequestBody MCRequest mcRequest) {
+        PaymentResponse.VNPayResponse response = paymentService.buyPoints(request, mcRequest.getMonkeyCoinPackId(), mcRequest.getRedirectUrl());
         return ResponseEntity.ok(response);
     }
 

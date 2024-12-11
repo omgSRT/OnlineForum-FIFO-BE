@@ -31,6 +31,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
@@ -79,7 +80,7 @@ public class UpvoteService {
                                                             newUpvote.setAccount(account);
                                                             newUpvote.setPost(post);
                                                             var saveNewUpvote = upvoteRepository.save(newUpvote);
-                                                            realtime_upvote(newUpvote, post.getAccount(), "Upvote", "Upvote notification");
+                                                            realtime_upvote(newUpvote, post.getAccount(), "Post", "Upvote notification");
                                                             if (existingDailyPoint != null) {
                                                                 realtime_dailyPoint(existingDailyPoint, post.getAccount(), "Daily Point", "Daily Point notification");
                                                             }
@@ -88,12 +89,13 @@ public class UpvoteService {
                                                             return CompletableFuture.completedFuture(upvoteResponse);
                                                         });
                                             } else {
+
                                                 Upvote newUpvote = new Upvote();
                                                 newUpvote.setAccount(account);
                                                 newUpvote.setPost(post);
                                                 var saveNewUpvote = upvoteRepository.save(newUpvote);
                                                 var upvoteResponse = upvoteMapper.toUpvoteCreateDeleteResponse(saveNewUpvote);
-                                                realtime_upvote(newUpvote, post.getAccount(), "Upvote", "Upvote notification");
+                                                realtime_upvote(newUpvote, post.getAccount(), "Post", "Upvote notification");
                                                 upvoteResponse.setMessage(SuccessReturnMessage.CREATE_SUCCESS.getMessage());
                                                 return CompletableFuture.completedFuture(upvoteResponse);
                                             }
@@ -106,7 +108,7 @@ public class UpvoteService {
 
     public void realtime_upvote(Upvote upvote, Account account, String entity, String titleNotification) {
         DataNotification dataNotification = DataNotification.builder()
-                .id(upvote.getUpvoteId())
+                .id(upvote.getPost().getPostId())
                 .entity(entity)
                 .build();
         String messageJson;
@@ -119,13 +121,16 @@ public class UpvoteService {
                     .account(account)
                     .createdDate(LocalDateTime.now())
                     .build();
-            notificationRepository.save(notification);
-            socketIOUtil.sendEventToOneClientInAServer(account.getAccountId(), WebsocketEventName.NOTIFICATION.name(), notification);
+            if(!upvote.getAccount().getAccountId().equals(account.getAccountId())) {
+                notificationRepository.save(notification);
+                socketIOUtil.sendEventToOneClientInAServer(account.getAccountId(), WebsocketEventName.NOTIFICATION.name(), notification);
+            }
             socketIOUtil.sendEventToAllClientInAServer(WebsocketEventName.REFRESH.toString(), upvote);
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
     }
+    
 
     public void realtime_dailyPoint(DailyPoint dailyPoint, Account account, String entity, String titleNotification) {
         DataNotification dataNotification = DataNotification.builder()

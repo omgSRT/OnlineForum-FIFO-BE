@@ -1,8 +1,8 @@
-package com.FA24SE088.OnlineForum.vnpay;
+package com.FA24SE088.OnlineForum.dto.response;
 
 import lombok.Builder;
 
-public abstract class PaymentDTO {
+public abstract class PaymentResponse {
     @Builder
     public static class VNPayResponse {
         public String code;

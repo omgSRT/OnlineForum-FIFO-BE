@@ -34,7 +34,7 @@ public class MonkeyCoinPackService {
     }
 
     public PricingResponse updatePricing(UUID pricingId, PricingRequest pricingRequest) {
-        MonkeyCoinPack monkeyCoinPack = monkeyCoinPackRepository.findById(pricingId).orElseThrow(() -> new AppException(ErrorCode.PRICING_NOT_FOUND));
+        MonkeyCoinPack monkeyCoinPack = monkeyCoinPackRepository.findById(pricingId).orElseThrow(() -> new AppException(ErrorCode.MONKEY_COIN_PACK_NOT_FOUND));
         monkeyCoinPack.setImgUrl(pricingRequest.getImgUrl());
         monkeyCoinPack.setPrice(pricingRequest.getPrice());
         monkeyCoinPack.setPoint(monkeyCoinPack.getPoint());
@@ -57,7 +57,7 @@ public class MonkeyCoinPackService {
         if (monkeyCoinPackRepository.existsById(pricingId)) {
             monkeyCoinPackRepository.deleteById(pricingId);
         } else {
-            throw new AppException(ErrorCode.PRICING_NOT_FOUND);
+            throw new AppException(ErrorCode.MONKEY_COIN_PACK_NOT_FOUND);
         }
     }
 }

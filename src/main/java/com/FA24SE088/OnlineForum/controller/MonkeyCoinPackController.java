@@ -44,7 +44,7 @@ public class MonkeyCoinPackController {
     public ApiResponse<PricingResponse> getPricing(@PathVariable UUID id) {
         return ApiResponse.<PricingResponse>builder()
                 .entity(monkeyCoinPackService.getPricingById(id)
-                        .orElseThrow(() -> new AppException(ErrorCode.PRICING_NOT_FOUND)))
+                        .orElseThrow(() -> new AppException(ErrorCode.MONKEY_COIN_PACK_NOT_FOUND)))
                 .build();
     }
 
