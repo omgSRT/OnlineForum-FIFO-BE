@@ -148,6 +148,7 @@ public enum ErrorCode {
     CONTENT_NOT_RELATED_TO_TITLE(10131, "Content Do Not Related To Title", HttpStatus.BAD_REQUEST),
     SPAM_COMMENT(10132, "This Type Of Comment Is Considered Spamming. Please Do Not Do That Again", HttpStatus.BAD_REQUEST),
     NOT_A_POST(10133, "This Is Not A Completed Post", HttpStatus.BAD_REQUEST),
+    REPORT_POST_THRESHOLD_LOWER_THAN_ONE(10134, "Report threshold must be greater than or equal to 1", HttpStatus.BAD_REQUEST),
     ;
 
     private int code;

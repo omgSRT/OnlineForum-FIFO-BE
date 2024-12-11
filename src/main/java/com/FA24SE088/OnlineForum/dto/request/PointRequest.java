@@ -18,4 +18,6 @@ public class PointRequest {
     double pointCostPerDownload;
     @Min(value = 1, message = "Point earned per download must be greater than or equal to 1")
     double pointEarnedPerDownload;
+    @Min(value = 1, message = "Report threshold must be greater than or equal to 1")
+    long reportThresholdForAutoDelete;
 }

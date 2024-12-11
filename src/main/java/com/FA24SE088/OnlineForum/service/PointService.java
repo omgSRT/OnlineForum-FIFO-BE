@@ -45,6 +45,11 @@ public class PointService {
                 throw new AppException(ErrorCode.POINT_DATA_EXIST);
             }
 
+            request.setMaxPoint(request.getMaxPoint() <= 0 ? 100 : request.getMaxPoint());
+            request.setPointPerPost(request.getPointPerPost() <= 0 ? 5 : request.getPointPerPost());
+            request.setPointCostPerDownload(request.getPointCostPerDownload() <= 0 ? 15 : request.getPointCostPerDownload());
+            request.setPointEarnedPerDownload(request.getPointEarnedPerDownload() <= 0 ? 2 : request.getPointEarnedPerDownload());
+            request.setReportThresholdForAutoDelete(request.getReportThresholdForAutoDelete() <= 0 ? 5 : request.getReportThresholdForAutoDelete());
             if (request.getMaxPoint() < request.getPointPerPost()) {
                 throw new AppException(ErrorCode.MAX_POINT_LOWER_THAN_INDIVIDUAL_POINT);
             }
@@ -70,12 +75,31 @@ public class PointService {
         var listPointDataFuture = CompletableFuture.supplyAsync(pointRepository::findAll);
 
         return listPointDataFuture.thenApply(listPointData -> {
-            Point existPoint = new Point();
+            Point existPoint;
 
             if (!listPointData.isEmpty()) {
                 existPoint = listPointData.get(0);
             } else {
                 throw new AppException(ErrorCode.POINT_NOT_FOUND);
+            }
+
+            request.setMaxPoint(request.getMaxPoint() <= 0
+                    ? existPoint.getMaxPoint()
+                    : request.getMaxPoint());
+            request.setPointPerPost(request.getPointPerPost() <= 0
+                    ? existPoint.getPointPerPost()
+                    : request.getPointPerPost());
+            request.setPointCostPerDownload(request.getPointCostPerDownload() <= 0
+                    ? existPoint.getPointCostPerDownload()
+                    : request.getPointCostPerDownload());
+            request.setPointEarnedPerDownload(request.getPointEarnedPerDownload() <= 0
+                    ? existPoint.getPointEarnedPerDownload()
+                    : request.getPointEarnedPerDownload());
+            request.setReportThresholdForAutoDelete(request.getReportThresholdForAutoDelete() <= 0
+                    ? existPoint.getReportThresholdForAutoDelete()
+                    : request.getReportThresholdForAutoDelete());
+            if (request.getMaxPoint() < request.getPointPerPost()) {
+                throw new AppException(ErrorCode.MAX_POINT_LOWER_THAN_INDIVIDUAL_POINT);
             }
 
             pointMapper.updatePoint(existPoint, request);

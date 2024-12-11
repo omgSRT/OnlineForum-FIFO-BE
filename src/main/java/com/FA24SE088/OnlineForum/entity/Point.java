@@ -23,6 +23,7 @@ public class Point {
     double pointPerPost;
     double pointCostPerDownload;
     double pointEarnedPerDownload;
+    long reportThresholdForAutoDelete;
 
     @JsonIgnoreProperties(value = {"point"}, allowSetters = true)
     @OneToMany(mappedBy = "point", cascade = CascadeType.ALL, orphanRemoval = true)
