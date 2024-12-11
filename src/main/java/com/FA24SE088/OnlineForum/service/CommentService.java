@@ -88,7 +88,7 @@ public class CommentService {
                                                     newComment.setReplies(new ArrayList<>());
 
                                                     var savedComment = commentRepository.save(newComment);
-                                                    realtimeComment(newComment, "Comment", "Comment notification");
+                                                    realtimeComment(newComment, "Post", "Comment notification");
                                                     realtimeDailyPointNotification(dailyPoint, "DailyPoint", "Daily point notification");
                                                     return CompletableFuture.completedFuture(savedComment);
                                                 });
@@ -105,7 +105,7 @@ public class CommentService {
                                         newComment.setReplies(new ArrayList<>());
 
                                         var savedComment = commentRepository.save(newComment);
-                                        realtimeComment(newComment, "Comment", "Comment notification");
+                                        realtimeComment(newComment, "Post", "Comment notification");
                                         return CompletableFuture.completedFuture(savedComment);
                                     }
                                 });
@@ -214,7 +214,7 @@ public class CommentService {
                                         newReply.setParentComment(parentComment);
                                         newReply.setReplies(new ArrayList<>());
                                         var saveNewReply = commentRepository.save(newReply);
-                                        realtimeComment(newReply, "Comment", "Reply notification");
+                                        realtimeComment(newReply, "Post", "Reply notification");
                                         return CompletableFuture.completedFuture(saveNewReply);
                                     }
                                 });
