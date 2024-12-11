@@ -80,7 +80,7 @@ public class UpvoteService {
                                                             newUpvote.setAccount(account);
                                                             newUpvote.setPost(post);
                                                             var saveNewUpvote = upvoteRepository.save(newUpvote);
-                                                            realtime_upvote(newUpvote, post.getAccount(), "Post", "Upvote notification");
+                                                            realtime_upvote(newUpvote, post.getAccount(), "Post", "Upvote notification in post: " + post.getTitle());
                                                             if (existingDailyPoint != null) {
                                                                 realtime_dailyPoint(existingDailyPoint, post.getAccount(), "Daily Point", "Daily Point notification");
                                                             }
@@ -95,7 +95,7 @@ public class UpvoteService {
                                                 newUpvote.setPost(post);
                                                 var saveNewUpvote = upvoteRepository.save(newUpvote);
                                                 var upvoteResponse = upvoteMapper.toUpvoteCreateDeleteResponse(saveNewUpvote);
-                                                realtime_upvote(newUpvote, post.getAccount(), "Post", "Upvote notification");
+                                                realtime_upvote(newUpvote, post.getAccount(), "Post", "Upvote notification in post: " + post.getTitle());
                                                 upvoteResponse.setMessage(SuccessReturnMessage.CREATE_SUCCESS.getMessage());
                                                 return CompletableFuture.completedFuture(upvoteResponse);
                                             }

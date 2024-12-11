@@ -199,7 +199,7 @@ public class CommentService {
                                                     newReply.setReplies(new ArrayList<>());
                                                     var saveNewReply = commentRepository.save(newReply);
                                                     realtimeDailyPointNotification(dailyPoint, "DailyPoint", "Daily point notification");
-                                                    realtimeComment(newReply, "Post", "Reply notification");
+                                                    realtimeComment(newReply, "Post", "Reply notification in post: " + post.getTitle());
                                                     return CompletableFuture.completedFuture(saveNewReply);
                                                 });
                                     } else {
@@ -214,7 +214,7 @@ public class CommentService {
                                         newReply.setParentComment(parentComment);
                                         newReply.setReplies(new ArrayList<>());
                                         var saveNewReply = commentRepository.save(newReply);
-                                        realtimeComment(newReply, "Post", "Reply notification");
+                                        realtimeComment(newReply, "Post", "Reply notification in post: " + post.getTitle());
                                         return CompletableFuture.completedFuture(saveNewReply);
                                     }
                                 });

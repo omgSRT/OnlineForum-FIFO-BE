@@ -1953,7 +1953,7 @@ public class PostService {
                 try {
                     messageJson = objectMapper.writeValueAsString(dataNotification);
                     Notification notification = Notification.builder()
-                            .title("Daily point Noitfication ")
+                            .title("Download file on post noitfication: " + dailyPoint.getPost().getTitle())
                             .message(messageJson)
                             .isRead(false)
                             .account(accountOwner)
