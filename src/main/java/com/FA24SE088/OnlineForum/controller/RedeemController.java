@@ -25,7 +25,7 @@ public class RedeemController {
     @PostMapping("/create")
     public ApiResponse<RedeemResponse> create(@RequestBody RedeemRequest request) {
         return ApiResponse.<RedeemResponse>builder()
-                .entity(redeemService.create(request))
+                .entity(redeemService.createRedeem(request))
                 .build();
     }
 

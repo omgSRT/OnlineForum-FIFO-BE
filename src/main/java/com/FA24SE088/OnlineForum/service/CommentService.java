@@ -88,8 +88,8 @@ public class CommentService {
                                                     newComment.setReplies(new ArrayList<>());
 
                                                     var savedComment = commentRepository.save(newComment);
-                                                    realtimeComment(newComment, "Comment", "Comment notification");
-                                                    realtimeNotification(dailyPoint, "DailyPoint", "Daily point notification");
+                                                    realtimeComment(newComment, "Post", "Comment notification");
+                                                    realtimeDailyPointNotification(dailyPoint, "DailyPoint", "Daily point notification");
                                                     return CompletableFuture.completedFuture(savedComment);
                                                 });
                                     } else {
@@ -105,7 +105,7 @@ public class CommentService {
                                         newComment.setReplies(new ArrayList<>());
 
                                         var savedComment = commentRepository.save(newComment);
-                                        realtimeComment(newComment, "Comment", "Comment notification");
+                                        realtimeComment(newComment, "Post", "Comment notification");
                                         return CompletableFuture.completedFuture(savedComment);
                                     }
                                 });
@@ -115,9 +115,8 @@ public class CommentService {
     }
 
     public void realtimeComment(Comment comment, String entity, String titleNotification) {
-        DataNotification dataNotification = null;
-        dataNotification = DataNotification.builder()
-                .id(comment.getCommentId())
+        DataNotification dataNotification = DataNotification.builder()
+                .id(comment.getPost().getPostId())
                 .entity(entity)
                 .build();
         String messageJson = null;
@@ -130,15 +129,17 @@ public class CommentService {
                     .account(comment.getPost().getAccount())
                     .createdDate(LocalDateTime.now())
                     .build();
-            notificationRepository.save(notification);
-            socketIOUtil.sendEventToOneClientInAServer(comment.getPost().getAccount().getAccountId(), WebsocketEventName.NOTIFICATION.name(), notification);
+            if (!comment.getAccount().getAccountId().equals(comment.getPost().getAccount().getAccountId())) {
+                notificationRepository.save(notification);
+                socketIOUtil.sendEventToOneClientInAServer(comment.getPost().getAccount().getAccountId(), WebsocketEventName.NOTIFICATION.name(), notification);
+            }
             socketIOUtil.sendEventToAllClientInAServer(WebsocketEventName.REFRESH.toString(), comment);
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
     }
 
-    public void realtimeNotification(DailyPoint dailyPoint, String entity, String titleNotification) {
+    public void realtimeDailyPointNotification(DailyPoint dailyPoint, String entity, String titleNotification) {
         DataNotification dataNotification = null;
         dataNotification = DataNotification.builder()
                 .id(dailyPoint.getDailyPointId())
@@ -197,8 +198,8 @@ public class CommentService {
                                                     newReply.setParentComment(parentComment);
                                                     newReply.setReplies(new ArrayList<>());
                                                     var saveNewReply = commentRepository.save(newReply);
-                                                    realtimeNotification(dailyPoint, "DailyPoint", "Daily point notification");
-                                                    realtimeComment(newReply, "Comment", "Reply notification");
+                                                    realtimeDailyPointNotification(dailyPoint, "DailyPoint", "Daily point notification");
+                                                    realtimeComment(newReply, "Post", "Reply notification in post: " + post.getTitle());
                                                     return CompletableFuture.completedFuture(saveNewReply);
                                                 });
                                     } else {
@@ -213,7 +214,7 @@ public class CommentService {
                                         newReply.setParentComment(parentComment);
                                         newReply.setReplies(new ArrayList<>());
                                         var saveNewReply = commentRepository.save(newReply);
-                                        realtimeComment(newReply, "Comment", "Reply notification");
+                                        realtimeComment(newReply, "Post", "Reply notification in post: " + post.getTitle());
                                         return CompletableFuture.completedFuture(saveNewReply);
                                     }
                                 });

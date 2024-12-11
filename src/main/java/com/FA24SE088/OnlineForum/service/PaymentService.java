@@ -1,7 +1,8 @@
-package com.FA24SE088.OnlineForum.vnpay;
+package com.FA24SE088.OnlineForum.service;
 
 
 import com.FA24SE088.OnlineForum.configuration.VNPAYConfig;
+import com.FA24SE088.OnlineForum.dto.response.PaymentResponse;
 import com.FA24SE088.OnlineForum.entity.Account;
 import com.FA24SE088.OnlineForum.entity.MonkeyCoinPack;
 import com.FA24SE088.OnlineForum.entity.OrderPoint;
@@ -34,7 +35,7 @@ public class PaymentService {
     private final WalletRepository walletRepository;
     private final OrderPointRepository orderPointRepository;
 
-    public PaymentDTO.VNPayResponse createVnPayPayment(HttpServletRequest request) {
+    public PaymentResponse.VNPayResponse createVnPayPayment(HttpServletRequest request) {
         long amount = 1000000L;
         String bankCode = request.getParameter("bankCode");
         Map<String, String> vnpParamsMap = vnPayConfig.getVNPayConfig("");
@@ -49,7 +50,7 @@ public class PaymentService {
         String vnpSecureHash = VNPayUtil.hmacSHA512(vnPayConfig.getSecretKey(), hashData);
         queryUrl += "&vnp_SecureHash=" + vnpSecureHash;
         String paymentUrl = vnPayConfig.getVnp_PayUrl() + "?" + queryUrl;
-        return PaymentDTO.VNPayResponse.builder()
+        return PaymentResponse.VNPayResponse.builder()
                 .code("ok")
                 .message("success")
                 .paymentUrl(paymentUrl).build();
@@ -61,10 +62,10 @@ public class PaymentService {
                 .orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND));
     }
 
-    public PaymentDTO.VNPayResponse buyPoints(HttpServletRequest request, UUID monkeyCoinPackId, String redirectUrl) {
+    public PaymentResponse.VNPayResponse buyPoints(HttpServletRequest request, UUID monkeyCoinPackId, String redirectUrl) {
         Account account = getCurrentUser();
         MonkeyCoinPack monkeyCoinPack = monkeyCoinPackRepository.findById(monkeyCoinPackId)
-                .orElseThrow(() -> new AppException(ErrorCode.PRICING_INVALID));
+                .orElseThrow(() -> new AppException(ErrorCode.MONKEY_COIN_PACK_INVALID));
 
         long amount = monkeyCoinPack.getPrice() * 100L;
         Wallet wallet = walletRepository.findById(account.getWallet().getWalletId())
@@ -75,7 +76,7 @@ public class PaymentService {
         orderPoint.setAmount(amount / 100.0);
         orderPoint.setOrderDate(new Date());
         orderPoint.setMethod("VNPay");
-        orderPoint.setStatus("PENDING");
+        orderPoint.setStatus(OrderPointStatus.FAILED.name());
         orderPointRepository.save(orderPoint);
 
         Map<String, String> vnpParamsMap = vnPayConfig.getVNPayConfig(redirectUrl);
@@ -90,7 +91,7 @@ public class PaymentService {
         queryUrl += "&vnp_SecureHash=" + vnpSecureHash;
         String paymentUrl = vnPayConfig.getVnp_PayUrl() + "?" + queryUrl;
 
-        return PaymentDTO.VNPayResponse.builder()
+        return PaymentResponse.VNPayResponse.builder()
                 .code("ok")
                 .message("success")
                 .paymentUrl(paymentUrl)
