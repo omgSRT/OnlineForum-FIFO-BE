@@ -15,6 +15,9 @@ import com.FA24SE088.OnlineForum.exception.ErrorCode;
 import com.FA24SE088.OnlineForum.mapper.AccountMapper;
 
 import com.FA24SE088.OnlineForum.repository.*;
+import com.FA24SE088.OnlineForum.template.EmailTemplate;
+import com.FA24SE088.OnlineForum.utils.EmailUtil;
+import com.FA24SE088.OnlineForum.utils.OtpUtil;
 import com.FA24SE088.OnlineForum.utils.PaginationUtils;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -50,6 +53,8 @@ public class AccountService {
     AccountMapper accountMapper;
     PasswordEncoder passwordEncoder;
     PaginationUtils paginationUtils;
+    EmailUtil emailUtil;
+    OtpUtil otpUtil;
 
     public AccountResponse create(AccountRequest request) {
         if (accountRepository.existsByUsername(request.getUsername()))
@@ -103,10 +108,19 @@ public class AccountService {
         String handle = String.format(request.getUsername());
         account.setHandle(handle);
         accountRepository.save(account);
+        sendEmailToRegister(request.getEmail());
         AccountResponse response = accountMapper.toResponse(account);
         response.setAccountId(account.getAccountId());
         return response;
     }
+
+    public void sendEmailToRegister(String email) {
+        emailUtil.sendToAnEmailWithHTMLEnabled(
+                email,
+                EmailTemplate.teamplateSendOtp(otpUtil.generateOtpRedis(email)),
+                "Mã OTP xác thực tài khoản");
+    }
+
 
     public AccountResponse callbackLoginGoogle(OAuth2User oAuth2User) {
         String email = oAuth2User.getAttribute("email");

@@ -1,8 +1,8 @@
 package com.FA24SE088.OnlineForum.service;
 
 
-import com.FA24SE088.OnlineForum.dto.request.PricingRequest;
-import com.FA24SE088.OnlineForum.dto.response.PricingResponse;
+import com.FA24SE088.OnlineForum.dto.request.MonkeyCoinPackRequest;
+import com.FA24SE088.OnlineForum.dto.response.MonkeyCoinPackResponse;
 import com.FA24SE088.OnlineForum.entity.MonkeyCoinPack;
 import com.FA24SE088.OnlineForum.exception.AppException;
 import com.FA24SE088.OnlineForum.exception.ErrorCode;
@@ -14,6 +14,7 @@ import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -24,38 +25,41 @@ import java.util.UUID;
 @Service
 public class MonkeyCoinPackService {
     MonkeyCoinPackRepository monkeyCoinPackRepository;
-    MonkeyCoinPackMapper monkeyCoinPackMapper; // Bạn cần tạo mapper để chuyển đổi entity sang response nếu muốn.
+    MonkeyCoinPackMapper monkeyCoinPackMapper;
 
-    public PricingResponse createPricing(PricingRequest pricingRequest) {
-        MonkeyCoinPack monkeyCoinPack = monkeyCoinPackMapper.toPricing(pricingRequest);
-        monkeyCoinPack.setImgUrl(pricingRequest.getImgUrl());
+    public MonkeyCoinPackResponse createMonkeyCoinPack(MonkeyCoinPackRequest monkeyCoinPackRequest) {
+        MonkeyCoinPack monkeyCoinPack = monkeyCoinPackMapper.toMonkeyCoinPack(monkeyCoinPackRequest);
+        monkeyCoinPack.setImgUrl(monkeyCoinPackRequest.getImgUrl());
         MonkeyCoinPack savedMonkeyCoinPack = monkeyCoinPackRepository.save(monkeyCoinPack);
         return monkeyCoinPackMapper.toResponse(savedMonkeyCoinPack);
     }
 
-    public PricingResponse updatePricing(UUID pricingId, PricingRequest pricingRequest) {
-        MonkeyCoinPack monkeyCoinPack = monkeyCoinPackRepository.findById(pricingId).orElseThrow(() -> new AppException(ErrorCode.MONKEY_COIN_PACK_NOT_FOUND));
-        monkeyCoinPack.setImgUrl(pricingRequest.getImgUrl());
-        monkeyCoinPack.setPrice(pricingRequest.getPrice());
+    public MonkeyCoinPackResponse updateMonkeyCoinPack(UUID monkeyCoinPackId, MonkeyCoinPackRequest monkeyCoinPackRequest) {
+        MonkeyCoinPack monkeyCoinPack = monkeyCoinPackRepository.findById(monkeyCoinPackId).orElseThrow(() -> new AppException(ErrorCode.MONKEY_COIN_PACK_NOT_FOUND));
+        monkeyCoinPack.setImgUrl(monkeyCoinPackRequest.getImgUrl());
+        monkeyCoinPack.setPrice(monkeyCoinPackRequest.getPrice());
         monkeyCoinPack.setPoint(monkeyCoinPack.getPoint());
         MonkeyCoinPack savedMonkeyCoinPack = monkeyCoinPackRepository.save(monkeyCoinPack);
         return monkeyCoinPackMapper.toResponse(savedMonkeyCoinPack);
     }
 
-    public Optional<PricingResponse> getPricingById(UUID pricingId) {
+    public Optional<MonkeyCoinPackResponse> getMonkeyCoinPackById(UUID monkeyCoinPackId) {
         return monkeyCoinPackRepository
-                .findById(pricingId)
+                .findById(monkeyCoinPackId)
                 .map(monkeyCoinPackMapper::toResponse);
     }
 
-    public List<PricingResponse> getAllPricings() {
+    public List<MonkeyCoinPackResponse> getAllMonkeyCoinPack() {
         List<MonkeyCoinPack> monkeyCoinPacks = monkeyCoinPackRepository.findAll();
-        return monkeyCoinPacks.stream().map(monkeyCoinPackMapper::toResponse).toList();
+        return monkeyCoinPacks.stream()
+                .sorted(Comparator.comparingLong(MonkeyCoinPack::getPrice).reversed())
+                .map(monkeyCoinPackMapper::toResponse)
+                .toList();
     }
 
-    public void deletePricing(UUID pricingId) {
-        if (monkeyCoinPackRepository.existsById(pricingId)) {
-            monkeyCoinPackRepository.deleteById(pricingId);
+    public void deleteMonkeyCoinPack(UUID monkeyCoinPackId) {
+        if (monkeyCoinPackRepository.existsById(monkeyCoinPackId)) {
+            monkeyCoinPackRepository.deleteById(monkeyCoinPackId);
         } else {
             throw new AppException(ErrorCode.MONKEY_COIN_PACK_NOT_FOUND);
         }

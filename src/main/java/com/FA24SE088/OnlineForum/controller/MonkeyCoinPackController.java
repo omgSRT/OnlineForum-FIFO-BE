@@ -1,9 +1,9 @@
 package com.FA24SE088.OnlineForum.controller;
 
 
-import com.FA24SE088.OnlineForum.dto.request.PricingRequest;
+import com.FA24SE088.OnlineForum.dto.request.MonkeyCoinPackRequest;
 import com.FA24SE088.OnlineForum.dto.response.ApiResponse;
-import com.FA24SE088.OnlineForum.dto.response.PricingResponse;
+import com.FA24SE088.OnlineForum.dto.response.MonkeyCoinPackResponse;
 import com.FA24SE088.OnlineForum.exception.AppException;
 import com.FA24SE088.OnlineForum.exception.ErrorCode;
 import com.FA24SE088.OnlineForum.service.MonkeyCoinPackService;
@@ -27,37 +27,37 @@ public class MonkeyCoinPackController {
 
 
     @PostMapping("/create")
-    public ApiResponse<PricingResponse> createPricing(@RequestBody PricingRequest pricingRequest) {
-        return ApiResponse.<PricingResponse>builder()
-                .entity(monkeyCoinPackService.createPricing(pricingRequest))
+    public ApiResponse<MonkeyCoinPackResponse> createPricing(@RequestBody MonkeyCoinPackRequest monkeyCoinPackRequest) {
+        return ApiResponse.<MonkeyCoinPackResponse>builder()
+                .entity(monkeyCoinPackService.createMonkeyCoinPack(monkeyCoinPackRequest))
                 .build();
     }
 
     @PutMapping("/update/{pricingId}")
-    public ApiResponse<PricingResponse> update(@PathVariable UUID pricingId, @RequestBody PricingRequest pricingRequest) {
-        return ApiResponse.<PricingResponse>builder()
-                .entity(monkeyCoinPackService.updatePricing(pricingId, pricingRequest))
+    public ApiResponse<MonkeyCoinPackResponse> update(@PathVariable UUID pricingId, @RequestBody MonkeyCoinPackRequest monkeyCoinPackRequest) {
+        return ApiResponse.<MonkeyCoinPackResponse>builder()
+                .entity(monkeyCoinPackService.updateMonkeyCoinPack(pricingId, monkeyCoinPackRequest))
                 .build();
     }
 
     @GetMapping("/get-by-id/{id}")
-    public ApiResponse<PricingResponse> getPricing(@PathVariable UUID id) {
-        return ApiResponse.<PricingResponse>builder()
-                .entity(monkeyCoinPackService.getPricingById(id)
+    public ApiResponse<MonkeyCoinPackResponse> getPricing(@PathVariable UUID id) {
+        return ApiResponse.<MonkeyCoinPackResponse>builder()
+                .entity(monkeyCoinPackService.getMonkeyCoinPackById(id)
                         .orElseThrow(() -> new AppException(ErrorCode.MONKEY_COIN_PACK_NOT_FOUND)))
                 .build();
     }
 
     @GetMapping("/get-all")
-    public ApiResponse<List<PricingResponse>> getAllPricings() {
-        return ApiResponse.<List<PricingResponse>>builder()
-                .entity(monkeyCoinPackService.getAllPricings())
+    public ApiResponse<List<MonkeyCoinPackResponse>> getAllPricings() {
+        return ApiResponse.<List<MonkeyCoinPackResponse>>builder()
+                .entity(monkeyCoinPackService.getAllMonkeyCoinPack())
                 .build();
     }
 
     @DeleteMapping("/delete/{id}")
     public ApiResponse<Void> deletePricing(@PathVariable UUID id) {
-        monkeyCoinPackService.deletePricing(id);
+        monkeyCoinPackService.deleteMonkeyCoinPack(id);
         return ApiResponse.<Void>builder().build();
     }
 }

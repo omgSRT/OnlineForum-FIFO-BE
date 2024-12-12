@@ -19,6 +19,7 @@ public class Feedback {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     UUID feedbackId;
+    @Column(columnDefinition = "MEDIUMTEXT")
     String content;
     String title;
     String status;

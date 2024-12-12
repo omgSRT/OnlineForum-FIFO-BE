@@ -3,12 +3,14 @@ package com.FA24SE088.OnlineForum.service;
 import com.FA24SE088.OnlineForum.dto.response.*;
 import com.FA24SE088.OnlineForum.entity.Account;
 import com.FA24SE088.OnlineForum.entity.BlockedAccount;
+import com.FA24SE088.OnlineForum.entity.Follow;
 import com.FA24SE088.OnlineForum.enums.SuccessReturnMessage;
 import com.FA24SE088.OnlineForum.exception.AppException;
 import com.FA24SE088.OnlineForum.exception.ErrorCode;
 import com.FA24SE088.OnlineForum.mapper.AccountMapper;
 import com.FA24SE088.OnlineForum.repository.AccountRepository;
 import com.FA24SE088.OnlineForum.repository.BlockedAccountRepository;
+import com.FA24SE088.OnlineForum.repository.FollowRepository;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -26,6 +28,7 @@ public class BlockUserService {
     AccountMapper accountMapper;
     AccountRepository accountRepository;
     BlockedAccountRepository blockedAccountRepository;
+    FollowRepository followRepository;
 
     private Account getCurrentUser() {
         var context = SecurityContextHolder.getContext();
@@ -47,6 +50,8 @@ public class BlockUserService {
         BlockAccountResponse response = new BlockAccountResponse();
         response.setFollowId(accountIdToToggle);
 
+        boolean exist = followRepository.existsByFollowerAndAndFollowee(currentUser, accountToToggle);
+
         if (blockedAccountOptional.isPresent()) {
             blockedAccountRepository.delete(blockedAccountOptional.get());
             response.setMessage(SuccessReturnMessage.DELETE_SUCCESS.getMessage());
@@ -55,8 +60,12 @@ public class BlockUserService {
             blockedAccount.setBlocker(currentUser);
             blockedAccount.setBlocked(accountToToggle);
             blockedAccount.setBlockedDate(new Date());
-
             blockedAccountRepository.save(blockedAccount);
+
+            if(exist){
+                Follow existingFollow = followRepository.findByFollowerAndFollowee(currentUser, accountToToggle).orElseThrow(() -> new AppException(ErrorCode.FOLLOW_NOT_FOUND));
+                followRepository.delete(existingFollow);
+            }
             response.setMessage(SuccessReturnMessage.CREATE_SUCCESS.getMessage());
         }
 

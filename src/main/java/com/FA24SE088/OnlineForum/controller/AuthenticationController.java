@@ -3,11 +3,9 @@ package com.FA24SE088.OnlineForum.controller;
 
 import com.FA24SE088.OnlineForum.dto.request.*;
 import com.FA24SE088.OnlineForum.dto.response.*;
-import com.FA24SE088.OnlineForum.entity.Otp;
 import com.FA24SE088.OnlineForum.enums.SuccessReturnMessage;
 import com.FA24SE088.OnlineForum.service.AccountService;
 import com.FA24SE088.OnlineForum.service.AuthenticateService;
-import com.FA24SE088.OnlineForum.template.EmailTemplate;
 import com.FA24SE088.OnlineForum.utils.EmailUtil;
 import com.FA24SE088.OnlineForum.utils.OtpUtil;
 import com.nimbusds.jose.JOSEException;
@@ -69,22 +67,15 @@ public class AuthenticationController {
     @Transactional
     public ApiResponse<AccountResponse> create(@Valid @RequestBody AccountRequest request) {
         AccountResponse response = accountService.create(request);
-        emailUtil.sendToAnEmailWithHTMLEnabled(
-                response.getEmail(),
-                EmailTemplate.teamplateSendOtp(otpUtil.generateOtpRedis(request.getEmail())),
-                "Mã OTP xác thực tài khoản");
         return ApiResponse.<AccountResponse>builder()
                 .entity(response)
                 .build();
     }
 
     @PostMapping("/resend-otp")
-    public ApiResponse<Otp> resendOtp(@RequestParam String email) {
-        Otp otpResponse = otpUtil.resendOtp(email);
-        emailUtil.sendToAnEmail(email,
-                "Mã OTP của bạn là: " + otpResponse.getOtpEmail(),
-                "Mã OTP xác thực tài khoản");
-        return ApiResponse.<Otp>builder()
+    public ApiResponse<String> resendOtp(@RequestParam String email) {
+        String otpResponse = otpUtil.resendOtp(email);
+        return ApiResponse.<String>builder()
                 .entity(otpResponse)
                 .build();
     }
@@ -151,18 +142,9 @@ public class AuthenticationController {
 
     @Operation(summary = "Resend OTP Email For Forget Password")
     @PostMapping("/resend-otp/forget-password")
-    public ApiResponse<Void> resendOtpForForgetPassword(@RequestParam String email) {
-        String emailBody = "<html>"
-                + "<body>"
-                + "<p><strong>FIFO Password Reset</strong></p>"
-                + "<p>We heard that you lost your FIFO password. Sorry about that!</p>"
-                + "<p>Don't worry! Enter This OTP To Reset Your Password: " + otpUtil.generateOtp(email).getOtpEmail() + " </p>"
-                + "</body>"
-                + "</html>";
-        emailUtil.sendToAnEmailWithHTMLEnabled(email,
-                emailBody,
-                "Please Reset Your Password");
-        return ApiResponse.<Void>builder()
+    public ApiResponse<String> resendOtpForForgetPassword(@RequestParam String email) {
+        otpUtil.resendOtpForgotPassword(email);
+        return ApiResponse.<String>builder()
                 .message(SuccessReturnMessage.SEND_SUCCESS.getMessage())
                 .build();
     }

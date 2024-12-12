@@ -28,14 +28,6 @@ public class EventService {
     EventMapper eventMapper;
     PaginationUtils paginationUtils;
 
-    //    public EventResponse createEvent(EventRequest eventRequest) {
-//        if (eventRequest.getEndDate() != null) {
-//            validateEventDates(eventRequest.getStartDate(), eventRequest.getEndDate());
-//        }
-//        Event event = eventMapper.toEvent(eventRequest);
-//        Event savedEvent = unitOfWork.getEventRepository().save(event);
-//        return mapToResponse(savedEvent);
-//    }
     public EventResponse createEvent(EventRequest eventRequest) {
         if (eventRequest.getEndDate() != null) {
             validateEventDates(eventRequest.getStartDate(), eventRequest.getEndDate());

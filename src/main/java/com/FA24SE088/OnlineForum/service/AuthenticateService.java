@@ -161,19 +161,6 @@ public class AuthenticateService {
                 .build();
     }
 
-//    public void logout(LogoutRequest request) throws ParseException, JOSEException {
-//        var signToken = verifyToken(request.getToken());
-//
-//        String jti = signToken.getJWTClaimsSet().getJWTID();
-//        Date expTime = signToken.getJWTClaimsSet().getExpirationTime();
-//        InvalidatedToken invalidatedToken = InvalidatedToken.builder()
-//                .id(jti)
-//                .expiryTime(expTime)
-//                .build();
-//
-//        unitOfWork.getInvalidateTokenRepository().save(invalidatedToken);
-//    }
-
 
     public CompletableFuture<Void> forgetPassword(String email) {
         var foundAccountFuture = accountRepository.findByEmailIgnoreCase(email)
@@ -197,17 +184,18 @@ public class AuthenticateService {
                     + "<body>"
                     + "<p><strong>FIFO Password Reset</strong></p>"
                     + "<p>We heard that you lost your FIFO password. Sorry about that!</p>"
-                    + "<p>Don't worry! Enter This OTP To Reset Your Password: " + otpUtil.generateOtp(account.getEmail()).getOtpEmail() + " </p>"
+                    + "<p>Don't worry! Enter This OTP To Reset Your Password: " + otpUtil.generateOtpRedis(email) + " </p>"
                     + "</body>"
                     + "</html>";
 
-            emailUtil.sendToAnEmailWithHTMLEnabled(account.getEmail(),
+            emailUtil.sendToAnEmailWithHTMLEnabled(email,
                     emailBody,
                     "Please Reset Your Password");
 
             return CompletableFuture.completedFuture(null);
         });
     }
+
 
     public CompletableFuture<AccountResponse> changePassword(String email, AccountChangePasswordRequest request) {
         PasswordEncoder passwordEncoder = new BCryptPasswordEncoder(10);
