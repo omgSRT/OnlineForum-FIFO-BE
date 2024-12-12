@@ -61,19 +61,19 @@ public class StatisticService {
             countMoneyRedis = (countMoneyRedis != null) ? countMoneyRedis : 0L;
 
             double accountGrowthRate = (countAccountRedis != 0)
-                    ? (double) ((countAccount - countAccountRedis) / countAccountRedis) * 100
+                    ? ((double) (countAccount - countAccountRedis) / countAccountRedis) * 100
                     : 0;
             accountGrowthRate = formatToTwoDecimalPlaces(accountGrowthRate);
             double postGrowthRate = (countPostRedis != 0)
-                    ? (double) ((countPost - countPostRedis) / countPostRedis) * 100
+                    ? ((double) (countPost - countPostRedis) / countPostRedis) * 100
                     : 0;
             postGrowthRate = formatToTwoDecimalPlaces(postGrowthRate);
             double activityGrowthRate = (countActivity != 0)
-                    ? (double) ((countActivity - countActivityRedis) / countActivity) * 100
+                    ? ((double) (countActivity - countActivityRedis) / countActivity) * 100
                     : 0;
             activityGrowthRate = formatToTwoDecimalPlaces(activityGrowthRate);
             double moneyGrowthRate = (countMoneyRedis != 0)
-                    ? (double) ((countMoney - countMoneyRedis) / countMoneyRedis) * 100
+                    ? ((double) (countMoney - countMoneyRedis) / countMoneyRedis) * 100
                     : 0;
             moneyGrowthRate = formatToTwoDecimalPlaces(moneyGrowthRate);
 
@@ -88,10 +88,10 @@ public class StatisticService {
                     .depositGrowthRate(moneyGrowthRate)
                     .build();
 
-            redisTemplate.opsForValue().set("countAccountRedis", countAccount, Duration.ofDays(1));
-            redisTemplate.opsForValue().set("countPostRedis", countPost, Duration.ofDays(1));
-            redisTemplate.opsForValue().set("countActivityRedis", countActivity, Duration.ofDays(1));
-            redisTemplate.opsForValue().set("countMoneyRedis", countMoney, Duration.ofDays(1));
+            setRedisValue("countAccountRedis", countAccount);
+            setRedisValue("countPostRedis", countPost);
+            setRedisValue("countActivityRedis", countActivity);
+            setRedisValue("countMoneyRedis", countMoney);
 
             return CompletableFuture.completedFuture(dodResponse);
         });
@@ -142,5 +142,13 @@ public class StatisticService {
 
     private double formatToTwoDecimalPlaces(double value) {
         return Math.round(value * 100.0) / 100.0;
+    }
+
+    private void setRedisValue(String key, long value) {
+        Long existingValue = redisTemplate.opsForValue().get(key);
+
+        if (existingValue == null) {
+            redisTemplate.opsForValue().set(key, value, Duration.ofDays(30));
+        }
     }
 }
