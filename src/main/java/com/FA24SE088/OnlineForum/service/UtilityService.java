@@ -9,6 +9,7 @@ import com.FA24SE088.OnlineForum.mapper.DailyPointMapper;
 import com.FA24SE088.OnlineForum.mapper.OrderPointMapper;
 import com.FA24SE088.OnlineForum.mapper.TransactionMapper;
 import com.FA24SE088.OnlineForum.repository.*;
+import com.FA24SE088.OnlineForum.utils.PaginationUtils;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -43,6 +44,7 @@ public class UtilityService {
     DailyPointRepository dailyPointRepository;
     OrderPointRepository orderPointRepository;
     BlockedAccountRepository blockedAccountRepository;
+    PaginationUtils paginationUtils;
 
     @Async("AsyncTaskExecutor")
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
@@ -89,6 +91,57 @@ public class UtilityService {
 
             return new SearchEverythingResponse(combinedAccountList, categoryListByName, topicListByName, combinedPostList);
         });
+    }
+
+    @Async("AsyncTaskExecutor")
+    @Transactional
+    @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
+    public CompletableFuture<FilterTransactionResponse> filter(boolean viewTransaction,
+                                                               boolean dailyPoint,
+                                                               boolean bonusPoint,
+                                                               boolean orderPoint,
+                                                               String startDateStr, String endDateStr) {
+        Account currentUser = getCurrentUser();
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd");
+
+        Date startDate = null;
+        Date endDate = null;
+
+        try {
+            if (startDateStr != null) {
+                startDate = simpleDateFormat.parse(startDateStr);
+                startDate = resetTimeToStartOfDay(startDate);
+            }
+            if (endDateStr != null) {
+                endDate = simpleDateFormat.parse(endDateStr);
+                endDate = resetTimeToEndOfDay(endDate);
+            }
+        } catch (ParseException e) {
+            throw new AppException(ErrorCode.WRONG_DATE_FORMAT);
+        }
+
+        validateDates(startDate, endDate);
+
+        if (startDate != null && endDate == null) {
+            endDate = startDate;
+        }
+
+        boolean includeAll = !viewTransaction && !dailyPoint && !bonusPoint && !orderPoint;
+
+        CompletableFuture<List<TransactionResponse>> transactionFuture = getTransactionFuture(viewTransaction, includeAll, currentUser, startDate, endDate);
+        CompletableFuture<List<DailyPoint2Response>> dailyPointFuture = getDailyPointFuture(dailyPoint, includeAll, currentUser, startDate, endDate);
+        CompletableFuture<List<DailyPoint2Response>> bonusPointFuture = getBonusPointFuture(bonusPoint, includeAll, currentUser, startDate, endDate);
+        CompletableFuture<List<OrderPointResponse>> orderPointFuture = getOrderPointFuture(orderPoint, includeAll, currentUser, startDate, endDate);
+
+        return CompletableFuture.allOf(transactionFuture, dailyPointFuture, bonusPointFuture)
+                .thenApply(listFinal -> {
+                    FilterTransactionResponse response = new FilterTransactionResponse();
+                    response.setTransactionList(transactionFuture.join());
+                    response.setDailyPointList(dailyPointFuture.join());
+                    response.setBonusPoint(bonusPointFuture.join());
+                    response.setOrderPointList(orderPointFuture.join());
+                    return response;
+                });
     }
 
 
@@ -218,57 +271,6 @@ public class UtilityService {
     private Account getCurrentUser() {
         var context = SecurityContextHolder.getContext();
         return accountRepository.findByUsername(context.getAuthentication().getName()).orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND));
-    }
-
-    @Async("AsyncTaskExecutor")
-    @Transactional
-    @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
-    public CompletableFuture<FilterTransactionResponse> filter(boolean viewTransaction,
-                                                               boolean dailyPoint,
-                                                               boolean bonusPoint,
-                                                               boolean orderPoint,
-                                                               String startDateStr, String endDateStr) {
-        Account currentUser = getCurrentUser();
-        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd");
-
-        Date startDate = null;
-        Date endDate = null;
-
-        try {
-            if (startDateStr != null) {
-                startDate = simpleDateFormat.parse(startDateStr);
-                startDate = resetTimeToStartOfDay(startDate);
-            }
-            if (endDateStr != null) {
-                endDate = simpleDateFormat.parse(endDateStr);
-                endDate = resetTimeToEndOfDay(endDate);
-            }
-        } catch (ParseException e) {
-            throw new AppException(ErrorCode.WRONG_DATE_FORMAT);
-        }
-
-        validateDates(startDate, endDate);
-
-        if (startDate != null && endDate == null) {
-            endDate = startDate;
-        }
-
-        boolean includeAll = !viewTransaction && !dailyPoint && !bonusPoint && !orderPoint;
-
-        CompletableFuture<List<TransactionResponse>> transactionFuture = getTransactionFuture(viewTransaction, includeAll, currentUser, startDate, endDate);
-        CompletableFuture<List<DailyPoint2Response>> dailyPointFuture = getDailyPointFuture(dailyPoint, includeAll, currentUser, startDate, endDate);
-        CompletableFuture<List<DailyPoint2Response>> bonusPointFuture = getBonusPointFuture(bonusPoint, includeAll, currentUser, startDate, endDate);
-        CompletableFuture<List<OrderPointResponse>> orderPointFuture = getOrderPointFuture(orderPoint, includeAll, currentUser, startDate, endDate);
-
-        return CompletableFuture.allOf(transactionFuture, dailyPointFuture, bonusPointFuture)
-                .thenApply(listFinal -> {
-                    FilterTransactionResponse response = new FilterTransactionResponse();
-                    response.setTransactionList(transactionFuture.join());
-                    response.setDailyPointList(dailyPointFuture.join());
-                    response.setBonusPoint(bonusPointFuture.join());
-                    response.setOrderPointList(orderPointFuture.join());
-                    return response;
-                });
     }
 
     private void validateDates(Date startDate, Date endDate) {
