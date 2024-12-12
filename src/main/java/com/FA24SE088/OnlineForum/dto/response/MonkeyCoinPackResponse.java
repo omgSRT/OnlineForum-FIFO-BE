@@ -1,16 +1,17 @@
-package com.FA24SE088.OnlineForum.dto.request;
+package com.FA24SE088.OnlineForum.dto.response;
 
-import jakarta.persistence.Column;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+
+import java.util.UUID;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class PricingRequest {
-    @Column(columnDefinition = "MEDIUMTEXT")
+public class MonkeyCoinPackResponse {
+    UUID monkeyCoinPackId;
     String imgUrl;
     long price;
     double point;

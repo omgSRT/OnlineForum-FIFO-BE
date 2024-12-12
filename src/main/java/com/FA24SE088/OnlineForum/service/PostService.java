@@ -209,12 +209,13 @@ public class PostService {
                                                         .account(account)
                                                         .createdDate(LocalDateTime.now())
                                                         .build();
-                                                notificationRepository.save(notification);
-                                                response.setNotification(notification);
+                                                if(dailyPointFuture.get().getPointEarned() != 0) {
+                                                    notificationRepository.save(notification);
+//                                                response.setNotification(notification);
 //                                                    socketIOUtil.sendEventToOneClientInAServer(clientSessionId, WebsocketEventName.NOTIFICATION.name(), notification);
-                                                socketIOUtil.sendEventToOneClientInAServer(account.getAccountId(), WebsocketEventName.NOTIFICATION.name(), notification);
-
-                                            } catch (JsonProcessingException e) {
+                                                    socketIOUtil.sendEventToOneClientInAServer(account.getAccountId(), WebsocketEventName.NOTIFICATION.name(), notification);
+                                                }
+                                            } catch (JsonProcessingException | InterruptedException | ExecutionException e) {
                                                 throw new RuntimeException(e);
                                             }
                                             return response;
