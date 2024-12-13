@@ -77,8 +77,9 @@ public class RewardService {
 
     public RewardResponse update(UUID rewardId, RewardUpdateRequest rewardRequest) {
         Reward reward = rewardRepository.findById(rewardId).orElseThrow(() -> new AppException(ErrorCode.REWARD_NOT_FOUND));
+
         if (rewardRequest.getName() != null && !rewardRequest.getName().isEmpty()) {
-            reward.setName(reward.getName());
+            reward.setName(rewardRequest.getName());
         }
         if (rewardRequest.getImage() != null && !rewardRequest.getImage().isEmpty()) {
             reward.setImage(rewardRequest.getImage());

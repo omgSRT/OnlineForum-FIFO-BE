@@ -41,12 +41,12 @@ public class SocketIOUtil {
 //    }
 
 
-    public void sendEventToOneClientInAServer(UUID accountId, String event, Object data) {
+    public void sendEventToOneClientInAServer(UUID accountId, String event,String message, Object data) {
         String sessionId = accountSessionIdMap.get(accountId);
         if (sessionId != null) {
             SocketIOClient client = socketIOServer.getClient(UUID.fromString(sessionId));
             if (client != null) {
-                client.sendEvent(event, data);
+                client.sendEvent(event,message,data);
             } else {
                 throw new IllegalArgumentException("Client with session ID '" + sessionId + "' not found");
             }

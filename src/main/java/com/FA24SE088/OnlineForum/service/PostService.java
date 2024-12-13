@@ -213,7 +213,7 @@ public class PostService {
                                                     notificationRepository.save(notification);
 //                                                response.setNotification(notification);
 //                                                    socketIOUtil.sendEventToOneClientInAServer(clientSessionId, WebsocketEventName.NOTIFICATION.name(), notification);
-                                                    socketIOUtil.sendEventToOneClientInAServer(account.getAccountId(), WebsocketEventName.NOTIFICATION.name(), notification);
+                                                    socketIOUtil.sendEventToOneClientInAServer(account.getAccountId(), WebsocketEventName.NOTIFICATION.name(),"You have been added 5 points" ,notification);
                                                 }
                                             } catch (JsonProcessingException | InterruptedException | ExecutionException e) {
                                                 throw new RuntimeException(e);
@@ -1961,7 +1961,7 @@ public class PostService {
                             .createdDate(LocalDateTime.now())
                             .build();
                     notificationRepository.save(notification);
-                    socketIOUtil.sendEventToOneClientInAServer(accountOwner.getAccountId(), WebsocketEventName.NOTIFICATION.name(), notification);
+                    socketIOUtil.sendEventToOneClientInAServer(accountOwner.getAccountId(), WebsocketEventName.NOTIFICATION.name(),accountDownloader.getUsername() + " downloaded file from in post: " + dailyPoint.getPost().getTitle() + " and you get " + dailyPoint.getPointEarned() + " point" ,notification);
                 } catch (JsonProcessingException e) {
                     throw new RuntimeException(e);
                 }

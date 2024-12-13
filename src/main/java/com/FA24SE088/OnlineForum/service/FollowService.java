@@ -181,12 +181,12 @@ public class FollowService {
             response.setMessage(SuccessReturnMessage.CREATE_SUCCESS.getMessage());
             response.setFollowee(followee);
             response.setFollower(account);
-            realtime_follow(follow, "Follow", "Follow notification");
+            realtime_follow(follow, "Follow", "Follow notification",account.getUsername() + " is following you");
         }
         return response;
     }
 
-    public void realtime_follow(Follow follow, String entity, String titleNotification) {
+    public void realtime_follow(Follow follow, String entity, String titleNotification,String message) {
         DataNotification dataNotification = DataNotification.builder()
                 .id(follow.getFollowId())
                 .entity(entity)
@@ -202,7 +202,7 @@ public class FollowService {
                     .createdDate(LocalDateTime.now())
                     .build();
             notificationRepository.save(notification);
-            socketIOUtil.sendEventToOneClientInAServer(follow.getFollowee().getAccountId(), WebsocketEventName.NOTIFICATION.name(), notification);
+            socketIOUtil.sendEventToOneClientInAServer(follow.getFollowee().getAccountId(), WebsocketEventName.NOTIFICATION.name(), message,notification);
 
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
