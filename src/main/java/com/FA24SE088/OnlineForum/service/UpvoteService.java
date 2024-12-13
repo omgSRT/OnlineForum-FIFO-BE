@@ -80,9 +80,9 @@ public class UpvoteService {
                                                             newUpvote.setAccount(account);
                                                             newUpvote.setPost(post);
                                                             var saveNewUpvote = upvoteRepository.save(newUpvote);
-                                                            realtime_upvote(newUpvote, post.getAccount(), "Post", "Upvote notification in post: " + post.getTitle());
+                                                            realtime_upvote(newUpvote, post.getAccount(), "Post", "Upvote notification in post: " + post.getTitle(),account.getUsername() + " like your post: " +post.getTitle());
                                                             if (existingDailyPoint != null) {
-                                                                realtime_dailyPoint(existingDailyPoint, post.getAccount(), "Daily Point", "Daily Point notification");
+                                                                realtime_dailyPoint(existingDailyPoint, post.getAccount(), "Daily Point", "Daily Point notification","You have been added " + existingDailyPoint.getPointEarned()+ " points");
                                                             }
                                                             var upvoteResponse = upvoteMapper.toUpvoteCreateDeleteResponse(saveNewUpvote);
                                                             upvoteResponse.setMessage(SuccessReturnMessage.CREATE_SUCCESS.getMessage());
@@ -95,7 +95,7 @@ public class UpvoteService {
                                                 newUpvote.setPost(post);
                                                 var saveNewUpvote = upvoteRepository.save(newUpvote);
                                                 var upvoteResponse = upvoteMapper.toUpvoteCreateDeleteResponse(saveNewUpvote);
-                                                realtime_upvote(newUpvote, post.getAccount(), "Post", "Upvote notification in post: " + post.getTitle());
+                                                realtime_upvote(newUpvote, post.getAccount(), "Post", "Upvote notification in post: " + post.getTitle(),account.getUsername() + " like your post: " +post.getTitle());
                                                 upvoteResponse.setMessage(SuccessReturnMessage.CREATE_SUCCESS.getMessage());
                                                 return CompletableFuture.completedFuture(upvoteResponse);
                                             }
@@ -106,7 +106,7 @@ public class UpvoteService {
         });
     }
 
-    public void realtime_upvote(Upvote upvote, Account account, String entity, String titleNotification) {
+    public void realtime_upvote(Upvote upvote, Account account, String entity, String titleNotification,String message) {
         DataNotification dataNotification = DataNotification.builder()
                 .id(upvote.getPost().getPostId())
                 .entity(entity)
@@ -123,16 +123,16 @@ public class UpvoteService {
                     .build();
             if(!upvote.getAccount().getAccountId().equals(account.getAccountId())) {
                 notificationRepository.save(notification);
-                socketIOUtil.sendEventToOneClientInAServer(account.getAccountId(), WebsocketEventName.NOTIFICATION.name(), notification);
+                socketIOUtil.sendEventToOneClientInAServer(account.getAccountId(), WebsocketEventName.NOTIFICATION.name(), message,notification);
             }
-            socketIOUtil.sendEventToAllClientInAServer(WebsocketEventName.REFRESH.toString(), upvote);
+            socketIOUtil.sendEventToAllClientInAServer(WebsocketEventName.LIKE.toString(),upvote);
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
     }
     
 
-    public void realtime_dailyPoint(DailyPoint dailyPoint, Account account, String entity, String titleNotification) {
+    public void realtime_dailyPoint(DailyPoint dailyPoint, Account account, String entity, String titleNotification,String message) {
         DataNotification dataNotification = DataNotification.builder()
                 .id(dailyPoint.getDailyPointId())
                 .entity(entity)
@@ -148,7 +148,7 @@ public class UpvoteService {
                     .createdDate(LocalDateTime.now())
                     .build();
             notificationRepository.save(notification);
-            socketIOUtil.sendEventToOneClientInAServer(account.getAccountId(), WebsocketEventName.NOTIFICATION.toString(), dailyPoint);
+            socketIOUtil.sendEventToOneClientInAServer(account.getAccountId(), WebsocketEventName.NOTIFICATION.toString(), message,dailyPoint);
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }

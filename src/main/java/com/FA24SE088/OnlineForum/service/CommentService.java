@@ -88,8 +88,8 @@ public class CommentService {
                                                     newComment.setReplies(new ArrayList<>());
 
                                                     var savedComment = commentRepository.save(newComment);
-                                                    realtimeComment(newComment, "Post", "Comment notification");
-                                                    realtimeDailyPointNotification(dailyPoint, "DailyPoint", "Daily point notification");
+                                                    realtimeComment(newComment, "Post", "Comment notification",account.getUsername() + " commented in your post: " + post.getTitle());
+                                                    realtimeDailyPointNotification(dailyPoint, "DailyPoint", "Daily point notification","You have been added " + dailyPoint.getPointEarned()+ " points");
                                                     return CompletableFuture.completedFuture(savedComment);
                                                 });
                                     } else {
@@ -105,7 +105,7 @@ public class CommentService {
                                         newComment.setReplies(new ArrayList<>());
 
                                         var savedComment = commentRepository.save(newComment);
-                                        realtimeComment(newComment, "Post", "Comment notification");
+                                        realtimeComment(newComment, "Post", "Comment notification",account.getUsername() + " commented in your post: " + post.getTitle());
                                         return CompletableFuture.completedFuture(savedComment);
                                     }
                                 });
@@ -114,7 +114,7 @@ public class CommentService {
                 .thenApply(commentMapper::toCommentResponse);
     }
 
-    public void realtimeComment(Comment comment, String entity, String titleNotification) {
+    public void realtimeComment(Comment comment, String entity, String titleNotification,String message) {
         DataNotification dataNotification = DataNotification.builder()
                 .id(comment.getPost().getPostId())
                 .entity(entity)
@@ -131,15 +131,15 @@ public class CommentService {
                     .build();
             if (!comment.getAccount().getAccountId().equals(comment.getPost().getAccount().getAccountId())) {
                 notificationRepository.save(notification);
-                socketIOUtil.sendEventToOneClientInAServer(comment.getPost().getAccount().getAccountId(), WebsocketEventName.NOTIFICATION.name(), notification);
+                socketIOUtil.sendEventToOneClientInAServer(comment.getPost().getAccount().getAccountId(), WebsocketEventName.NOTIFICATION.name(), message,notification);
             }
-            socketIOUtil.sendEventToAllClientInAServer(WebsocketEventName.REFRESH.toString(), comment);
+            socketIOUtil.sendEventToAllClientInAServer(WebsocketEventName.COMMENT.toString(),comment);
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
     }
 
-    public void realtimeDailyPointNotification(DailyPoint dailyPoint, String entity, String titleNotification) {
+    public void realtimeDailyPointNotification(DailyPoint dailyPoint, String entity, String titleNotification,String message) {
         DataNotification dataNotification = null;
         dataNotification = DataNotification.builder()
                 .id(dailyPoint.getDailyPointId())
@@ -156,7 +156,7 @@ public class CommentService {
                     .createdDate(LocalDateTime.now())
                     .build();
             notificationRepository.save(notification);
-            socketIOUtil.sendEventToOneClientInAServer(dailyPoint.getAccount().getAccountId(), WebsocketEventName.NOTIFICATION.name(), notification);
+            socketIOUtil.sendEventToOneClientInAServer(dailyPoint.getAccount().getAccountId(), WebsocketEventName.NOTIFICATION.name(), message,notification);
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
@@ -198,8 +198,8 @@ public class CommentService {
                                                     newReply.setParentComment(parentComment);
                                                     newReply.setReplies(new ArrayList<>());
                                                     var saveNewReply = commentRepository.save(newReply);
-                                                    realtimeDailyPointNotification(dailyPoint, "DailyPoint", "Daily point notification");
-                                                    realtimeComment(newReply, "Post", "Reply notification in post: " + post.getTitle());
+                                                    realtimeDailyPointNotification(dailyPoint, "DailyPoint", "Daily point notification","You have been added " + dailyPoint.getPointEarned()+ " points");
+                                                    realtimeComment(newReply, "Post", "Reply notification in post: " + post.getTitle(),account.getUsername() + " reply comment"+ parentComment.getContent()+" in your post: " + post.getTitle());
                                                     return CompletableFuture.completedFuture(saveNewReply);
                                                 });
                                     } else {
@@ -214,7 +214,7 @@ public class CommentService {
                                         newReply.setParentComment(parentComment);
                                         newReply.setReplies(new ArrayList<>());
                                         var saveNewReply = commentRepository.save(newReply);
-                                        realtimeComment(newReply, "Post", "Reply notification in post: " + post.getTitle());
+                                        realtimeComment(newReply, "Post", "Reply notification in post: " + post.getTitle(),account.getUsername() + " reply comment"+ parentComment.getContent()+" in your post: " + post.getTitle());
                                         return CompletableFuture.completedFuture(saveNewReply);
                                     }
                                 });
