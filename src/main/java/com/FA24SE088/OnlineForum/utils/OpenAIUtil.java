@@ -98,22 +98,54 @@ public class OpenAIUtil {
                 }
             }
 
+            var percentageTitleTopic = calculateExactWordContainmentPercentage(title, topicName);
+            var percentageContentTopic = calculateExactWordContainmentPercentage(content, topicName);
+            var percentageTitleContent = calculateExactWordContainmentPercentage(content, title);
+
+            System.out.println(percentageTitleTopic);
+            System.out.println(percentageContentTopic);
+            System.out.println(percentageTitleContent);
+
             if (!titleTopicRelated) {
-                throw new AppException(ErrorCode.TITLE_NOT_RELATED_TO_TOPIC);
+                if(percentageTitleTopic < 40) {
+                    throw new AppException(ErrorCode.TITLE_NOT_RELATED_TO_TOPIC);
+                }
             }
             if (!contentTopicRelated) {
-//                    if (content.toLowerCase().contains(topicName.toLowerCase())) {
-//                        contentTopicRelated = true;
-//                    }
-                throw new AppException(ErrorCode.CONTENT_NOT_RELATED_TO_TOPIC);
+                if(percentageContentTopic < 40){
+                    throw new AppException(ErrorCode.CONTENT_NOT_RELATED_TO_TOPIC);
+                }
             }
             if (!contentTitleRelated) {
-                throw new AppException(ErrorCode.CONTENT_NOT_RELATED_TO_TITLE);
+                if(percentageTitleContent < 40){
+                    throw new AppException(ErrorCode.CONTENT_NOT_RELATED_TO_TITLE);
+                }
             }
 
             return true;
         }
         return false;
+    }
+
+    private double calculateExactWordContainmentPercentage(String source, String target) {
+        if (source == null || target == null || source.isEmpty() || target.isEmpty()) {
+            return 0;
+        }
+
+        String[] sourceWords = source.toLowerCase().split("\\s+");
+        String[] targetWords = target.toLowerCase().split("\\s+");
+
+        int matchCount = 0;
+
+        for (String targetWord : targetWords) {
+            for (String sourceWord : sourceWords) {
+                if (sourceWord.equals(targetWord)) {
+                    matchCount++;
+                }
+            }
+        }
+
+        return (double) (matchCount * 100) / sourceWords.length;
     }
 
     public boolean isRelatedUsingVector(String title, String content, String topicName) {
@@ -199,4 +231,5 @@ public class OpenAIUtil {
             throw new RuntimeException("Error fetching embedding", e);
         }
     }
+
 }
