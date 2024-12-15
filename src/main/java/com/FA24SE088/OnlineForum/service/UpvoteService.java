@@ -66,6 +66,7 @@ public class UpvoteService {
                     upvoteRepository.delete(existUpvote.get());
                     var upvoteResponse = upvoteMapper.toUpvoteCreateDeleteResponse(existUpvote.get());
                     upvoteResponse.setMessage(SuccessReturnMessage.DELETE_SUCCESS.getMessage());
+                    realtime_disUpvote(existUpvote.get());
                     return CompletableFuture.completedFuture(upvoteResponse);
                 } else {
                     return upvoteRepository.countByPost(post)
@@ -129,6 +130,10 @@ public class UpvoteService {
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public void realtime_disUpvote(Upvote upvote) {
+            socketIOUtil.sendEventToAllClientInAServer(WebsocketEventName.DISLIKE.toString(),upvote);
     }
     
 

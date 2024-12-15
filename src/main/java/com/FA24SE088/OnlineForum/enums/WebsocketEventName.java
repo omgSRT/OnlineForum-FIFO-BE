@@ -5,7 +5,9 @@ public enum WebsocketEventName {
     DATA_SYNC,
     REFRESH,
     LIKE,
+    DISLIKE,
     COMMENT,
+    UPDATE_DELETE_COMMENT,
     STATUS_UPDATE,
     NOTIFICATION,
 }

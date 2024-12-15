@@ -231,9 +231,9 @@ public class ReportService {
                                         walletPostOwner.setBalance(pointDeduction);
                                         var post = report.getPost();
                                         post.setStatus(PostStatus.HIDDEN.name());
-                                        realtimeNotificationForReported(report, "Report", "Your post has been violated and deleted","Your post: " + report.getPost().getTitle()+" has been violated and deleted");
-                                        realtimeNotificationForReporter(report, "Report", "The staff has processing the post you have reported","The staff has processing the:" +report.getPost().getTitle() +"  you have reported");
-                                        realtimeNotificationForStaff(report, account, "This is the 5th Approve and the post was deleted", "Report","This is the 5th Approve and the post was deleted");
+                                        realtimeNotificationForReported(report, "Report", "Your post: " + report.getPost().getTitle() + " has been violated and deleted", "Your post: " + report.getPost().getTitle() + " has been violated and deleted");
+                                        realtimeNotificationForReporter(report, "Report", "The staff has processing the:" + report.getPost().getTitle() + "  you have reported", "The staff has processing the:" + report.getPost().getTitle() + "  you have reported");
+                                        realtimeNotificationForStaff(report, account, "This is the 5th Approve and the post was deleted", "Report", "This is the 5th Approve and the post was deleted");
                                         walletRepository.save(walletPostOwner);
                                         postRepository.save(post);
                                         return CompletableFuture.completedFuture(null);
@@ -246,7 +246,7 @@ public class ReportService {
                 .thenApply(reportMapper::toReportResponse);
     }
 
-    public void realtimeNotificationForReported(Report report, String entity, String title,String message) {
+    public void realtimeNotificationForReported(Report report, String entity, String title, String message) {
         DataNotification dataNotification = DataNotification.builder()
                 .id(report.getReportId())
                 .entity(entity)
@@ -262,13 +262,13 @@ public class ReportService {
                     .createdDate(LocalDateTime.now())
                     .build();
             notificationRepository.save(notification);
-            socketIOUtil.sendEventToOneClientInAServer(report.getPost().getAccount().getAccountId(), WebsocketEventName.NOTIFICATION.name(), message,notification);
+            socketIOUtil.sendEventToOneClientInAServer(report.getPost().getAccount().getAccountId(), WebsocketEventName.NOTIFICATION.name(), message, notification);
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
     }
 
-    public void realtimeNotificationForReporter(Report report, String title, String entity,String message) {
+    public void realtimeNotificationForReporter(Report report, String title, String entity, String message) {
         DataNotification dataNotification = DataNotification.builder()
                 .id(report.getReportId())
                 .entity(entity)
@@ -284,13 +284,13 @@ public class ReportService {
                     .createdDate(LocalDateTime.now())
                     .build();
             notificationRepository.save(notification);
-            socketIOUtil.sendEventToOneClientInAServer(report.getAccount().getAccountId(), WebsocketEventName.NOTIFICATION.name(), message,notification);
+            socketIOUtil.sendEventToOneClientInAServer(report.getAccount().getAccountId(), WebsocketEventName.NOTIFICATION.name(), message, notification);
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
     }
 
-    public void realtimeNotificationForStaff(Report report, Account account, String title, String entity,String message) {
+    public void realtimeNotificationForStaff(Report report, Account account, String title, String entity, String message) {
         DataNotification dataNotification = DataNotification.builder()
                 .id(report.getReportId())
                 .entity(entity)
@@ -306,7 +306,7 @@ public class ReportService {
                     .createdDate(LocalDateTime.now())
                     .build();
             notificationRepository.save(notification);
-            socketIOUtil.sendEventToOneClientInAServer(account.getAccountId(), WebsocketEventName.NOTIFICATION.name(), message,notification);
+            socketIOUtil.sendEventToOneClientInAServer(account.getAccountId(), WebsocketEventName.NOTIFICATION.name(), message, notification);
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
