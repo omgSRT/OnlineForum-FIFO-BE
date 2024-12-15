@@ -88,8 +88,8 @@ public class CommentService {
                                                     newComment.setReplies(new ArrayList<>());
 
                                                     var savedComment = commentRepository.save(newComment);
-                                                    realtimeComment(newComment, "Post", "Comment notification",account.getUsername() + " commented in your post: " + post.getTitle());
-                                                    realtimeDailyPointNotification(dailyPoint, "DailyPoint", "Daily point notification","You have been added " + dailyPoint.getPointEarned()+ " points");
+                                                    realtimeComment(newComment, "Post", account.getUsername() + " commented in your post: " + post.getTitle(),account.getUsername() + " commented in your post: " + post.getTitle());
+                                                    realtimeDailyPointNotification(dailyPoint, "DailyPoint", "Daily point notification you have been added " + dailyPoint.getPointEarned()+ " points","You have been added " + dailyPoint.getPointEarned()+ " points");
                                                     return CompletableFuture.completedFuture(savedComment);
                                                 });
                                     } else {
@@ -105,7 +105,7 @@ public class CommentService {
                                         newComment.setReplies(new ArrayList<>());
 
                                         var savedComment = commentRepository.save(newComment);
-                                        realtimeComment(newComment, "Post", "Comment notification",account.getUsername() + " commented in your post: " + post.getTitle());
+                                        realtimeComment(newComment, "Post", account.getUsername() + " commented in your post: " + post.getTitle(),account.getUsername() + " commented in your post: " + post.getTitle());
                                         return CompletableFuture.completedFuture(savedComment);
                                     }
                                 });
@@ -138,6 +138,10 @@ public class CommentService {
             throw new RuntimeException(e);
         }
     }
+    public void realtimeUpdateDeleteComment(Comment comment) {
+            socketIOUtil.sendEventToAllClientInAServer(WebsocketEventName.UPDATE_DELETE_COMMENT.toString(),comment);
+    }
+
 
     public void realtimeDailyPointNotification(DailyPoint dailyPoint, String entity, String titleNotification,String message) {
         DataNotification dataNotification = null;
@@ -198,8 +202,8 @@ public class CommentService {
                                                     newReply.setParentComment(parentComment);
                                                     newReply.setReplies(new ArrayList<>());
                                                     var saveNewReply = commentRepository.save(newReply);
-                                                    realtimeDailyPointNotification(dailyPoint, "DailyPoint", "Daily point notification","You have been added " + dailyPoint.getPointEarned()+ " points");
-                                                    realtimeComment(newReply, "Post", "Reply notification in post: " + post.getTitle(),account.getUsername() + " reply comment"+ parentComment.getContent()+" in your post: " + post.getTitle());
+                                                    realtimeDailyPointNotification(dailyPoint, "DailyPoint", "Daily point notification you have been added " + dailyPoint.getPointEarned()+ " points","You have been added " + dailyPoint.getPointEarned()+ " points");
+                                                    realtimeComment(newReply, "Post", account.getUsername() + " reply comment"+ parentComment.getContent()+" in your post: " + post.getTitle(),account.getUsername() + " reply comment"+ parentComment.getContent()+" in your post: " + post.getTitle());
                                                     return CompletableFuture.completedFuture(saveNewReply);
                                                 });
                                     } else {
@@ -329,7 +333,7 @@ public class CommentService {
                     }
 
                     commentMapper.updateComment(comment, request);
-
+                    realtimeUpdateDeleteComment(comment);
                     return CompletableFuture.completedFuture(commentRepository.save(comment));
                 })
                 .thenApply(commentMapper::toCommentResponse);
@@ -355,7 +359,7 @@ public class CommentService {
                         comment.getParentComment().getReplies().remove(comment);
                     }
                     commentRepository.delete(comment);
-
+                    realtimeUpdateDeleteComment(comment);
                     return CompletableFuture.completedFuture(comment);
                 })
                 .thenApply(commentMapper::toCommentResponse);
@@ -374,7 +378,7 @@ public class CommentService {
                         comment.getParentComment().getReplies().remove(comment);
                     }
                     commentRepository.delete(comment);
-
+                    realtimeUpdateDeleteComment(comment);
                     return CompletableFuture.completedFuture(comment);
                 })
                 .thenApply(commentMapper::toCommentResponse);
