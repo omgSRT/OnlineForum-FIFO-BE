@@ -1,6 +1,5 @@
 package com.FA24SE088.OnlineForum.service;
 
-import com.FA24SE088.OnlineForum.dto.request.Wallet2Request;
 import com.FA24SE088.OnlineForum.dto.request.WalletRequest;
 import com.FA24SE088.OnlineForum.dto.response.WalletResponse;
 import com.FA24SE088.OnlineForum.entity.Account;
@@ -35,8 +34,8 @@ public class WalletService {
         return walletRepository.save(wallet);
     }
 
-    public WalletResponse update(Wallet2Request request) {
-        Account account = accountRepository.findById(request.getAccountId()).orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND));
+    public WalletResponse update(WalletRequest request) {
+        Account account = accountRepository.findById(request.getAccountID()).orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND));
         Wallet response = account.getWallet();
         if (response == null) throw new AppException(ErrorCode.WALLET_NOT_EXIST);
         response.setBalance(request.getBalance());
