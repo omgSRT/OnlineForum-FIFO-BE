@@ -4,7 +4,7 @@
     "activemq",
     "ada",
     "adapt",
-    "adaptative",
+    "adaptive",
     "address",
     "aes",
     "aes encrypt",
@@ -895,5 +895,5 @@
     "zalopay",
     "zeromq",
     "zip",
-    "zipping",
+    "zipping"
 ]

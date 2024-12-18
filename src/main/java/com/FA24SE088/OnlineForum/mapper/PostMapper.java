@@ -36,5 +36,5 @@ public interface PostMapper {
     @Mapping(target = "upvoteList", ignore = true)
     @Mapping(target = "commentList", ignore = true)
     @Mapping(target = "reportList", ignore = true)
-    void updateDraft(@MappingTarget Post post, DraftUpdateRequest postUpdateRequest);
+    void updateDraft(@MappingTarget Post post, DraftUpdateRequest draftUpdateRequest);
 }
