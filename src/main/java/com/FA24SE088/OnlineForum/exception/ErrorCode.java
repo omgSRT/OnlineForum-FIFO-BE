@@ -113,7 +113,7 @@ public enum ErrorCode {
     POINT_BONUS_LESS_THAN_ONE(10095, "Point Bonus Must Be Equal Or Greater Than 1", HttpStatus.BAD_REQUEST),
     CANNOT_COMMENT_ON_DRAFT(10096, "Cannot Comment On Draft", HttpStatus.BAD_REQUEST),
     TYPE_BONUS_ALREADY_EXIST(10097, "Type Bonus Already Existed", HttpStatus.BAD_REQUEST),
-    TYPE_OR_TOPIC_NOT_FOUND(10098, "Type Or Topic Must Be Present To Update To Completed Post", HttpStatus.BAD_REQUEST),
+    TAG_OR_TOPIC_NOT_FOUND(10098, "Tag Or Topic Must Be Present To Update To Completed Post", HttpStatus.BAD_REQUEST),
     POST_ALREADY_HIDDEN(10099, "This Post Is Already In Hidden Status", HttpStatus.BAD_REQUEST),
     REPORT_POST_NOT_FOUND(10100, "Report Post Not Found", HttpStatus.NOT_FOUND),
     ORDER_POINT_NOT_FOUND(10101, "Order point Not Found", HttpStatus.NOT_FOUND),
@@ -149,6 +149,7 @@ public enum ErrorCode {
     SPAM_COMMENT(10132, "This Type Of Comment Is Considered Spamming. Please Do Not Do That Again", HttpStatus.BAD_REQUEST),
     NOT_A_POST(10133, "This Is Not A Completed Post", HttpStatus.BAD_REQUEST),
     REPORT_POST_THRESHOLD_LOWER_THAN_ONE(10134, "Report threshold must be greater than or equal to 1", HttpStatus.BAD_REQUEST),
+    TITLE_OR_CONTENT_NOT_FOUND(10135, "Title Or Content Must Be Present To Update To Completed Post", HttpStatus.BAD_REQUEST),
     ;
 
     private int code;

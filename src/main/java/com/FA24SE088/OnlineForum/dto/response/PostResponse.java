@@ -21,7 +21,6 @@ public class PostResponse {
     Date createdDate;
     Date lastModifiedDate;
     String status;
-    String linkFile;
     int upvoteCount;
     int commentCount;
     int viewCount;
@@ -34,8 +33,6 @@ public class PostResponse {
     List<ImageResponse> imageList;
     @JsonIgnoreProperties(value = {"post"})
     List<PostFile> postFileList;
-
     @JsonIgnoreProperties(value = {"account"})
     Notification notification;
-
 }

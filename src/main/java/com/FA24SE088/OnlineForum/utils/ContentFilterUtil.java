@@ -16,6 +16,7 @@ import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.List;
+import java.util.regex.Pattern;
 
 @Component
 public class ContentFilterUtil {
@@ -122,7 +123,6 @@ public class ContentFilterUtil {
 
         return areImagesSafe && isTitleSafe && isDescriptionSafe;
     }
-
 
     private static ByteString downloadImage(String imageUrl) throws Exception {
         URL url = new URL(imageUrl);
