@@ -113,7 +113,7 @@ public enum ErrorCode {
     POINT_BONUS_LESS_THAN_ONE(10095, "Point Bonus Must Be Equal Or Greater Than 1", HttpStatus.BAD_REQUEST),
     CANNOT_COMMENT_ON_DRAFT(10096, "Cannot Comment On Draft", HttpStatus.BAD_REQUEST),
     TYPE_BONUS_ALREADY_EXIST(10097, "Type Bonus Already Existed", HttpStatus.BAD_REQUEST),
-    TYPE_OR_TOPIC_NOT_FOUND(10098, "Type Or Topic Must Be Present To Update To Completed Post", HttpStatus.BAD_REQUEST),
+    TAG_OR_TOPIC_NOT_FOUND(10098, "Tag Or Topic Must Be Present To Update To Completed Post", HttpStatus.BAD_REQUEST),
     POST_ALREADY_HIDDEN(10099, "This Post Is Already In Hidden Status", HttpStatus.BAD_REQUEST),
     REPORT_POST_NOT_FOUND(10100, "Report Post Not Found", HttpStatus.NOT_FOUND),
     ORDER_POINT_NOT_FOUND(10101, "Order point Not Found", HttpStatus.NOT_FOUND),
