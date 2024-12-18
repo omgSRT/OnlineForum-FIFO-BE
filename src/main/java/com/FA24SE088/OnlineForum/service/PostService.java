@@ -1070,10 +1070,9 @@ public class PostService {
                 var requestTag = tagFuture.join();
                 var requestTopic = topicFuture.join();
 
-                post.setTitle(request.getTitle() == null ? post.getTitle() : request.getTitle());
-                post.setContent(request.getContent() == null ? post.getContent() : request.getContent());
-                post.setTag(requestTag == null ? post.getTag() : (Tag) requestTag);
-                post.setTopic(requestTopic == null ? post.getTopic() : (Topic) requestTopic);
+                postMapper.updateDraft(post, request);
+                post.setTag(requestTag == null ? null : (Tag) requestTag);
+                post.setTopic(requestTopic == null ? null : (Topic) requestTopic);
                 if (createImageFuture.join() != null) {
                     post.setImageList(createImageFuture.join());
                 } else {
@@ -1439,7 +1438,8 @@ public class PostService {
 
                     return dailyPointFuture.thenCompose(dailyPoint -> {
                         if (dailyPoint != null) {
-                            throw new AppException(ErrorCode.DAILY_POINT_ALREADY_EXIST);
+                            //throw new AppException(ErrorCode.DAILY_POINT_ALREADY_EXIST);
+                            return CompletableFuture.completedFuture(null);
                         }
 
                         return CompletableFuture.completedFuture(
