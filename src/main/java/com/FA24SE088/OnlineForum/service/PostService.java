@@ -2053,6 +2053,9 @@ public class PostService {
         if (isCurrentDraftFieldsNull(post)) {
             throw new AppException(ErrorCode.MISSING_REQUIRED_FIELDS_IN_DRAFT);
         }
+        if(post.getTitle() == null || post.getContent() == null){
+            throw new AppException(ErrorCode.TITLE_OR_CONTENT_NOT_FOUND);
+        }
         if (!post.getStatus().equals(PostStatus.DRAFT.name())) {
             throw new AppException(ErrorCode.COMPLETED_POST_CANNOT_BE_UPDATE_TO_POST);
         }
