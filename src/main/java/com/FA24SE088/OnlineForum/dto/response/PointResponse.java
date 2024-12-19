@@ -16,4 +16,5 @@ public class PointResponse {
     double pointPerPost;
     double pointCostPerDownload;
     double pointEarnedPerDownload;
+    long reportThresholdForAutoDelete;
 }

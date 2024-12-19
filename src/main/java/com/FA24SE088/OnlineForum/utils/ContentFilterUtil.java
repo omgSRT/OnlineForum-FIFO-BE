@@ -144,29 +144,4 @@ public class ContentFilterUtil {
             connection.disconnect();
         }
     }
-    
-    private Set<String> loadRelatedWordFilter() {
-        Set<String> keywords;
-
-        try (InputStream inputStream = getClass().getClassLoader().getResourceAsStream("relatedWordFilter.txt")) {
-            if (inputStream == null) {
-                throw new IllegalArgumentException("File not found: relatedWordFilter.txt");
-            }
-
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
-                String content = reader.lines().collect(Collectors.joining());
-
-                content = content.replaceAll("^\\[|\\]$", "")
-                        .replaceAll("\"", "");
-
-                keywords = Arrays.stream(content.split(","))
-                        .map(String::trim)
-                        .collect(Collectors.toSet());
-            }
-        } catch (IOException e) {
-            throw new RuntimeException("Error reading relatedWordFilter.txt", e);
-        }
-
-        return keywords;
-    }
 }

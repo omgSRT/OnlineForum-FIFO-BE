@@ -2,6 +2,7 @@ package com.FA24SE088.OnlineForum.service;
 
 import com.FA24SE088.OnlineForum.dto.response.DoDResponse;
 import com.FA24SE088.OnlineForum.entity.OrderPoint;
+import com.FA24SE088.OnlineForum.enums.OrderPointStatus;
 import com.FA24SE088.OnlineForum.repository.*;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -126,7 +127,7 @@ public class StatisticService {
     private CompletableFuture<Long> countAllMoneyInOrderPoints() {
         return CompletableFuture.supplyAsync(() -> {
             long amount = 0L;
-            var orderPointList = orderPointRepository.findAll();
+            var orderPointList = orderPointRepository.findByStatus(OrderPointStatus.SUCCESS.name());
             if (orderPointList.isEmpty()) {
                 return amount;
             }
