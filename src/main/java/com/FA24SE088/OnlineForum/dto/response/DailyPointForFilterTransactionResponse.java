@@ -13,7 +13,7 @@ import java.util.UUID;
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class DailyPoint2Response {
+public class DailyPointForFilterTransactionResponse {
     UUID dailyPointId;
     double pointEarned;
     Date createdDate;

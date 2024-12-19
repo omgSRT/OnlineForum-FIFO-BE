@@ -2,6 +2,7 @@ package com.FA24SE088.OnlineForum.controller;
 
 
 import com.FA24SE088.OnlineForum.dto.request.NotificationRequest;
+import com.FA24SE088.OnlineForum.dto.request.NotificationUpdateIsReadRequest;
 import com.FA24SE088.OnlineForum.dto.response.ApiResponse;
 import com.FA24SE088.OnlineForum.dto.response.NotificationResponse;
 import com.FA24SE088.OnlineForum.exception.AppException;
@@ -47,6 +48,12 @@ public class NotificationController {
                 .entity(notificationService.getAllNotifications())
                 .build();
     }
+    @PutMapping("/update-status/{notificationId}")
+    public ApiResponse<NotificationResponse> updateIsRead(@PathVariable UUID notificationId, @RequestBody NotificationUpdateIsReadRequest request){
+        return ApiResponse.<NotificationResponse>builder()
+                .entity(notificationService.updateStatusIsRead(notificationId,request))
+                .build();
+    }
 
     @GetMapping("/get-all-by-account/{accountId}")
     public ApiResponse<List<NotificationResponse>> getAllNotificationsByAccount(@PathVariable UUID accountId) {
@@ -55,7 +62,6 @@ public class NotificationController {
                 .build();
     }
 
-    //    @GetMapping("/get-my-notifications")
     @GetMapping("/get-all-of-current-user")
     public ApiResponse<List<NotificationResponse>> getMyNotifications() {
         return ApiResponse.<List<NotificationResponse>>builder()

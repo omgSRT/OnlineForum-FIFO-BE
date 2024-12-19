@@ -2,7 +2,6 @@ package com.FA24SE088.OnlineForum.controller;
 
 
 import com.FA24SE088.OnlineForum.dto.request.FeedbackRequest;
-import com.FA24SE088.OnlineForum.dto.request.FeedbackRequest2;
 import com.FA24SE088.OnlineForum.dto.response.ApiResponse;
 import com.FA24SE088.OnlineForum.dto.response.FeedbackResponse;
 import com.FA24SE088.OnlineForum.enums.FeedbackStatus;

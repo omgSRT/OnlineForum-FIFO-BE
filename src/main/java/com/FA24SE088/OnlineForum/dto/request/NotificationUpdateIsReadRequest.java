@@ -10,7 +10,6 @@ import java.util.UUID;
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class Wallet2Request {
-    UUID accountId;
-    double balance;
+public class NotificationUpdateIsReadRequest {
+    boolean isRead;
 }

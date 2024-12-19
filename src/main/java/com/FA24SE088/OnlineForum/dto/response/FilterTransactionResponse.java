@@ -15,8 +15,8 @@ public class FilterTransactionResponse {
     @JsonIgnoreProperties(value = {"wallet"})
     List<TransactionResponse> transactionList;
     @JsonIgnoreProperties(value = {"account", "typeBonus"})
-    List<DailyPoint2Response> dailyPointList;
+    List<DailyPointForFilterTransactionResponse> dailyPointList;
     @JsonIgnoreProperties(value = {"account", "point"})
-    List<DailyPoint2Response> bonusPoint;
+    List<DailyPointForFilterTransactionResponse> bonusPoint;
     List<OrderPointResponse> orderPointList;
 }

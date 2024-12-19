@@ -1,6 +1,7 @@
 package com.FA24SE088.OnlineForum.service;
 
 import com.FA24SE088.OnlineForum.dto.request.NotificationRequest;
+import com.FA24SE088.OnlineForum.dto.request.NotificationUpdateIsReadRequest;
 import com.FA24SE088.OnlineForum.dto.response.NotificationResponse;
 import com.FA24SE088.OnlineForum.entity.Account;
 import com.FA24SE088.OnlineForum.entity.Notification;
@@ -29,7 +30,6 @@ public class NotificationService {
     NotificationRepository notificationRepository;
     AccountRepository accountRepository;
     NotificationMapper notificationMapper;
-    //DataHandler dataHandler;
 
     private Account getCurrentUser() {
         var context = SecurityContextHolder.getContext();
@@ -50,25 +50,11 @@ public class NotificationService {
         response.setAccount(account);
         return response;
     }
-
-    public void sendPrivateNotification(NotificationRequest notificationRequest) {
-        var savedData = saveNotification(notificationRequest);
-        //dataHandler.sendToUser(notificationRequest.getAccountId(), savedData);
-    }
-
-    private Notification saveNotification(NotificationRequest notificationRequest) {
-
-        Account account = accountRepository.findById(notificationRequest.getAccountId()).orElseThrow(
-                () -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND)
-        );
-        Notification notification = Notification.builder()
-                .title(notificationRequest.getTitle())
-                .message(notificationRequest.getMessage())
-                .isRead(false)
-                .createdDate(LocalDateTime.now())
-                .account(account)
-                .build();
-        return notificationRepository.save(notification);
+    public NotificationResponse updateStatusIsRead(UUID notificationId, NotificationUpdateIsReadRequest request){
+        Notification notification = notificationRepository.findById(notificationId).orElseThrow(() -> new AppException(ErrorCode.NOTIFICATION_NOT_FOUND));
+        notification.setRead(request.isRead());
+        notificationRepository.save(notification);
+        return notificationMapper.toResponse(notification);
     }
 
     public Optional<NotificationResponse> getNotificationById(UUID notificationId) {

@@ -129,8 +129,8 @@ public class UtilityService {
         boolean includeAll = !viewTransaction && !dailyPoint && !bonusPoint && !orderPoint;
 
         CompletableFuture<List<TransactionResponse>> transactionFuture = getTransactionFuture(viewTransaction, includeAll, currentUser, startDate, endDate);
-        CompletableFuture<List<DailyPoint2Response>> dailyPointFuture = getDailyPointFuture(dailyPoint, includeAll, currentUser, startDate, endDate);
-        CompletableFuture<List<DailyPoint2Response>> bonusPointFuture = getBonusPointFuture(bonusPoint, includeAll, currentUser, startDate, endDate);
+        CompletableFuture<List<DailyPointForFilterTransactionResponse>> dailyPointFuture = getDailyPointFuture(dailyPoint, includeAll, currentUser, startDate, endDate);
+        CompletableFuture<List<DailyPointForFilterTransactionResponse>> bonusPointFuture = getBonusPointFuture(bonusPoint, includeAll, currentUser, startDate, endDate);
         CompletableFuture<List<OrderPointResponse>> orderPointFuture = getOrderPointFuture(orderPoint, includeAll, currentUser, startDate, endDate);
 
         return CompletableFuture.allOf(transactionFuture, dailyPointFuture, bonusPointFuture)
@@ -143,6 +143,57 @@ public class UtilityService {
                     return response;
                 });
     }
+//    public CompletableFuture<FilterTransactionResponse> filter(
+//            boolean viewTransaction,
+//            boolean dailyPoint,
+//            boolean bonusPoint,
+//            boolean orderPoint,
+//            String startDateStr,
+//            String endDateStr,
+//            int page,
+//            int perPage) {
+//        Account currentUser = getCurrentUser();
+//        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd");
+//
+//        Date startDate = null;
+//        Date endDate = null;
+//
+//        try {
+//            if (startDateStr != null) {
+//                startDate = simpleDateFormat.parse(startDateStr);
+//                startDate = resetTimeToStartOfDay(startDate);
+//            }
+//            if (endDateStr != null) {
+//                endDate = simpleDateFormat.parse(endDateStr);
+//                endDate = resetTimeToEndOfDay(endDate);
+//            }
+//        } catch (ParseException e) {
+//            throw new AppException(ErrorCode.WRONG_DATE_FORMAT);
+//        }
+//
+//        validateDates(startDate, endDate);
+//
+//        if (startDate != null && endDate == null) {
+//            endDate = startDate;
+//        }
+//
+//        boolean includeAll = !viewTransaction && !dailyPoint && !bonusPoint && !orderPoint;
+//
+//        CompletableFuture<List<TransactionResponse>> transactionFuture = getTransactionFuture(viewTransaction, includeAll, currentUser, startDate, endDate, page, perPage);
+//        CompletableFuture<List<DailyPointForFilterTransactionResponse>> dailyPointFuture = getDailyPointFuture(dailyPoint, includeAll, currentUser, startDate, endDate, page, perPage);
+//        CompletableFuture<List<DailyPointForFilterTransactionResponse>> bonusPointFuture = getBonusPointFuture(bonusPoint, includeAll, currentUser, startDate, endDate, page, perPage);
+//        CompletableFuture<List<OrderPointResponse>> orderPointFuture = getOrderPointFuture(orderPoint, includeAll, currentUser, startDate, endDate, page, perPage);
+//
+//        return CompletableFuture.allOf(transactionFuture, dailyPointFuture, bonusPointFuture, orderPointFuture)
+//                .thenApply(listFinal -> {
+//                    FilterTransactionResponse response = new FilterTransactionResponse();
+//                    response.setTransactionList(transactionFuture.join());
+//                    response.setDailyPointList(dailyPointFuture.join());
+//                    response.setBonusPoint(bonusPointFuture.join());
+//                    response.setOrderPointList(orderPointFuture.join());
+//                    return response;
+//                });
+//    }
 
 
     private List<Account> collectAccounts(CompletableFuture<List<Account>> usernameFuture,
@@ -305,7 +356,7 @@ public class UtilityService {
         return calendar.getTime();
     }
 
-    @Async("AsyncTaskExecutor")
+        @Async("AsyncTaskExecutor")
     private CompletableFuture<List<TransactionResponse>> getTransactionFuture(boolean viewTransaction, boolean includeAll, Account currentUser, Date startDate, Date endDate) {
         if (viewTransaction || includeAll) {
             if (startDate != null && endDate != null) {
@@ -326,7 +377,7 @@ public class UtilityService {
     }
 
     @Async("AsyncTaskExecutor")
-    private CompletableFuture<List<DailyPoint2Response>> getDailyPointFuture(boolean dailyPoint, boolean includeAll, Account currentUser, Date startDate, Date endDate) {
+    private CompletableFuture<List<DailyPointForFilterTransactionResponse>> getDailyPointFuture(boolean dailyPoint, boolean includeAll, Account currentUser, Date startDate, Date endDate) {
         if (dailyPoint || includeAll) {
             if (startDate != null && endDate != null) {
                 return dailyPointRepository
@@ -342,7 +393,7 @@ public class UtilityService {
     }
 
     @Async("AsyncTaskExecutor")
-    private CompletableFuture<List<DailyPoint2Response>> getBonusPointFuture(boolean bonusPoint, boolean includeAll, Account currentUser, Date startDate, Date endDate) {
+    private CompletableFuture<List<DailyPointForFilterTransactionResponse>> getBonusPointFuture(boolean bonusPoint, boolean includeAll, Account currentUser, Date startDate, Date endDate) {
         if (bonusPoint || includeAll) {
             if (startDate != null && endDate != null) {
                 return dailyPointRepository
@@ -372,6 +423,7 @@ public class UtilityService {
         }
         return CompletableFuture.completedFuture(Collections.emptyList());
     }
+
 
     private String getUsernameFromJwt() {
         var authentication = SecurityContextHolder.getContext().getAuthentication();

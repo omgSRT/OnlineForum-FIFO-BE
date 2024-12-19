@@ -12,7 +12,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.UUID;
 
 @RequiredArgsConstructor
 @RestController
@@ -24,9 +23,9 @@ public class FollowController {
 
     @Operation(summary = "Create follow", description = "Create a new follow for the current user")
     @PostMapping("/follow-or-unfollow")
-    public ApiResponse<Follow2Response> createFollow(@RequestBody FollowUnfollowRequest request) {
+    public ApiResponse<FollowOrUnfollowResponse> createFollow(@RequestBody FollowUnfollowRequest request) {
 //        followService.followOrUnfollow(request.getAccountId());
-        return ApiResponse.<Follow2Response>builder()
+        return ApiResponse.<FollowOrUnfollowResponse>builder()
                 .entity(followService.followOrUnfollow(request.getAccountId()))
                 .build();
     }

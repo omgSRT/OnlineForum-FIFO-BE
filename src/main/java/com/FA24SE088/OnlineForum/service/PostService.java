@@ -29,7 +29,6 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -189,39 +188,99 @@ public class PostService {
                                             response.setUpvoteCount(upvoteCountFuture.join());
                                             response.setCommentCount(commentCountFuture.join());
                                             response.setViewCount(viewCountFuture.join());
-                                            DataNotification dataNotification = null;
+//                                            DataNotification dataNotification = null;
+//                                            try {
+//                                                dataNotification = DataNotification.builder()
+//                                                        .id(dailyPointFuture.get().getDailyPointId())
+//                                                        .entity("DailyPoint")
+//                                                        .build();
+//                                            } catch (InterruptedException | ExecutionException e) {
+//                                                throw new RuntimeException(e);
+//                                            }
+//                                            String messageJson = null;
+//                                            try {
+//
+//                                                messageJson = objectMapper.writeValueAsString(dataNotification);
+//                                                Notification notification = Notification.builder()
+//                                                        .title("Daily point Noitfication ")
+//                                                        .message(messageJson)
+//                                                        .isRead(false)
+//                                                        .account(account)
+//                                                        .createdDate(LocalDateTime.now())
+//                                                        .build();
+//                                                if(dailyPointFuture.get().getPointEarned() != 0) {
+//                                                    notificationRepository.save(notification);
+//                                                    socketIOUtil.sendEventToOneClientInAServer(account.getAccountId(), WebsocketEventName.NOTIFICATION.name(),"You have been added 5 points" ,notification);
+//                                                }
+//                                            } catch (JsonProcessingException | InterruptedException | ExecutionException e) {
+//                                                throw new RuntimeException(e);
+//                                            }
                                             try {
-                                                dataNotification = DataNotification.builder()
-                                                        .id(dailyPointFuture.get().getDailyPointId())
-                                                        .entity("DailyPoint")
-                                                        .build();
-                                            } catch (InterruptedException | ExecutionException e) {
+                                                realtime_dailyPoint(dailyPointFuture.get(), "DailyPoint", "You have get " + dailyPointFuture.get().getPointEarned() + "MC from create post: " + dailyPointFuture.get().getPost().getTitle(), "You have get " + dailyPointFuture.get().getPointEarned() + "MC from create post: " + dailyPointFuture.get().getPost().getTitle());
+                                                realtime_notificationToFollower(post,account,"Post",
+                                                        account.getUsername()+ " has just created 1 post: " + post.getTitle(),
+                                                        account.getUsername()+ " has just created 1 post: " + post.getTitle());
+                                            } catch (InterruptedException e) {
                                                 throw new RuntimeException(e);
-                                            }
-                                            String messageJson = null;
-                                            try {
-
-                                                messageJson = objectMapper.writeValueAsString(dataNotification);
-                                                Notification notification = Notification.builder()
-                                                        .title("Daily point Noitfication ")
-                                                        .message(messageJson)
-                                                        .isRead(false)
-                                                        .account(account)
-                                                        .createdDate(LocalDateTime.now())
-                                                        .build();
-                                                if(dailyPointFuture.get().getPointEarned() != 0) {
-                                                    notificationRepository.save(notification);
-//                                                response.setNotification(notification);
-//                                                    socketIOUtil.sendEventToOneClientInAServer(clientSessionId, WebsocketEventName.NOTIFICATION.name(), notification);
-                                                    socketIOUtil.sendEventToOneClientInAServer(account.getAccountId(), WebsocketEventName.NOTIFICATION.name(),"You have been added 5 points" ,notification);
-                                                }
-                                            } catch (JsonProcessingException | InterruptedException | ExecutionException e) {
+                                            } catch (ExecutionException e) {
                                                 throw new RuntimeException(e);
                                             }
                                             return response;
                                         });
                             });
                 });
+    }
+
+    public void realtime_dailyPoint(DailyPoint dailyPoint, String entity, String title, String message) {
+        DataNotification dataNotification = DataNotification.builder()
+                .id(dailyPoint.getDailyPointId())
+                .entity(entity)
+                .build();
+        String messageJson = null;
+        try {
+
+            messageJson = objectMapper.writeValueAsString(dataNotification);
+            Notification notification = Notification.builder()
+                    .title(title)
+                    .message(messageJson)
+                    .isRead(false)
+                    .account(dailyPoint.getAccount())
+                    .createdDate(LocalDateTime.now())
+                    .build();
+            if (dailyPoint.getPointEarned() != 0) {
+                notificationRepository.save(notification);
+                socketIOUtil.sendEventToOneClientInAServer(dailyPoint.getAccount().getAccountId(), WebsocketEventName.NOTIFICATION.name(), message, notification);
+            }
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+    }
+    public void realtime_notificationToFollower(Post post,Account account, String entity, String title, String message) {
+        DataNotification dataNotification = DataNotification.builder()
+                .id(post.getPostId())
+                .entity(entity)
+                .build();
+        List<Account> accountList = followRepository.findByFollowee(account).stream().map(Follow::getFollower).toList();
+
+        accountList.forEach(accountFollower -> {
+            String messageJson = null;
+            try {
+                messageJson = objectMapper.writeValueAsString(dataNotification);
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException(e);
+            }
+            Notification notification = Notification.builder()
+                    .title(title)
+                    .message(messageJson)
+                    .isRead(false)
+                    .account(accountFollower)
+                    .createdDate(LocalDateTime.now())
+                    .build();
+            notificationRepository.save(notification);
+            socketIOUtil.sendEventToOneClientInAServer(accountFollower.getAccountId(), WebsocketEventName.NOTIFICATION.name(), message, notification);
+        });
+
+
     }
 
     @Async("AsyncTaskExecutor")
@@ -643,33 +702,33 @@ public class PostService {
         var accountFuture = findAccountByUsername(username);
 
         return CompletableFuture.allOf(postFuture, accountFuture, pointFuture).thenCompose(v -> {
-            var account = accountFuture.join();
-            var post = postFuture.join();
-            var categoryPost = post.getTopic().getCategory();
+                    var account = accountFuture.join();
+                    var post = postFuture.join();
+                    var categoryPost = post.getTopic().getCategory();
 
-            return categoryRepository.findByAccount(account).thenCompose(categoryList -> {
-                if (post.getStatus().equals(PostStatus.DRAFT.name())) {
-                    throw new AppException(ErrorCode.DRAFT_POST_CANNOT_CHANGE_STATUS);
-                }
-                if (post.getStatus().equals(PostStatus.HIDDEN.name())) {
-                    throw new AppException(ErrorCode.POST_ALREADY_HIDDEN);
-                }
+                    return categoryRepository.findByAccount(account).thenCompose(categoryList -> {
+                        if (post.getStatus().equals(PostStatus.DRAFT.name())) {
+                            throw new AppException(ErrorCode.DRAFT_POST_CANNOT_CHANGE_STATUS);
+                        }
+                        if (post.getStatus().equals(PostStatus.HIDDEN.name())) {
+                            throw new AppException(ErrorCode.POST_ALREADY_HIDDEN);
+                        }
 
-                if (account.getRole().getName().equals("USER") &&
-                        !account.equals(post.getAccount())) {
-                    throw new AppException(ErrorCode.ACCOUNT_NOT_THE_AUTHOR_OF_POST);
-                }
-                if (account.getRole().getName().equals("STAFF") &&
-                        !categoryList.contains(categoryPost)) {
-                    throw new AppException(ErrorCode.STAFF_NOT_SUPERVISE_CATEGORY);
-                }
+                        if (account.getRole().getName().equals("USER") &&
+                                !account.equals(post.getAccount())) {
+                            throw new AppException(ErrorCode.ACCOUNT_NOT_THE_AUTHOR_OF_POST);
+                        }
+                        if (account.getRole().getName().equals("STAFF") &&
+                                !categoryList.contains(categoryPost)) {
+                            throw new AppException(ErrorCode.STAFF_NOT_SUPERVISE_CATEGORY);
+                        }
 
-                post.setStatus(PostStatus.HIDDEN.name());
-                post.setLastModifiedDate(new Date());
+                        post.setStatus(PostStatus.HIDDEN.name());
+                        post.setLastModifiedDate(new Date());
 
-                return CompletableFuture.completedFuture(postRepository.save(post));
-            });
-        })
+                        return CompletableFuture.completedFuture(postRepository.save(post));
+                    });
+                })
                 .thenCompose(post -> {
                     var account = post.getAccount();
                     var pointList = pointFuture.join();
@@ -678,7 +737,7 @@ public class PostService {
                         throw new AppException(ErrorCode.POINT_NOT_FOUND);
                     }
                     point = pointList.get(0);
-                    if(account.getRole().getName().equalsIgnoreCase("USER")){
+                    if (account.getRole().getName().equalsIgnoreCase("USER")) {
                         createTransactionForDeletePost(account.getWallet(), point).thenApply(transaction -> {
                             var wallet = account.getWallet();
                             wallet.setBalance(wallet.getBalance() - point.getPointPerPost());
@@ -706,7 +765,7 @@ public class PostService {
                                 response.setViewCount(viewCountFuture.join());
                                 return response;
                             });
-        });
+                });
     }
 
     @Async("AsyncTaskExecutor")
@@ -1961,7 +2020,7 @@ public class PostService {
                             .createdDate(LocalDateTime.now())
                             .build();
                     notificationRepository.save(notification);
-                    socketIOUtil.sendEventToOneClientInAServer(accountOwner.getAccountId(), WebsocketEventName.NOTIFICATION.name(),accountDownloader.getUsername() + " downloaded file from in post: " + dailyPoint.getPost().getTitle() + " and you get " + dailyPoint.getPointEarned() + " point" ,notification);
+                    socketIOUtil.sendEventToOneClientInAServer(accountOwner.getAccountId(), WebsocketEventName.NOTIFICATION.name(), accountDownloader.getUsername() + " downloaded file from in post: " + dailyPoint.getPost().getTitle() + " and you get " + dailyPoint.getPointEarned() + " point", notification);
                 } catch (JsonProcessingException e) {
                     throw new RuntimeException(e);
                 }
