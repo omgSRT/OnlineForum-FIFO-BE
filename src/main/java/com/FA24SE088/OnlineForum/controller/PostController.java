@@ -209,8 +209,9 @@ public class PostController {
 
     @Operation(summary = "Update Draft To Completed Post", description = "Update Draft To Completed Post By ID")
     @PutMapping(path = "/update/draft/to-post/{draftId}")
-    public ApiResponse<PostResponse> updateDraftToPost(@PathVariable UUID draftId) {
-        return postService.updateDraftToPostById(draftId).thenApply(postResponse ->
+    public ApiResponse<PostResponse> updateDraftToPost(@PathVariable UUID draftId,
+                                                       @RequestBody @Valid DraftUpdateRequest request) {
+        return postService.updateDraftToPostById(draftId, request).thenApply(postResponse ->
                 ApiResponse.<PostResponse>builder()
                         .message(SuccessReturnMessage.UPDATE_SUCCESS.getMessage())
                         .entity(postResponse)

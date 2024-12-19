@@ -34,6 +34,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -1102,72 +1103,66 @@ public class PostService {
 
     @Async("AsyncTaskExecutor")
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
-    public CompletableFuture<PostResponse> updateDraftToPostById(UUID draftId) {
+    @Transactional
+    public CompletableFuture<PostResponse> updateDraftToPostById(UUID draftId, DraftUpdateRequest request) {
         var username = getUsernameFromJwt();
         var accountFuture = findAccountByUsername(username);
         var postFuture = findPostById(draftId);
+        var tagFuture = request.getTagId() == null
+                ? CompletableFuture.completedFuture(null)
+                : findTagById(request.getTagId());
+        var topicFuture = request.getTopicId() == null
+                ? CompletableFuture.completedFuture(null)
+                : findTopicById(request.getTopicId());
 
-        return CompletableFuture.allOf(accountFuture, postFuture).thenCompose(v -> {
+        return CompletableFuture.allOf(accountFuture, postFuture, tagFuture, topicFuture).thenCompose(v -> {
             var account = accountFuture.join();
             var post = postFuture.join();
 
-            if (isCurrentDraftFieldsNull(post)) {
-                throw new AppException(ErrorCode.MISSING_REQUIRED_FIELDS_IN_DRAFT);
-            }
-            if (!post.getStatus().equals(PostStatus.DRAFT.name())) {
-                throw new AppException(ErrorCode.COMPLETED_POST_CANNOT_BE_UPDATE_TO_POST);
-            }
-            if (post.getTag() == null || post.getTopic() == null) {
-                throw new AppException(ErrorCode.TYPE_OR_TOPIC_NOT_FOUND);
-            }
-            if (post.getTopic().getCategory().getName().equalsIgnoreCase("SOURCE CODE")
-                    && (post.getPostFileList() == null || post.getPostFileList().isEmpty())) {
-                throw new AppException(ErrorCode.POST_MUST_HAVE_AT_LEAST_ONE_SOURCE_CODE);
-            }
-            var imageUrlList = post.getImageList() == null || post.getImageList().isEmpty()
-                    ? null
-                    : post.getImageList().stream()
-                    .map(Image::getUrl)
-                    .toList();
-            var checkContentSafe = ensureContentSafe(imageUrlList, post.getTitle(), post.getContent());
-            if (!checkContentSafe) {
-                throw new AppException(ErrorCode.TITLE_OR_CONTENT_OR_IMAGES_CONTAIN_INAPPROPRIATE_CONTENT);
-            }
-            var checkContentRelated = openAIUtil.isRelated(post.getTitle(), post.getContent(),
-                    post.getTopic().getName());
-            if (!checkContentRelated) {
-                throw new AppException(ErrorCode.ERROR_CHECK_RELATED);
-            }
-            if (post.getPostFileList() != null && !post.getPostFileList().isEmpty()) {
-                Set<PostFileRequest> postFileRequestList = post.getPostFileList().stream()
-                        .map(PostFile::getUrl)
-                        .map(url -> PostFileRequest.builder()
-                                .url(url)
-                                .build())
-                        .collect(Collectors.toSet());
-                var programmingLanguage = determineProgrammingLanguage(postFileRequestList);
-                programmingLanguage = programmingLanguage.toLowerCase();
-                if (!post.getTopic().getName().toLowerCase().contains(programmingLanguage)) {
-                    throw new AppException(ErrorCode.SOURCE_CODE_DOES_NOT_MATCH_CURRENT_TOPIC);
+            var deleteImageListFuture = deleteImagesByPost(post);
+            var createImageFuture = createImages(request, post);
+            var deletePostFileFuture = deletePostFilesByPost(post);
+            var createPostFileFuture = createPostFiles(request, post);
+
+            return CompletableFuture.allOf(deleteImageListFuture, createImageFuture, deletePostFileFuture, createPostFileFuture)
+                    .thenCompose(voidReturnData -> {
+                var requestTag = tagFuture.join();
+                var requestTopic = topicFuture.join();
+
+                postMapper.updateDraft(post, request);
+                post.setTag(requestTag == null ? null : (Tag) requestTag);
+                post.setTopic(requestTopic == null ? null : (Topic) requestTopic);
+                if (createImageFuture.join() != null) {
+                    post.setImageList(createImageFuture.join());
+                } else {
+                    post.setImageList(new ArrayList<>());
                 }
-            }
-
-            var dailyPointFuture = createDailyPointLog(account.getAccountId(), post);
-            var walletFuture = addPointToWallet(account.getAccountId());
-            var pointFuture = getPoint();
-
-            return CompletableFuture.allOf(dailyPointFuture, walletFuture, pointFuture).thenCompose(voidReturnData -> {
-                var dailyPoint = dailyPointFuture.join();
-
-                List<DailyPoint> dailyPointList = new ArrayList<>();
-                if (dailyPoint != null) {
-                    dailyPointList.add(dailyPoint);
+                if (createPostFileFuture.join() != null) {
+                    post.setPostFileList(createPostFileFuture.join());
+                } else {
+                    post.setPostFileList(new ArrayList<>());
                 }
-                post.setDailyPointList(dailyPointList);
-                post.setStatus(PostStatus.PUBLIC.name());
-                post.setLastModifiedDate(new Date());
-                return CompletableFuture.completedFuture(postRepository.save(post));
-            }).thenCompose(savedPost -> {
+
+                validateDraftBeforePosting(post);
+
+                var dailyPointFuture = createDailyPointLog(account.getAccountId(), post);
+                var walletFuture = addPointToWallet(account.getAccountId());
+
+                return CompletableFuture.allOf(dailyPointFuture, walletFuture).thenCompose(voidDataa -> {
+                    var dailyPoint = dailyPointFuture.join();
+
+                    List<DailyPoint> dailyPointList = new ArrayList<>();
+                    if (dailyPoint != null) {
+                        dailyPointList.add(dailyPoint);
+                    }
+
+                    post.setDailyPointList(dailyPointList);
+                    post.setStatus(PostStatus.PUBLIC.name());
+                    post.setLastModifiedDate(new Date());
+                    return CompletableFuture.completedFuture(postRepository.save(post));
+                });
+            })
+                    .thenCompose(savedPost -> {
                 CompletableFuture<Integer> upvoteCountFuture = upvoteRepository
                         .countByPost(savedPost);
                 CompletableFuture<Integer> commentCountFuture = commentRepository
@@ -1502,7 +1497,8 @@ public class PostService {
 
                     return dailyPointFuture.thenCompose(dailyPoint -> {
                         if (dailyPoint != null) {
-                            throw new AppException(ErrorCode.DAILY_POINT_ALREADY_EXIST);
+                            //throw new AppException(ErrorCode.DAILY_POINT_ALREADY_EXIST);
+                            return CompletableFuture.completedFuture(null);
                         }
 
                         return CompletableFuture.completedFuture(
@@ -2109,6 +2105,52 @@ public class PostService {
                     .orElse("Unknown");
         } catch (IOException | RarException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    private void validateDraftBeforePosting(Post post){
+        if (isCurrentDraftFieldsNull(post)) {
+            throw new AppException(ErrorCode.MISSING_REQUIRED_FIELDS_IN_DRAFT);
+        }
+        if(post.getTitle() == null || post.getContent() == null){
+            throw new AppException(ErrorCode.TITLE_OR_CONTENT_NOT_FOUND);
+        }
+        if (!post.getStatus().equals(PostStatus.DRAFT.name())) {
+            throw new AppException(ErrorCode.COMPLETED_POST_CANNOT_BE_UPDATE_TO_POST);
+        }
+        if (post.getTag() == null || post.getTopic() == null) {
+            throw new AppException(ErrorCode.TAG_OR_TOPIC_NOT_FOUND);
+        }
+        if (post.getTopic().getCategory().getName().equalsIgnoreCase("SOURCE CODE")
+                && (post.getPostFileList() == null || post.getPostFileList().isEmpty())) {
+            throw new AppException(ErrorCode.POST_MUST_HAVE_AT_LEAST_ONE_SOURCE_CODE);
+        }
+        var imageUrlList = post.getImageList() == null || post.getImageList().isEmpty()
+                ? null
+                : post.getImageList().stream()
+                .map(Image::getUrl)
+                .toList();
+        var checkContentSafe = ensureContentSafe(imageUrlList, post.getTitle(), post.getContent());
+        if (!checkContentSafe) {
+            throw new AppException(ErrorCode.TITLE_OR_CONTENT_OR_IMAGES_CONTAIN_INAPPROPRIATE_CONTENT);
+        }
+        var checkContentRelated = openAIUtil.isRelated(post.getTitle(), post.getContent(),
+                post.getTopic().getName());
+        if (!checkContentRelated) {
+            throw new AppException(ErrorCode.ERROR_CHECK_RELATED);
+        }
+        if (post.getPostFileList() != null && !post.getPostFileList().isEmpty()) {
+            Set<PostFileRequest> postFileRequestList = post.getPostFileList().stream()
+                    .map(PostFile::getUrl)
+                    .map(url -> PostFileRequest.builder()
+                            .url(url)
+                            .build())
+                    .collect(Collectors.toSet());
+            var programmingLanguage = determineProgrammingLanguage(postFileRequestList);
+            programmingLanguage = programmingLanguage.toLowerCase();
+            if (!post.getTopic().getName().toLowerCase().contains(programmingLanguage)) {
+                throw new AppException(ErrorCode.SOURCE_CODE_DOES_NOT_MATCH_CURRENT_TOPIC);
+            }
         }
     }
     //endregion

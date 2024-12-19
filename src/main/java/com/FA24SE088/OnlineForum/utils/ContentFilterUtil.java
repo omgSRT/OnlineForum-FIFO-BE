@@ -9,13 +9,22 @@ import com.google.cloud.language.v2.LanguageServiceSettings;
 import com.google.cloud.language.v2.Sentiment;
 import com.google.cloud.vision.v1.*;
 import com.google.protobuf.ByteString;
+import jakarta.annotation.PostConstruct;
+import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 @Component
 public class ContentFilterUtil {
@@ -123,7 +132,6 @@ public class ContentFilterUtil {
         return areImagesSafe && isTitleSafe && isDescriptionSafe;
     }
 
-
     private static ByteString downloadImage(String imageUrl) throws Exception {
         URL url = new URL(imageUrl);
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
@@ -135,5 +143,30 @@ public class ContentFilterUtil {
         } finally {
             connection.disconnect();
         }
+    }
+    
+    private Set<String> loadRelatedWordFilter() {
+        Set<String> keywords;
+
+        try (InputStream inputStream = getClass().getClassLoader().getResourceAsStream("relatedWordFilter.txt")) {
+            if (inputStream == null) {
+                throw new IllegalArgumentException("File not found: relatedWordFilter.txt");
+            }
+
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
+                String content = reader.lines().collect(Collectors.joining());
+
+                content = content.replaceAll("^\\[|\\]$", "")
+                        .replaceAll("\"", "");
+
+                keywords = Arrays.stream(content.split(","))
+                        .map(String::trim)
+                        .collect(Collectors.toSet());
+            }
+        } catch (IOException e) {
+            throw new RuntimeException("Error reading relatedWordFilter.txt", e);
+        }
+
+        return keywords;
     }
 }
