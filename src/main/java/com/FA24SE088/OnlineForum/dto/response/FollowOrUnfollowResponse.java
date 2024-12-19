@@ -12,7 +12,7 @@ import java.util.UUID;
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class Follow2Response {
+public class FollowOrUnfollowResponse {
     UUID followId;
     String message;
     String status;

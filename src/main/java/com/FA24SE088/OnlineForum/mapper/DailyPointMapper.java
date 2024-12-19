@@ -1,7 +1,7 @@
 package com.FA24SE088.OnlineForum.mapper;
 
 import com.FA24SE088.OnlineForum.dto.request.DailyPointRequest;
-import com.FA24SE088.OnlineForum.dto.response.DailyPoint2Response;
+import com.FA24SE088.OnlineForum.dto.response.DailyPointForFilterTransactionResponse;
 import com.FA24SE088.OnlineForum.dto.response.DailyPointResponse;
 import com.FA24SE088.OnlineForum.entity.DailyPoint;
 import org.mapstruct.Mapper;
@@ -16,7 +16,7 @@ public interface DailyPointMapper {
 
     DailyPointResponse toDailyPointResponse(DailyPoint dailyPoint);
 
-    DailyPoint2Response toDailyPointResponse2(DailyPoint dailyPoint);
+    DailyPointForFilterTransactionResponse toDailyPointResponse2(DailyPoint dailyPoint);
 
-    List<DailyPoint2Response> toListResponse(List<DailyPoint> list);
+    List<DailyPointForFilterTransactionResponse> toListResponse(List<DailyPoint> list);
 }

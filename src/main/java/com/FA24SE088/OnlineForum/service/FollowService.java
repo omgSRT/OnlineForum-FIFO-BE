@@ -1,6 +1,5 @@
 package com.FA24SE088.OnlineForum.service;
 
-import com.FA24SE088.OnlineForum.dto.request.UnfollowRequest;
 import com.FA24SE088.OnlineForum.dto.response.*;
 import com.FA24SE088.OnlineForum.entity.*;
 import com.FA24SE088.OnlineForum.enums.FollowStatus;
@@ -148,7 +147,7 @@ public class FollowService {
                 .toList();
     }
 
-    public Follow2Response followOrUnfollow(UUID followeeId) {
+    public FollowOrUnfollowResponse followOrUnfollow(UUID followeeId) {
         Account account = getCurrentUser();
 
         Account followee = accountRepository.findById(followeeId)
@@ -160,7 +159,7 @@ public class FollowService {
 
         boolean exist = followRepository.existsByFollowerAndAndFollowee(account, followee);
 
-        Follow2Response response = new Follow2Response();
+        FollowOrUnfollowResponse response = new FollowOrUnfollowResponse();
         if (exist) {
             Follow existingFollow = followRepository.findByFollowerAndFollowee(account, followee).orElseThrow(() -> new AppException(ErrorCode.FOLLOW_NOT_FOUND));
             followRepository.delete(existingFollow);

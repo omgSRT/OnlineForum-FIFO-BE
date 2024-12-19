@@ -14,7 +14,6 @@ import java.util.UUID;
 public class NotificationRequest {
     String title;
     String message;
-    boolean isRead;
-    @Nullable
+//    boolean isRead;
     UUID accountId;
 }
