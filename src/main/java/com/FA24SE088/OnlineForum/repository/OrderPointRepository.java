@@ -15,4 +15,6 @@ public interface OrderPointRepository extends JpaRepository<OrderPoint, UUID> {
     CompletableFuture<List<OrderPoint>> findByWallet_AccountAndOrderDateBetweenOrderByOrderDateDesc(Account account, Date start, Date end);
 
     CompletableFuture<List<OrderPoint>> findByWallet_AccountOrderByOrderDateDesc(Account account);
+
+    List<OrderPoint> findByStatus(String status);
 }
