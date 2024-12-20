@@ -84,6 +84,7 @@ public class CommentService {
                                                     Comment newComment = commentMapper.toComment(request);
                                                     newComment.setAccount(account);
                                                     newComment.setPost(post);
+                                                    newComment.setCreatedDate(new Date());
                                                     newComment.setParentComment(null);
                                                     newComment.setReplies(new ArrayList<>());
 
@@ -101,6 +102,7 @@ public class CommentService {
                                         Comment newComment = commentMapper.toComment(request);
                                         newComment.setAccount(account);
                                         newComment.setPost(post);
+                                        newComment.setCreatedDate(new Date());
                                         newComment.setParentComment(null);
                                         newComment.setReplies(new ArrayList<>());
 
@@ -112,58 +114,6 @@ public class CommentService {
                     });
                 })
                 .thenApply(commentMapper::toCommentResponse);
-    }
-
-    public void realtimeComment(Comment comment, String entity, String titleNotification,String message) {
-        DataNotification dataNotification = DataNotification.builder()
-                .id(comment.getPost().getPostId())
-                .entity(entity)
-                .build();
-        String messageJson = null;
-        try {
-            messageJson = objectMapper.writeValueAsString(dataNotification);
-            Notification notification = Notification.builder()
-                    .title(titleNotification)
-                    .message(messageJson)
-                    .isRead(false)
-                    .account(comment.getPost().getAccount())
-                    .createdDate(LocalDateTime.now())
-                    .build();
-            if (!comment.getAccount().getAccountId().equals(comment.getPost().getAccount().getAccountId())) {
-                notificationRepository.save(notification);
-                socketIOUtil.sendEventToOneClientInAServer(comment.getPost().getAccount().getAccountId(), WebsocketEventName.NOTIFICATION.name(), message,notification);
-            }
-            socketIOUtil.sendEventToAllClientInAServer(WebsocketEventName.COMMENT.toString(),comment);
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
-        }
-    }
-    public void realtimeUpdateDeleteComment(Comment comment) {
-            socketIOUtil.sendEventToAllClientInAServer(WebsocketEventName.UPDATE_DELETE_COMMENT.toString(),comment);
-    }
-
-
-    public void realtimeDailyPointNotification(DailyPoint dailyPoint, String entity, String titleNotification,String message) {
-        DataNotification dataNotification = null;
-        dataNotification = DataNotification.builder()
-                .id(dailyPoint.getDailyPointId())
-                .entity(entity)
-                .build();
-        String messageJson = null;
-        try {
-            messageJson = objectMapper.writeValueAsString(dataNotification);
-            Notification notification = Notification.builder()
-                    .title(titleNotification)
-                    .message(messageJson)
-                    .isRead(false)
-                    .account(dailyPoint.getAccount())
-                    .createdDate(LocalDateTime.now())
-                    .build();
-            notificationRepository.save(notification);
-            socketIOUtil.sendEventToOneClientInAServer(dailyPoint.getAccount().getAccountId(), WebsocketEventName.NOTIFICATION.name(), message,notification);
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
-        }
     }
 
     @Transactional
@@ -200,7 +150,9 @@ public class CommentService {
                                                     newReply.setAccount(account);
                                                     newReply.setPost(post);
                                                     newReply.setParentComment(parentComment);
+                                                    newReply.setCreatedDate(new Date());
                                                     newReply.setReplies(new ArrayList<>());
+
                                                     var saveNewReply = commentRepository.save(newReply);
                                                     realtimeDailyPointNotification(dailyPoint, "DailyPoint", "Daily point notification you have been added " + dailyPoint.getPointEarned()+ " points","You have been added " + dailyPoint.getPointEarned()+ " points");
                                                     realtimeComment(newReply, "Post", account.getUsername() + " reply comment"+ parentComment.getContent()+" in your post: " + post.getTitle(),account.getUsername() + " reply comment"+ parentComment.getContent()+" in your post: " + post.getTitle());
@@ -216,7 +168,9 @@ public class CommentService {
                                         newReply.setAccount(account);
                                         newReply.setPost(post);
                                         newReply.setParentComment(parentComment);
+                                        newReply.setCreatedDate(new Date());
                                         newReply.setReplies(new ArrayList<>());
+
                                         var saveNewReply = commentRepository.save(newReply);
                                         realtimeComment(newReply, "Post", "Reply notification in post: " + post.getTitle(),account.getUsername() + " reply comment"+ parentComment.getContent()+" in your post: " + post.getTitle());
                                         return CompletableFuture.completedFuture(saveNewReply);
@@ -231,7 +185,7 @@ public class CommentService {
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
     public CompletableFuture<List<CommentGetAllResponse>> getAllComments(int page, int perPage) {
         return CompletableFuture.supplyAsync(() -> {
-            var list = commentRepository.findAll().stream()
+            var list = commentRepository.findAllByOrderByCreatedDateDesc().stream()
                     .map(commentMapper::toCommentGetAllResponse)
                     .toList();
             return paginationUtils.convertListToPage(page, perPage, list);
@@ -294,6 +248,7 @@ public class CommentService {
             var list = commentList.stream()
                     .filter(comment -> !blockedList.contains(comment.getAccount())
                             || !blockerList.contains(comment.getAccount()))
+                    .sorted(Comparator.comparing(Comment::getCreatedDate).reversed())
                     .map(commentMapper::toCommentNoPostResponseWithReplies)
                     .toList();
             return paginationUtils.convertListToPage(page, perPage, list);
@@ -306,7 +261,7 @@ public class CommentService {
         var accountFuture = findAccountById(accountId);
 
         return accountFuture.thenCompose(account ->
-                commentRepository.findByAccount(account).thenCompose(list -> {
+                commentRepository.findAllByAccountOrderByCreatedDateDesc(account).thenCompose(list -> {
                     var responseList = list.stream()
                             .map(commentMapper::toCommentResponse)
                             .toList();
@@ -384,6 +339,7 @@ public class CommentService {
                 .thenApply(commentMapper::toCommentResponse);
     }
 
+
     @Async("AsyncTaskExecutor")
     private CompletableFuture<Post> findPostById(UUID postId) {
         return CompletableFuture.supplyAsync(() ->
@@ -440,7 +396,7 @@ public class CommentService {
     @Async("AsyncTaskExecutor")
     private CompletableFuture<List<Comment>> getAllComments() {
         return CompletableFuture.supplyAsync(() ->
-                commentRepository.findAll().stream()
+                commentRepository.findAllByOrderByCreatedDateDesc().stream()
                         .toList());
     }
 
@@ -533,5 +489,55 @@ public class CommentService {
                     .map(BlockedAccount::getBlocker)
                     .toList();
         });
+    }
+
+    private void realtimeComment(Comment comment, String entity, String titleNotification,String message) {
+        DataNotification dataNotification = DataNotification.builder()
+                .id(comment.getPost().getPostId())
+                .entity(entity)
+                .build();
+        String messageJson = null;
+        try {
+            messageJson = objectMapper.writeValueAsString(dataNotification);
+            Notification notification = Notification.builder()
+                    .title(titleNotification)
+                    .message(messageJson)
+                    .isRead(false)
+                    .account(comment.getPost().getAccount())
+                    .createdDate(LocalDateTime.now())
+                    .build();
+            if (!comment.getAccount().getAccountId().equals(comment.getPost().getAccount().getAccountId())) {
+                notificationRepository.save(notification);
+                socketIOUtil.sendEventToOneClientInAServer(comment.getPost().getAccount().getAccountId(), WebsocketEventName.NOTIFICATION.name(), message,notification);
+            }
+            socketIOUtil.sendEventToAllClientInAServer(WebsocketEventName.COMMENT.toString(),comment);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+    }
+    private void realtimeUpdateDeleteComment(Comment comment) {
+        socketIOUtil.sendEventToAllClientInAServer(WebsocketEventName.UPDATE_DELETE_COMMENT.toString(),comment);
+    }
+    private void realtimeDailyPointNotification(DailyPoint dailyPoint, String entity, String titleNotification,String message) {
+        DataNotification dataNotification = null;
+        dataNotification = DataNotification.builder()
+                .id(dailyPoint.getDailyPointId())
+                .entity(entity)
+                .build();
+        String messageJson = null;
+        try {
+            messageJson = objectMapper.writeValueAsString(dataNotification);
+            Notification notification = Notification.builder()
+                    .title(titleNotification)
+                    .message(messageJson)
+                    .isRead(false)
+                    .account(dailyPoint.getAccount())
+                    .createdDate(LocalDateTime.now())
+                    .build();
+            notificationRepository.save(notification);
+            socketIOUtil.sendEventToOneClientInAServer(dailyPoint.getAccount().getAccountId(), WebsocketEventName.NOTIFICATION.name(), message,notification);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

@@ -22,6 +22,9 @@ public interface CommentRepository extends JpaRepository<Comment, UUID> {
     CompletableFuture<List<Comment>> findByAccount(Account account);
 
     @Async("AsyncTaskExecutor")
+    CompletableFuture<List<Comment>> findAllByAccountOrderByCreatedDateDesc(Account account);
+
+    @Async("AsyncTaskExecutor")
     CompletableFuture<Integer> countByPostTopicCategory(Category category);
 
     @Async("AsyncTaskExecutor")
@@ -29,4 +32,6 @@ public interface CommentRepository extends JpaRepository<Comment, UUID> {
 
     @Async("AsyncTaskExecutor")
     CompletableFuture<Integer> countByPost(Post post);
+
+    List<Comment> findAllByOrderByCreatedDateDesc();
 }
