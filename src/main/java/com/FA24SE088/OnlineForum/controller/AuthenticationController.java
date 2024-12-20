@@ -34,9 +34,7 @@ import java.text.ParseException;
 public class AuthenticationController {
     AuthenticateService authenticateService;
     AccountService accountService;
-    EmailUtil emailUtil;
     OtpUtil otpUtil;
-    RedisTemplate<String, String> redisTemplate;
 
     @Operation(summary = "Login", description = "new admin account: admin1234 \n" +
             "password: admin1234")
