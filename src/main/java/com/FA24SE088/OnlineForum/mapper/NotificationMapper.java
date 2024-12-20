@@ -4,6 +4,7 @@ import com.FA24SE088.OnlineForum.dto.request.AccountRequest;
 import com.FA24SE088.OnlineForum.dto.request.AccountUpdateRequest;
 import com.FA24SE088.OnlineForum.dto.request.NotificationRequest;
 import com.FA24SE088.OnlineForum.dto.response.AccountResponse;
+import com.FA24SE088.OnlineForum.dto.response.NotificationForCommentResponse;
 import com.FA24SE088.OnlineForum.dto.response.NotificationResponse;
 import com.FA24SE088.OnlineForum.entity.Account;
 import com.FA24SE088.OnlineForum.entity.Notification;
@@ -20,6 +21,7 @@ public interface NotificationMapper {
 
     @Mapping(target = "account", source = "account")
     NotificationResponse toResponse(Notification notification);
+    NotificationForCommentResponse toCommentRealTimeResponse(Notification notification);
 
     List<NotificationResponse> toListResponse(List<Notification> notificationList);
 }

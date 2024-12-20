@@ -12,6 +12,7 @@ import com.FA24SE088.OnlineForum.enums.WebsocketEventName;
 import com.FA24SE088.OnlineForum.exception.AppException;
 import com.FA24SE088.OnlineForum.exception.ErrorCode;
 import com.FA24SE088.OnlineForum.mapper.CommentMapper;
+import com.FA24SE088.OnlineForum.mapper.NotificationMapper;
 import com.FA24SE088.OnlineForum.repository.*;
 import com.FA24SE088.OnlineForum.utils.ContentFilterUtil;
 import com.FA24SE088.OnlineForum.utils.PaginationUtils;
@@ -22,6 +23,7 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -47,7 +49,10 @@ public class CommentService {
     FollowRepository followRepository;
     DailyPointRepository dailyPointRepository;
     WalletRepository walletRepository;
+    @Autowired
     CommentMapper commentMapper;
+    @Autowired
+    NotificationMapper notificationMapper;
     PaginationUtils paginationUtils;
     SocketIOUtil socketIOUtil;
     ContentFilterUtil contentFilterUtil;
@@ -129,9 +134,12 @@ public class CommentService {
                     .account(comment.getPost().getAccount())
                     .createdDate(LocalDateTime.now())
                     .build();
+            NotificationForCommentResponse data = notificationMapper.toCommentRealTimeResponse(notification);
+            data.setCommentId(comment.getCommentId());
+
             if (!comment.getAccount().getAccountId().equals(comment.getPost().getAccount().getAccountId())) {
                 notificationRepository.save(notification);
-                socketIOUtil.sendEventToOneClientInAServer(comment.getPost().getAccount().getAccountId(), WebsocketEventName.NOTIFICATION.name(), message,notification);
+                socketIOUtil.sendEventToOneClientInAServer(comment.getPost().getAccount().getAccountId(), WebsocketEventName.NOTIFICATION.name(), message,data);
             }
             socketIOUtil.sendEventToAllClientInAServer(WebsocketEventName.COMMENT.toString(),comment);
         } catch (JsonProcessingException e) {
