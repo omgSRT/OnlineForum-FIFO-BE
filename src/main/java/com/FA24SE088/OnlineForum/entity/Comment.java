@@ -6,6 +6,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
+import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
@@ -22,6 +23,7 @@ public class Comment {
     UUID commentId;
     @Column(columnDefinition = "MEDIUMTEXT")
     String content;
+    Date createdDate;
 
     @ManyToOne
     @JoinColumn(name = "accountId")
