@@ -12,6 +12,7 @@ import com.FA24SE088.OnlineForum.enums.WebsocketEventName;
 import com.FA24SE088.OnlineForum.exception.AppException;
 import com.FA24SE088.OnlineForum.exception.ErrorCode;
 import com.FA24SE088.OnlineForum.mapper.CommentMapper;
+import com.FA24SE088.OnlineForum.mapper.NotificationMapper;
 import com.FA24SE088.OnlineForum.repository.*;
 import com.FA24SE088.OnlineForum.utils.ContentFilterUtil;
 import com.FA24SE088.OnlineForum.utils.PaginationUtils;
@@ -22,6 +23,7 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -48,6 +50,7 @@ public class CommentService {
     DailyPointRepository dailyPointRepository;
     WalletRepository walletRepository;
     CommentMapper commentMapper;
+    NotificationMapper notificationMapper;
     PaginationUtils paginationUtils;
     SocketIOUtil socketIOUtil;
     ContentFilterUtil contentFilterUtil;
@@ -115,6 +118,7 @@ public class CommentService {
                 })
                 .thenApply(commentMapper::toCommentResponse);
     }
+
 
     @Transactional
     @Async("AsyncTaskExecutor")
@@ -490,8 +494,8 @@ public class CommentService {
                     .toList();
         });
     }
-
-    private void realtimeComment(Comment comment, String entity, String titleNotification,String message) {
+    //--------------------------------
+    public void realtimeComment(Comment comment, String entity, String titleNotification,String message) {
         DataNotification dataNotification = DataNotification.builder()
                 .id(comment.getPost().getPostId())
                 .entity(entity)
@@ -506,19 +510,24 @@ public class CommentService {
                     .account(comment.getPost().getAccount())
                     .createdDate(LocalDateTime.now())
                     .build();
+            NotificationForCommentResponse data = notificationMapper.toCommentRealTimeResponse(notification);
+            data.setCommentId(comment.getCommentId());
+
             if (!comment.getAccount().getAccountId().equals(comment.getPost().getAccount().getAccountId())) {
                 notificationRepository.save(notification);
-                socketIOUtil.sendEventToOneClientInAServer(comment.getPost().getAccount().getAccountId(), WebsocketEventName.NOTIFICATION.name(), message,notification);
+                socketIOUtil.sendEventToOneClientInAServer(comment.getPost().getAccount().getAccountId(), WebsocketEventName.NOTIFICATION.name(), message,data);
             }
             socketIOUtil.sendEventToAllClientInAServer(WebsocketEventName.COMMENT.toString(),comment);
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
     }
-    private void realtimeUpdateDeleteComment(Comment comment) {
+    public void realtimeUpdateDeleteComment(Comment comment) {
         socketIOUtil.sendEventToAllClientInAServer(WebsocketEventName.UPDATE_DELETE_COMMENT.toString(),comment);
     }
-    private void realtimeDailyPointNotification(DailyPoint dailyPoint, String entity, String titleNotification,String message) {
+
+
+    public void realtimeDailyPointNotification(DailyPoint dailyPoint, String entity, String titleNotification,String message) {
         DataNotification dataNotification = null;
         dataNotification = DataNotification.builder()
                 .id(dailyPoint.getDailyPointId())
@@ -540,4 +549,55 @@ public class CommentService {
             throw new RuntimeException(e);
         }
     }
+    //--------------------------------
+
+//    private void realtimeComment(Comment comment, String entity, String titleNotification,String message) {
+//        DataNotification dataNotification = DataNotification.builder()
+//                .id(comment.getPost().getPostId())
+//                .entity(entity)
+//                .build();
+//        String messageJson = null;
+//        try {
+//            messageJson = objectMapper.writeValueAsString(dataNotification);
+//            Notification notification = Notification.builder()
+//                    .title(titleNotification)
+//                    .message(messageJson)
+//                    .isRead(false)
+//                    .account(comment.getPost().getAccount())
+//                    .createdDate(LocalDateTime.now())
+//                    .build();
+//            if (!comment.getAccount().getAccountId().equals(comment.getPost().getAccount().getAccountId())) {
+//                notificationRepository.save(notification);
+//                socketIOUtil.sendEventToOneClientInAServer(comment.getPost().getAccount().getAccountId(), WebsocketEventName.NOTIFICATION.name(), message,notification);
+//            }
+//            socketIOUtil.sendEventToAllClientInAServer(WebsocketEventName.COMMENT.toString(),comment);
+//        } catch (JsonProcessingException e) {
+//            throw new RuntimeException(e);
+//        }
+//    }
+//    private void realtimeUpdateDeleteComment(Comment comment) {
+//        socketIOUtil.sendEventToAllClientInAServer(WebsocketEventName.UPDATE_DELETE_COMMENT.toString(),comment);
+//    }
+//    private void realtimeDailyPointNotification(DailyPoint dailyPoint, String entity, String titleNotification,String message) {
+//        DataNotification dataNotification = null;
+//        dataNotification = DataNotification.builder()
+//                .id(dailyPoint.getDailyPointId())
+//                .entity(entity)
+//                .build();
+//        String messageJson = null;
+//        try {
+//            messageJson = objectMapper.writeValueAsString(dataNotification);
+//            Notification notification = Notification.builder()
+//                    .title(titleNotification)
+//                    .message(messageJson)
+//                    .isRead(false)
+//                    .account(dailyPoint.getAccount())
+//                    .createdDate(LocalDateTime.now())
+//                    .build();
+//            notificationRepository.save(notification);
+//            socketIOUtil.sendEventToOneClientInAServer(dailyPoint.getAccount().getAccountId(), WebsocketEventName.NOTIFICATION.name(), message,notification);
+//        } catch (JsonProcessingException e) {
+//            throw new RuntimeException(e);
+//        }
+//    }
 }

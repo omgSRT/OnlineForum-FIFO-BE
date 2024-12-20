@@ -22,7 +22,7 @@ public class BlockUserController {
 
     @Operation(summary = "Block user", description = "Block a user for the current user")
     @PostMapping("/block-or-unblock")
-    public ApiResponse<BlockAccountResponse> blockUser(@RequestBody BlockRequest request) {
+    public ApiResponse<BlockAccountResponse> blockOrUnblockUser(@RequestBody BlockRequest request) {
         return ApiResponse.<BlockAccountResponse>builder()
                 .entity(blockUserService.blockOrUnblock(request.getAccountID()))
                 .build();
@@ -30,7 +30,7 @@ public class BlockUserController {
 
     @Operation(summary = "Get block list", description = "")
     @GetMapping("/get-list-user-block")
-    public ApiResponse<List<AccountResponse>> getFollow() {
+    public ApiResponse<List<AccountResponse>> getListBlock() {
         return ApiResponse.<List<AccountResponse>>builder()
                 .entity(blockUserService.listBlock())
                 .build();
