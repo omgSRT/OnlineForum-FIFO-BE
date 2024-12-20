@@ -38,6 +38,7 @@ public interface CommentMapper {
         response.setCommentId(comment.getCommentId());
         response.setContent(comment.getContent());
         response.setAccount(comment.getAccount());
+        response.setCreatedDate(comment.getCreatedDate());
 
         if (comment.getReplies() != null) {
             response.setReplies(toCommentNoPostResponseList(comment.getReplies()));

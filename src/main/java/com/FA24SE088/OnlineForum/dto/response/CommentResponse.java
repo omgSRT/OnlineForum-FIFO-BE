@@ -6,6 +6,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
+import java.util.Date;
 import java.util.UUID;
 
 @Data
@@ -16,6 +17,7 @@ import java.util.UUID;
 public class CommentResponse {
     UUID commentId;
     String content;
+    Date createdDate;
     @JsonIgnoreProperties(value = {"password", "email", "bio", "coverImage", "gender", "address", "createdDate", "status", "role"})
     Account account;
     @JsonIgnoreProperties(value = {"account", "topic", "tag"})
