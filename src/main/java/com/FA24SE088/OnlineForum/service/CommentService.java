@@ -278,6 +278,24 @@ public class CommentService {
 
     @Async("AsyncTaskExecutor")
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
+    public CompletableFuture<List<CommentResponse>> getAllCommentsByCurrentUser(int page, int perPage) {
+        var username = getUsernameFromJwt();
+        var currentAccountFuture = findAccountByUsername(username);
+
+        return currentAccountFuture.thenCompose(account ->
+                commentRepository.findAllByAccountOrderByCreatedDateDesc(account).thenCompose(list -> {
+                    var responseList = list.stream()
+                            .map(commentMapper::toCommentResponse)
+                            .toList();
+                    var paginatedList = paginationUtils.convertListToPage(page, perPage, responseList);
+
+                    return CompletableFuture.completedFuture(paginatedList);
+                })
+        );
+    }
+
+    @Async("AsyncTaskExecutor")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
     public CompletableFuture<CommentResponse> updateComment(UUID commentId, CommentUpdateRequest request) {
         var username = getUsernameFromJwt();
         var accountFuture = findAccountByUsername(username);

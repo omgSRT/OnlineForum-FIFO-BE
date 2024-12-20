@@ -84,7 +84,7 @@ public class ImageService {
 
     @Async("AsyncTaskExecutor")
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
-    public CompletableFuture<List<ImageResponse>> getAllImagesByAccount(int page, int perPage) {
+    public CompletableFuture<List<ImageResponse>> getAllImagesByCurrentAccount(int page, int perPage) {
         var username = getUsernameFromJwt();
         var accountFuture = findAccountByUsername(username);
 

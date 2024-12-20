@@ -59,10 +59,10 @@ public class ImageController {
     }
 
     @Operation(summary = "Get All Images")
-    @GetMapping(path = "/getall/by-current-account")
-    public ApiResponse<List<ImageResponse>> getImagesByAccount(@RequestParam(defaultValue = "1") int page,
+    @GetMapping(path = "/getall/by-current-user")
+    public ApiResponse<List<ImageResponse>> getImagesBycCurrentUser(@RequestParam(defaultValue = "1") int page,
                                                                @RequestParam(defaultValue = "10") int perPage) {
-        return imageService.getAllImagesByAccount(page, perPage).thenApply(imageResponses ->
+        return imageService.getAllImagesByCurrentAccount(page, perPage).thenApply(imageResponses ->
                 ApiResponse.<List<ImageResponse>>builder()
                         .entity(imageResponses)
                         .build()
