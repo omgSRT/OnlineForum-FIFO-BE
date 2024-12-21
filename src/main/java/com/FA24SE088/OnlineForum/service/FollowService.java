@@ -48,16 +48,7 @@ public class FollowService {
         return accountRepository.findByUsername(context.getAuthentication().getName()).orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND));
     }
 
-    //xem danh sách người mình follow
-//    public List<FollowResponse> getFollows() {
-//        Account currentUser = getCurrentUser();
-//
-//        List<Follow> followedAccounts = followRepository.findByFollower(currentUser);
-//
-//        return followedAccounts.stream()
-//                .map(followMapper::toRespone)
-//                .toList();
-//    }
+
     //xem danh sách người mình follow
     public List<AccountResponse> getFollows() {
         Account currentUser = getCurrentUser();

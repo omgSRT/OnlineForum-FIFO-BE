@@ -232,58 +232,6 @@ public class PostService {
                 });
     }
 
-    public void realtime_dailyPoint(DailyPoint dailyPoint, String entity, String title, String message) {
-        DataNotification dataNotification = DataNotification.builder()
-                .id(dailyPoint.getDailyPointId())
-                .entity(entity)
-                .build();
-        String messageJson = null;
-        try {
-
-            messageJson = objectMapper.writeValueAsString(dataNotification);
-            Notification notification = Notification.builder()
-                    .title(title)
-                    .message(messageJson)
-                    .isRead(false)
-                    .account(dailyPoint.getAccount())
-                    .createdDate(LocalDateTime.now())
-                    .build();
-            if (dailyPoint.getPointEarned() != 0) {
-                notificationRepository.save(notification);
-                socketIOUtil.sendEventToOneClientInAServer(dailyPoint.getAccount().getAccountId(), WebsocketEventName.NOTIFICATION.name(), message, notification);
-            }
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
-        }
-    }
-    public void realtime_notificationToFollower(Post post,Account account, String entity, String title, String message) {
-        DataNotification dataNotification = DataNotification.builder()
-                .id(post.getPostId())
-                .entity(entity)
-                .build();
-        List<Account> accountList = followRepository.findByFollowee(account).stream().map(Follow::getFollower).toList();
-
-        accountList.forEach(accountFollower -> {
-            String messageJson = null;
-            try {
-                messageJson = objectMapper.writeValueAsString(dataNotification);
-            } catch (JsonProcessingException e) {
-                throw new RuntimeException(e);
-            }
-            Notification notification = Notification.builder()
-                    .title(title)
-                    .message(messageJson)
-                    .isRead(false)
-                    .account(accountFollower)
-                    .createdDate(LocalDateTime.now())
-                    .build();
-            notificationRepository.save(notification);
-            socketIOUtil.sendEventToOneClientInAServer(accountFollower.getAccountId(), WebsocketEventName.NOTIFICATION.name(), message, notification);
-        });
-
-
-    }
-
     @Async("AsyncTaskExecutor")
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
     public CompletableFuture<List<PostResponse>> getAllPosts(int page, int perPage,
@@ -537,9 +485,13 @@ public class PostService {
 
                     var responseFutures = new ArrayList<>(postList.stream()
                             .filter(post -> post.getAccount().equals(otherAccount))
-                            .filter(post -> isAuthor || isStaffOrAdmin
-                                    || post.getStatus().equals(PostStatus.PUBLIC.name())
-                                    || (post.getStatus().equals(PostStatus.PRIVATE.name()) && isFollowing))
+                            .filter(post -> {
+                                if(isAuthor || isStaffOrAdmin){
+                                    return post.getStatus().equals(PostStatus.PUBLIC.name()) || post.getStatus().equals(PostStatus.PRIVATE.name());
+                                }
+                                return post.getStatus().equals(PostStatus.PUBLIC.name())
+                                        || (post.getStatus().equals(PostStatus.PRIVATE.name()) && isFollowing);
+                            })
                             .filter(post -> !isBlockedByCurrent && !isBlockedByOther)
                             .map(post -> {
                                 CompletableFuture<Integer> upvoteCountFuture = upvoteRepository
@@ -566,6 +518,125 @@ public class PostService {
                                     .toList()
                             )
                             .thenApply(list -> paginationUtils.convertListToPage(page, perPage, list));
+                });
+    }
+
+    @Async("AsyncTaskExecutor")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
+    public CompletableFuture<List<PostResponse>> getAllPostForCurrentUserReplyTab(int page, int perPage){
+        var username = getUsernameFromJwt();
+        var accountFuture = findAccountByUsername(username);
+
+        return accountFuture.thenCompose(account ->
+                    getCommentsByAccount(account).thenCompose(comments -> {
+                        Set<Post> postSet = new HashSet<>();
+
+                        for(Comment comment : comments){
+                            Post post = comment.getPost();
+                            postSet.add(post);
+                        }
+
+                        var responseFutures = new ArrayList<>(postSet.stream()
+                                .filter(Objects::nonNull)
+                                .filter(post ->post.getStatus().equals(PostStatus.PUBLIC.name())
+                                        || (post.getStatus().equals(PostStatus.PRIVATE.name()) && post.getAccount().equals(account)))
+                                .distinct()
+                                .sorted(Comparator.comparing(Post::getCreatedDate).reversed())
+                                .map(post -> {
+                                    CompletableFuture<Integer> upvoteCountFuture = upvoteRepository
+                                            .countByPost(post);
+                                    CompletableFuture<Integer> commentCountFuture = commentRepository
+                                            .countByPost(post);
+                                    CompletableFuture<Integer> viewCountFuture = postViewRepository
+                                            .countByPost(post);
+
+                                    return CompletableFuture.allOf(upvoteCountFuture, commentCountFuture, viewCountFuture)
+                                            .thenApply(voidResult -> {
+                                                PostResponse response = postMapper.toPostResponse(post);
+                                                response.setUpvoteCount(upvoteCountFuture.join());
+                                                response.setCommentCount(commentCountFuture.join());
+                                                response.setViewCount(viewCountFuture.join());
+                                                return response;
+                                            });
+                                })
+                                .toList());
+
+                        return CompletableFuture.allOf(responseFutures.toArray(new CompletableFuture[0]))
+                                .thenApply(voidResult -> responseFutures.stream()
+                                        .map(CompletableFuture::join)
+                                        .toList()
+                                )
+                                .thenApply(list -> paginationUtils.convertListToPage(page, perPage, list));
+                    })
+                );
+    }
+
+    @Async("AsyncTaskExecutor")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('USER')")
+    public CompletableFuture<List<PostResponse>> getAllPostForOtherUserReplyTab(int page, int perPage, UUID otherAccountId){
+        var username = getUsernameFromJwt();
+        var currentAccountFuture = findAccountByUsername(username);
+        var otherAccountFuture = findAccountById(otherAccountId);
+        var blockedListFuture = getBlockedAccountListByUsername(username);
+
+        return CompletableFuture.allOf(currentAccountFuture, otherAccountFuture, blockedListFuture)
+                .thenCompose(v -> {
+                    var currentAccount = currentAccountFuture.join();
+                    var otherAccount = otherAccountFuture.join();
+                    var blockedAccountList = blockedListFuture.join();
+
+                    boolean isBlockedByCurrent = blockedAccountList.contains(otherAccount);
+                    boolean isBlockedByOther = blockedAccountRepository
+                            .findByBlockerAndBlocked(otherAccount, currentAccount).isPresent();
+                    boolean isFollowing = isFollowing(currentAccount, otherAccount);
+                    boolean isAuthor = currentAccount.equals(otherAccount);
+                    boolean isStaffOrAdmin = hasRole(currentAccount, "ADMIN") || hasRole(currentAccount, "STAFF");
+
+                    return getCommentsByAccount(otherAccount).thenCompose(comments -> {
+                        Set<Post> postSet = new HashSet<>();
+
+                        for(Comment comment : comments){
+                            Post post = comment.getPost();
+                            postSet.add(post);
+                        }
+
+                        var responseFutures = new ArrayList<>(postSet.stream()
+                                .filter(Objects::nonNull)
+                                .distinct()
+                                .filter(post -> {
+                                    if(isAuthor || isStaffOrAdmin){
+                                        return post.getStatus().equals(PostStatus.PUBLIC.name()) || post.getStatus().equals(PostStatus.PRIVATE.name());
+                                    }
+                                    return post.getStatus().equals(PostStatus.PUBLIC.name())
+                                            || (post.getStatus().equals(PostStatus.PRIVATE.name()) && isFollowing);
+                                })
+                                .filter(post -> !isBlockedByCurrent && !isBlockedByOther)
+                                .map(post -> {
+                                    CompletableFuture<Integer> upvoteCountFuture = upvoteRepository
+                                            .countByPost(post);
+                                    CompletableFuture<Integer> commentCountFuture = commentRepository
+                                            .countByPost(post);
+                                    CompletableFuture<Integer> viewCountFuture = postViewRepository
+                                            .countByPost(post);
+
+                                    return CompletableFuture.allOf(upvoteCountFuture, commentCountFuture, viewCountFuture)
+                                            .thenApply(voidResult -> {
+                                                PostResponse response = postMapper.toPostResponse(post);
+                                                response.setUpvoteCount(upvoteCountFuture.join());
+                                                response.setCommentCount(commentCountFuture.join());
+                                                response.setViewCount(viewCountFuture.join());
+                                                return response;
+                                            });
+                                })
+                                .toList());
+
+                        return CompletableFuture.allOf(responseFutures.toArray(new CompletableFuture[0]))
+                                .thenApply(voidResult -> responseFutures.stream()
+                                        .map(CompletableFuture::join)
+                                        .toList()
+                                )
+                                .thenApply(list -> paginationUtils.convertListToPage(page, perPage, list));
+                    });
                 });
     }
 
@@ -2152,6 +2223,63 @@ public class PostService {
                 throw new AppException(ErrorCode.SOURCE_CODE_DOES_NOT_MATCH_CURRENT_TOPIC);
             }
         }
+    }
+
+    @Async("AsyncTaskExecutor")
+    private CompletableFuture<List<Comment>> getCommentsByAccount(Account account){
+        return commentRepository.findByAccount(account);
+    }
+
+    private void realtime_dailyPoint(DailyPoint dailyPoint, String entity, String title, String message) {
+        DataNotification dataNotification = DataNotification.builder()
+                .id(dailyPoint.getDailyPointId())
+                .entity(entity)
+                .build();
+        String messageJson = null;
+        try {
+
+            messageJson = objectMapper.writeValueAsString(dataNotification);
+            Notification notification = Notification.builder()
+                    .title(title)
+                    .message(messageJson)
+                    .isRead(false)
+                    .account(dailyPoint.getAccount())
+                    .createdDate(LocalDateTime.now())
+                    .build();
+            if (dailyPoint.getPointEarned() != 0) {
+                notificationRepository.save(notification);
+                socketIOUtil.sendEventToOneClientInAServer(dailyPoint.getAccount().getAccountId(), WebsocketEventName.NOTIFICATION.name(), message, notification);
+            }
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+    }
+    private void realtime_notificationToFollower(Post post,Account account, String entity, String title, String message) {
+        DataNotification dataNotification = DataNotification.builder()
+                .id(post.getPostId())
+                .entity(entity)
+                .build();
+        List<Account> accountList = followRepository.findByFollowee(account).stream().map(Follow::getFollower).toList();
+
+        accountList.forEach(accountFollower -> {
+            String messageJson = null;
+            try {
+                messageJson = objectMapper.writeValueAsString(dataNotification);
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException(e);
+            }
+            Notification notification = Notification.builder()
+                    .title(title)
+                    .message(messageJson)
+                    .isRead(false)
+                    .account(accountFollower)
+                    .createdDate(LocalDateTime.now())
+                    .build();
+            notificationRepository.save(notification);
+            socketIOUtil.sendEventToOneClientInAServer(accountFollower.getAccountId(), WebsocketEventName.NOTIFICATION.name(), message, notification);
+        });
+
+
     }
     //endregion
 }

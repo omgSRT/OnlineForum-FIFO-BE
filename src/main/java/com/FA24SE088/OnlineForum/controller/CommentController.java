@@ -102,6 +102,18 @@ public class CommentController {
         ).join();
     }
 
+    @Operation(summary = "Get All Comments", description = "Get All Comments By Current User")
+    @GetMapping(path = "/getall/by-current-user")
+    public ApiResponse<List<CommentResponse>> getAllCommentsByCurrentUser(@RequestParam(defaultValue = "1") int page,
+                                                                         @RequestParam(defaultValue = "10") int perPage) {
+        return commentService.getAllCommentsByCurrentUser(page, perPage).thenApply(
+                commentResponses ->
+                        ApiResponse.<List<CommentResponse>>builder()
+                                .entity(commentResponses)
+                                .build()
+        ).join();
+    }
+
     @Operation(summary = "Update Comment", description = "Update Comment By ID")
     @PutMapping(path = "/update/{commentId}")
     public ApiResponse<CommentResponse> updateComment(@PathVariable UUID commentId,
