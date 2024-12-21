@@ -32,16 +32,26 @@ public class FollowController {
 
     @Operation(summary = "Danh sách người mình đang follow", description = "")
     @GetMapping("/get-follows")
-    public ApiResponse<List<FollowNoFollowerResponse>> getAllFollows() {
-        return ApiResponse.<List<FollowNoFollowerResponse>>builder()
+//    public ApiResponse<List<FollowResponse>> getAllFollows() {
+//        return ApiResponse.<List<FollowResponse>>builder()
+//                .entity(followService.getFollows())
+//                .build();
+//    }
+    public ApiResponse<List<AccountResponse>> getAllFollows() {
+        return ApiResponse.<List<AccountResponse>>builder()
                 .entity(followService.getFollows())
                 .build();
     }
 
     @Operation(summary = "Danh sách người đang follow mình", description = "")
     @GetMapping("get-followers")
-    public ApiResponse<List<FollowNoFolloweeResponse>> getAllFollowers() {
-        return ApiResponse.<List<FollowNoFolloweeResponse>>builder()
+//    public ApiResponse<List<FollowResponse>> getAllFollowers() {
+//        return ApiResponse.<List<FollowResponse>>builder()
+//                .entity(followService.getFollowers())
+//                .build();
+//    }
+    public ApiResponse<List<AccountResponse>> getAllFollowers() {
+        return ApiResponse.<List<AccountResponse>>builder()
                 .entity(followService.getFollowers())
                 .build();
     }

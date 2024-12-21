@@ -35,7 +35,6 @@ import java.util.*;
 @Service
 public class FollowService {
     AccountMapper accountMapper;
-    PaginationUtils paginationUtils;
     ObjectMapper objectMapper = new ObjectMapper();
     SocketIOUtil socketIOUtil;
     AccountRepository accountRepository;
@@ -49,101 +48,52 @@ public class FollowService {
         return accountRepository.findByUsername(context.getAuthentication().getName()).orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND));
     }
 
-//    public FollowResponse create(UUID id) {
-//        Account account = getCurrentUser();
-//        Account account1 = accountRepository.findById(id)
-//                .orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND));
-//        if (account.getAccountId().equals(account1.getAccountId())) {
-//            throw new AppException(ErrorCode.CANNOT_FOLLOW_SELF);
-//        }
-//        boolean alreadyFollow = account.getFollowerList().stream()
-//                .anyMatch(follow -> follow.getFollowee().getAccountId().equals(account1.getAccountId()));
-//
-//        if (alreadyFollow) {
-//            throw new AppException(ErrorCode.ACCOUNT_HAS_BEEN_FOLLOWED);
-//        } else {
-//            Follow follow = Follow.builder()
-//                    .follower(account)
-//                    .followee(account1)
-//                    .status(FollowStatus.FOLLOWING.name())
-//                    .build();
-//            return followMapper.toResponse(followRepository.save(follow));
-//        }
-//    }
-
-//    public void unfollow(UnfollowRequest request) {
-//        Account account = getCurrentUser();
-//        Account follower = accountRepository.findById(request.getAccountID())
-//                .orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND));
-//        if (account.getAccountId().equals(follower.getAccountId())) {
-//            throw new AppException(ErrorCode.CANNOT_UNFOLLOW_SELF);
-//        }
-//
-//        Follow follow = followRepository.findByFollowerAndFollowee(account, follower)
-//                .orElseThrow(() -> new AppException(ErrorCode.FOLLOW_NOT_FOUND));
-//
-//        followRepository.delete(follow);
-//    }
-//
-//    public void blockUser(UUID accountIdToBlock) {
-//        Account currentUser = getCurrentUser();
-//        Account accountToBlock = accountRepository.findById(accountIdToBlock)
-//                .orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND));
-//        if (currentUser.getAccountId().equals(accountToBlock.getAccountId())) {
-//            throw new AppException(ErrorCode.CANNOT_BLOCK_SELF);
-//        }
-//        // Kiểm tra nếu currentUser đã follow accountToBlock
-//        Optional<Follow> followOptional = followRepository.findByFollowerAndFollowee(currentUser, accountToBlock);
-//
-//        followOptional.ifPresent(followRepository::delete);
-//
-//        boolean alreadyBlocked = currentUser.getBlockedAccounts().stream()
-//                .anyMatch(blocked -> blocked.getBlocked().getAccountId().equals(accountToBlock.getAccountId()));
-//
-//        if (!alreadyBlocked) {
-//            BlockedAccount blockedAccount = new BlockedAccount();
-//            blockedAccount.setBlocker(currentUser);
-//            blockedAccount.setBlocked(accountToBlock);
-//            blockedAccount.setBlockedDate(new Date());
-//
-//            blockedAccountRepository.save(blockedAccount);
-//        } else {
-//            throw new AppException(ErrorCode.ACCOUNT_ALREADY_BLOCKED);
-//        }
-//    }
-//
-//    public void unblock(UUID accountIdToUnblock) {
-//        Account currentUser = getCurrentUser();
-//        Account accountToUnblock = accountRepository.findById(accountIdToUnblock)
-//                .orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND));
-//        if (currentUser.getAccountId().equals(accountToUnblock.getAccountId())) {
-//            throw new AppException(ErrorCode.CANNOT_UNBLOCK_SELF);
-//        }
-//        BlockedAccount blockedAccount = blockedAccountRepository
-//                .findByBlockerAndBlocked(currentUser, accountToUnblock)
-//                .orElseThrow(() -> new AppException(ErrorCode.BLOCK_NOT_FOUND));
-//
-//        blockedAccountRepository.delete(blockedAccount);
-//    }
 
     //xem danh sách người mình follow
-    public List<FollowNoFollowerResponse> getFollows() {
+    public List<AccountResponse> getFollows() {
         Account currentUser = getCurrentUser();
 
         List<Follow> followedAccounts = followRepository.findByFollower(currentUser);
 
         return followedAccounts.stream()
-                .map(followMapper::toFollowNoFollowerResponse)
+                .map(Follow::getFollowee)
+                .map(account -> {
+                    long followerCount = followRepository.countByFollowee(account);
+                    long followeeCount = followRepository.countByFollower(account);
+
+                    AccountResponse response = accountMapper.toResponse(account);
+                    response.setCountFollowee(followeeCount);
+                    response.setCountFollower(followerCount);
+                    return response;
+                })
                 .toList();
     }
 
     //xem danh sách người follow mình
-    public List<FollowNoFolloweeResponse> getFollowers() {
+//    public List<FollowResponse> getFollowers() {
+//        Account currentUser = getCurrentUser();
+//        List<Follow> followers = followRepository.findByFollowee(currentUser);
+//
+//        return followers.stream()
+//                .map(followMapper::toRespone)
+//                .toList();
+//    }
+    //xem danh sách người follow mình
+    public List<AccountResponse> getFollowers() {
         Account currentUser = getCurrentUser();
         List<Follow> followers = followRepository.findByFollowee(currentUser);
 
         return followers.stream()
-                .map(followMapper::toFollowNoFolloweeResponse)
+                .map(Follow::getFollower)
+                .map(account -> {
+                    long followerCount = followRepository.countByFollowee(account);
+                    long followeeCount = followRepository.countByFollower(account);
+
+                    AccountResponse response = accountMapper.toResponse(account);
+                    response.setCountFollowee(followeeCount);
+                    response.setCountFollower(followerCount);
+                    return response;
+                })
                 .toList();
     }
 
