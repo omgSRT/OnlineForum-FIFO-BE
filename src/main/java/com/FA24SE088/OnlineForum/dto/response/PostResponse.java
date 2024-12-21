@@ -33,6 +33,4 @@ public class PostResponse {
     List<ImageResponse> imageList;
     @JsonIgnoreProperties(value = {"post"})
     List<PostFile> postFileList;
-    @JsonIgnoreProperties(value = {"account"})
-    Notification notification;
 }
