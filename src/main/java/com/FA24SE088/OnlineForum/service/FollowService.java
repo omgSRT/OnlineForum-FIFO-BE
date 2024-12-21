@@ -67,7 +67,7 @@ public class FollowService {
 //                    .followee(account1)
 //                    .status(FollowStatus.FOLLOWING.name())
 //                    .build();
-//            return followMapper.toRespone(followRepository.save(follow));
+//            return followMapper.toResponse(followRepository.save(follow));
 //        }
 //    }
 
@@ -127,23 +127,23 @@ public class FollowService {
 //    }
 
     //xem danh sách người mình follow
-    public List<FollowResponse> getFollows() {
+    public List<FollowNoFollowerResponse> getFollows() {
         Account currentUser = getCurrentUser();
 
         List<Follow> followedAccounts = followRepository.findByFollower(currentUser);
 
         return followedAccounts.stream()
-                .map(followMapper::toRespone)
+                .map(followMapper::toFollowNoFollowerResponse)
                 .toList();
     }
 
     //xem danh sách người follow mình
-    public List<FollowResponse> getFollowers() {
+    public List<FollowNoFolloweeResponse> getFollowers() {
         Account currentUser = getCurrentUser();
         List<Follow> followers = followRepository.findByFollowee(currentUser);
 
         return followers.stream()
-                .map(followMapper::toRespone)
+                .map(followMapper::toFollowNoFolloweeResponse)
                 .toList();
     }
 
