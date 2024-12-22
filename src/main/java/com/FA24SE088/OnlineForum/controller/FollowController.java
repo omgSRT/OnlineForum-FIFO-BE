@@ -37,8 +37,8 @@ public class FollowController {
 //                .entity(followService.getFollows())
 //                .build();
 //    }
-    public ApiResponse<List<AccountResponse>> getAllFollows() {
-        return ApiResponse.<List<AccountResponse>>builder()
+    public ApiResponse<List<AccountForFollowedResponse>> getAllFollows() {
+        return ApiResponse.<List<AccountForFollowedResponse>>builder()
                 .entity(followService.getFollows())
                 .build();
     }
@@ -50,8 +50,8 @@ public class FollowController {
 //                .entity(followService.getFollowers())
 //                .build();
 //    }
-    public ApiResponse<List<AccountResponse>> getAllFollowers() {
-        return ApiResponse.<List<AccountResponse>>builder()
+    public ApiResponse<List<AccountForFollowedResponse>> getAllFollowers() {
+        return ApiResponse.<List<AccountForFollowedResponse>>builder()
                 .entity(followService.getFollowers())
                 .build();
     }
