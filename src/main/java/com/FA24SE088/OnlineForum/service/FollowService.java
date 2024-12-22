@@ -59,7 +59,27 @@ public class FollowService {
                 .map(account -> {
                     long followerCount = followRepository.countByFollowee(account);
                     long followeeCount = followRepository.countByFollower(account);
-                    boolean isFollowing = followRepository.existsByFollowerAndAndFollowee(currentUser,account);
+                    boolean isFollowing = followRepository.existsByFollowerAndAndFollowee(currentUser, account);
+
+                    AccountForFollowedResponse response = accountMapper.toAccountFollowedResponse(account);
+                    response.setCountFollowee(followeeCount);
+                    response.setCountFollower(followerCount);
+                    response.setFollowing(isFollowing);
+                    return response;
+                })
+                .toList();
+    }
+    //xem danh sách người mình follow
+    public List<AccountForFollowedResponse> getFollowsAnotherAccount(UUID accountId) {
+        Account anotherAccount = accountRepository.findById(accountId).orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND));
+        List<Follow> followedAccounts = followRepository.findByFollower(anotherAccount);
+
+        return followedAccounts.stream()
+                .map(Follow::getFollowee)
+                .map(account -> {
+                    long followerCount = followRepository.countByFollowee(account);
+                    long followeeCount = followRepository.countByFollower(account);
+                    boolean isFollowing = followRepository.existsByFollowerAndAndFollowee(anotherAccount, account);
 
                     AccountForFollowedResponse response = accountMapper.toAccountFollowedResponse(account);
                     response.setCountFollowee(followeeCount);
@@ -89,7 +109,27 @@ public class FollowService {
                 .map(account -> {
                     long followerCount = followRepository.countByFollowee(account);
                     long followeeCount = followRepository.countByFollower(account);
-                    boolean isFollowing = followRepository.existsByFollowerAndAndFollowee(currentUser,account);
+                    boolean isFollowing = followRepository.existsByFollowerAndAndFollowee(currentUser, account);
+
+                    AccountForFollowedResponse response = accountMapper.toAccountFollowedResponse(account);
+                    response.setCountFollowee(followeeCount);
+                    response.setCountFollower(followerCount);
+                    response.setFollowing(isFollowing);
+                    return response;
+                })
+                .toList();
+    }
+    //xem danh sách người follow mình
+    public List<AccountForFollowedResponse> getFollowersAnotherAccount(UUID accountId) {
+        Account anotherAccount = accountRepository.findById(accountId).orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_FOUND));
+        List<Follow> followers = followRepository.findByFollowee(anotherAccount);
+
+        return followers.stream()
+                .map(Follow::getFollower)
+                .map(account -> {
+                    long followerCount = followRepository.countByFollowee(account);
+                    long followeeCount = followRepository.countByFollower(account);
+                    boolean isFollowing = followRepository.existsByFollowerAndAndFollowee(anotherAccount, account);
 
                     AccountForFollowedResponse response = accountMapper.toAccountFollowedResponse(account);
                     response.setCountFollowee(followeeCount);
@@ -133,12 +173,12 @@ public class FollowService {
             response.setMessage(SuccessReturnMessage.CREATE_SUCCESS.getMessage());
             response.setFollowee(followee);
             response.setFollower(account);
-            realtime_follow(follow, "Follow", "Follow notification",account.getUsername() + " is following you");
+            realtime_follow(follow, "Follow", "Follow notification", account.getUsername() + " is following you");
         }
         return response;
     }
 
-    public void realtime_follow(Follow follow, String entity, String titleNotification,String message) {
+    public void realtime_follow(Follow follow, String entity, String titleNotification, String message) {
         DataNotification dataNotification = DataNotification.builder()
                 .id(follow.getFollowId())
                 .entity(entity)
@@ -154,7 +194,7 @@ public class FollowService {
                     .createdDate(LocalDateTime.now())
                     .build();
             notificationRepository.save(notification);
-            socketIOUtil.sendEventToOneClientInAServer(follow.getFollowee().getAccountId(), WebsocketEventName.NOTIFICATION.name(), message,notification);
+            socketIOUtil.sendEventToOneClientInAServer(follow.getFollowee().getAccountId(), WebsocketEventName.NOTIFICATION.name(), message, notification);
 
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
