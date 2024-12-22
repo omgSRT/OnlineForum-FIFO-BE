@@ -10,7 +10,6 @@ import com.FA24SE088.OnlineForum.exception.ErrorCode;
 import com.FA24SE088.OnlineForum.mapper.AccountMapper;
 import com.FA24SE088.OnlineForum.mapper.FollowMapper;
 import com.FA24SE088.OnlineForum.repository.NotificationRepository;
-import com.FA24SE088.OnlineForum.utils.PaginationUtils;
 import com.FA24SE088.OnlineForum.utils.SocketIOUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -50,7 +49,7 @@ public class FollowService {
 
 
     //xem danh sách người mình follow
-    public List<AccountResponse> getFollows() {
+    public List<AccountForFollowedResponse> getFollows() {
         Account currentUser = getCurrentUser();
 
         List<Follow> followedAccounts = followRepository.findByFollower(currentUser);
@@ -60,10 +59,12 @@ public class FollowService {
                 .map(account -> {
                     long followerCount = followRepository.countByFollowee(account);
                     long followeeCount = followRepository.countByFollower(account);
+                    boolean isFollowing = followRepository.existsByFollowerAndAndFollowee(currentUser,account);
 
-                    AccountResponse response = accountMapper.toResponse(account);
+                    AccountForFollowedResponse response = accountMapper.toAccountFollowedResponse(account);
                     response.setCountFollowee(followeeCount);
                     response.setCountFollower(followerCount);
+                    response.setFollowing(isFollowing);
                     return response;
                 })
                 .toList();
@@ -79,7 +80,7 @@ public class FollowService {
 //                .toList();
 //    }
     //xem danh sách người follow mình
-    public List<AccountResponse> getFollowers() {
+    public List<AccountForFollowedResponse> getFollowers() {
         Account currentUser = getCurrentUser();
         List<Follow> followers = followRepository.findByFollowee(currentUser);
 
@@ -88,10 +89,12 @@ public class FollowService {
                 .map(account -> {
                     long followerCount = followRepository.countByFollowee(account);
                     long followeeCount = followRepository.countByFollower(account);
+                    boolean isFollowing = followRepository.existsByFollowerAndAndFollowee(currentUser,account);
 
-                    AccountResponse response = accountMapper.toResponse(account);
+                    AccountForFollowedResponse response = accountMapper.toAccountFollowedResponse(account);
                     response.setCountFollowee(followeeCount);
                     response.setCountFollower(followerCount);
+                    response.setFollowing(isFollowing);
                     return response;
                 })
                 .toList();
@@ -158,18 +161,6 @@ public class FollowService {
         }
     }
 
-
-    public List<AccountResponse> listBlock() {
-        Account currentUser = getCurrentUser();
-
-        List<BlockedAccount> blockedAccounts = blockedAccountRepository
-                .findByBlocker(currentUser);
-
-        return blockedAccounts.stream()
-                .map(BlockedAccount::getBlocked)
-                .map(accountMapper::toResponse)
-                .toList();
-    }
 
     public List<AccountFollowResponse> getTop10MostFollowedAccounts() {
         Pageable pageable = PageRequest.of(0, 10);
