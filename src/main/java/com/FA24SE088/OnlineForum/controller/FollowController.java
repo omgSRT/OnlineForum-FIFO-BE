@@ -12,6 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @RequiredArgsConstructor
 @RestController
@@ -24,7 +25,6 @@ public class FollowController {
     @Operation(summary = "Create follow", description = "Create a new follow for the current user")
     @PostMapping("/follow-or-unfollow")
     public ApiResponse<FollowOrUnfollowResponse> createFollow(@RequestBody FollowUnfollowRequest request) {
-//        followService.followOrUnfollow(request.getAccountId());
         return ApiResponse.<FollowOrUnfollowResponse>builder()
                 .entity(followService.followOrUnfollow(request.getAccountId()))
                 .build();
@@ -42,6 +42,12 @@ public class FollowController {
                 .entity(followService.getFollows())
                 .build();
     }
+    @GetMapping("/get-another-follows/{accountId}")
+    public ApiResponse<List<AccountForFollowedResponse>> getAllFollowsAnotherAccount(@PathVariable UUID accountId) {
+        return ApiResponse.<List<AccountForFollowedResponse>>builder()
+                .entity(followService.getFollowsAnotherAccount(accountId))
+                .build();
+    }
 
     @Operation(summary = "Danh sách người đang follow mình", description = "")
     @GetMapping("get-followers")
@@ -53,6 +59,12 @@ public class FollowController {
     public ApiResponse<List<AccountForFollowedResponse>> getAllFollowers() {
         return ApiResponse.<List<AccountForFollowedResponse>>builder()
                 .entity(followService.getFollowers())
+                .build();
+    }
+    @GetMapping("get-another-followers/{accountId}")
+    public ApiResponse<List<AccountForFollowedResponse>> getAllFollowersAnotherAccount(@PathVariable UUID accountId) {
+        return ApiResponse.<List<AccountForFollowedResponse>>builder()
+                .entity(followService.getFollowersAnotherAccount(accountId))
                 .build();
     }
 
